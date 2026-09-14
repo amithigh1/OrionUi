@@ -4,3 +4,17 @@ tests/frameworks/out/
 *.log
 .DS_Store
 Thumbs.db
+
+# Secrets & Environment variables
+.env
+.env.*
+*.env
+*.pem
+*.key
+*.cert
+*.pfx
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.sw?

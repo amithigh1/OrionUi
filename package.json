@@ -21,11 +21,11 @@
     "single-file"
   ],
   "license": "MIT",
-  "author": "",
-  "homepage": "",
+  "author": "Orion Infosys (http://orion-infosys.com/)",
+  "homepage": "https://amithigh1.github.io/OrionUi/",
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/amithigh1/OrionUi.git"
   },
   "main": "dist/orion.js",
   "module": "dist/orion.esm.js",
