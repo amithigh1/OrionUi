@@ -15,25 +15,6 @@
   const here = location.href.split('#')[0].split('?')[0];
   const escH = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-  /* ── Google Analytics (GA4: G-DLK9DDXJMJ & G-GKMCZFLK5L) ──────────── */
-  (function initGA() {
-    if (window.__orion_ga_injected) return;
-    window.__orion_ga_injected = true;
-    if (!document.querySelector('script[src*="googletagmanager.com/gtag/js"]')) {
-      const s = document.createElement('script');
-      s.async = true;
-      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-DLK9DDXJMJ';
-      document.head.append(s);
-    }
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){ window.dataLayer.push(arguments); }
-    window.gtag = window.gtag || gtag;
-    gtag('js', new Date());
-    const path = location.pathname + location.search + location.hash;
-    gtag('config', 'G-DLK9DDXJMJ', { page_path: path });
-    gtag('config', 'G-GKMCZFLK5L', { page_path: path });
-  })();
-
   /* ── syntax highlighting ─────────────────────────────────────────── */
   const JS_KW = /^(?:const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|new|class|extends|import|export|from|default|async|await|try|catch|finally|throw|typeof|instanceof|in|of|this|super|null|undefined|true|false|static|get|set|yield|delete|void)$/;
   function hlJS(src) {
@@ -154,7 +135,7 @@
         <button class="o-btn o-btn-ghost o-btn-icon o-btn-sm docs-rtl" title="Toggle RTL" aria-label="Toggle right-to-left">RTL</button>
         <button class="o-btn o-btn-ghost o-btn-icon o-btn-sm docs-theme" title="Theme" aria-label="Toggle theme"></button>
         <a class="o-btn o-btn-ghost o-btn-sm" href="${ROOT}../templates/index.html">Templates</a>
-        <a class="o-btn o-btn-primary o-btn-sm" href="http://orion-infosys.com/" target="_blank" rel="noopener" title="Visit Orion Infosys">Orion Infosys ↗</a>
+        <a class="o-btn o-btn-ghost o-btn-sm" href="https://github.com/amithigh1/OrionUi" target="_blank" rel="noopener">GitHub ↗</a>
       </div>`;
     const layout = document.createElement('div'); layout.className = 'docs-layout';
     const sidebar = document.createElement('aside'); sidebar.className = 'docs-sidebar'; sidebar.setAttribute('aria-label', 'Documentation');
@@ -184,12 +165,12 @@
     footer.className = 'docs-footer';
     footer.innerHTML = `
       <div class="docs-footer-info">
-        <span>Developed by <a href="http://orion-infosys.com/" target="_blank" rel="noopener"><strong>Orion Infosys</strong></a> — Enterprise IT &amp; Software Solutions</span>
+        <span>Orion Admin · MIT Licensed · Open Source Admin UI Library</span>
       </div>
       <div class="docs-footer-links">
-        <a href="http://orion-infosys.com/" target="_blank" rel="noopener">Company Website ↗</a>
-        <span class="docs-footer-sep">·</span>
         <a href="https://github.com/amithigh1/OrionUi" target="_blank" rel="noopener">GitHub ↗</a>
+        <span class="docs-footer-sep">·</span>
+        <a href="${ROOT}getting-started.html">Documentation</a>
       </div>`;
     main.append(footer);
     // toc

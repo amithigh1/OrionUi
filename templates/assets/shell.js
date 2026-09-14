@@ -12,25 +12,6 @@
   const PAGE = window.PAGE || {};
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-  /* ── Google Analytics (GA4: G-DLK9DDXJMJ & G-GKMCZFLK5L) ──────────── */
-  (function initGA() {
-    if (window.__orion_ga_injected) return;
-    window.__orion_ga_injected = true;
-    if (!document.querySelector('script[src*="googletagmanager.com/gtag/js"]')) {
-      const s = document.createElement('script');
-      s.async = true;
-      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-DLK9DDXJMJ';
-      document.head.append(s);
-    }
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){ window.dataLayer.push(arguments); }
-    window.gtag = window.gtag || gtag;
-    gtag('js', new Date());
-    const path = location.pathname + location.search + location.hash;
-    gtag('config', 'G-DLK9DDXJMJ', { page_path: path });
-    gtag('config', 'G-GKMCZFLK5L', { page_path: path });
-  })();
-
   const NAV = [
     { heading: 'Main' },
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', href: 'dashboard.html' },
@@ -118,8 +99,8 @@
         </div>
         <div id="tpl-slot"></div>
         <footer style="margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--o-border); display: flex; justify-content: space-between; align-items: center; font-size: .8125rem; color: var(--o-text-muted); flex-wrap: wrap; gap: .5rem;">
-          <span>Built with Orion Admin · Sponsored by <a href="http://orion-infosys.com/" target="_blank" rel="noopener" style="color:var(--o-primary);font-weight:600;text-decoration:none">Orion Infosys</a></span>
-          <a href="http://orion-infosys.com/" target="_blank" rel="noopener" style="color:var(--o-text-muted);text-decoration:none">orion-infosys.com ↗</a>
+          <span>Built with Orion Admin · Open Source Admin UI Library</span>
+          <a href="https://github.com/amithigh1/OrionUi" target="_blank" rel="noopener" style="color:var(--o-text-muted);text-decoration:none">GitHub Repository ↗</a>
         </footer>
       </div>
     </main>`;

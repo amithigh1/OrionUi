@@ -1,6 +1,9 @@
 {
-  "name": "orion-admin",
+  "name": "@amithigh1/orion-admin",
   "version": "0.1.0",
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "Zero-dependency, single-file admin UI library: layout, forms, data tables, charts, calendars, editors, uploads and 300+ components for plain HTML, React, Vue and Angular. One <script> tag.",
   "keywords": [
     "admin",
@@ -21,7 +24,7 @@
     "single-file"
   ],
   "license": "MIT",
-  "author": "Orion Infosys (http://orion-infosys.com/)",
+  "author": "Orion Admin Contributors",
   "homepage": "https://amithigh1.github.io/OrionUi/",
   "repository": {
     "type": "git",
