@@ -1,0 +1,46 @@
+/* <o-phone>: country button + tel input in one .o-control, searchable country panel */
+o-phone { display: block; min-width: 0; }
+o-phone:not(:defined) { visibility: hidden; }
+.o-phone-control { display: flex; align-items: stretch; padding: 0; overflow: hidden; }
+.o-phone-country {
+  display: inline-flex; align-items: center; gap: .375rem; flex-shrink: 0; padding: 0 .5rem 0 .625rem; margin: 0;
+  font: inherit; font-size: var(--o-fs-sm); color: var(--o-text); background: var(--o-surface-2);
+  border: 0; border-inline-end: 1px solid var(--o-input-border); cursor: pointer; white-space: nowrap;
+  transition: background-color var(--o-dur-fast);
+}
+.o-phone-country:hover:not(:disabled) { background: var(--o-surface-3); }
+.o-phone-country:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--o-focus); }
+.o-phone-country:disabled { cursor: not-allowed; opacity: .7; }
+.o-phone-dial { color: var(--o-text-muted); font-variant-numeric: tabular-nums; }
+.o-phone-caret { width: .875rem; height: .875rem; color: var(--o-text-subtle); transition: transform var(--o-dur-fast); }
+o-phone.is-open .o-phone-caret { transform: rotate(180deg); }
+.o-phone-flag { display: inline-grid; place-items: center; font-size: 1.125rem; line-height: 1; min-width: 1.375rem; }
+.o-phone-flag.is-code {
+  min-width: 1.625rem; height: 1.125rem; padding: 0 .1875rem; font-size: .625rem; font-weight: 700; letter-spacing: .02em;
+  color: var(--o-text-muted); background: var(--o-surface-3); border: 1px solid var(--o-border); border-radius: 3px;
+}
+.o-phone-input {
+  flex: 1 1 auto; width: 100%; min-width: 0; padding: 0 var(--o-control-px); margin: 0;
+  font: inherit; color: inherit; background: transparent; border: 0; outline: none; box-shadow: none; font-variant-numeric: tabular-nums;
+}
+.o-phone-input::placeholder { color: var(--o-text-subtle); opacity: 1; }
+o-phone:not(:focus-within) .o-phone-control:has(.o-phone-input[aria-invalid="true"]) { --o-focus: var(--o-danger); border-color: var(--o-danger); }
+o-phone[size="sm"] .o-phone-control { height: var(--o-control-h-sm); font-size: var(--o-fs-sm); border-radius: var(--o-radius-sm); }
+o-phone[size="lg"] .o-phone-control { height: var(--o-control-h-lg); font-size: var(--o-fs-md); }
+
+.o-phone-panel { display: flex; flex-direction: column; width: 20rem; max-width: calc(100vw - 16px); max-height: 22rem; overflow: hidden; }
+.o-phone-search-wrap { position: relative; flex-shrink: 0; padding: .5rem; border-bottom: 1px solid var(--o-border); }
+.o-phone-search-wrap > .o-icon { position: absolute; top: 50%; inset-inline-start: 1.125rem; transform: translateY(-50%); width: 1rem; height: 1rem; color: var(--o-text-subtle); pointer-events: none; }
+.o-phone-search { padding-inline-start: 2rem; }
+.o-phone-list { flex: 1 1 auto; min-height: 0; margin: 0; padding: .25rem; list-style: none; overflow-y: auto; overscroll-behavior: contain; }
+.o-phone-group { padding: .5rem .625rem .25rem; font-size: .6875rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--o-text-subtle); }
+.o-phone-option {
+  display: flex; align-items: center; gap: .625rem; padding: .4375rem .625rem; border-radius: var(--o-radius-sm);
+  font-size: var(--o-fs-sm); cursor: pointer; scroll-margin: .25rem;
+}
+.o-phone-option.is-active { background: var(--o-surface-3); }
+.o-phone-option[aria-selected="true"] { color: var(--o-primary-text); font-weight: 600; }
+.o-phone-option[aria-selected="true"]::after { content: ""; width: .375rem; height: .375rem; border-radius: 50%; background: currentColor; order: 3; }
+.o-phone-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.o-phone-code { flex-shrink: 0; color: var(--o-text-muted); font-variant-numeric: tabular-nums; }
+.o-phone-empty { padding: 1.25rem .75rem; text-align: center; font-size: var(--o-fs-sm); color: var(--o-text-muted); }

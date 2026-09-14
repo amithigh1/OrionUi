@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in — Orion Admin</title>
+<script src="../../dist/orion.js"></script>
+</head>
+<body>
+<div class="o-auth-split">
+  <div class="o-auth-cover">
+    <div class="o-auth-cover-brand">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>
+      Orion Admin
+    </div>
+    <div class="o-auth-cover-body">
+      <div class="o-auth-illustration">
+        <svg viewBox="0 0 480 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+          <defs><linearGradient id="cardGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".97"/><stop offset="1" stop-color="#ffffff" stop-opacity=".82"/></linearGradient></defs>
+          <rect x="40" y="40" width="400" height="260" rx="18" fill="url(#cardGrad)"/>
+          <circle cx="66" cy="66" r="6" fill="#ef4444"/><circle cx="86" cy="66" r="6" fill="#f59e0b"/><circle cx="106" cy="66" r="6" fill="#22c55e"/>
+          <rect x="64" y="96" width="150" height="14" rx="7" fill="#c7d2fe"/>
+          <rect x="64" y="120" width="100" height="10" rx="5" fill="#e0e7ff"/>
+          <g fill="#818cf8"><rect x="64" y="220" width="24" height="60" rx="4"/><rect x="98" y="190" width="24" height="90" rx="4"/><rect x="132" y="160" width="24" height="120" rx="4"/><rect x="166" y="200" width="24" height="80" rx="4"/></g>
+          <polyline points="230,260 260,230 290,245 320,190 350,205 380,150 410,170" fill="none" stroke="#4338ca" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="410" cy="170" r="6" fill="#4338ca"/>
+          <rect x="230" y="150" width="180" height="18" rx="9" fill="#eef2ff"/>
+        </svg>
+      </div>
+      <h2 class="o-auth-cover-title">Run your business from one screen.</h2>
+      <p class="o-auth-cover-text">Real-time revenue, users and health metrics — all in Orion Admin.</p>
+    </div>
+    <div class="o-auth-cover-quote">
+      “We replaced four dashboards with one. Setup took an afternoon.”
+      <b>— Priya Raman, Head of Ops at Northwind</b>
+    </div>
+  </div>
+  <div class="o-auth-split-form">
+    <div class="o-auth-card">
+      <o-auth-form type="login" social='["google","microsoft","github","apple"]' remember id="login-form"></o-auth-form>
+    </div>
+  </div>
+</div>
+<script>
+  document.getElementById('login-form').onSubmit = async (data) => {
+    await new Promise(r => setTimeout(r, 700));
+    if (data.email !== 'demo@orion.dev' || data.password !== 'password123') {
+      throw { field: 'password', message: 'Incorrect email or password. Try demo@orion.dev / password123.' };
+    }
+    alert('Signed in! (demo)');
+  };
+</script>
+</body>
+</html>

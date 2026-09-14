@@ -1,0 +1,15 @@
+[
+  { "id": "kl-1", "name": "Orion Store — KLCC", "city": "Kuala Lumpur", "lat": 3.1579, "lng": 101.7116, "address": "Suria KLCC, Jalan Ampang, 50450 Kuala Lumpur" },
+  { "id": "kl-2", "name": "Orion Store — Bukit Bintang", "city": "Kuala Lumpur", "lat": 3.1466, "lng": 101.7106, "address": "168 Jalan Bukit Bintang, 55100 Kuala Lumpur" },
+  { "id": "kl-3", "name": "Orion Store — Bangsar", "city": "Kuala Lumpur", "lat": 3.1287, "lng": 101.6788, "address": "Bangsar Village, Jalan Telawi, 59100 Kuala Lumpur" },
+  { "id": "kl-4", "name": "Orion Store — Mont Kiara", "city": "Kuala Lumpur", "lat": 3.1698, "lng": 101.6509, "address": "Plaza Mont Kiara, 50480 Kuala Lumpur" },
+  { "id": "kl-5", "name": "Orion Store — Sunway", "city": "Subang Jaya", "lat": 3.0733, "lng": 101.6067, "address": "Sunway Pyramid, 47500 Subang Jaya, Selangor" },
+  { "id": "kl-6", "name": "Orion Store — Petaling Jaya", "city": "Petaling Jaya", "lat": 3.1073, "lng": 101.6067, "address": "1 Utama, 47800 Petaling Jaya, Selangor" },
+  { "id": "kl-7", "name": "Orion Store — Ampang", "city": "Kuala Lumpur", "lat": 3.1600, "lng": 101.7500, "address": "Ampang Point, 68000 Ampang, Selangor" },
+  { "id": "sg-1", "name": "Orion Store — Orchard", "city": "Singapore", "lat": 1.3048, "lng": 103.8318, "address": "ION Orchard, 2 Orchard Turn, Singapore 238801" },
+  { "id": "sg-2", "name": "Orion Store — Marina Bay", "city": "Singapore", "lat": 1.2838, "lng": 103.8591, "address": "The Shoppes at Marina Bay Sands, Singapore 018972" },
+  { "id": "sg-3", "name": "Orion Store — Raffles Place", "city": "Singapore", "lat": 1.2840, "lng": 103.8512, "address": "One Raffles Place, Singapore 048616" },
+  { "id": "sg-4", "name": "Orion Store — Bugis", "city": "Singapore", "lat": 1.3006, "lng": 103.8559, "address": "Bugis Junction, 200 Victoria Street, Singapore 188021" },
+  { "id": "sg-5", "name": "Orion Store — Jurong East", "city": "Singapore", "lat": 1.3329, "lng": 103.7436, "address": "JEM, 50 Jurong Gateway Road, Singapore 608549" },
+  { "id": "sg-6", "name": "Orion Store — Sentosa", "city": "Singapore", "lat": 1.2494, "lng": 103.8303, "address": "Sentosa Gateway, Singapore 098269" }
+]

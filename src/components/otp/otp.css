@@ -1,0 +1,25 @@
+/* <o-otp>: one box per character */
+o-otp { display: block; --o-otp-size: 2.75rem; }
+o-otp:not(:defined) { visibility: hidden; }
+o-otp[size="sm"] { --o-otp-size: 2.25rem; }
+o-otp[size="lg"] { --o-otp-size: 3.25rem; }
+.o-otp-row { display: flex; align-items: center; gap: .5rem; max-width: 100%; }
+.o-otp-box {
+  flex: 0 1 var(--o-otp-size); width: var(--o-otp-size); min-width: 1.75rem; height: calc(var(--o-otp-size) * 1.15); padding: 0;
+  font: inherit; font-size: calc(var(--o-otp-size) * .45); font-weight: 600; line-height: 1; text-align: center; font-variant-numeric: tabular-nums;
+  color: var(--o-text); background: var(--o-input-bg); border: 1px solid var(--o-input-border); border-radius: var(--o-radius);
+  box-shadow: var(--o-shadow-xs); caret-color: var(--o-primary); text-transform: uppercase;
+  transition: border-color var(--o-dur-fast) ease, box-shadow var(--o-dur-fast) ease, background-color var(--o-dur-fast) ease;
+}
+.o-otp-box:hover { border-color: color-mix(in srgb, var(--o-input-border) 60%, var(--o-text-muted)); }
+.o-otp-box:focus { outline: none; border-color: var(--o-primary); box-shadow: 0 0 0 var(--o-ring-width) color-mix(in srgb, var(--o-focus) var(--o-ring-alpha), transparent); }
+.o-otp-box::selection { background: transparent; }
+.o-otp-box.is-filled { background: var(--o-surface-2); border-color: var(--o-border-strong); }
+.o-otp-box:disabled { color: var(--o-text-muted); background: var(--o-surface-3); cursor: not-allowed; box-shadow: none; }
+.o-otp-sep { flex: 0 0 .625rem; height: 2px; border-radius: 2px; background: var(--o-border-strong); }
+o-otp[invalid] .o-otp-box { --o-focus: var(--o-danger); border-color: var(--o-danger); background: var(--o-danger-subtle); }
+.o-otp-msg:empty { display: none; }
+.o-otp-msg { margin-top: .5rem; font-size: var(--o-fs-xs); color: var(--o-danger-text); }
+.o-otp-resend { margin-top: .625rem; font-size: var(--o-fs-sm); color: var(--o-text-muted); font-variant-numeric: tabular-nums; }
+.o-otp-resend-btn { --o-btn-px: 0; }
+@media (max-width: 400px) { .o-otp-row { gap: .3125rem; } o-otp { --o-otp-size: 2.5rem; } }

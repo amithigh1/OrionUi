@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gallery &amp; Lightbox — Orion Admin</title>
+<meta name="docs:section" content="Media">
+<meta name="docs:order" content="20">
+<meta name="docs:desc" content="Image gallery (grid, masonry, justified), lightbox, image preview, zoom controls and fullscreen viewer">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .demo-thumbs { display: flex; flex-wrap: wrap; gap: .75rem; }
+  .demo-thumbs img { width: 9rem; height: 6rem; object-fit: cover; border-radius: var(--o-radius); }
+  .demo-inline-img { float: inline-end; width: 12rem; margin: 0 0 .5rem 1rem; border-radius: var(--o-radius); }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Gallery &amp; Lightbox</h1>
+    <p class="docs-lead"><code>&lt;o-gallery&gt;</code> lays out images as a grid, masonry or justified rows and opens a full-screen <strong>lightbox</strong> with pinch / wheel / double-tap zoom, panning, rotation, slideshow, thumbnails, download, share and swipe-down-to-close. <code>data-o-preview</code> adds the same viewer to any image, and <code>&lt;o-zoom&gt;</code> is a standalone pan-and-zoom box.</p>
+  </header>
+
+  <section id="masonry">
+    <h2>Masonry gallery with lightbox</h2>
+    <p>Children are plain links to the full image with a thumbnail inside. Width/height attributes give the layout the aspect ratio before images load. Click any image — then try the arrow keys, <kbd>+</kbd>/<kbd>−</kbd>, the mouse wheel, double-click, or a swipe down on touch screens.</p>
+    <div class="docs-demo">
+      <template>
+        <o-gallery id="masonry-gallery" layout="masonry" min-width="190" gap="10" label="Landscapes">
+          <a href="../fixtures/media/photo-forest.jpg" data-caption="Pine forest in morning mist"><img src="../fixtures/media/photo-forest-thumb.jpg" width="373" height="560" alt="Forest"></a>
+          <a href="../fixtures/media/photo-mountains.jpg" data-caption="Violet peaks at sunrise"><img src="../fixtures/media/photo-mountains-thumb.jpg" width="560" height="373" alt="Mountains"></a>
+          <a href="../fixtures/media/photo-lake.jpg" data-caption="A red sail on an alpine lake"><img src="../fixtures/media/photo-lake-thumb.jpg" width="560" height="560" alt="Alpine lake"></a>
+          <a href="../fixtures/media/photo-ocean.jpg" data-caption="The sun meets the sea"><img src="../fixtures/media/photo-ocean-thumb.jpg" width="560" height="373" alt="Ocean sunset"></a>
+          <a href="../fixtures/media/photo-aurora.jpg" data-caption="Northern lights over a still lake"><img src="../fixtures/media/photo-aurora-thumb.jpg" width="373" height="560" alt="Aurora"></a>
+          <a href="../fixtures/media/photo-city.jpg" data-caption="Skyline at dusk"><img src="../fixtures/media/photo-city-thumb.jpg" width="560" height="373" alt="City"></a>
+          <a href="../fixtures/media/photo-lavender.jpg" data-caption="Rows of lavender"><img src="../fixtures/media/photo-lavender-thumb.jpg" width="373" height="560" alt="Lavender"></a>
+          <a href="../fixtures/media/photo-tropical.jpg" data-caption="Palm tree and turquoise water"><img src="../fixtures/media/photo-tropical-thumb.jpg" width="560" height="560" alt="Beach"></a>
+          <a href="../fixtures/media/photo-desert.jpg" data-caption="Dunes under a clear sky"><img src="../fixtures/media/photo-desert-thumb.jpg" width="560" height="373" alt="Desert"></a>
+        </o-gallery>
+      </template>
+    </div>
+  </section>
+
+  <section id="grid">
+    <h2>Grid from data (with a video)</h2>
+    <p>Set <code>items</code> from JavaScript (or as JSON) to render tiles yourself. Items with <code>type: 'video'</code> play inside the lightbox (with <code>&lt;o-video&gt;</code> when the players package is loaded, otherwise the native player).</p>
+    <div class="docs-demo">
+      <template>
+        <o-gallery id="grid-gallery" columns="4" aspect="4/3" gap="8" captions="below" label="Trip photos"></o-gallery>
+        <script>
+          const M = '../fixtures/media/';
+          document.getElementById('grid-gallery').items = [
+            { src: M + 'photo-tropical.jpg', thumb: M + 'photo-tropical-thumb.jpg', title: 'Tropical beach', caption: 'Day 1 · Langkawi', width: 1600, height: 1600 },
+            { src: M + 'clip.webm', poster: M + 'clip-poster.jpg', type: 'video', title: 'Timelapse', caption: 'Sunrise to sunset', width: 1280, height: 720,
+              tracks: [{ src: M + 'clip-en.vtt', label: 'English', srclang: 'en', kind: 'subtitles' }] },
+            { src: M + 'photo-lake.jpg', thumb: M + 'photo-lake-thumb.jpg', title: 'Alpine lake', caption: 'Day 3 · Hallstatt', width: 1600, height: 1600 },
+            { src: M + 'photo-city.jpg', thumb: M + 'photo-city-thumb.jpg', title: 'City lights', caption: 'Day 5 · Vienna', width: 1600, height: 1067 },
+          ];
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="justified">
+    <h2>Justified rows</h2>
+    <p>Rows keep the images' aspect ratios and fill the full width; <code>row-height</code> sets the target height. Captions appear on hover (always on touch devices).</p>
+    <div class="docs-demo">
+      <template>
+        <o-gallery layout="justified" row-height="170" gap="6" label="Justified gallery">
+          <a href="../fixtures/media/photo-desert.jpg" data-title="Desert"><img src="../fixtures/media/photo-desert-thumb.jpg" width="560" height="373" alt="Desert"><span class="o-gallery-cap"><strong>Desert</strong></span></a>
+          <a href="../fixtures/media/photo-aurora.jpg" data-title="Aurora"><img src="../fixtures/media/photo-aurora-thumb.jpg" width="373" height="560" alt="Aurora"><span class="o-gallery-cap"><strong>Aurora</strong></span></a>
+          <a href="../fixtures/media/photo-lake.jpg" data-title="Lake"><img src="../fixtures/media/photo-lake-thumb.jpg" width="560" height="560" alt="Lake"><span class="o-gallery-cap"><strong>Lake</strong></span></a>
+          <a href="../fixtures/media/photo-city.jpg" data-title="City"><img src="../fixtures/media/photo-city-thumb.jpg" width="560" height="373" alt="City"><span class="o-gallery-cap"><strong>City</strong></span></a>
+          <a href="../fixtures/media/photo-forest.jpg" data-title="Forest"><img src="../fixtures/media/photo-forest-thumb.jpg" width="373" height="560" alt="Forest"><span class="o-gallery-cap"><strong>Forest</strong></span></a>
+          <a href="../fixtures/media/photo-ocean.jpg" data-title="Ocean"><img src="../fixtures/media/photo-ocean-thumb.jpg" width="560" height="373" alt="Ocean"><span class="o-gallery-cap"><strong>Ocean</strong></span></a>
+          <a href="../fixtures/media/photo-mountains.jpg" data-title="Mountains"><img src="../fixtures/media/photo-mountains-thumb.jpg" width="560" height="373" alt="Mountains"><span class="o-gallery-cap"><strong>Mountains</strong></span></a>
+        </o-gallery>
+      </template>
+    </div>
+  </section>
+
+  <section id="lightbox">
+    <h2>Lightbox API</h2>
+    <p><code>Orion.lightbox(items, options)</code> opens the viewer from code and returns a handle to control it. The viewer is a modal dialog: focus is trapped, the page does not scroll, <kbd>Esc</kbd> closes and focus returns to the trigger.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-primary" id="lb-open"><o-icon name="image"></o-icon> Open lightbox</button>
+        <button class="o-btn" id="lb-show"><o-icon name="play"></o-icon> Slideshow</button>
+        <button class="o-btn" id="lb-full"><o-icon name="maximize"></o-icon> Fullscreen viewer</button>
+        <div class="docs-log" id="lb-log" style="flex-basis:100%"></div>
+        <script>
+          const P = '../fixtures/media/';
+          const photos = ['mountains', 'ocean', 'forest', 'desert', 'aurora', 'city'].map((n, i) => ({
+            src: P + `photo-${n}.jpg`, thumb: P + `photo-${n}-thumb.jpg`, title: n[0].toUpperCase() + n.slice(1), caption: `Photo ${i + 1} of the sample set`,
+            width: ['forest', 'aurora'].includes(n) ? 1067 : 1600, height: ['forest', 'aurora'].includes(n) ? 1600 : 1067,
+          }));
+          const log = m => docs.log('#lb-log', m);
+          document.getElementById('lb-open').onclick = e => Orion.lightbox(photos, { index: 1, share: true, origin: e.currentTarget,
+            onChange: (i, it) => log(`change → ${i} ${it.title}`), onClose: r => log(`closed (${r})`) });
+          document.getElementById('lb-show').onclick = () => { const lb = Orion.lightbox(photos, { thumbnails: false, interval: 2500 }); lb.play(); };
+          document.getElementById('lb-full').onclick = () => { const lb = Orion.lightbox(photos, { index: 4 }); lb.fullscreen(); };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="preview">
+    <h2>Image preview (<code>data-o-preview</code>)</h2>
+    <p>Add <code>data-o-preview</code> to any image (or a link wrapping one) to open it in the lightbox. Images with the same value form a group you can browse. Use <code>data-o-preview-src</code> for a larger version and <code>data-caption</code> / <code>data-title</code> for text.</p>
+    <div class="docs-demo">
+      <template>
+        <p><img class="demo-inline-img" src="../fixtures/media/photo-lake-thumb.jpg" alt="Alpine lake" data-o-preview data-o-preview-src="../fixtures/media/photo-lake.jpg" data-caption="Single image preview">
+          A single image in running text opens by itself. It is focusable and opens with <kbd>Enter</kbd> or <kbd>Space</kbd>, so keyboard users get the same preview.</p>
+        <div class="demo-thumbs" style="clear:both">
+          <a href="../fixtures/media/product-coral.jpg" data-o-preview="colors" data-title="Coral"><img src="../fixtures/media/product-coral-thumb.jpg" alt="Coral headphones"></a>
+          <a href="../fixtures/media/product-midnight.jpg" data-o-preview="colors" data-title="Midnight"><img src="../fixtures/media/product-midnight-thumb.jpg" alt="Midnight headphones"></a>
+          <a href="../fixtures/media/product-mint.jpg" data-o-preview="colors" data-title="Mint"><img src="../fixtures/media/product-mint-thumb.jpg" alt="Mint headphones"></a>
+          <a href="../fixtures/media/product-sky.jpg" data-o-preview="colors" data-title="Sky"><img src="../fixtures/media/product-sky-thumb.jpg" alt="Sky headphones"></a>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="zoom">
+    <h2>Zoom controls (<code>&lt;o-zoom&gt;</code>)</h2>
+    <p>A pan-and-zoom box for any content — here an SVG floor plan with a minimap. Zoom with the toolbar, <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + wheel or trackpad pinch (a plain wheel keeps scrolling the page and shows a hint), touch pinch, or a double-click; drag to pan. The level button resets to fit and the last button goes fullscreen.</p>
+    <div class="docs-demo">
+      <template>
+        <o-zoom id="plan" minimap max="6" label="Apartment floor plan" style="--o-zoom-h: 26rem">
+          <img src="../fixtures/media/floorplan.svg" alt="Apartment floor plan with five rooms" width="1600" height="1000">
+        </o-zoom>
+        <div class="o-cluster o-mt-3">
+          <button class="o-btn o-btn-sm" id="z-kitchen">Zoom to 250%</button>
+          <button class="o-btn o-btn-sm" id="z-reset">reset()</button>
+          <span class="o-muted o-small" id="z-state"></span>
+        </div>
+        <script>
+          const plan = document.getElementById('plan');
+          plan.addEventListener('o-change', e => { document.getElementById('z-state').textContent = `zoom ${Math.round(e.detail.zoom * 100)}%`; });
+          document.getElementById('z-kitchen').onclick = () => plan.zoomTo(2.5);
+          document.getElementById('z-reset').onclick = () => plan.reset();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3><code>&lt;o-gallery&gt;</code></h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute / property</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>layout</td><td>'grid' | 'masonry' | 'justified'</td><td>grid</td><td>Tile layout.</td></tr>
+        <tr><td>columns</td><td>number</td><td></td><td>Fixed column count (grid, masonry). Empty = as many columns of <code>min-width</code> as fit.</td></tr>
+        <tr><td>min-width</td><td>number</td><td>200</td><td>Minimum tile width in px for automatic columns.</td></tr>
+        <tr><td>gap</td><td>number | CSS length</td><td>8</td><td>Space between tiles.</td></tr>
+        <tr><td>aspect</td><td>string</td><td>1</td><td>Tile aspect ratio in grid layout, e.g. <code>4/3</code>.</td></tr>
+        <tr><td>row-height</td><td>number</td><td>220</td><td>Target row height (justified).</td></tr>
+        <tr><td>captions</td><td>'hover' | 'below' | 'none'</td><td>hover</td><td>Caption display (<code>.o-gallery-cap</code> or <code>&lt;figcaption&gt;</code>).</td></tr>
+        <tr><td>lightbox</td><td>boolean</td><td>true</td><td>Open the lightbox on click (<code>lightbox="false"</code> to disable).</td></tr>
+        <tr><td>lightbox-options</td><td>object</td><td>{}</td><td>Options passed to <code>Orion.lightbox</code>.</td></tr>
+        <tr><td>items</td><td>array</td><td>[]</td><td><code>[{ src, thumb, title, caption, alt, width, height, type, poster, tracks }]</code> — rendered as tiles.</td></tr>
+        <tr><td>label</td><td>string</td><td></td><td>Accessible name.</td></tr>
+        <tr><td>open(i) / relayout() / getItems()</td><td>methods</td><td></td><td>Open the viewer at a tile, recompute the layout, read items.</td></tr>
+        <tr><td>o-open</td><td>event</td><td></td><td><code>{ index, item }</code> — cancelable; call <code>preventDefault()</code> to handle clicks yourself.</td></tr>
+      </tbody>
+    </table>
+    <h3><code>Orion.lightbox(items, options)</code></h3>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>index</td><td>0</td><td>Item to show first.</td></tr>
+        <tr><td>loop</td><td>true</td><td>Wrap around at the ends.</td></tr>
+        <tr><td>zoom / maxZoom / upscale</td><td>true / 4 / false</td><td>Zooming (buttons, wheel, pinch, double-tap); max zoom relative to fit (at least 2× the real pixels); allow small images to grow beyond 100%.</td></tr>
+        <tr><td>thumbnails</td><td>items &gt; 1</td><td>Thumbnail strip.</td></tr>
+        <tr><td>slideshow / interval</td><td>true / 4000</td><td>Slideshow button and delay.</td></tr>
+        <tr><td>download / share / rotate / fullscreen / counter</td><td>true / false / true / true / true</td><td>Toolbar buttons (share uses the Web Share API or copies the link).</td></tr>
+        <tr><td>swipeClose</td><td>true</td><td>Swipe up or down to close.</td></tr>
+        <tr><td>origin</td><td></td><td>Element the viewer zooms out of (and returns focus to).</td></tr>
+        <tr><td>label, onChange(index, item), onClose(reason)</td><td></td><td>Accessible name and callbacks.</td></tr>
+      </tbody>
+    </table>
+    <p>Returns <code>{ next(), prev(), goTo(i), close(), zoomIn(), zoomOut(), reset(), rotate(deg), play(), pause(), fullscreen(), index, item, zoom, el }</code>. The dialog also dispatches <code>o-change</code> <code>{ index, item }</code>, and <code>o-lightbox-close</code> is dispatched on the origin element.</p>
+    <h3><code>data-o-preview</code></h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>data-o-preview="group"</td><td>On an <code>&lt;img&gt;</code> or a link. Elements with the same value are browsed together; an empty value previews one image.</td></tr>
+        <tr><td>data-o-preview-src</td><td>Full-size source (links use <code>href</code>).</td></tr>
+        <tr><td>data-title / data-caption</td><td>Caption text (defaults to the image <code>alt</code>).</td></tr>
+        <tr><td>data-width / data-height / data-type / data-poster</td><td>Real size of the full image, <code>video</code> items and their poster.</td></tr>
+        <tr><td>data-o-preview-options</td><td>JSON options for <code>Orion.lightbox</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3><code>&lt;o-zoom&gt;</code></h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute / member</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>min / max</td><td>1 / 8</td><td>Zoom range relative to “fit”.</td></tr>
+        <tr><td>step</td><td>1.5</td><td>Factor for the + / − buttons and keys.</td></tr>
+        <tr><td>wheel</td><td>ctrl</td><td><code>ctrl</code> (Ctrl/⌘ + wheel, pinch), <code>zoom</code> (plain wheel) or <code>none</code>.</td></tr>
+        <tr><td>controls / minimap / fullscreen</td><td>true / false / true</td><td>Toolbar, overview map, fullscreen button.</td></tr>
+        <tr><td>src / alt</td><td></td><td>Convenience: render an image as the content.</td></tr>
+        <tr><td>zoomIn() / zoomOut() / zoomTo(level) / reset() / panBy(dx, dy)</td><td></td><td>Methods. Getters: <code>zoom</code> (1 = fit), <code>scale</code>.</td></tr>
+        <tr><td>o-change</td><td></td><td>Event <code>{ zoom, scale, x, y }</code> on every change.</td></tr>
+        <tr><td>--o-zoom-h</td><td>24rem</td><td>Height (or set <code>height</code> directly).</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Lightbox</th><th>&lt;o-zoom&gt; (focused)</th></tr></thead>
+      <tbody>
+        <tr><td>← / →</td><td>Previous / next (mirrored in RTL); pan when zoomed</td><td>Pan</td></tr>
+        <tr><td>↑ / ↓</td><td>Pan when zoomed</td><td>Pan</td></tr>
+        <tr><td>+ / −</td><td>Zoom in / out</td><td>Zoom in / out</td></tr>
+        <tr><td>0</td><td>Reset zoom</td><td>Fit</td></tr>
+        <tr><td>Home / End</td><td>First / last item</td><td></td></tr>
+        <tr><td>R / Shift+R</td><td>Rotate clockwise / counter-clockwise</td><td></td></tr>
+        <tr><td>F</td><td>Toggle fullscreen</td><td></td></tr>
+        <tr><td>S</td><td>Start / stop slideshow</td><td></td></tr>
+        <tr><td>Esc</td><td>Close</td><td></td></tr>
+      </tbody>
+    </table>
+    <p>Touch: swipe left/right to navigate, swipe down to close, pinch to zoom, double-tap to zoom in/out, tap to hide the toolbar. The viewer uses dark tokens in every theme so photos keep their contrast.</p>
+    <h3>Frameworks</h3>
+    <p><code>&lt;o-gallery&gt;</code> never moves its children — render tiles with your framework, or pass <code>items</code> as a property. In React listen to <code>o-open</code> via a ref; <code>Orion.lightbox()</code> can be called from any event handler.</p>
+  </section>
+</main>
+</body>
+</html>

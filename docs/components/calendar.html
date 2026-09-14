@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calendar — Orion Admin</title>
+<meta name="docs:section" content="Scheduling">
+<meta name="docs:order" content="10">
+<meta name="docs:desc" content="Month, week, day, list and year views with drag-and-drop scheduling and async event sources">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Calendar</h1>
+    <p class="docs-lead"><code>&lt;o-calendar&gt;</code> is a full scheduling calendar: month, week, day, list and year
+      views, click-and-drag event creation, drag-move and drag-resize, recurring events (RFC&nbsp;5545 <code>RRULE</code>),
+      business hours, week numbers and locale-aware formatting. Events come from a plain array, an async range function
+      or a URL. See <a href="recurring-events.html">Recurring events</a> for <code>RRULE</code> details and
+      <a href="scheduler.html">Scheduler</a> for the resource timeline views.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Team calendar</h2>
+    <p>A daily standup (weekdays), a public holiday, a multi-day conference and a few one-off meetings. Switch views
+      with the toolbar or press <kbd class="o-kbd">M</kbd> <kbd class="o-kbd">W</kbd> <kbd class="o-kbd">D</kbd>
+      <kbd class="o-kbd">A</kbd> <kbd class="o-kbd">Y</kbd>. The calendar is <code>editable</code> and
+      <code>selectable</code>: drag on an empty slot to create an event, drag an event to move it, drag its edges to
+      resize it, and click an event to see its details.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-calendar id="cal-team" editable selectable now-indicator week-numbers business-hours
+          views='["month","week","day","list","year"]' height="38rem" label="Team calendar"></o-calendar>
+        <div class="docs-log" id="cal-team-log"></div>
+        <script>
+          (() => {
+            const D = Orion.date, cal = document.getElementById('cal-team');
+            const iso = n => D.toISODate(D.add(D.today(), n));
+            const at = (n, h, m = 0) => { const d = D.add(D.today(), n); d.setHours(h, m, 0, 0); return d; };
+            cal.events = [
+              { id: 'standup', title: 'Daily standup', start: at(0, 9, 0), end: at(0, 9, 15), rrule: 'FREQ=DAILY;BYDAY=MO,TU,WE,TH,FR', color: 'secondary', location: 'Huddle room' },
+              { id: 'planning', title: 'Sprint planning', start: at(1, 10, 0), end: at(1, 11, 30), color: 'primary', location: 'Room A · Zoom', attendees: ['Aisha Rahman', 'Ben Tan', 'Mei Lim'] },
+              { id: 'review', title: 'Design review', start: at(3, 14, 0), end: at(3, 15, 0), color: 'info', location: 'Room B' },
+              { id: 'oneonone', title: '1:1 with Priya', start: at(2, 16, 0), end: at(2, 16, 30), color: 'chart-5' },
+              { id: 'conf', title: 'Orion Summit (conference)', start: iso(5), end: iso(8), allDay: true, color: 'warning', location: 'Convention Centre' },
+              { id: 'holiday', title: 'Public holiday', start: iso(12), end: iso(13), allDay: true, color: 'success', editable: false },
+              { id: 'launch', title: 'Launch readiness review', start: at(9, 13, 0), end: at(9, 14, 0), color: 'danger', description: 'Go / no-go call with all leads.' },
+              { id: 'offsite', title: 'Team offsite', start: iso(-3), end: iso(-1), allDay: true, color: 'chart-7' },
+            ];
+            const log = m => docs.log('#cal-team-log', m);
+            cal.addEventListener('o-event-click', e => log(`o-event-click ${e.detail.event.title}`));
+            cal.addEventListener('o-event-create', e => log(`o-event-create ${e.detail.event.title}`));
+            cal.addEventListener('o-event-change', e => log(`o-event-change ${e.detail.event.title} → ${Orion.format.date(e.detail.event.start, 'short')} ${e.detail.event.allDay ? '' : Orion.format.time(e.detail.event.start)}`));
+            cal.addEventListener('o-event-delete', e => log(`o-event-delete ${e.detail.event.title}`));
+            cal.addEventListener('o-select-range', e => log(`o-select-range ${e.detail.allDay ? Orion.format.date(e.detail.start) : Orion.format.date(e.detail.start) + ' ' + Orion.format.time(e.detail.start)}`));
+            cal.addEventListener('o-view-change', e => log(`o-view-change ${e.detail.view}`));
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="sources">
+    <h2>Event sources</h2>
+    <p>Set <code>events</code> (an array — shown above), an async <code>source(rangeInfo)</code> function that
+      returns events for the visible range (results are cached per month), or a URL string that receives
+      <code>?start=&amp;end=</code> query parameters and returns JSON. All three can be mixed: <code>events</code> is
+      for events you own locally, <code>source</code> for anything fetched.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-calendar id="cal-src" views='["month","week"]' height="26rem" label="Async source demo"></o-calendar>
+        <script>
+          (() => {
+            const D = Orion.date;
+            const server = (seed) => {
+              const r = Orion.util ? null : null;
+              return async ({ start, end }) => {
+                await new Promise(res => setTimeout(res, 350));
+                const out = [];
+                for (let d = new Date(start); d < end; d = D.add(d, 1)) {
+                  if (d.getDay() === 3) out.push({ id: 'sync-' + D.toISODate(d), title: 'Cross-team sync', start: D.format(d, 'YYYY-MM-DD') + 'T11:00', end: D.format(d, 'YYYY-MM-DD') + 'T11:30', color: 'info' });
+                  if (d.getDate() === 1) out.push({ id: 'invoice-' + D.toISODate(d), title: 'Invoices due', start: D.toISODate(d), allDay: true, color: 'warning' });
+                }
+                return out;
+              };
+            };
+            document.getElementById('cal-src').source = server();
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="dnd">
+    <h2>Drag-and-drop scheduling</h2>
+    <p>Drag an unscheduled item from the list onto the calendar (<code>data-o-calendar-draggable</code>), then drag
+      the created event to another day or resize it. <code>o-event-change</code> is cancelable — call
+      <code>event.preventDefault()</code> (or return <code>false</code>) and the change is reverted, or call
+      <code>detail.revert()</code> later (for example after an API call fails).</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-cluster o-mb-3" id="dnd-pool">
+          <div class="o-chip" data-o-calendar-draggable='{"title":"Interview: Frontend Engineer","duration":45,"color":"chart-3"}' tabindex="0">📋 Interview: Frontend Engineer</div>
+          <div class="o-chip" data-o-calendar-draggable='{"title":"Customer call","duration":30,"color":"chart-4"}' tabindex="0">📋 Customer call</div>
+          <div class="o-chip" data-o-calendar-draggable='{"title":"Focus block","duration":120,"color":"secondary"}' tabindex="0">📋 Focus block</div>
+        </div>
+        <o-calendar id="cal-dnd" editable selectable views='["week","day"]' view="week" height="26rem" label="Drag and drop demo"></o-calendar>
+        <div class="docs-log" id="cal-dnd-log"></div>
+        <script>
+          (() => {
+            const cal = document.getElementById('cal-dnd');
+            cal.events = [{ id: 'x1', title: 'Existing meeting', start: (() => { const d = new Date(); d.setHours(10, 0, 0, 0); return d; })(), end: (() => { const d = new Date(); d.setHours(11, 0, 0, 0); return d; })() }];
+            cal.addEventListener('o-event-create', e => docs.log('#cal-dnd-log', `o-event-create ${e.detail.event.title} (${e.detail.source})`));
+            cal.addEventListener('o-event-change', e => {
+              docs.log('#cal-dnd-log', `o-event-change ${e.detail.event.title} — ${e.detail.source}`);
+              // Example of a server round-trip that can fail and revert:
+              // saveToServer(e.detail.event).catch(() => e.detail.revert());
+            });
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="business-hours">
+    <h2>Business hours &amp; week numbers</h2>
+    <p><code>business-hours</code> shades hours outside <code>{ days, start, end }</code> (or an array of ranges) in
+      the week/day and resource views. <code>week-numbers</code> adds an ISO week column to month and time-grid
+      views. <code>first-hour</code> / <code>last-hour</code> crop the visible day, <code>scroll-time</code> sets the
+      initial scroll position and <code>slot-minutes</code> the grid granularity.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-calendar id="cal-biz" view="week" views='["week"]'
+          business-hours='{"days":[1,2,3,4,5],"start":"09:00","end":"18:00"}'
+          first-hour="7" last-hour="21" scroll-time="08:30" slot-minutes="30" week-numbers now-indicator
+          height="24rem" label="Business hours demo"></o-calendar>
+      </template>
+    </div>
+  </section>
+
+  <section id="locale">
+    <h2>Locale, week start &amp; 12/24-hour clock</h2>
+    <p>Month names, weekday labels, the first day of the week and the 12/24-hour clock all come from
+      <code>Orion.date</code> / <code>Orion.i18n</code> — switch the site language (top bar) and the calendar
+      re-renders. Override per instance with <code>locale</code>, <code>week-start</code> (0 = Sunday) or
+      <code>hour12</code>.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <label class="o-label o-mb-0" for="loc-pick">Locale</label>
+          <select id="loc-pick" class="o-select o-input-sm" style="width:auto">
+            <option value="">Site language</option>
+            <option value="en-US">en-US (Sunday, 12h)</option>
+            <option value="en-GB">en-GB (Monday, 24h)</option>
+            <option value="ar-SA">ar-SA (Saturday, RTL)</option>
+            <option value="ja-JP">ja-JP</option>
+          </select>
+        </div>
+        <o-calendar id="cal-loc" view="week" views='["week"]' height="22rem" label="Locale demo"></o-calendar>
+        <script>
+          document.getElementById('loc-pick').addEventListener('change', e => { document.getElementById('cal-loc').locale = e.target.value || null; });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="editor">
+    <h2>Custom event content &amp; API access</h2>
+    <p><code>eventContent(event, info)</code> replaces a chip's default markup (return an element, a
+      <code>Orion.util.html</code> template or a string). <code>eventDidMount({ el, event, view })</code> runs after
+      an event chip is inserted, for tooltips or third-party widgets. Buttons below drive the imperative API.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-sm o-btn-primary" id="api-add">addEvent()</button>
+          <button class="o-btn o-btn-sm" id="api-update">updateEvent()</button>
+          <button class="o-btn o-btn-sm" id="api-remove">removeEvent()</button>
+          <button class="o-btn o-btn-sm" id="api-goto">gotoDate(+14)</button>
+          <button class="o-btn o-btn-sm" id="api-print"><o-icon name="printer"></o-icon> print()</button>
+        </div>
+        <o-calendar id="cal-api" editable height="24rem" label="API demo"></o-calendar>
+        <div class="docs-log" id="cal-api-log"></div>
+        <script>
+          (() => {
+            const cal = document.getElementById('cal-api');
+            cal.eventContent = (ev) => Orion.util.html`<span class="o-calendar-ev-main"><span class="o-calendar-ev-title">🚀 ${ev.title}</span></span>`;
+            let id = null;
+            document.getElementById('api-add').onclick = () => { const ev = cal.addEvent({ title: 'Scripted event', start: new Date(), end: new Date(Date.now() + 36e5) }); id = ev.id; docs.log('#cal-api-log', 'addEvent → ' + ev.id); };
+            document.getElementById('api-update').onclick = () => { if (!id) return; cal.updateEvent(id, { title: 'Renamed event', color: 'success' }); docs.log('#cal-api-log', 'updateEvent ' + id); };
+            document.getElementById('api-remove').onclick = () => { if (!id) return; cal.removeEvent(id); docs.log('#cal-api-log', 'removeEvent ' + id); id = null; };
+            document.getElementById('api-goto').onclick = () => cal.gotoDate(Orion.date.add(cal.currentDate, 14, 'd'));
+            document.getElementById('api-print').onclick = () => cal.print();
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="factory">
+    <h2>Programmatic factory — <code>Orion.calendar()</code></h2>
+    <p><code>Orion.calendar(target, config)</code> creates (or configures an existing) <code>&lt;o-calendar&gt;</code>
+      inside <code>target</code> and assigns every key of <code>config</code> as a property. Note the naming: the
+      element is <code>&lt;o-calendar&gt;</code> and its class is registered as <code>Orion.FullCalendar</code> —
+      <code>Orion.Calendar</code> is a different class (the datepicker package's month-grid widget). Use the
+      <code>Orion.calendar()</code> factory or the tag directly; you rarely need the class itself.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div id="cal-factory-host"></div>
+        <script>
+          (() => {
+            const cal = Orion.calendar('#cal-factory-host', {
+              view: 'week', views: ['week', 'day'], height: '22rem', label: 'Factory-built calendar',
+              events: [{ id: 'kickoff', title: 'Kickoff call', start: (() => { const d = new Date(); d.setHours(9, 30, 0, 0); return d; })(), end: (() => { const d = new Date(); d.setHours(10, 0, 0, 0); return d; })() }],
+            });
+            cal.addEventListener('o-event-click', e => docs.log('#cal-factory-log', 'o-event-click ' + e.detail.event.title));
+          })();
+        </script>
+        <div class="docs-log" id="cal-factory-log"></div>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+      const cal = Orion.calendar('#host', { view: 'month', events: [...] });
+      // Equivalent to: const cal = document.createElement('o-calendar'); Object.assign(cal, config); host.append(cal);
+    </pre>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Prop / attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>view</code></td><td>string</td><td>Current view: <code>month | week | day | list | year | resource-day | resource-week | resource-month</code>.</td></tr>
+        <tr><td><code>views</code></td><td>array</td><td>Views offered in the toolbar. Default <code>["month","week","day","list"]</code>.</td></tr>
+        <tr><td><code>date</code></td><td>Date | string</td><td>Date the current view is centred on.</td></tr>
+        <tr><td><code>events</code></td><td>array</td><td>Event objects (see shape below).</td></tr>
+        <tr><td><code>source</code></td><td>function | string</td><td>Async <code>({start,end,view,signal}) =&gt; events</code>, or a URL fetched with <code>?start&amp;end</code>.</td></tr>
+        <tr><td><code>resources</code></td><td>array</td><td><code>{ id, title, color, capacity, group, avatar }[]</code> — used by resource views.</td></tr>
+        <tr><td><code>editable</code></td><td>boolean</td><td>Allow drag-move, drag-resize, and the create/edit dialog.</td></tr>
+        <tr><td><code>selectable</code></td><td>boolean</td><td>Allow click/drag range selection (fires <code>o-select-range</code>).</td></tr>
+        <tr><td><code>week-start</code></td><td>number</td><td>0 = Sunday … 6 = Saturday. Defaults from the locale.</td></tr>
+        <tr><td><code>first-hour</code> / <code>last-hour</code></td><td>number</td><td>Visible hour range in time-grid / resource views (0–24).</td></tr>
+        <tr><td><code>slot-minutes</code></td><td>number</td><td>Grid granularity, default 30.</td></tr>
+        <tr><td><code>snap-minutes</code></td><td>number</td><td>Drag/resize snapping (defaults to <code>min(15, slotMinutes)</code>).</td></tr>
+        <tr><td><code>scroll-time</code></td><td>string</td><td>Initial scroll position, e.g. <code>"08:00"</code>.</td></tr>
+        <tr><td><code>default-duration</code></td><td>number</td><td>Minutes for a new event created by a single click.</td></tr>
+        <tr><td><code>business-hours</code></td><td>boolean | object | array</td><td><code>{ days:[1..5], start:"09:00", end:"18:00" }</code>; shades everything else.</td></tr>
+        <tr><td><code>now-indicator</code></td><td>boolean</td><td>Live "current time" line.</td></tr>
+        <tr><td><code>week-numbers</code></td><td>boolean</td><td>ISO week number column.</td></tr>
+        <tr><td><code>fixed-weeks</code></td><td>boolean</td><td>Always render 6 weeks in month view.</td></tr>
+        <tr><td><code>height</code></td><td>string</td><td>CSS length; <code>"auto"</code> (default) grows with content.</td></tr>
+        <tr><td><code>day-max-events</code></td><td>number | "auto" | false</td><td>Rows before "+N more" in month cells.</td></tr>
+        <tr><td><code>all-day-max-rows</code></td><td>number</td><td>Rows before "+N more" in the all-day band.</td></tr>
+        <tr><td><code>toolbar</code></td><td>boolean | object</td><td><code>{ start, center, end }</code> token strings, e.g. <code>{"start":"today prev,next title","end":"views"}</code>.</td></tr>
+        <tr><td><code>navigator</code></td><td>boolean</td><td>Show the mini-month sidebar.</td></tr>
+        <tr><td><code>locale</code> / <code>hour12</code></td><td>string / boolean</td><td>Override the site locale / clock style.</td></tr>
+        <tr><td><code>event-color</code></td><td>string</td><td>Default color token for events without one.</td></tr>
+        <tr><td><code>conflicts</code></td><td>boolean</td><td>Highlight overlapping bookings on the same resource.</td></tr>
+        <tr><td><code>droppable</code></td><td>boolean</td><td>Accept <code>data-o-calendar-draggable</code> external items.</td></tr>
+        <tr><td><code>confirm-delete</code></td><td>boolean</td><td>Ask before deleting a non-recurring event from the dialog.</td></tr>
+        <tr><td><code>popover</code></td><td>boolean</td><td>Show the built-in details popover on click (otherwise handle <code>o-event-click</code> yourself).</td></tr>
+        <tr><td><code>builtin-dialogs</code></td><td>boolean</td><td>Force the built-in dialog even when <code>Orion.modal</code> is available.</td></tr>
+        <tr><td><code>event-content</code> / <code>event-did-mount</code></td><td>function</td><td>Custom chip rendering / mount hook (properties only).</td></tr>
+        <tr><td><code>texts</code></td><td>object</td><td>Per-instance text overrides, see <code>calendar.*</code> / <code>rrule.*</code> keys.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Event object</h3>
+    <table class="docs-api">
+      <thead><tr><th>Field</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>String (auto-generated if omitted).</td></tr>
+        <tr><td><code>title</code></td><td>String.</td></tr>
+        <tr><td><code>start</code> / <code>end</code></td><td>Date, ISO string, or <code>"YYYY-MM-DD"</code> for all-day. <code>end</code> is exclusive.</td></tr>
+        <tr><td><code>allDay</code></td><td>Boolean (inferred from date-only strings when omitted).</td></tr>
+        <tr><td><code>rrule</code></td><td>RRULE string or <code>Orion.rrule</code> object — see <a href="recurring-events.html">Recurring events</a>.</td></tr>
+        <tr><td><code>exdates</code></td><td>Array of excluded occurrence dates.</td></tr>
+        <tr><td><code>color</code></td><td>Token (<code>primary</code>, <code>chart-3</code>…), a CSS variable, or any CSS color.</td></tr>
+        <tr><td><code>textColor</code></td><td>Optional explicit text color override.</td></tr>
+        <tr><td><code>resourceId</code></td><td>Assigns the event to a resource row (resource views).</td></tr>
+        <tr><td><code>location</code>, <code>description</code>, <code>attendees</code>, <code>url</code></td><td>Shown in the details popover / editor.</td></tr>
+        <tr><td><code>editable</code></td><td><code>false</code> locks a single event even when the calendar is editable.</td></tr>
+        <tr><td><code>className</code></td><td>Extra class on the rendered chip.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>detail</th></tr></thead>
+      <tbody>
+        <tr><td><code>o-event-click</code></td><td><code>{ event, el, originalEvent }</code> — cancelable; prevents the built-in popover.</td></tr>
+        <tr><td><code>o-event-create</code></td><td><code>{ event, source }</code> — cancelable; <code>source</code>: <code>dialog | external</code>.</td></tr>
+        <tr><td><code>o-event-change</code></td><td><code>{ event, oldEvent, revert(), scope, source }</code> — cancelable (move/resize/dialog edit); call <code>revert()</code> after an async failure.</td></tr>
+        <tr><td><code>o-event-delete</code></td><td><code>{ event, scope, revert() }</code> — cancelable.</td></tr>
+        <tr><td><code>o-select-range</code></td><td><code>{ start, end, allDay, resourceId, view, source }</code> — cancelable; prevented range selections don't open the create dialog.</td></tr>
+        <tr><td><code>o-view-change</code></td><td><code>{ view, requested }</code> — fires when the effective view differs from the requested one (e.g. auto list on phones).</td></tr>
+        <tr><td><code>o-dates-change</code></td><td><code>{ start, end, view }</code> — fires whenever the visible range changes.</td></tr>
+        <tr><td><code>o-source-error</code></td><td><code>{ error, start, end }</code> — an async <code>source</code>/URL fetch failed.</td></tr>
+        <tr><td><code>o-loading</code></td><td><code>{ loading }</code>.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>addEvent(raw)</code></td><td>Adds and returns the normalised event.</td></tr>
+        <tr><td><code>updateEvent(id, changes)</code></td><td>Merges changes into a stored event.</td></tr>
+        <tr><td><code>removeEvent(id)</code></td><td>Removes an event, returns it.</td></tr>
+        <tr><td><code>getEventById(id)</code></td><td>Returns a stored event.</td></tr>
+        <tr><td><code>getEvents([range])</code></td><td>All stored events, or occurrences overlapping <code>{start,end}</code> (recurrences expanded).</td></tr>
+        <tr><td><code>refetch()</code></td><td>Clears the <code>source</code> cache and reloads the visible range.</td></tr>
+        <tr><td><code>gotoDate(date)</code>, <code>next()</code>, <code>prev()</code>, <code>today()</code></td><td>Navigation.</td></tr>
+        <tr><td><code>changeView(view, date?)</code></td><td>Switches views, optionally jumping to a date.</td></tr>
+        <tr><td><code>scrollToTime(time)</code></td><td>Scrolls a time-grid / resource view to <code>"HH:mm"</code>.</td></tr>
+        <tr><td><code>zoomBy(n)</code></td><td>Zooms resource views (5 levels).</td></tr>
+        <tr><td><code>openEditor([event])</code></td><td>Opens the create or edit dialog programmatically.</td></tr>
+        <tr><td><code>getView()</code></td><td><code>{ type, start, end, title, date }</code> for the current view.</td></tr>
+        <tr><td><code>print()</code></td><td>Prints just this calendar (print stylesheet hides chrome).</td></tr>
+        <tr><td><code>toICS({ name })</code></td><td>Returns an RFC&nbsp;5545 <code>.ics</code> text of all stored events.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Keyboard</h3>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td><kbd class="o-kbd">Arrow keys</kbd></td><td>Move focus between days / time slots (Home, End, Page Up/Down for week/month jumps).</td></tr>
+        <tr><td><kbd class="o-kbd">Enter</kbd> / <kbd class="o-kbd">Space</kbd></td><td>On an empty slot: start a selection; on a focused event: open it.</td></tr>
+        <tr><td><kbd class="o-kbd">Shift</kbd> + arrows</td><td>Extend a time-slot selection.</td></tr>
+        <tr><td><kbd class="o-kbd">Alt</kbd> + arrows</td><td>Move a focused, editable event.</td></tr>
+        <tr><td><kbd class="o-kbd">Alt</kbd>+<kbd class="o-kbd">Shift</kbd> + arrows</td><td>Resize a focused, editable event.</td></tr>
+        <tr><td><kbd class="o-kbd">Delete</kbd> / <kbd class="o-kbd">Backspace</kbd></td><td>Delete a focused, editable event.</td></tr>
+        <tr><td><kbd class="o-kbd">Escape</kbd></td><td>Cancel an in-progress drag or selection.</td></tr>
+        <tr><td><kbd class="o-kbd">T</kbd> <kbd class="o-kbd">N</kbd>/<kbd class="o-kbd">J</kbd> <kbd class="o-kbd">P</kbd>/<kbd class="o-kbd">K</kbd></td><td>Today, next, previous (when focus isn't in a field).</td></tr>
+        <tr><td><kbd class="o-kbd">M</kbd> <kbd class="o-kbd">W</kbd> <kbd class="o-kbd">D</kbd> <kbd class="o-kbd">A</kbd>/<kbd class="o-kbd">L</kbd> <kbd class="o-kbd">Y</kbd></td><td>Switch view (month/week/day/agenda/year), when offered in <code>views</code>.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

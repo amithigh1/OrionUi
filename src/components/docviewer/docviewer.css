@@ -1,0 +1,97 @@
+/* ── <o-docviewer> ─────────────────────────────────────────────────────────────────── */
+o-docviewer:not(:defined) { display: block; }
+.o-docviewer {
+  display: flex; flex-direction: column; min-height: 20rem; height: 100%;
+  background: var(--o-surface); border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); overflow: hidden;
+}
+.o-docviewer:fullscreen, .o-docviewer.is-fullscreen { height: 100vh; border-radius: 0; }
+.o-docviewer-toolbar { display: flex; align-items: center; gap: .125rem; flex: 0 0 auto; padding: .5rem .625rem; border-bottom: 1px solid var(--o-border); background: var(--o-surface-2); overflow-x: auto; scrollbar-width: none; }
+.o-docviewer-toolbar::-webkit-scrollbar { display: none; }
+.o-docviewer-filename { display: flex; align-items: center; gap: .5rem; min-width: 0; color: var(--o-text); font-weight: 500; font-size: var(--o-fs-sm); }
+.o-docviewer-filename .o-icon { flex-shrink: 0; width: 1.125rem; height: 1.125rem; color: var(--o-text-muted); }
+.o-docviewer-filename-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.o-docviewer-spacer { flex: 1 1 auto; }
+.o-docviewer-zoom-group { display: flex; align-items: center; gap: 0; flex-shrink: 0; }
+.o-docviewer-zoom-group[hidden] { display: none; }
+.o-docviewer-zoom-label { min-width: 3.25rem; height: 1.875rem; padding: 0 .375rem; font: inherit; font-size: var(--o-fs-xs); font-weight: 600; font-variant-numeric: tabular-nums; color: var(--o-text-muted); background: transparent; border: 0; border-radius: var(--o-radius-sm); cursor: pointer; }
+.o-docviewer-zoom-label:hover { background: var(--o-surface-3); color: var(--o-text); }
+
+.o-docviewer-body { position: relative; flex: 1 1 auto; min-height: 0; overflow: auto; }
+.o-docviewer-loading, .o-docviewer-error { position: absolute; inset: 0; z-index: 2; display: none; flex-direction: column; align-items: center; justify-content: center; gap: .75rem; padding: 2rem; text-align: center; color: var(--o-text-muted); background: var(--o-surface); }
+.o-docviewer.is-loading .o-docviewer-loading { display: flex; }
+.o-docviewer.is-error .o-docviewer-error { display: flex; }
+.o-docviewer-error > .o-icon { width: 2.5rem; height: 2.5rem; color: var(--o-danger-text); }
+.o-docviewer.is-loading .o-docviewer-content, .o-docviewer.is-error .o-docviewer-content { visibility: hidden; }
+.o-docviewer.is-empty .o-docviewer-body::after { content: attr(data-empty-text); }
+.o-docviewer-content { min-height: 100%; }
+.o-docviewer.is-empty .o-docviewer-content { display: grid; place-items: center; min-height: 16rem; color: var(--o-text-subtle); }
+
+.o-docviewer-frame { display: block; width: 100%; height: 100%; min-height: 24rem; border: 0; background: var(--o-surface-3); }
+.o-docviewer-image-wrap, .o-docviewer-zoom.o-docviewer-zoom { display: grid; place-items: center; width: 100%; height: 100%; min-height: 20rem; padding: 1rem; }
+.o-docviewer-image-wrap img { display: block; max-width: 100%; max-height: 100%; border-radius: var(--o-radius); }
+.o-docviewer-zoom { min-height: 20rem; height: 100%; border: 0; border-radius: 0; background: var(--o-surface-2); }
+.o-docviewer-native-media { display: block; width: 100%; max-height: 70vh; }
+audio.o-docviewer-native-media { width: 100%; margin: 2rem auto; }
+
+/* paper-like page (DOCX / Markdown) */
+.o-docviewer-page { max-width: 54rem; margin: 1.5rem auto; padding: 2.5rem 3rem 3rem; background: var(--o-surface); border: 1px solid var(--o-border); border-radius: var(--o-radius); box-shadow: var(--o-shadow-sm); }
+.o-docviewer-docx-title, .o-docviewer-title { font-size: var(--o-fs-4xl); font-weight: 700; letter-spacing: -.01em; }
+.o-docviewer-subtitle { margin-top: -.75em; color: var(--o-text-muted); font-size: var(--o-fs-lg); }
+.o-docviewer-h1 { font-size: var(--o-fs-2xl); } .o-docviewer-h2 { font-size: var(--o-fs-xl); } .o-docviewer-h3 { font-size: var(--o-fs-lg); }
+.o-docviewer-docx-img { max-width: 100%; display: block; margin-inline: auto; }
+.o-docviewer-docx-table { width: 100%; border-collapse: collapse; margin: 0 0 1.1em; font-size: var(--o-fs-base); }
+.o-docviewer-docx-table td, .o-docviewer-docx-table th { border: 1px solid var(--o-border); padding: .5rem .75rem; vertical-align: top; }
+.o-docviewer-docx-pagebreak { margin: 2.5rem 0; border: 0; border-top: 1px dashed var(--o-border-strong); }
+.o-docviewer-md-code { padding: .875rem 1rem; margin: 0 0 1.1em; overflow-x: auto; background: var(--o-surface-2); border: 1px solid var(--o-border); border-radius: var(--o-radius); font-family: var(--o-font-mono); font-size: var(--o-fs-sm); }
+.o-docviewer-md-task { list-style: none; margin-inline-start: -1.4em; }
+.o-docviewer-md-task input { margin-inline-end: .4em; }
+
+/* CSV */
+.o-docviewer-csv { border: 0; border-radius: 0; }
+.o-docviewer-csv table { font-variant-numeric: tabular-nums; }
+
+/* JSON tree */
+.o-docviewer-json { padding: 1rem 1.25rem; font-family: var(--o-font-mono); font-size: var(--o-fs-sm); line-height: 1.7; }
+.o-docviewer-json-node { margin-inline-start: 0; }
+.o-docviewer-json-node > summary { cursor: pointer; list-style: none; }
+.o-docviewer-json-node > summary::-webkit-details-marker { display: none; }
+.o-docviewer-json-node > summary::before { content: "▸"; display: inline-block; width: 1em; color: var(--o-text-subtle); transition: transform .1s; }
+.o-docviewer-json-node[open] > summary::before { transform: rotate(90deg); }
+.o-docviewer-json-children { padding-inline-start: 1.375rem; border-inline-start: 1px dotted var(--o-border-strong); margin-inline-start: .3em; }
+.o-docviewer-json-row { padding-inline-start: 1em; }
+.o-docviewer-json-key { color: var(--o-primary-text); }
+.o-docviewer-json-brace { color: var(--o-text-muted); }
+.o-docviewer-json-val.is-string { color: var(--o-success-text); }
+.o-docviewer-json-val.is-number { color: var(--o-info-text); }
+.o-docviewer-json-val.is-boolean { color: var(--o-warning-text); }
+.o-docviewer-json-val.is-null, .o-docviewer-json-val.is-undefined { color: var(--o-text-subtle); font-style: italic; }
+
+/* code with line numbers */
+.o-docviewer-code { display: flex; height: 100%; overflow: auto; font-family: var(--o-font-mono); font-size: var(--o-fs-sm); line-height: 1.6; }
+.o-docviewer-code-gutter { flex: 0 0 auto; padding: 1rem .75rem; text-align: end; color: var(--o-text-subtle); background: var(--o-surface-2); border-inline-end: 1px solid var(--o-border); user-select: none; }
+.o-docviewer-code-gutter > span { display: block; }
+.o-docviewer-code-pre { flex: 1 1 auto; margin: 0; padding: 1rem 1.25rem; overflow: visible; white-space: pre; tab-size: 2; }
+.o-docviewer-text { margin: 0; padding: 1.25rem 1.5rem; white-space: pre-wrap; word-break: break-word; font-family: var(--o-font-mono); font-size: var(--o-fs-sm); line-height: 1.6; }
+
+/* fallback empty/error card */
+.o-docviewer .o-empty { min-height: 16rem; }
+
+@media print {
+  .o-docviewer-print-body { margin: 0; padding: 0; background: #fff; color: #000; }
+  .o-docviewer-print-body .o-docviewer-page { box-shadow: none; border: 0; margin: 0; max-width: none; }
+}
+.o-docviewer-print-frame { position: fixed; inset: 0; width: 0; height: 0; border: 0; opacity: 0; pointer-events: none; }
+
+@media (max-width: 575.98px) {
+  .o-docviewer-page { padding: 1.5rem 1.25rem; margin: .75rem; }
+  .o-docviewer-filename-text { max-width: 8rem; }
+}
+
+/* ── Orion.preview() fallback dialog (used when Orion.modal is not loaded) ───────────── */
+.o-docviewer-fb { position: fixed; inset: 0; z-index: var(--o-z-modal); display: flex; align-items: center; justify-content: center; padding: 1.5rem; background: var(--o-backdrop); }
+.o-docviewer-fb-panel { display: flex; flex-direction: column; width: min(64rem, 100%); height: min(44rem, 100%); background: var(--o-elevated); border-radius: var(--o-radius-lg); box-shadow: var(--o-shadow-xl); overflow: hidden; outline: none; }
+.o-docviewer-fb-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .75rem 1rem; border-bottom: 1px solid var(--o-border); font-weight: 600; }
+.o-docviewer-fb-close { display: inline-grid; place-items: center; width: 2rem; height: 2rem; padding: 0; color: var(--o-text-muted); background: transparent; border: 0; border-radius: var(--o-radius-sm); cursor: pointer; }
+.o-docviewer-fb-close:hover { background: var(--o-surface-3); color: var(--o-text); }
+.o-docviewer-modal-body { display: flex; height: 100%; }
+.o-docviewer-modal-viewer, .o-docviewer-fb-panel .o-docviewer-modal-viewer { flex: 1 1 auto; border: 0; border-radius: 0; height: 100%; }

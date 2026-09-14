@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tables — Orion Admin</title>
+<meta name="docs:section" content="Data">
+<meta name="docs:order" content="5">
+<meta name="docs:desc" content="Styled HTML tables: striped, hover, bordered, compact, sticky header, responsive stacked rows">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Tables</h1>
+    <p class="docs-lead">CSS styles for plain HTML tables. For sorting, filtering, pagination, editing and everything else, use <a href="datatable.html">&lt;o-datatable&gt;</a>.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic table</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-table-wrap">
+          <table class="o-table o-table-hover">
+            <thead><tr><th>Name</th><th>Role</th><th>Status</th><th class="o-num">Salary</th><th class="o-shrink"></th></tr></thead>
+            <tbody>
+              <tr><td><div class="o-user"><o-avatar name="Aisha Rahman" size="sm"></o-avatar><div class="o-user-info"><span class="o-user-name">Aisha Rahman</span><span class="o-user-sub">aisha@example.com</span></div></div></td><td>Admin</td><td><span class="o-badge o-badge-soft-success o-badge-dot">Active</span></td><td class="o-num">$92,400</td><td><button class="o-btn o-btn-ghost o-btn-icon o-btn-sm" aria-label="Actions"><o-icon name="more-horizontal"></o-icon></button></td></tr>
+              <tr class="is-selected"><td><div class="o-user"><o-avatar name="Ben Tan" size="sm"></o-avatar><div class="o-user-info"><span class="o-user-name">Ben Tan</span><span class="o-user-sub">ben@example.com</span></div></div></td><td>Editor</td><td><span class="o-badge o-badge-soft-warning o-badge-dot">Pending</span></td><td class="o-num">$61,200</td><td><button class="o-btn o-btn-ghost o-btn-icon o-btn-sm" aria-label="Actions"><o-icon name="more-horizontal"></o-icon></button></td></tr>
+              <tr><td><div class="o-user"><o-avatar name="Chen Wei" size="sm"></o-avatar><div class="o-user-info"><span class="o-user-name">Chen Wei</span><span class="o-user-sub">chen@example.com</span></div></div></td><td>Viewer</td><td><span class="o-badge o-badge-soft-secondary o-badge-dot">Inactive</span></td><td class="o-num">$48,900</td><td><button class="o-btn o-btn-ghost o-btn-icon o-btn-sm" aria-label="Actions"><o-icon name="more-horizontal"></o-icon></button></td></tr>
+            </tbody>
+            <tfoot><tr><td colspan="3">Total</td><td class="o-num">$202,500</td><td></td></tr></tfoot>
+          </table>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="variants">
+    <h2>Striped, bordered, compact, sticky</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-table-wrap" style="max-height:14rem">
+          <table class="o-table o-table-striped o-table-bordered o-table-sm o-table-sticky">
+            <thead><tr><th>#</th><th>Region</th><th class="o-num">Q1</th><th class="o-num">Q2</th><th class="o-num">Q3</th><th class="o-num">Q4</th></tr></thead>
+            <tbody id="tbl-rows"></tbody>
+          </table>
+        </div>
+        <script>
+          const regions = ['North', 'South', 'East', 'West', 'Central', 'Coastal', 'Highlands', 'Metro', 'Islands', 'Border'];
+          document.getElementById('tbl-rows').innerHTML = regions.map((r, i) => `<tr><td>${i + 1}</td><td>${r}</td>${[1, 2, 3, 4].map(q => `<td class="o-num">${Orion.format.number(((i + 3) * 977 * q) % 9000 + 1000)}</td>`).join('')}</tr>`).join('');
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="responsive">
+    <h2>Responsive tables</h2>
+    <p>Wrap in <code>.o-table-wrap</code> for horizontal scrolling, or add <code>.o-table-stack</code> and a <code>data-label</code> on each cell to turn rows into stacked cards below 768px (resize the window to see it).</p>
+    <div class="docs-demo">
+      <template>
+        <table class="o-table o-table-stack">
+          <thead><tr><th>Invoice</th><th>Client</th><th>Due</th><th class="o-num">Amount</th></tr></thead>
+          <tbody>
+            <tr><td data-label="Invoice">INV-2031</td><td data-label="Client">Globex</td><td data-label="Due">12 Oct 2026</td><td data-label="Amount" class="o-num">$4,200.00</td></tr>
+            <tr><td data-label="Invoice">INV-2032</td><td data-label="Client">Initech</td><td data-label="Due">19 Oct 2026</td><td data-label="Amount" class="o-num">$980.00</td></tr>
+          </tbody>
+        </table>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>Classes</h2>
+    <table class="docs-api">
+      <thead><tr><th>Class</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.o-table</td><td>Base table.</td></tr>
+        <tr><td>.o-table-striped / -hover / -bordered</td><td>Row striping, hover highlight, cell borders.</td></tr>
+        <tr><td>.o-table-sm / -lg</td><td>Density.</td></tr>
+        <tr><td>.o-table-sticky</td><td>Sticky header inside a scrolling wrapper.</td></tr>
+        <tr><td>.o-table-wrap</td><td>Bordered, rounded, horizontally scrollable container.</td></tr>
+        <tr><td>.o-table-stack + td[data-label]</td><td>Card rows on small screens.</td></tr>
+        <tr><td>.o-num / .o-shrink / tr.is-selected</td><td>Right-aligned numbers, shrink-to-fit column, selected row.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Overlays lab — Orion Admin</title>
+<script src="../../../dist/orion.js"></script>
+</head>
+<body style="padding:2rem">
+<button id="b1">open</button>
+<dialog id="d1" style="width:300px;height:200px"><button id="inside">inside</button><input id="inp"></dialog>
+<div id="pop" popover="manual" style="position:fixed;inset:auto 10px 10px auto;margin:0;width:200px;height:60px;background:gold"><button id="popbtn" style="width:100%;height:100%">toast btn</button></div>
+<script>
+  window.log = [];
+  const d = document.getElementById('d1');
+  d.addEventListener('cancel', e => log.push('cancel'));
+  d.addEventListener('close', e => log.push('close'));
+  document.getElementById('popbtn').addEventListener('click', () => log.push('popclick'));
+  window.blockEsc = false;
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && window.blockEsc) e.preventDefault(); });
+</script>
+</body>
+</html>

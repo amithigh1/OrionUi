@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- A single static "fixture" tile: point `tiles` at this file (or any URL template that
+       always resolves to it) to test <o-map> fully offline with one fixed, literal image
+       instead of the built-in procedural `tiles="offline"` generator. Useful for pixel-stable
+       visual-regression screenshots where even the deterministic canvas tiles are more detail
+       than you want. See docs/components/maps.html "Tile sources" and map/README.md. -->
+  <rect width="256" height="256" fill="#cfe3f5"/>
+  <rect x="1" y="1" width="254" height="254" fill="none" stroke="rgba(15,23,42,.12)" stroke-width="2"/>
+  <path d="M0 200 Q 60 150 128 190 T 256 170 V256 H0 Z" fill="#bfdcae"/>
+  <path d="M40 40 Q 90 10 150 40 T 210 90 Q 160 120 100 100 T 40 40 Z" fill="#cfe4c1"/>
+  <line x1="0" y1="128" x2="256" y2="128" stroke="rgba(15,23,42,.08)" stroke-width="1"/>
+  <line x1="128" y1="0" x2="128" y2="256" stroke="rgba(15,23,42,.08)" stroke-width="1"/>
+  <text x="10" y="24" font-family="ui-monospace,monospace" font-size="13" fill="rgba(15,23,42,.55)">fixture tile</text>
+</svg>

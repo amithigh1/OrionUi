@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stepper — Orion Admin</title>
+<meta name="docs:section" content="Forms">
+<meta name="docs:order" content="75">
+<meta name="docs:desc" content="Step indicators (horizontal, vertical, dots, progress) and an order/shipment progress tracker">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Stepper</h1>
+    <p class="docs-lead"><code>&lt;o-stepper&gt;</code> is a standalone step indicator — four visual variants, horizontal or vertical, clickable navigation, and an automatic "Step 2 of 4" collapse when the container is too narrow. <code>&lt;o-wizard&gt;</code> (see <a href="wizard.html">Wizard</a>) uses one internally as its header. <code>&lt;o-progress-tracker&gt;</code> is a sibling widget for order/shipment-style progress.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Variants</h2>
+    <div class="docs-demo">
+      <template>
+        <o-stepper current="1" clickable steps='[{"title":"Account","description":"Login details","icon":"user"},{"title":"Profile","optional":true},{"title":"Review"}]' style="margin-bottom:2rem"></o-stepper>
+        <o-stepper current="2" variant="dots" steps='["Cart","Shipping","Payment","Confirm"]' style="margin-bottom:2rem"></o-stepper>
+        <o-stepper current="1" variant="progress" steps='[{"title":"Details","icon":"user"},{"title":"Address","icon":"map-pin"},{"title":"Payment","icon":"credit-card"}]' style="margin-bottom:2rem"></o-stepper>
+        <o-stepper current="1" variant="compact" steps='["Details","Address","Payment"]'></o-stepper>
+      </template>
+    </div>
+  </section>
+
+  <section id="orientation">
+    <h2>Vertical, errors &amp; disabled steps</h2>
+    <div class="docs-demo">
+      <template>
+        <o-stepper orientation="vertical" current="2" clickable steps='[{"title":"Cart"},{"title":"Shipping","status":"error"},{"title":"Payment"},{"title":"Confirm","status":"disabled"}]' style="max-width:20rem"></o-stepper>
+      </template>
+    </div>
+  </section>
+
+  <section id="responsive">
+    <h2>Responsive collapse</h2>
+    <p>When the stepper is narrower than it needs to be, it automatically collapses to a progress bar with "Step N of M" (try resizing the window, or see it forced narrow below).</p>
+    <div class="docs-demo">
+      <template>
+        <div style="max-width:16rem">
+          <o-stepper current="1" steps='["Account","Profile","Preferences","Review"]'></o-stepper>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="static">
+    <h2>Static markup (no JS)</h2>
+    <div class="docs-demo">
+      <template>
+        <ol class="o-steps">
+          <li class="o-step is-complete"><span class="o-step-btn"><span class="o-step-marker"></span><span class="o-step-text"><span class="o-step-title">Account</span></span></span></li>
+          <li class="o-step is-current"><span class="o-step-btn"><span class="o-step-marker">2</span><span class="o-step-text"><span class="o-step-title">Profile</span></span></span></li>
+          <li class="o-step"><span class="o-step-btn"><span class="o-step-marker">3</span><span class="o-step-text"><span class="o-step-title">Review</span></span></span></li>
+        </ol>
+      </template>
+    </div>
+  </section>
+
+  <section id="events">
+    <h2>Navigation via clicks &amp; methods</h2>
+    <div class="docs-demo">
+      <template>
+        <o-stepper id="ev-stepper" current="0" clickable steps='["Cart","Shipping","Payment","Confirm"]' style="margin-bottom:1rem"></o-stepper>
+        <button class="o-btn o-btn-sm" id="ev-prev">Prev</button>
+        <button class="o-btn o-btn-sm" id="ev-next">Next</button>
+        <div class="docs-log" id="ev-log"></div>
+        <script>
+          const evStepper = document.getElementById('ev-stepper');
+          document.getElementById('ev-prev').onclick = () => evStepper.prev();
+          document.getElementById('ev-next').onclick = () => evStepper.next();
+          evStepper.addEventListener('o-change', e => docs.log('#ev-log', 'o-change ' + JSON.stringify(e.detail)));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="tracker">
+    <h2>&lt;o-progress-tracker&gt;</h2>
+    <p>Without a <code>steps</code> prop, it defaults to Ordered / Packed / Shipped / Out for delivery / Delivered.</p>
+    <div class="docs-demo">
+      <template>
+        <o-progress-tracker current="2" style="margin-bottom:2rem"></o-progress-tracker>
+        <o-progress-tracker current="1" style="margin-bottom:2rem" steps='[
+          {"title":"Order placed","time":"2026-09-10T09:14:00"},
+          {"title":"Preparing shipment","time":"2026-09-10T15:40:00"},
+          {"title":"In transit","icon":"truck","expected":"2026-09-13"},
+          {"title":"Delivered","icon":"home"}
+        ]'></o-progress-tracker>
+        <o-progress-tracker current="1" status="error" errorTitle="Delivery issue" steps='["Order placed","Out for delivery","Delivered"]'></o-progress-tracker>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>&lt;o-stepper&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Prop</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>steps</td><td>Array of strings or <code>{ title, description, icon, optional, status }</code>; an explicit <code>status</code> always wins over the computed one.</td></tr>
+        <tr><td>current</td><td>0-based index.</td></tr>
+        <tr><td>orientation</td><td><code>horizontal</code> (default) · <code>vertical</code></td></tr>
+        <tr><td>variant</td><td><code>default</code> · <code>dots</code> · <code>progress</code> · <code>compact</code> (always collapsed)</td></tr>
+        <tr><td>clickable / responsive</td><td><code>responsive</code> defaults to <code>true</code>.</td></tr>
+      </tbody>
+    </table>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>statusOf(i)</td><td>Returns <code>complete</code>/<code>current</code>/<code>upcoming</code>/<code>error</code>/<code>disabled</code>.</td></tr>
+        <tr><td>goTo(i) / next() / prev()</td><td>Navigate programmatically.</td></tr>
+        <tr><td>setStatus(i, status?)</td><td>Force (or clear) a step's status.</td></tr>
+        <tr><td>o-select { index, step }</td><td>Cancelable; the default handler calls <code>goTo</code>.</td></tr>
+        <tr><td>o-change { index, previous }</td><td>Fired after navigation.</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-progress-tracker&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Prop</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>steps</td><td><code>{ title, icon, description, time | date, expected, errorTitle }[]</code></td></tr>
+        <tr><td>current / orientation / responsive</td><td>Same shape as <code>&lt;o-stepper&gt;</code>.</td></tr>
+        <tr><td>status</td><td><code>error</code> or <code>cancelled</code> — marks the current step as failed instead of in-progress.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Arrow keys</td><td>Move focus between clickable steps (flips with <code>dir="rtl"</code>).</td></tr>
+        <tr><td>Home / End</td><td>Focus the first / last step.</td></tr>
+        <tr><td>Enter / Space</td><td>Activate the focused step.</td></tr>
+      </tbody>
+    </table>
+    <p>Disabled steps are skipped by keyboard navigation; the current step has <code>aria-current="step"</code>.</p>
+  </section>
+</main>
+</body>
+</html>

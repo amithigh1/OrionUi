@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Layout &amp; grid — Orion Admin</title>
+<meta name="docs:section" content="Foundation">
+<meta name="docs:order" content="30">
+<meta name="docs:title" content="Layout &amp; Grid">
+<meta name="docs:desc" content="Containers, 12-column responsive grid, CSS grid, stacks, breakpoints">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .demo-cells > * > div, .demo-cells > div { padding: .75rem; text-align: center; font-size: .8125rem; font-weight: 500; color: var(--o-primary-text); background: var(--o-primary-subtle); border: 1px dashed var(--o-primary-border); border-radius: var(--o-radius-sm); }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Layout &amp; Grid</h1>
+    <p class="docs-lead">A mobile-first, 12-column flexbox grid (Bootstrap-compatible naming), a CSS-grid system, containers and composition primitives. All class names use the <code>o-</code> prefix, so they never clash with other CSS.</p>
+  </header>
+
+  <section id="breakpoints">
+    <h2>Breakpoints</h2>
+    <table class="docs-api">
+      <thead><tr><th>Infix</th><th>Min width</th><th>Typical device</th></tr></thead>
+      <tbody>
+        <tr><td>(none)</td><td>0</td><td>Phones (portrait)</td></tr>
+        <tr><td>sm</td><td>576px</td><td>Phones (landscape)</td></tr>
+        <tr><td>md</td><td>768px</td><td>Tablets</td></tr>
+        <tr><td>lg</td><td>992px</td><td>Laptops</td></tr>
+        <tr><td>xl</td><td>1200px</td><td>Desktops</td></tr>
+        <tr><td>xxl</td><td>1400px</td><td>Large desktops</td></tr>
+      </tbody>
+    </table>
+    <p>Responsive classes apply at the breakpoint and up: <code>.o-col-md-6</code>, <code>.o-d-lg-none</code>, <code>.o-text-md-center</code>, <code>.o-mt-lg-4</code>, <code>.o-grid-cols-xl-4</code>.</p>
+  </section>
+
+  <section id="containers">
+    <h2>Containers</h2>
+    <p><code>.o-container</code> is centered with responsive max-widths. <code>.o-container-fluid</code> is always full width, and <code>.o-container-{bp}</code> is full width until the breakpoint.</p>
+  </section>
+
+  <section id="grid">
+    <h2>12-column grid</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-row o-gy-3 demo-cells">
+          <div class="o-col-12 o-col-md-8"><div>.o-col-12 .o-col-md-8</div></div>
+          <div class="o-col-6 o-col-md-4"><div>.o-col-6 .o-col-md-4</div></div>
+          <div class="o-col-6 o-col-md-4"><div>.o-col-6 .o-col-md-4</div></div>
+          <div class="o-col-6 o-col-md-4"><div>.o-col-6 .o-col-md-4</div></div>
+          <div class="o-col-6 o-col-md-4"><div>.o-col-6 .o-col-md-4</div></div>
+          <div class="o-col"><div>.o-col</div></div>
+          <div class="o-col"><div>.o-col</div></div>
+          <div class="o-col-auto"><div>.o-col-auto (content width)</div></div>
+        </div>
+      </template>
+    </div>
+    <h3>Gutters, offsets, row columns</h3>
+    <div class="docs-demo">
+      <template>
+        <div class="o-row o-g-2 demo-cells o-mb-4">
+          <div class="o-col-4"><div>.o-g-2</div></div><div class="o-col-4"><div>small gutter</div></div><div class="o-col-4"><div>both axes</div></div>
+        </div>
+        <div class="o-row demo-cells o-mb-4">
+          <div class="o-col-md-4 o-offset-md-4"><div>.o-col-md-4 .o-offset-md-4</div></div>
+        </div>
+        <div class="o-row o-row-cols-2 o-row-cols-lg-4 o-g-3 demo-cells">
+          <div><div>.o-row-cols-2</div></div><div><div>.o-row-cols-lg-4</div></div><div><div>item</div></div><div><div>item</div></div>
+        </div>
+      </template>
+    </div>
+    <p>Gutter scale: <code>.o-g-0</code> … <code>.o-g-5</code> (0, .25, .5, 1, 1.5, 3rem), separately <code>.o-gx-*</code> / <code>.o-gy-*</code>, all responsive (<code>.o-g-md-4</code>).</p>
+  </section>
+
+  <section id="css-grid">
+    <h2>CSS grid</h2>
+    <p><code>.o-grid</code> with <code>.o-grid-cols-{1-12}</code> (responsive) and <code>.o-span-{1-12|full}</code>. Set the gap with <code>--o-gap</code> or <code>.o-gap-*</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-grid o-grid-cols-2 o-grid-cols-md-4 o-gap-3 demo-cells">
+          <div class="o-span-2">.o-span-2</div><div>1</div><div>2</div>
+          <div>3</div><div class="o-span-2 o-span-md-3">.o-span-2 .o-span-md-3</div><div class="o-row-span-2" style="display:grid;place-items:center">.o-row-span-2</div>
+          <div class="o-span-full">.o-span-full</div>
+        </div>
+      </template>
+    </div>
+    <h3>Auto-fit cards</h3>
+    <p><code>.o-grid-auto</code> fills rows with as many columns as fit, each at least <code>--o-min</code> (default 16rem) wide. No breakpoints are needed.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-grid-auto demo-cells" style="--o-min: 12rem">
+          <div>Card</div><div>Card</div><div>Card</div><div>Card</div><div>Card</div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="primitives">
+    <h2>Composition primitives</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-stack" style="--o-gap:.75rem">
+          <div class="o-between o-p-3 o-border o-rounded"><b>.o-between</b><button class="o-btn o-btn-sm">Action</button></div>
+          <div class="o-hstack o-p-3 o-border o-rounded"><o-avatar name="Ada Lovelace"></o-avatar><span>.o-hstack — aligned row with gap</span><span class="o-spacer"></span><span class="o-badge">.o-spacer pushes this</span></div>
+          <div class="o-cluster o-p-3 o-border o-rounded"><span class="o-chip">.o-cluster</span><span class="o-chip">wraps</span><span class="o-chip">with</span><span class="o-chip">gaps</span><span class="o-chip">nicely</span></div>
+          <div class="o-center o-p-6 o-border o-rounded o-bg-surface-2">.o-center</div>
+        </div>
+      </template>
+    </div>
+    <table class="docs-api">
+      <thead><tr><th>Class</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.o-stack</td><td>Vertical flex with <code>--o-gap</code> (1rem).</td></tr>
+        <tr><td>.o-hstack</td><td>Horizontal, vertically centered, gap .75rem.</td></tr>
+        <tr><td>.o-cluster</td><td>Wrapping inline group (tags, buttons).</td></tr>
+        <tr><td>.o-between</td><td>Space-between row (headers with actions).</td></tr>
+        <tr><td>.o-center</td><td>Center content both ways.</td></tr>
+        <tr><td>.o-spacer / .o-vr</td><td>Flexible spacer / vertical rule.</td></tr>
+        <tr><td>.o-page-header</td><td>Page title + actions row that wraps on mobile.</td></tr>
+        <tr><td>.o-ratio .o-ratio-16x9</td><td>Aspect-ratio box for embeds (<code>.o-aspect-*</code> utilities use native aspect-ratio).</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="app-layout">
+    <h2>Admin app layout</h2>
+    <p>For the full admin shell (sidebar, header, responsive off-canvas navigation), see <a href="app-shell.html">App shell</a> and the <a href="../../templates/index.html">templates</a>.</p>
+  </section>
+</main>
+</body>
+</html>

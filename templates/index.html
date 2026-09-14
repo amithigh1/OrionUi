@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Templates — Orion Admin</title>
+<script src="../dist/orion.js"></script>
+<link rel="stylesheet" href="assets/shell.css">
+<style>
+  body { background: var(--o-bg); }
+  .gal-hero { padding: 3rem 2rem; text-align: center; color: #fff;
+    background: radial-gradient(900px 340px at 110% -20%, color-mix(in srgb, var(--o-info) 70%, transparent), transparent 60%),
+                linear-gradient(135deg, var(--o-primary), color-mix(in srgb, var(--o-primary) 55%, #0b1020)); }
+  .gal-hero h1 { color: #fff; font-size: clamp(1.75rem, 4vw, 2.75rem); margin: 0 0 .5rem; letter-spacing: -.02em; }
+  .gal-hero p { color: rgba(255,255,255,.85); max-width: 44rem; margin: 0 auto; font-size: 1.0625rem; }
+  .gal-wrap { max-width: 76rem; margin: -2rem auto 4rem; padding: 0 1rem; }
+</style>
+</head>
+<body>
+  <div class="gal-hero">
+    <h1>Admin templates</h1>
+    <p>Complete, ready-to-use pages built with Orion Admin. Copy a file, point it at your API and you are live.
+      Every page uses the same shared shell (<code style="color:#fff;background:rgba(255,255,255,.15)">assets/shell.js</code>) so your navigation stays in one place.</p>
+  </div>
+
+  <div class="gal-wrap">
+    <div class="o-card o-card-body o-mb-6 o-cluster" style="justify-content:space-between">
+      <div class="o-cluster">
+        <o-theme-switch variant="segmented"></o-theme-switch>
+        <span class="o-text-muted o-text-sm">Try dark mode — every template follows the theme.</span>
+      </div>
+      <a class="o-btn o-btn-primary" href="../docs/index.html">Documentation</a>
+    </div>
+
+    <div class="tpl-card-grid" id="gallery"></div>
+
+    <div class="o-card o-card-body o-mt-6">
+      <h3 class="o-h5">How to use a template</h3>
+      <ol class="o-mb-0 o-text-muted">
+        <li>Copy the template's <code>.html</code> file plus <code>assets/shell.js</code> and <code>assets/shell.css</code> into your project.</li>
+        <li>Point the <code>&lt;script src="…/orion.min.js"&gt;</code> tag at the CDN or your copy of the library.</li>
+        <li>Edit the <code>NAV</code> array in <code>shell.js</code> and replace the demo data with your API calls (<code>Orion.http.get('/api/…')</code>).</li>
+      </ol>
+    </div>
+  </div>
+
+<script>
+  const TEMPLATES = [
+    { href: 'dashboard.html', icon: 'dashboard', title: 'Dashboard', desc: 'KPI cards, charts, recent orders and an activity feed.' },
+    { href: 'users.html', icon: 'users', title: 'Users (CRUD)', desc: 'Data table with filters, bulk actions, export and a validated create/edit modal.' },
+    { href: 'orders.html', icon: 'shopping-cart', title: 'Orders', desc: 'Server-side table, status badges, row detail drawer and an invoice link.' },
+    { href: 'products.html', icon: 'package', title: 'Products', desc: 'Card grid or table view, faceted filters with chips, and a validated product editor.' },
+    { href: 'reports.html', icon: 'chart-line', title: 'Reports', desc: 'Chart gallery, date-range filter and a pivot table with export.' },
+    { href: 'calendar.html', icon: 'calendar', title: 'Calendar', desc: 'Month/week/day scheduling with drag & drop and recurring events.' },
+    { href: 'kanban.html', icon: 'kanban', title: 'Project board', desc: 'Kanban with swimlanes, WIP limits and card details.' },
+    { href: 'chat.html', icon: 'message-circle', title: 'Messages', desc: 'Two-pane chat with typing indicators and read receipts.' },
+    { href: 'files.html', icon: 'folder', title: 'File manager', desc: 'Tree navigation, uploads with progress and document preview.' },
+    { href: 'profile.html', icon: 'user', title: 'User profile', desc: 'Profile header, tabs, timeline and account settings form.' },
+    { href: 'settings.html', icon: 'settings', title: 'Settings', desc: 'Tabbed settings, preferences, theme builder and permissions.' },
+    { href: 'invoice.html', icon: 'receipt', title: 'Invoice', desc: 'Printable invoice with totals, print preview and PDF export.' },
+    { href: 'login.html', icon: 'lock', title: 'Sign in', desc: 'Split-screen authentication with validation and social buttons.' },
+    { href: 'register.html', icon: 'user-plus', title: 'Sign up', desc: 'Registration with password strength and terms.' },
+    { href: 'forgot-password.html', icon: 'mail', title: 'Forgot password', desc: 'Reset request with success state.' },
+    { href: 'lock.html', icon: 'key', title: 'Lock screen', desc: 'Session lock with avatar and password.' },
+    { href: '404.html', icon: 'alert-circle', title: '404', desc: 'Not-found page with search and navigation.' },
+    { href: '500.html', icon: 'alert-triangle', title: '500', desc: 'Server-error page with retry and support links.' },
+  ];
+  document.getElementById('gallery').innerHTML = TEMPLATES.map(t => `
+    <a class="o-card o-card-hover o-card-link" href="${t.href}">
+      <div class="tpl-preview"><o-icon name="${t.icon}"></o-icon></div>
+      <div class="o-card-body">
+        <div class="o-card-title o-text-md">${t.title}</div>
+        <p class="o-text-muted o-text-sm o-mb-0">${t.desc}</p>
+      </div>
+    </a>`).join('');
+</script>
+</body>
+</html>

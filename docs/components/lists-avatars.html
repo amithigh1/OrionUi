@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lists &amp; avatars — Orion Admin</title>
+<meta name="docs:section" content="Foundation">
+<meta name="docs:order" content="26">
+<meta name="docs:title" content="Lists &amp; Avatars">
+<meta name="docs:desc" content="List groups, user avatars with initials, groups, online/offline presence status">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Lists &amp; Avatars</h1>
+    <p class="docs-lead">List groups for menus and records, <code>&lt;o-avatar&gt;</code> with automatic initials and colors, avatar groups and presence indicators.</p>
+  </header>
+
+  <section id="avatars">
+    <h2>User avatar</h2>
+    <p><code>&lt;o-avatar&gt;</code> shows the image, falls back to initials (with a stable color per name) if the image is missing or fails, and supports status dots.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-avatar name="Aisha Rahman" size="xs"></o-avatar>
+        <o-avatar name="Ben Tan" size="sm"></o-avatar>
+        <o-avatar name="Chen Wei"></o-avatar>
+        <o-avatar name="Diego Silva" size="lg" status="online"></o-avatar>
+        <o-avatar name="Elena Ivanova" size="xl" status="away"></o-avatar>
+        <o-avatar name="Farid Haddad" size="2xl" status="busy"></o-avatar>
+        <o-avatar name="Grace Kim" shape="square" size="lg"></o-avatar>
+        <o-avatar icon="user" size="lg"></o-avatar>
+        <o-avatar name="Broken Image" src="data:image/png;base64,broken" size="lg"></o-avatar>
+        <span class="o-avatar o-avatar-lg o-avatar-ring o-c-success">AR</span>
+      </template>
+    </div>
+    <h3>Groups &amp; user blocks</h3>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-avatar-group"><o-avatar name="Aisha Rahman"></o-avatar><o-avatar name="Ben Tan"></o-avatar><o-avatar name="Chen Wei"></o-avatar><o-avatar name="Diego Silva"></o-avatar><span class="o-avatar o-avatar-more">+5</span></div>
+        <div class="o-user"><o-avatar name="Nurul Ismail" status="online"></o-avatar><div class="o-user-info"><span class="o-user-name">Nurul Ismail</span><span class="o-user-sub">nurul@example.com</span></div></div>
+        <span class="o-hstack o-text-sm"><span class="o-status o-status-online o-status-pulse"></span> Online</span>
+        <span class="o-hstack o-text-sm"><span class="o-status o-status-away"></span> Away</span>
+        <span class="o-hstack o-text-sm"><span class="o-status o-status-busy"></span> Busy</span>
+        <span class="o-hstack o-text-sm"><span class="o-status o-status-offline"></span> Offline</span>
+      </template>
+    </div>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>name</td><td>string</td><td>Used for initials, color and <code>aria-label</code>.</td></tr>
+        <tr><td>src</td><td>string</td><td>Image URL (lazy loaded; falls back to initials on error).</td></tr>
+        <tr><td>size</td><td><code>xs sm lg xl 2xl</code></td><td>Size (default 2.5rem). Also <code>--o-avatar-size</code>.</td></tr>
+        <tr><td>status</td><td><code>online away busy offline</code></td><td>Presence dot.</td></tr>
+        <tr><td>shape</td><td><code>square</code></td><td>Rounded square.</td></tr>
+        <tr><td>color</td><td>color name</td><td>Overrides the automatic color.</td></tr>
+        <tr><td>icon</td><td>icon name</td><td>Shown when there is no name/image.</td></tr>
+      </tbody>
+    </table>
+    <p>JS helpers: <code>Orion.avatar.initials('Ada Lovelace')</code> → <code>"AL"</code>, <code>Orion.avatar.colorFor(name)</code>.</p>
+  </section>
+
+  <section id="list-group">
+    <h2>List group</h2>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-grid o-grid-cols-1 o-grid-cols-md-2 o-gap-4">
+          <ul class="o-list">
+            <li class="o-list-item"><o-avatar name="Aisha Rahman" size="sm" status="online"></o-avatar><div class="o-list-content"><span class="o-list-title">Aisha Rahman</span><span class="o-list-sub">Product designer</span></div><span class="o-list-meta">2m</span></li>
+            <li class="o-list-item"><o-avatar name="Ben Tan" size="sm"></o-avatar><div class="o-list-content"><span class="o-list-title">Ben Tan</span><span class="o-list-sub">Engineering lead</span></div><span class="o-badge o-badge-soft-primary">Admin</span></li>
+            <li class="o-list-item"><o-avatar name="Chen Wei" size="sm" status="away"></o-avatar><div class="o-list-content"><span class="o-list-title">Chen Wei</span><span class="o-list-sub">Support</span></div><button class="o-btn o-btn-ghost o-btn-icon o-btn-sm" aria-label="More"><o-icon name="more-horizontal"></o-icon></button></li>
+          </ul>
+          <div class="o-list">
+            <a class="o-list-item is-active" href="#list-group"><o-icon name="inbox"></o-icon><span class="o-list-content">Inbox</span><span class="o-badge o-badge-primary">12</span></a>
+            <a class="o-list-item" href="#list-group"><o-icon name="star"></o-icon><span class="o-list-content">Starred</span></a>
+            <a class="o-list-item" href="#list-group"><o-icon name="send"></o-icon><span class="o-list-content">Sent</span></a>
+            <a class="o-list-item is-disabled" href="#list-group" aria-disabled="true"><o-icon name="trash"></o-icon><span class="o-list-content">Trash (disabled)</span></a>
+          </div>
+        </div>
+      </template>
+    </div>
+    <table class="docs-api">
+      <thead><tr><th>Class</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.o-list / .o-list-item</td><td>List container &amp; row (use <code>a</code>/<code>button</code>/<code>label</code> or <code>.is-action</code> for interactive rows).</td></tr>
+        <tr><td>.o-list-content / -title / -sub / -meta</td><td>Row parts.</td></tr>
+        <tr><td>.o-list-flush / -compact / -numbered</td><td>Variants.</td></tr>
+        <tr><td>.o-list-item-{color}, .is-active, .is-disabled</td><td>States.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,28 @@
+/* ============================================================================
+ * <o-autocomplete> — input + ghost completion + suggestions panel (listbox from select)
+ * Customise: --o-ac-max-h (panel list height)
+ * ========================================================================== */
+o-autocomplete { display: block; position: relative; min-width: 0; }
+o-autocomplete:not(:defined) { visibility: hidden; }
+.o-ac-control { display: flex; align-items: center; padding: 0; padding-inline-end: .375rem; }
+.o-ac-icon { display: inline-grid; place-items: center; flex-shrink: 0; padding-inline-start: .75rem; color: var(--o-text-subtle); }
+.o-ac-icon > .o-icon { width: 1rem; height: 1rem; }
+.o-ac-field { position: relative; display: flex; flex: 1 1 auto; align-self: stretch; min-width: 0; }
+.o-ac-input, .o-ac-ghost { padding: 0 var(--o-control-px); font: inherit; letter-spacing: inherit; }
+.o-ac-control.has-icon .o-ac-input, .o-ac-control.has-icon .o-ac-ghost { padding-inline-start: .5rem; }
+.o-control-sm .o-ac-input, .o-control-sm .o-ac-ghost { padding-inline: .5rem; }
+.o-control-lg .o-ac-input, .o-control-lg .o-ac-ghost { padding-inline: 1rem; }
+.o-ac-input { position: relative; z-index: 1; flex: 1 1 auto; width: 100%; min-width: 0; color: var(--o-text); background: transparent; border: 0; outline: 0; }
+.o-ac-input::placeholder { color: var(--o-text-subtle); }
+.o-ac-ghost { position: absolute; inset: 0; display: flex; align-items: center; overflow: hidden; white-space: pre; pointer-events: none; }
+.o-ac-ghost-typed { color: transparent; }
+.o-ac-ghost-rest { color: var(--o-text-subtle); }
+.o-ac-spinner { display: none; --o-spinner-size: .875rem; margin-inline: .25rem; }
+o-autocomplete.is-loading .o-ac-spinner { display: inline-block; }
+.o-ac-panel { display: flex; flex-direction: column; min-width: 12rem; max-width: min(36rem, calc(100vw - 16px)); padding: 0; overflow: hidden; }
+.o-ac-list { flex: 1 1 auto; min-height: 0; max-height: var(--o-ac-max-h, 20rem); }
+.o-ac-list:not(:has(.o-listbox-option, .o-listbox-group)) { padding: 0; }
+.o-ac-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .5rem .5rem 0 .875rem; }
+.o-ac-head-title { font-size: .6875rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--o-text-subtle); }
+.o-ac-head .o-btn { --o-btn-h: 1.5rem; }
+.o-ac-panel.is-recent .o-listbox-icon { color: var(--o-text-subtle); }

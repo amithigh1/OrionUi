@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Survey and Poll — Orion Admin</title>
+<meta name="docs:section" content="Forms">
+<meta name="docs:order" content="95">
+<meta name="docs:desc" content="Multi-page JSON surveys (NPS, rating, matrix, ranking, skip logic) and a single-question poll with result bars">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Survey and Poll</h1>
+    <p class="docs-lead"><code>&lt;o-survey&gt;</code> renders a multi-page survey from a JSON schema — single/multiple choice, text, rating, NPS, emoji scale, Likert/matrix, dropdown, ranking and date questions, with required fields, skip logic and a progress bar. <code>&lt;o-poll&gt;</code> is a lighter single-question poll with animated result bars. Both build on <a href="validation.html">Orion.validate</a> and <a href="dynamic-forms.html">Orion.conditional</a>.</p>
+  </header>
+
+  <section id="satisfaction">
+    <h2>Realistic example: customer satisfaction survey</h2>
+    <p>Every question type in one flow, including a page (<em>"Tell us more"</em>) with a text field that only appears when "Other" is picked.</p>
+    <div class="docs-demo">
+      <template>
+        <o-survey id="csat"></o-survey>
+        <div class="docs-log" id="csat-log"></div>
+        <script>
+          const csat = document.getElementById('csat');
+          csat.schema = {
+            title: 'Customer satisfaction survey', description: 'Takes about a minute — thank you for your time.',
+            pages: [
+              { title: 'About your visit', questions: [
+                { id: 'nps', type: 'nps', label: 'How likely are you to recommend us to a friend or colleague?', required: true },
+                { id: 'overall', type: 'rating', label: 'Overall, how satisfied were you today?', scale: 5, required: true },
+              ] },
+              { title: 'Tell us more', questions: [
+                { id: 'reason', type: 'single', label: 'What was the main reason for your visit?', required: true, options: ['Support', 'Billing', 'Product question', 'Other'] },
+                { id: 'otherReason', type: 'text', label: 'Please specify', required: true, showIf: 'reason=Other' },
+                { id: 'departments', type: 'multiple', label: 'Which teams did you interact with?', options: ['Support', 'Sales', 'Engineering', 'Billing'] },
+              ] },
+              { title: 'Rate our team', questions: [
+                { id: 'team', type: 'matrix', required: true, label: 'Please rate the following', rows: ['Response time', 'Friendliness', 'Knowledge'], columns: ['Poor', 'Fair', 'Good', 'Excellent'] },
+              ] },
+              { title: 'Almost done', questions: [
+                { id: 'features', type: 'ranking', label: 'Rank these by importance to you', options: ['Speed', 'Price', 'Support', 'Design'] },
+                { id: 'mood', type: 'emoji', label: 'How do you feel about our new dashboard?', scale: 5 },
+                { id: 'country', type: 'dropdown', label: 'Country', options: ['Malaysia', 'Singapore', 'United States', 'Other'] },
+                { id: 'followUp', type: 'date', label: 'Best date to follow up with you' },
+                { id: 'comments', type: 'longtext', label: "Anything else you'd like to share?", rules: 'max:500' },
+              ] },
+            ],
+            thankYou: { title: 'Thank you!', description: 'Your feedback helps us improve.' },
+          };
+          csat.addEventListener('o-complete', e => docs.log('#csat-log', 'o-complete: ' + JSON.stringify(e.detail.answers)));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="skip-logic">
+    <h2>Skip logic across pages</h2>
+    <p>"Are you a new customer?" — answering "No" skips the entire "Your first experience" page (a page-level <code>skipIf</code>), landing directly on the last page.</p>
+    <div class="docs-demo">
+      <template>
+        <o-survey id="skip-demo"></o-survey>
+        <script>
+          document.getElementById('skip-demo').schema = {
+            progress: true,
+            pages: [
+              { id: 'intro', questions: [{ id: 'isNew', type: 'single', label: 'Are you a new customer?', required: true, options: ['Yes', 'No'] }] },
+              { id: 'first-experience', title: 'Your first experience', skipIf: 'isNew=No', questions: [{ id: 'firstImpression', type: 'rating', label: 'How was your first impression?', scale: 5 }] },
+              { id: 'wrap-up', title: 'Wrap up', questions: [{ id: 'anythingElse', type: 'longtext', label: 'Anything else to add?' }] },
+            ],
+          };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="summarize">
+    <h2>Results summary helper</h2>
+    <p><code>Orion.survey.summarize(schema, responses)</code> aggregates an array of collected answer-objects into per-question counts, averages and an NPS score — handy for building a results dashboard.</p>
+    <div class="docs-demo" data-code="none">
+      <template>
+        <button class="o-btn" id="sum-btn">Summarize 5 fake responses</button>
+        <div class="docs-log" id="sum-out"></div>
+        <script>
+          document.getElementById('sum-btn').onclick = () => {
+            const schema = { questions: [
+              { id: 'nps', type: 'nps' },
+              { id: 'reason', type: 'single', options: ['Support', 'Billing', 'Other'] },
+            ] };
+            const responses = [
+              { nps: 9, reason: 'Support' }, { nps: 10, reason: 'Support' }, { nps: 4, reason: 'Billing' },
+              { nps: 7, reason: 'Other' }, { nps: 9, reason: 'Support' },
+            ];
+            docs.log('#sum-out', Orion.survey.summarize(schema, responses));
+          };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="poll">
+    <h2>&lt;o-poll&gt;</h2>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div style="display:flex;flex-wrap:wrap;gap:2rem;align-items:flex-start">
+          <o-poll question="Which feature should we build next?" options='["Dark mode","Offline sync","Mobile app","API access"]' name="roadmap-poll-demo"></o-poll>
+          <o-poll question="Pick up to 2 things you love" multiple max-choices="2" options='["Speed","Design","Support","Price"]' name="love-poll-demo" allow-revote></o-poll>
+        </div>
+      </template>
+    </div>
+    <h3>Results-only display</h3>
+    <p>Seed <code>votes</code> with server totals and set <code>results-only</code> to show a live results widget with no voting UI.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-poll results-only question="Favorite programming language (1,204 votes)" options='["JavaScript","Python","TypeScript","Go"]' votes='{"JavaScript":512,"Python":401,"TypeScript":233,"Go":58}'></o-poll>
+      </template>
+    </div>
+
+    <h3>Programmatic factory — <code>Orion.polls()</code></h3>
+    <div class="o-alert o-alert-info o-mb-3">
+      <o-icon name="info"></o-icon>
+      <div class="o-alert-content"><p><code>Orion.polls(target, opts)</code> is this package's poll factory — <strong><code>Orion.poll</code></strong> (singular, no "s") is a <em>different</em> thing: the <a href="realtime.html">realtime package</a>'s live-refresh helper (<code>Orion.poll(fn, options)</code> for repeatedly calling a function on an interval). Don't confuse the two — they happen to share almost the same name.</p></div>
+    </div>
+    <p><code>Orion.polls(target, opts)</code> configures <code>target</code> if it's already an <code>&lt;o-poll&gt;</code>, otherwise creates one inside it and assigns <code>opts</code> as properties.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div id="poll-factory-host"></div>
+        <script>
+          (() => {
+            const p = Orion.polls('#poll-factory-host', { question: 'Built via Orion.polls() — which do you prefer?', options: ['REST', 'GraphQL', 'tRPC'], name: 'factory-poll-demo' });
+            p.addEventListener('o-vote', e => docs.log('#poll-factory-log', 'o-vote ' + JSON.stringify(e.detail.value)));
+          })();
+        </script>
+        <div class="docs-log" id="poll-factory-log"></div>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>&lt;o-survey&gt; schema</h3>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>title / description / progress</td><td><code>progress</code> defaults to <code>true</code> (a progress bar + "Page N of M").</td></tr>
+        <tr><td>pages[]</td><td><code>{ id, title, description, showIf, skipIf, questions }</code> — or a flat top-level <code>questions</code> array for a single page.</td></tr>
+        <tr><td>thankYou</td><td><code>{ title, description }</code> or <code>(answers) =&gt; string</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>Question definition</h3>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>id / type / label / help / required / placeholder / default</td><td>Common to every type.</td></tr>
+        <tr><td>type</td><td><code>single</code> · <code>multiple</code> · <code>text</code> · <code>longtext</code> · <code>rating</code> · <code>nps</code> · <code>emoji</code> · <code>matrix</code> (alias <code>likert</code>) · <code>dropdown</code> · <code>ranking</code> · <code>date</code></td></tr>
+        <tr><td>options[]</td><td><code>single</code>/<code>multiple</code>/<code>dropdown</code>/<code>ranking</code>: strings or <code>{ value, label, goTo }</code> — <code>goTo</code> branches straight to another page's <code>id</code>.</td></tr>
+        <tr><td>rows[] / columns[]</td><td><code>matrix</code>/<code>likert</code> only.</td></tr>
+        <tr><td>scale</td><td><code>rating</code>/<code>emoji</code> point count, default 5. <code>nps</code> is always 0–10.</td></tr>
+        <tr><td>labels: { low, high }</td><td>End captions for rating/nps/emoji.</td></tr>
+        <tr><td>rules</td><td>Extra <code>Orion.validate</code> rule string, checked on <code>text</code>/<code>longtext</code>/<code>date</code>.</td></tr>
+        <tr><td>showIf / skipIf</td><td>Same condition shapes as the <a href="dynamic-forms.html">conditional</a> package; question-level conditions hide/disable just that question, page-level conditions decide whether <code>next()</code> visits that page at all.</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-survey&gt; methods &amp; events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>getAnswers() / setAnswers(obj)</td><td>Read/write all collected answers, keyed by question <code>id</code>.</td></tr>
+        <tr><td>next() / prev() / goToPage(idOrIndex) / finish() / reset()</td><td>Navigation; <code>next()</code>/<code>finish()</code> validate the current page first.</td></tr>
+        <tr><td>o-page-change { index, page }</td><td>Fires after navigating.</td></tr>
+        <tr><td>o-answer { id, value, answers }</td><td>Fires on every change.</td></tr>
+        <tr><td>o-complete { answers }</td><td>Fires once the last page is submitted.</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-poll&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>question / options / multiple / maxChoices</td><td>Attributes/props.</td></tr>
+        <tr><td>name / persist</td><td>Storage key; <code>persist</code> (default true) remembers this browser's vote in <code>localStorage</code>.</td></tr>
+        <tr><td>votes</td><td>Seed / server-authoritative counts (<code>{ optionValue: count }</code>) — authoritative over any locally-persisted tally.</td></tr>
+        <tr><td>allowRevote / resultsOnly</td><td><code>resultsOnly</code> always shows the bars, never the voting UI.</td></tr>
+        <tr><td>vote(value) / getResults() / hasVoted() / changeVote() / reset()</td><td>Methods.</td></tr>
+        <tr><td>o-vote { value, results } / o-results { results }</td><td>Events.</td></tr>
+        <tr><td>Orion.polls(target, opts)</td><td>Factory: configures <code>target</code> if it's already an <code>&lt;o-poll&gt;</code>, else creates one inside it. <strong>Not</strong> <code>Orion.poll</code> — see the callout above.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <p>Every question renders real native radios/checkboxes/inputs, so standard form keyboard behavior applies throughout. <code>Enter</code> in a text question advances the page. Ranking questions have Up/Down buttons on each row and also respond to <code>ArrowUp</code>/<code>ArrowDown</code> while their drag handle is focused.</p>
+  </section>
+</main>
+</body>
+</html>

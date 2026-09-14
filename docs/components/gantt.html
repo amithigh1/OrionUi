@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gantt chart — Orion Admin</title>
+<meta name="docs:section" content="Scheduling">
+<meta name="docs:order" content="50">
+<meta name="docs:desc" content="Project Gantt: task tree, dependencies, drag scheduling, critical path, baselines, export">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Gantt chart</h1>
+    <p class="docs-lead"><code>&lt;o-gantt&gt;</code> plans projects: an editable task tree on the left and a virtualized timeline on the right, with dependencies of all four types, drag-and-drop scheduling, auto-scheduling, the critical path, baselines, working-day calendars, undo/redo and PNG, PDF and JSON export. It renders thousands of tasks smoothly and works with a keyboard, a screen reader, a touch screen, in dark mode and right to left.</p>
+  </header>
+
+  <section id="project">
+    <h2>Software project</h2>
+    <p>A product launch split into phases, tasks and milestones. The plan is computed with <code>Orion.gantt.schedule()</code> from durations and dependencies, the critical path is highlighted in red, and the company offsite is a holiday. Drag a bar to move it, drag its edges to change its length, drag the small triangle to set progress and drag from a bar's dot to another bar to link them. Moving a task pushes its successors.</p>
+    <div class="docs-demo">
+      <template>
+        <o-gantt id="plan" view="week" today-line critical-path height="34rem" label="Portal relaunch plan"></o-gantt>
+        <div class="docs-log" id="plan-log"></div>
+        <script>
+          (() => {
+            const D = Orion.date, day = n => D.toISODate(D.add(D.today(), n));
+            const kickoff = day(-32);
+            const plan = [
+              { id: 'p1', name: 'Discovery', type: 'project' },
+              { id: 't1', parent: 'p1', name: 'Kick-off meeting', type: 'milestone', start: kickoff },
+              { id: 't2', parent: 'p1', name: 'Stakeholder interviews', duration: 5, assignees: ['Aisha Rahman'], dependencies: ['t1'] },
+              { id: 't3', parent: 'p1', name: 'Requirements spec', duration: 6, assignees: ['Ben Tan'], dependencies: ['t2'] },
+              { id: 't4', parent: 'p1', name: 'Requirements sign-off', type: 'milestone', dependencies: ['t3'] },
+              { id: 'p2', name: 'Design', type: 'project' },
+              { id: 't5', parent: 'p2', name: 'Information architecture', duration: 4, assignees: ['Mei Lim'], dependencies: ['t4'] },
+              { id: 't6', parent: 'p2', name: 'UI design', duration: 8, assignees: ['Mei Lim', 'Diego Garcia'], dependencies: ['t5'] },
+              { id: 't7', parent: 'p2', name: 'Design system tokens', duration: 5, assignees: ['Diego Garcia'], dependencies: [{ id: 't6', type: 'SS', lag: 2 }], color: 'chart-3' },
+              { id: 't8', parent: 'p2', name: 'Design review', type: 'milestone', dependencies: ['t6', 't7'] },
+              { id: 'p3', name: 'Development', type: 'project' },
+              { id: 't9', parent: 'p3', name: 'API & data model', duration: 10, assignees: ['Hiro Sato'], dependencies: ['t4'] },
+              { id: 't10', parent: 'p3', name: 'Auth & accounts', duration: 6, assignees: ['Jamal Okafor'], dependencies: ['t9'] },
+              { id: 't11', parent: 'p3', name: 'Frontend screens', duration: 12, assignees: ['Priya Patel', 'Mei Lim'], dependencies: ['t8'] },
+              { id: 't12', parent: 'p3', name: 'Payments integration', duration: 7, assignees: ['Hiro Sato'], dependencies: ['t10'] },
+              { id: 't13', parent: 'p3', name: 'Feature freeze', type: 'milestone', dependencies: ['t11', 't12'] },
+              { id: 'p4', name: 'QA & launch', type: 'project' },
+              { id: 't14', parent: 'p4', name: 'QA testing', duration: 8, assignees: ['Sofia Silva'], dependencies: ['t13'] },
+              { id: 't15', parent: 'p4', name: 'Performance tuning', duration: 4, assignees: ['Jamal Okafor'], dependencies: [{ id: 't14', type: 'SS', lag: 3 }], color: 'chart-5' },
+              { id: 't16', parent: 'p4', name: 'User acceptance testing', duration: 5, assignees: ['Aisha Rahman'], dependencies: ['t14'] },
+              { id: 't17', parent: 'p4', name: 'Release 2.0', type: 'milestone', dependencies: ['t16', { id: 't15', type: 'FF' }] },
+              { id: 't18', parent: 'p4', name: 'Hypercare support', duration: 5, assignees: ['Sofia Silva', 'Ben Tan'], dependencies: ['t17'] },
+            ];
+            const holidays = [{ date: day(9), name: 'Company offsite' }];
+            const today = D.today();
+            // ASAP dates from durations + dependencies, then progress from today's date
+            const tasks = Orion.gantt.schedule(plan.map(t => ({ start: kickoff, ...t })), { holidays }).map(t => {
+              if (t.type === 'project') return t;
+              const s = D.parse(t.start), e = D.add(D.parse(t.end), 1);
+              const done = e <= today ? 100 : s >= today ? 0 : Math.round((today - s) / (e - s) * 100 / 5) * 5;
+              return { ...t, progress: done };
+            });
+            const g = document.getElementById('plan');
+            g.holidays = holidays;
+            g.tasks = tasks;
+            const log = m => docs.log('#plan-log', m);
+            g.addEventListener('o-task-change', e => log(`o-task-change ${e.detail.task.name}: ${JSON.stringify(e.detail.changes)}${e.detail.affected.length ? ` (+${e.detail.affected.length} pushed)` : ''}`));
+            g.addEventListener('o-link-create', e => log(`o-link-create ${e.detail.link.from} → ${e.detail.link.to} (${e.detail.link.type})`));
+            g.addEventListener('o-link-delete', e => log(`o-link-delete ${e.detail.link.from} → ${e.detail.link.to}`));
+            g.addEventListener('o-select', e => e.detail.task && log(`o-select ${e.detail.task.name}`));
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="views">
+    <h2>Views &amp; zoom</h2>
+    <p>Five presets set the time scale: <code>day</code>, <code>week</code>, <code>month</code>, <code>quarter</code> and <code>year</code>. The header adapts its two tiers (for example month over days, or year over quarters) and labels are formatted with the current locale. Hold <kbd class="o-kbd">Ctrl</kbd> and scroll (or pinch on a trackpad) to zoom continuously around the pointer, use the toolbar, or call <code>zoomIn()</code>, <code>zoomOut()</code>, <code>setView()</code>. Weekends and holidays are shaded when days are wide enough to see.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <div class="o-segmented" role="group" aria-label="View" id="vw-views">
+            <button type="button" data-v="day">Day</button><button type="button" data-v="week">Week</button><button type="button" data-v="month" aria-pressed="true">Month</button><button type="button" data-v="quarter">Quarter</button><button type="button" data-v="year">Year</button>
+          </div>
+          <button class="o-btn o-btn-sm" id="vw-today"><o-icon name="calendar"></o-icon> Today</button>
+          <span class="o-text-muted o-text-sm" id="vw-level"></span>
+        </div>
+        <o-gantt id="vw" view="month" toolbar="false" today-line height="18rem" columns='["name","start","end"]'></o-gantt>
+        <script>
+          (() => {
+            const D = Orion.date, day = n => D.toISODate(D.add(D.today(), n));
+            const g = document.getElementById('vw');
+            g.tasks = [
+              { id: 1, name: 'Research', start: day(-60), duration: 25, progress: 100 },
+              { id: 2, name: 'Prototype', start: day(-30), duration: 30, progress: 60, dependencies: [1] },
+              { id: 3, name: 'Pilot', start: day(15), duration: 40, dependencies: [2] },
+              { id: 4, name: 'General availability', type: 'milestone', start: day(80), dependencies: [3] },
+              { id: 5, name: 'Scale-out', start: day(85), duration: 70, dependencies: [4] },
+            ];
+            const seg = document.getElementById('vw-views'), lvl = document.getElementById('vw-level');
+            const paint = e => { const v = e ? e.detail.view : g.view; seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v))); lvl.textContent = `${(e ? e.detail.dayWidth : g.zoom).toFixed(1)} px / day`; };
+            seg.addEventListener('click', e => { const b = e.target.closest('button'); if (b) g.setView(b.dataset.v); });
+            g.addEventListener('o-view-change', paint);
+            document.getElementById('vw-today').onclick = () => g.scrollToToday('smooth');
+            paint();
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="scheduling">
+    <h2>Dependencies &amp; auto-scheduling</h2>
+    <p>Each task lists its predecessors in <code>dependencies</code>: plain ids (finish-to-start) or <code>{ id, type, lag }</code> objects with <code>'FS'</code>, <code>'SS'</code>, <code>'FF'</code> or <code>'SF'</code> and a lag in working days (negative for a lead). With <code>auto-schedule</code> (on by default), a change pushes every dependent task later so that each dependency still holds; links that would create a loop are refused. Arrows are routed orthogonally and a link to a summary applies to every task inside it.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-sm" id="sc-push">Delay “Foundation” by 3 days</button>
+          <button class="o-btn o-btn-sm" id="sc-undo">Undo</button>
+          <button class="o-btn o-btn-sm" id="sc-crit">Log critical path</button>
+        </div>
+        <o-gantt id="sc" view="day" critical-path toolbar="false" height="19rem" columns='["name",{"key":"duration","width":70}]'></o-gantt>
+        <div class="docs-log" id="sc-log"></div>
+        <script>
+          (() => {
+            const D = Orion.date, start = D.toISODate(D.add(D.startOf(D.today(), 'week', 1), 7));
+            const g = document.getElementById('sc'), log = m => docs.log('#sc-log', m);
+            g.tasks = Orion.gantt.schedule([
+              { id: 'a', name: 'Foundation', start, duration: 3 },
+              { id: 'b', name: 'Walls (FS)', start, duration: 4, dependencies: ['a'] },
+              { id: 'c', name: 'Wiring (SS +2)', start, duration: 3, dependencies: [{ id: 'b', type: 'SS', lag: 2 }] },
+              { id: 'd', name: 'Inspection (FF)', start, duration: 2, dependencies: [{ id: 'c', type: 'FF' }] },
+              { id: 'e', name: 'Roof (FS +1 lag)', start, duration: 3, dependencies: [{ id: 'b', lag: 1 }] },
+              { id: 'f', name: 'Handover', type: 'milestone', start, dependencies: ['d', 'e'] },
+            ]);
+            document.getElementById('sc-push').onclick = () => { const a = g.getTask('a'); g.updateTask('a', { start: D.toISODate(D.add(D.parse(a.start), 3)) }); };
+            document.getElementById('sc-undo').onclick = () => g.undo();
+            document.getElementById('sc-crit').onclick = () => log('critical path: ' + g.getCriticalPath().join(' → '));
+            g.addEventListener('o-change', e => log(`o-change (${e.detail.reason}): ${e.detail.ids.join(', ')}`));
+          })();
+        </script>
+      </template>
+    </div>
+    <h3>Scheduling engine</h3>
+    <p>The same engine is available without any UI, for example to compute dates on a server-rendered page or to validate an import:</p>
+    <pre class="docs-code-block" data-lang="js">
+      const tasks = Orion.gantt.schedule(list, { workingDays: [1, 2, 3, 4, 5], holidays: ['2026-12-25'] });
+      const { tasks: critical, slack, finish } = Orion.gantt.criticalPath(tasks);
+      const loop = Orion.gantt.findCycle(tasks);      // ['a', 'b'] or null
+      const cal = Orion.gantt.calendar({ workingDays: [0, 1, 2, 3, 4] });
+    </pre>
+  </section>
+
+  <section id="editing">
+    <h2>Editing, undo &amp; events</h2>
+    <p>Double-click a cell (or press <kbd class="o-kbd">Enter</kbd>) to edit names, dates, durations, progress and assignees in place. Every edit — dragging, typing, keyboard moves, indenting, adding or deleting — is one step in the built-in undo history (<kbd class="o-kbd">Ctrl</kbd>+<kbd class="o-kbd">Z</kbd> / <kbd class="o-kbd">Ctrl</kbd>+<kbd class="o-kbd">Y</kbd>). <code>o-task-change</code> is cancelable: this demo refuses to move a task so that it starts in the past. Use <code>detail.revert()</code> later, for example when your server rejects the change.</p>
+    <div class="docs-demo">
+      <template>
+        <o-gantt id="ed" view="week" today-line height="22rem"></o-gantt>
+        <div class="docs-log" id="ed-log"></div>
+        <script>
+          (() => {
+            const D = Orion.date, day = n => D.toISODate(D.add(D.today(), n));
+            const g = document.getElementById('ed'), log = m => docs.log('#ed-log', m);
+            g.tasks = [
+              { id: 1, name: 'Sprint 14', type: 'project' },
+              { id: 2, parent: 1, name: 'Checkout redesign', start: day(1), duration: 4, assignees: ['Grace Kim'] },
+              { id: 3, parent: 1, name: 'Order history API', start: day(2), duration: 5, assignees: ['Omar Haddad'], dependencies: [2] },
+              { id: 4, parent: 1, name: 'Sprint demo', type: 'milestone', start: day(14), dependencies: [3] },
+              { id: 5, name: 'Bug bash', start: day(3), duration: 2, assignees: ['Lina Novak', 'Ravi Patel'], color: 'warning' },
+            ];
+            g.addEventListener('o-task-change', e => {
+              const { task, changes } = e.detail;
+              if (changes.start && D.isBefore(task.start, D.today(), 'day')) { e.preventDefault(); log(`✖ refused: ${task.name} cannot start in the past`); return; }
+              log(`o-task-change ${task.name} ${JSON.stringify(changes)}`);
+            });
+            g.addEventListener('o-task-add', e => log(`o-task-add ${e.detail.task.name}`));
+            g.addEventListener('o-task-remove', e => log(`o-task-remove ${e.detail.task.name}`));
+            g.addEventListener('o-task-click', e => log(`o-task-click ${e.detail.task.name}`));
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="calendar">
+    <h2>Working days, holidays &amp; baselines</h2>
+    <p>Durations and lags count <em>working</em> days. <code>working-days</code> lists the weekdays that are worked (0 = Sunday … 6 = Saturday; default Monday–Friday) and <code>holidays</code> adds days off, as <code>'YYYY-MM-DD'</code> strings or <code>{ date, name }</code> objects. Moving a task skips non-working days and keeps its working duration. <code>baselineStart</code>/<code>baselineEnd</code> draw the original plan under each bar; the tooltip shows the variance.</p>
+    <div class="docs-demo">
+      <template>
+        <o-gantt id="cal" view="day" working-days="[0,1,2,3,4]" toolbar="false" height="16rem" columns='["name","duration"]'></o-gantt>
+        <script>
+          (() => {
+            const D = Orion.date, sun = D.startOf(D.add(D.today(), 7), 'week', 0), day = n => D.toISODate(D.add(sun, n));
+            const g = document.getElementById('cal');
+            g.holidays = [{ date: day(10), name: 'National holiday' }];
+            g.tasks = [
+              { id: 1, name: 'Site survey (Sun–Thu week)', start: day(0), duration: 4, baselineStart: day(0), baselineEnd: day(2), progress: 100 },
+              { id: 2, name: 'Permits', start: day(4), duration: 5, dependencies: [1], baselineStart: day(3), baselineEnd: day(8), progress: 40 },
+              { id: 3, name: 'Procurement', start: day(11), duration: 3, dependencies: [2], baselineStart: day(9), baselineEnd: day(11) },
+              { id: 4, name: 'Mobilisation', type: 'milestone', start: day(15), baselineStart: day(12), dependencies: [3] },
+            ];
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="columns">
+    <h2>Columns</h2>
+    <p><code>columns</code> chooses and orders the task-list columns: built-in keys (<code>name</code>, <code>start</code>, <code>end</code>, <code>duration</code>, <code>progress</code>, <code>assignee</code>) or objects with <code>key</code>, <code>label</code>, <code>width</code>, <code>align</code>, <code>editable</code>, <code>type</code>, <code>value(task)</code>, <code>render(task)</code> and <code>set(task, value)</code>. Extra fields on a task (like <code>status</code> below) are kept and returned by <code>getTasks()</code>. Drag a header edge to resize a column and drag the divider to resize the list; on phones the list narrows and the toolbar button hides it.</p>
+    <div class="docs-demo">
+      <template>
+        <o-gantt id="cols" view="week" height="18rem" grid-width="470"></o-gantt>
+        <script>
+          (() => {
+            const D = Orion.date, day = n => D.toISODate(D.add(D.today(), n));
+            const badge = { Done: 'success', 'In progress': 'primary', Blocked: 'danger', Planned: 'secondary' };
+            const g = document.getElementById('cols');
+            g.columns = [
+              'name',
+              { key: 'status', label: 'Status', width: 120, render: t => Orion.util.html`<span class="o-badge o-badge-soft-${badge[t.status] || 'secondary'}">${t.status}</span>`, set: (t, v) => ({ status: v }), editable: true },
+              { key: 'budget', label: 'Budget', width: 100, align: 'end', type: 'number', value: t => t.budget == null ? '' : Orion.format.currency(t.budget, 'USD', { maximumFractionDigits: 0 }), editable: true },
+              'assignee',
+            ];
+            g.tasks = [
+              { id: 1, name: 'Brand refresh', start: day(-10), duration: 8, progress: 100, status: 'Done', budget: 12000, assignees: ['Emma Dubois'], color: 'success' },
+              { id: 2, name: 'Landing pages', start: day(-2), duration: 9, progress: 35, status: 'In progress', budget: 8000, assignees: ['Lucas Costa'], dependencies: [1] },
+              { id: 3, name: 'Paid campaign', start: day(9), duration: 10, status: 'Blocked', budget: 25000, assignees: ['Hana Ahmed'], dependencies: [2], color: 'danger' },
+              { id: 4, name: 'Launch event', type: 'milestone', start: day(22), status: 'Planned', dependencies: [3] },
+            ];
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="roadmap">
+    <h2>Read-only roadmap</h2>
+    <p><code>readonly</code> removes every editing affordance (handles, dots, editors and toolbar actions) but keeps selection, tooltips, zoom and export. This quarterly roadmap uses the <code>quarter</code> view, collapsed groups and a custom tooltip.</p>
+    <div class="docs-demo">
+      <template>
+        <o-gantt id="rm" view="quarter" readonly today-line height="17rem" columns='["name",{"key":"owner","label":"Owner","width":110}]' grid-width="300"></o-gantt>
+        <script>
+          (() => {
+            const D = Orion.date, q = D.startOf(D.today(), 'quarter'), m = n => D.toISODate(D.add(q, n, 'month'));
+            const g = document.getElementById('rm');
+            g.tooltip = t => { const el = document.createElement('div'); el.innerHTML = '<strong></strong><div class="o-text-muted"></div>'; el.firstChild.textContent = t.name; el.lastChild.textContent = `${Orion.format.date(t.start)} – ${Orion.format.date(t.end)} · ${t.owner || 'Unassigned'}`; return el; };
+            g.tasks = [
+              { id: 'web', name: 'Web platform', type: 'project', owner: 'Platform' },
+              { id: 'w1', parent: 'web', name: 'Design system 3', start: m(-3), end: m(1), owner: 'Mei', color: 'chart-3' },
+              { id: 'w2', parent: 'web', name: 'Edge rendering', start: m(0), end: m(4), owner: 'Hiro' },
+              { id: 'mob', name: 'Mobile', type: 'project', owner: 'Apps', collapsed: true },
+              { id: 'm1', parent: 'mob', name: 'Offline mode', start: m(1), end: m(5), owner: 'Priya' },
+              { id: 'm2', parent: 'mob', name: 'Tablet layouts', start: m(4), end: m(7), owner: 'Diego' },
+              { id: 'ai', name: 'AI assistant', type: 'project', owner: 'Labs' },
+              { id: 'a1', parent: 'ai', name: 'Private beta', start: m(2), end: m(5), owner: 'Sofia', color: 'chart-5' },
+              { id: 'a2', parent: 'ai', name: 'Public launch', type: 'milestone', start: m(7), owner: 'Sofia', dependencies: ['a1'] },
+            ];
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="performance">
+    <h2>2,000 tasks</h2>
+    <p>Rows and the time axis are virtualized: only what is on screen (plus a margin) exists in the DOM, so large plans scroll, zoom and edit without lag. Dependencies, roll-ups and the critical path are recomputed after each edit in a few milliseconds.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-primary o-btn-sm" id="perf-go">Generate 2,000 tasks</button>
+          <button class="o-btn o-btn-sm" id="perf-crit" disabled>Toggle critical path</button>
+          <span class="o-text-muted o-text-sm" id="perf-out" role="status"></span>
+        </div>
+        <o-gantt id="perf" view="week" height="30rem" columns='["name","start","duration"]'></o-gantt>
+        <script>
+          (() => {
+            const g = document.getElementById('perf'), out = document.getElementById('perf-out');
+            const make = n => {
+              const rnd = docs.rand(42), D = Orion.date, base = D.startOf(D.add(D.today(), -40), 'week', 1), tasks = [];
+              const people = docs.people(40).map(p => p.name);
+              for (let p = 0; tasks.length < n; p++) {
+                const pid = 'P' + p; tasks.push({ id: pid, name: `Workstream ${p + 1}`, type: 'project', collapsed: p > 3 });
+                let prev = null;
+                for (let i = 0; i < 24 && tasks.length < n; i++) {
+                  const id = `${pid}-${i}`, s = D.add(base, Math.floor(p * 3 + i * 2 + rnd() * 6));
+                  tasks.push({ id, parent: pid, name: `Task ${p + 1}.${i + 1}`, start: D.toISODate(s), duration: 2 + Math.floor(rnd() * 8), progress: Math.floor(rnd() * 10) * 10, assignees: [people[Math.floor(rnd() * people.length)]], dependencies: prev && rnd() > 0.35 ? [prev] : [] });
+                  prev = id;
+                }
+              }
+              return tasks;
+            };
+            document.getElementById('perf-go').onclick = async () => {
+              const tasks = make(2000), t0 = performance.now();
+              g.tasks = tasks;
+              g.flush();
+              await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+              out.textContent = `${tasks.length.toLocaleString()} tasks rendered in ${Math.round(performance.now() - t0)} ms · ${g.querySelectorAll('.o-gantt-row').length} rows in the DOM`;
+              document.getElementById('perf-crit').disabled = false;
+            };
+            document.getElementById('perf-crit').onclick = () => { const t0 = performance.now(); g.criticalPath = !g.criticalPath; g.flush(); out.textContent = `critical path ${g.criticalPath ? 'on' : 'off'} in ${Math.round(performance.now() - t0)} ms`; };
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="export">
+    <h2>Export</h2>
+    <p>The toolbar's <strong>Export</strong> menu, or the methods: <code>exportPNG(options)</code> draws the chart (and task-list columns) on a canvas and downloads a PNG; <code>exportPDF(options)</code> uses the Orion PDF module when it is loaded and otherwise opens the print dialog so the chart can be saved as PDF; <code>exportJSON()</code> downloads <code>getTasks()</code>. <code>toCanvas(options)</code> returns the canvas for your own use.</p>
+    <pre class="docs-code-block" data-lang="js">
+      const blob = await gantt.exportPNG({ scale: 2, range: 'all', columns: ['name', 'start'], download: false });
+      await gantt.exportPDF({ filename: 'roadmap', orientation: 'landscape' });
+      const json = gantt.exportJSON({ download: false });
+    </pre>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Attributes &amp; properties</h3>
+    <table class="docs-api">
+      <thead><tr><th>Property (attribute)</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>tasks</td><td>Task[]</td><td>[]</td><td>The plan (see task fields). JSON in the attribute; set the property from frameworks.</td></tr>
+        <tr><td>view</td><td>'day' | 'week' | 'month' | 'quarter' | 'year'</td><td>'week'</td><td>Zoom preset.</td></tr>
+        <tr><td>start / end</td><td>date</td><td>auto</td><td>Minimum visible range (the range always grows to include every task).</td></tr>
+        <tr><td>today-line</td><td>boolean</td><td>false</td><td>Draw a line at the current time.</td></tr>
+        <tr><td>critical-path</td><td>boolean</td><td>false</td><td>Highlight the critical path (tasks with zero total slack and their driving links).</td></tr>
+        <tr><td>readonly</td><td>boolean</td><td>false</td><td>Disable every edit (selection, zoom, tooltips and export keep working).</td></tr>
+        <tr><td>auto-schedule</td><td>boolean</td><td>true</td><td>Push dependent tasks when a predecessor moves (<code>auto-schedule="false"</code> to turn off).</td></tr>
+        <tr><td>working-days</td><td>number[]</td><td>[1,2,3,4,5]</td><td>Worked weekdays (0 = Sunday). Durations and lags count working days.</td></tr>
+        <tr><td>holidays</td><td>(string | {date, name})[]</td><td>[]</td><td>Non-working dates.</td></tr>
+        <tr><td>columns</td><td>(string | Column)[]</td><td>name, start, end, duration, progress, assignee</td><td>Task-list columns (see Columns).</td></tr>
+        <tr><td>grid-width</td><td>number</td><td>auto</td><td>Initial task-list width in px (the divider can be dragged).</td></tr>
+        <tr><td>row-height</td><td>number</td><td>36</td><td>Row height in px.</td></tr>
+        <tr><td>baselines</td><td>boolean</td><td>true</td><td>Draw baselines when tasks have <code>baselineStart</code>/<code>baselineEnd</code>.</td></tr>
+        <tr><td>toolbar</td><td>boolean</td><td>true</td><td>Show the built-in toolbar (<code>toolbar="false"</code> to hide).</td></tr>
+        <tr><td>date-format</td><td>'short' | 'medium' | 'long' | Intl options | tokens</td><td>'medium'</td><td>Date format in the task list and tooltips.</td></tr>
+        <tr><td>height</td><td>CSS length</td><td>32rem</td><td>Component height (or set <code>--o-gantt-h</code>).</td></tr>
+        <tr><td>label</td><td>string</td><td>“Gantt chart”</td><td>Accessible name.</td></tr>
+        <tr><td>tooltip</td><td>(task) =&gt; Node | SafeHTML | string</td><td>built-in card</td><td>Custom hover card content (strings are shown as text).</td></tr>
+        <tr><td>texts</td><td>object</td><td>—</td><td>Per-instance overrides of <code>gantt.*</code> strings.</td></tr>
+        <tr><td>zoom</td><td>number</td><td>—</td><td>Property only: current pixels per day (continuous zoom).</td></tr>
+      </tbody>
+    </table>
+    <h3>Task fields</h3>
+    <table class="docs-api">
+      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>id</td><td>string | number</td><td>Unique id (generated when missing).</td></tr>
+        <tr><td>name</td><td>string</td><td>Label.</td></tr>
+        <tr><td>start / end</td><td>'YYYY-MM-DD' | Date</td><td>First and last day (inclusive). Give <code>end</code> or <code>duration</code>.</td></tr>
+        <tr><td>duration</td><td>number</td><td>Working days (used when <code>end</code> is missing).</td></tr>
+        <tr><td>progress</td><td>0–100</td><td>Percent complete. Summaries show a duration-weighted roll-up.</td></tr>
+        <tr><td>parent</td><td>id</td><td>Parent task; a task with children becomes a summary whose dates are computed.</td></tr>
+        <tr><td>type</td><td>'task' | 'milestone' | 'project'</td><td>Milestones are diamonds at the end of their day; <code>project</code> marks a summary.</td></tr>
+        <tr><td>dependencies</td><td>(id | {id, type, lag})[]</td><td>Predecessors: <code>FS</code> (default), <code>SS</code>, <code>FF</code>, <code>SF</code>; <code>lag</code> in working days.</td></tr>
+        <tr><td>assignees</td><td>(string | {name, avatar})[]</td><td>People (first one is shown next to the bar).</td></tr>
+        <tr><td>color</td><td>token | CSS color</td><td><code>primary</code>, <code>success</code>, <code>chart-1</code>…<code>chart-8</code> or any CSS color.</td></tr>
+        <tr><td>collapsed</td><td>boolean</td><td>Start collapsed (summaries).</td></tr>
+        <tr><td>baselineStart / baselineEnd</td><td>date</td><td>Original plan.</td></tr>
+        <tr><td>data</td><td>any</td><td>Your payload (returned untouched). Other unknown fields are kept too.</td></tr>
+      </tbody>
+    </table>
+    <p>All dates you get back (<code>getTasks()</code>, event details) are <code>'YYYY-MM-DD'</code> strings in local time, so they are safe to store and compare.</p>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-task-change</td><td>{ task, changes, previous, affected[], revert() }</td><td>Cancelable. A user edit (drag, resize, progress, cell edit, keyboard move, indent). <code>affected</code> lists tasks pushed by auto-scheduling.</td></tr>
+        <tr><td>o-task-click</td><td>{ id, task, originalEvent }</td><td>A bar or row was clicked.</td></tr>
+        <tr><td>o-task-dblclick</td><td>{ id, task, originalEvent }</td><td>Cancelable; the default starts editing the name.</td></tr>
+        <tr><td>o-task-contextmenu</td><td>{ id, task, originalEvent }</td><td>Cancelable; prevent it to show your own menu (e.g. <code>Orion.contextMenu</code>).</td></tr>
+        <tr><td>o-task-add / o-task-remove</td><td>{ task }</td><td>Cancelable; toolbar, Insert or Delete.</td></tr>
+        <tr><td>o-link-create</td><td>{ link: {from, to, type, lag}, from, to }</td><td>Cancelable; a dependency was drawn.</td></tr>
+        <tr><td>o-link-delete</td><td>{ link, from, to }</td><td>Cancelable; a dependency was deleted (double-click or select + Delete).</td></tr>
+        <tr><td>o-select</td><td>{ id, task }</td><td>Selection changed (<code>task</code> is null when cleared).</td></tr>
+        <tr><td>o-change</td><td>{ reason, ids }</td><td>After any committed change, including undo, redo and API calls — sync your store here.</td></tr>
+        <tr><td>o-view-change</td><td>{ view, dayWidth }</td><td>Zoom changed.</td></tr>
+        <tr><td>o-expand / o-collapse</td><td>{ id, task }</td><td>A summary was expanded or collapsed.</td></tr>
+        <tr><td>o-export</td><td>{ format, blob? }</td><td>After an export.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>getTasks() / getTask(id)</td><td>Public copies (dates as <code>'YYYY-MM-DD'</code>).</td></tr>
+        <tr><td>addTask(task, { parent, after, select })</td><td>Insert a task (undoable, auto-scheduled). Returns its id.</td></tr>
+        <tr><td>updateTask(id, changes, { schedule })</td><td>Change fields; moving a summary moves its subtree. Undoable, no events.</td></tr>
+        <tr><td>removeTask(id)</td><td>Remove a task, its subtasks and its links.</td></tr>
+        <tr><td>addLink(from, to, type, lag) / removeLink(from, to)</td><td>Edit dependencies (loops are refused).</td></tr>
+        <tr><td>indent(id) / outdent(id)</td><td>Change the hierarchy.</td></tr>
+        <tr><td>schedule()</td><td>Auto-schedule the whole plan; returns the ids that moved.</td></tr>
+        <tr><td>getCriticalPath()</td><td>Ids of the critical tasks.</td></tr>
+        <tr><td>select(id) / getSelected()</td><td>Selection.</td></tr>
+        <tr><td>expand(id) / collapse(id) / toggle(id) / expandAll() / collapseAll()</td><td>Summaries.</td></tr>
+        <tr><td>scrollToTask(id) / scrollToToday() / scrollToDate(date)</td><td>Navigation.</td></tr>
+        <tr><td>setView(view) / zoomIn() / zoomOut()</td><td>Zoom.</td></tr>
+        <tr><td>undo() / redo() / canUndo / canRedo / clearHistory()</td><td>History (100 steps).</td></tr>
+        <tr><td>exportPNG(opts) / exportPDF(opts) / exportJSON(opts) / toCanvas(opts)</td><td>Export. Options: <code>scale</code>, <code>range</code> ('all' | 'visible'), <code>columns</code>, <code>grid</code>, <code>filename</code>, <code>download</code>.</td></tr>
+        <tr><td>refresh()</td><td>Recompute and re-render (after changing sizes with CSS).</td></tr>
+        <tr><td>Orion.gantt(target, config)</td><td>Factory: creates an <code>&lt;o-gantt&gt;</code> in <code>target</code>. <code>Orion.gantt.schedule / criticalPath / findCycle / normalize / calendar</code> run the engine without UI.</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS variables</h3>
+    <p><code>--o-gantt-h</code>, <code>--o-gantt-task</code>, <code>--o-gantt-milestone</code>, <code>--o-gantt-summary</code>, <code>--o-gantt-critical</code>, <code>--o-gantt-today</code>, <code>--o-gantt-weekend</code>, <code>--o-gantt-holiday</code>, <code>--o-gantt-sel</code>, <code>--o-gantt-hover</code>.</p>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <p>The task list is a WAI-ARIA <em>treegrid</em>; the timeline is focusable too and shares the same shortcuts. Changes are announced to screen readers.</p>
+    <table class="docs-api">
+      <thead><tr><th>Keys</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>↑ ↓ / Page Up, Page Down</td><td>Previous / next task (selection follows focus).</td></tr>
+        <tr><td>→ / ←</td><td>Task list: expand / collapse a summary, go to the parent, move between cells. Timeline: scroll.</td></tr>
+        <tr><td>Home / End</td><td>First / last cell (or task with Ctrl).</td></tr>
+        <tr><td>Enter or F2</td><td>Edit the focused cell (Enter commits and moves down, Escape cancels, Tab moves to the next cell). Typing starts editing.</td></tr>
+        <tr><td>Alt + ← / →</td><td>Move the task one unit earlier / later (a day, or a week in coarse views).</td></tr>
+        <tr><td>Alt + Shift + ← / →</td><td>Shorten / lengthen the task.</td></tr>
+        <tr><td>Tab / Shift + Tab</td><td>Indent / outdent the task. When that is not possible focus moves on; press Escape first to leave with Tab.</td></tr>
+        <tr><td>Delete</td><td>Delete the task (or the selected dependency).</td></tr>
+        <tr><td>Insert / Shift + Insert</td><td>Add a task / milestone below.</td></tr>
+        <tr><td>Space</td><td>Expand or collapse a summary.</td></tr>
+        <tr><td>Ctrl + Z / Ctrl + Y</td><td>Undo / redo.</td></tr>
+        <tr><td>+ / −</td><td>Zoom in / out. <kbd class="o-kbd">T</kbd> in the timeline scrolls to today.</td></tr>
+        <tr><td>Escape</td><td>Cancel a drag, clear a selected dependency.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="frameworks">
+    <h2>Frameworks</h2>
+    <p>Set <code>tasks</code> as a property (React 19, Vue <code>:tasks</code>, Angular <code>[tasks]</code>) and listen to <code>o-change</code> or <code>o-task-change</code> to write edits back to your store; <code>getTasks()</code> returns plain JSON-safe objects. Assigning a new <code>tasks</code> array reloads the plan and clears the undo history, so keep the component as the source of truth while the user edits, or apply your own changes with <code>updateTask()</code> to keep history.</p>
+    <pre class="docs-code-block" data-lang="html">
+      &lt;!-- Vue --&gt;
+      &lt;o-gantt :tasks="tasks" view="week" critical-path @o-change="tasks = $event.target.getTasks()" /&gt;
+      &lt;!-- Angular --&gt;
+      &lt;o-gantt [tasks]="tasks" (o-task-change)="save($event.detail)"&gt;&lt;/o-gantt&gt;
+    </pre>
+  </section>
+</main>
+</body>
+</html>

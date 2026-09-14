@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Split Panels — Orion Admin</title>
+<meta name="docs:section" content="Layout &amp; Navigation">
+<meta name="docs:order" content="75">
+<meta name="docs:desc" content="Resizable split panes with keyboard separators, collapse and a responsive list–detail view">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <style>
+    .sp-demo { height: 18rem; border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); background: var(--o-surface); overflow: hidden; }
+    .sp-pane { padding: 1rem; }
+    .sp-pane h4 { margin: 0 0 .25rem; font-size: var(--o-fs-sm); }
+    .sp-pane p { margin: 0; font-size: var(--o-fs-sm); color: var(--o-text-muted); }
+    .sp-rail { display: flex; flex-direction: column; background: var(--o-surface-2); }
+    .sp-rail-inner { display: flex; flex-direction: column; gap: .25rem; padding: .5rem; min-width: 11rem; }
+    .sp-rail .o-nav-link { justify-content: flex-start; overflow: hidden; }
+    .sp-term { font: .8125rem/1.6 var(--o-font-mono); background: var(--o-surface-2); }
+    .mail { height: 30rem; border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); background: var(--o-surface); }
+    .mail-list { list-style: none; margin: 0; padding: 0; }
+    .mail-item { display: grid; grid-template-columns: auto 1fr auto; gap: .125rem .75rem; align-items: center; width: 100%; padding: .75rem 1rem; border: 0; border-bottom: 1px solid var(--o-border); background: none; text-align: start; font: inherit; color: var(--o-text); cursor: pointer; }
+    .mail-item:hover { background: var(--o-surface-2); }
+    .mail-item:focus-visible { outline: 2px solid var(--o-focus); outline-offset: -2px; }
+    .mail-item .o-avatar { grid-row: span 2; }
+    .mail-from { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mail-time { font-size: var(--o-fs-xs); color: var(--o-text-muted); }
+    .mail-subject { grid-column: 2 / -1; font-size: var(--o-fs-sm); color: var(--o-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mail-detail { padding: 1.25rem 1.5rem; }
+    .mail-detail h3 { margin: 0 0 .5rem; }
+  </style>
+  <header class="docs-hero">
+    <h1>Split panels</h1>
+    <p class="docs-lead"><code>&lt;o-split&gt;</code> makes any number of children resizable with pointer, touch and keyboard (WAI-ARIA window splitter). Panes respect min / max sizes, snap to collapsed, restore on double-click or <kbd class="o-kbd">Enter</kbd>, nest into grids and persist their sizes. <code>&lt;o-split-view&gt;</code> is the responsive list–detail pattern.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic</h2>
+    <p><code>sizes</code> takes percentages; <code>min</code> / <code>max</code> accept <code>px</code> or <code>%</code> for all panes and <code>data-min</code> / <code>data-max</code> per pane. Drag the gutter or focus it and use the arrow keys (<kbd class="o-kbd">Shift</kbd> for bigger steps).</p>
+    <div class="docs-demo">
+      <template>
+        <o-split id="sp-basic" class="sp-demo" sizes="35,65" min="140px">
+          <div class="sp-pane"><h4>Navigation</h4><p>min 140px</p></div>
+          <div class="sp-pane" data-max="85%"><h4>Content</h4><p>max 85%</p></div>
+        </o-split>
+        <div class="docs-log" id="log-sp"></div>
+        <script>
+          document.getElementById('sp-basic').addEventListener('o-resize-end', e => docs.log('#log-sp', 'o-resize-end ' + JSON.stringify(e.detail.sizes)));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="nested">
+    <h2>Three panes &amp; nesting</h2>
+    <p>Use any number of panes, and nest <code>&lt;o-split direction="vertical"&gt;</code> for IDE-style layouts.</p>
+    <div class="docs-demo">
+      <template>
+        <o-split class="sp-demo" style="height:22rem" sizes="22,58,20" min="10%">
+          <div class="sp-pane"><h4>Explorer</h4><p>src / components / split</p></div>
+          <o-split direction="vertical" sizes="70,30" min="15%">
+            <div class="sp-pane"><h4>editor.js</h4><p>Drag the horizontal gutter below.</p></div>
+            <div class="sp-pane sp-term"><h4>Terminal</h4><p>$ node build/build.mjs</p></div>
+          </o-split>
+          <div class="sp-pane"><h4>Outline</h4><p>OSplit · setup · _resizePair</p></div>
+        </o-split>
+      </template>
+    </div>
+  </section>
+
+  <section id="collapse">
+    <h2>Collapsible panes</h2>
+    <p><code>collapsible</code> (or <code>data-collapsible</code>) lets a pane snap closed when dragged below half its minimum, on double-click of the gutter or with <kbd class="o-kbd">Enter</kbd>. <code>data-collapsed-size</code> keeps a rail visible. Sizes are remembered with <code>persist</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-sm" id="sp-toggle">toggle(0)</button>
+          <button class="o-btn o-btn-sm" id="sp-set">setSizes([50, 50])</button>
+          <button class="o-btn o-btn-sm" id="sp-reset">reset()</button>
+        </div>
+        <o-split id="sp-col" class="sp-demo" sizes="26,74" persist="docs-split">
+          <aside class="sp-rail" data-min="180px" data-collapsible data-collapsed-size="52">
+            <div class="sp-rail-inner">
+              <a class="o-nav-link is-active" href="#collapse"><o-icon name="home"></o-icon><span>Dashboard</span></a>
+              <a class="o-nav-link" href="#collapse"><o-icon name="inbox"></o-icon><span>Inbox</span></a>
+              <a class="o-nav-link" href="#collapse"><o-icon name="calendar"></o-icon><span>Calendar</span></a>
+              <a class="o-nav-link" href="#collapse"><o-icon name="settings"></o-icon><span>Settings</span></a>
+            </div>
+          </aside>
+          <div class="sp-pane" data-min="200px"><h4>Workspace</h4><p>Collapse the sidebar to a 52px icon rail.</p></div>
+        </o-split>
+        <div class="docs-log" id="log-col2"></div>
+        <script>
+          const sc = document.getElementById('sp-col');
+          sc.addEventListener('o-collapse', e => docs.log('#log-col2', 'o-collapse ' + e.detail.index));
+          sc.addEventListener('o-expand', e => docs.log('#log-col2', 'o-expand ' + e.detail.index));
+          document.getElementById('sp-toggle').onclick = () => sc.toggle(0);
+          document.getElementById('sp-set').onclick = () => sc.setSizes([50, 50]);
+          document.getElementById('sp-reset').onclick = () => sc.reset();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="list-detail">
+    <h2>List–detail split view</h2>
+    <p><code>&lt;o-split-view breakpoint="md"&gt;</code> shows list and detail side by side when it is at least <code>breakpoint</code> wide (<code>md</code> = 768px by default; this demo uses <code>sm</code>). Narrower, it shows the list; choosing an item (<code>[data-o-item]</code>) slides the detail in with a Back button. <code>hash="mail"</code> keeps the selection in the URL so the browser Back button returns to the list. The second example is forced narrow to show the mobile behaviour.</p>
+    <div class="docs-demo">
+      <template>
+        <o-split-view class="mail" id="mail" hash="mail" breakpoint="sm" label="Messages" list-width="minmax(15rem, 20rem)">
+          <div slot="list"><ul class="mail-list" id="mail-list"></ul></div>
+          <article slot="detail" class="mail-detail" id="mail-detail"><div class="o-empty"><div class="o-empty-icon"><o-icon name="inbox"></o-icon></div><p class="o-empty-title">Select a message</p></div></article>
+        </o-split-view>
+        <h4 class="o-h6 o-mt-6">Compact (container narrower than the breakpoint)</h4>
+        <div style="max-width:360px">
+          <o-split-view class="mail" id="mail-sm" style="height:24rem">
+            <div slot="list"><ul class="mail-list" id="mail-list-sm"></ul></div>
+            <article slot="detail" class="mail-detail" id="mail-detail-sm"></article>
+          </o-split-view>
+        </div>
+        <script>
+          const subjects = ['Quarterly report is ready', 'Design review moved to Friday', 'Your invoice #1042', 'Welcome to the team!', 'Server maintenance tonight', 'Re: onboarding checklist', 'New comment on "Roadmap"', 'Lunch?'];
+          const people = docs.people(8, 11);
+          const mails = people.map((p, i) => ({ id: String(100 + i), from: p.name, subject: subjects[i], time: `${9 + i}:0${i % 6}`, body: `Hi,\n\n${subjects[i]}. Let me know if you have any questions.\n\nBest,\n${p.first}` }));
+          const fill = (listId, detailId, viewId) => {
+            const list = document.getElementById(listId), detail = document.getElementById(detailId), view = document.getElementById(viewId);
+            list.innerHTML = mails.map(m => `<li><button class="mail-item" data-o-item="${m.id}"><o-avatar name="${m.from}" size="sm"></o-avatar><span class="mail-from">${m.from}</span><span class="mail-time">${m.time}</span><span class="mail-subject">${m.subject}</span></button></li>`).join('');
+            view.addEventListener('o-select', e => {
+              const m = mails.find(x => x.id === e.detail.id); if (!m) return;
+              detail.innerHTML = '';
+              const h = document.createElement('h3'); h.textContent = m.subject;
+              const meta = document.createElement('p'); meta.className = 'o-muted'; meta.textContent = `${m.from} · ${m.time}`;
+              const body = document.createElement('p'); body.style.whiteSpace = 'pre-line'; body.textContent = m.body;
+              detail.append(h, meta, body);
+            });
+          };
+          fill('mail-list', 'mail-detail', 'mail');
+          fill('mail-list-sm', 'mail-detail-sm', 'mail-sm');
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>&lt;o-split&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>direction</td><td><code>horizontal | vertical</code></td><td>Side by side or stacked.</td></tr>
+        <tr><td>sizes</td><td><code>number[]</code></td><td>Initial sizes in % (<code>"30,70"</code> or JSON). Per pane: <code>data-size</code>.</td></tr>
+        <tr><td>min / max</td><td><code>"200px" | "15%"</code></td><td>Limits for every pane; per pane <code>data-min</code> / <code>data-max</code>. Enforced while dragging and on window resize.</td></tr>
+        <tr><td>collapsible</td><td><code>boolean</code></td><td>All panes can collapse (per pane <code>data-collapsible</code>, <code>"false"</code> opts out).</td></tr>
+        <tr><td>collapsed-size</td><td><code>number</code></td><td>Collapsed size in px (per pane <code>data-collapsed-size</code>); 0 makes the pane inert.</td></tr>
+        <tr><td>snap</td><td><code>0–1</code></td><td>Collapse when dragged below <code>snap × min</code> (default 0.5).</td></tr>
+        <tr><td>step</td><td><code>number</code></td><td>Keyboard step in % (default 2; Shift = 10).</td></tr>
+        <tr><td>gutter-size</td><td><code>number</code></td><td>Gutter hit area in px (default 8, 14 on touch screens).</td></tr>
+        <tr><td>persist</td><td><code>string</code></td><td>Remember sizes in localStorage (<code>orion:split:&lt;key&gt;</code>).</td></tr>
+      </tbody>
+    </table>
+    <table class="docs-api">
+      <thead><tr><th>Event / method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-resize</td><td><code>{ sizes, dragging }</code> while resizing (once per frame).</td></tr>
+        <tr><td>o-resize-end</td><td><code>{ sizes }</code> after a drag, key press or API change.</td></tr>
+        <tr><td>o-collapse / o-expand</td><td><code>{ index }</code>.</td></tr>
+        <tr><td>getSizes() / setSizes(list)</td><td>Read / set sizes in % of the free space.</td></tr>
+        <tr><td>collapse(i) / expand(i) / toggle(i)</td><td>Collapse or restore pane <code>i</code> (animated).</td></tr>
+        <tr><td>isCollapsed(i) / reset()</td><td>State / restore the initial sizes and clear persistence.</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-split-view&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute / member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>breakpoint</td><td><code>sm | md | lg | xl</code> or px — compact below this <em>component</em> width (default <code>md</code>).</td></tr>
+        <tr><td>list-width</td><td>Grid track for the list column (default <code>minmax(16rem, 22rem)</code>).</td></tr>
+        <tr><td>hash</td><td>Sync the selection with <code>#key=id</code>.</td></tr>
+        <tr><td>items</td><td>Selector of selectable list items (default <code>[data-o-item]</code>; the id comes from <code>data-o-item</code> or <code>id</code>).</td></tr>
+        <tr><td>selected / compact / view</td><td>Selected id, compact mode, current view (<code>list | detail</code>).</td></tr>
+        <tr><td>o-select</td><td><code>{ id, item }</code>, cancelable — render the detail here.</td></tr>
+        <tr><td>o-view</td><td><code>{ view, compact }</code>.</td></tr>
+        <tr><td>select(id) / showDetail() / showList() / clear()</td><td>Navigate programmatically.</td></tr>
+      </tbody>
+    </table>
+    <p>CSS custom properties: <code>--o-split-gutter</code>, <code>--o-split-line</code>, <code>--o-split-view-list</code>.</p>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key (gutter focused)</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>← / → (↑ / ↓ vertical)</td><td>Move the divider by <code>step</code>% (Shift: 10%); mirrored in RTL.</td></tr>
+        <tr><td>Home / End</td><td>Preceding pane to its minimum / maximum.</td></tr>
+        <tr><td>Enter / Space, double-click</td><td>Collapse or restore the collapsible pane next to the divider.</td></tr>
+        <tr><td>Escape (split view detail)</td><td>Back to the list in compact mode.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="frameworks">
+    <h2>Frameworks</h2>
+    <p>Render panes as normal children: gutters are inserted between them and re-synced when panes are added or removed. Sizes are applied as inline <code>flex</code> styles, so do not bind <code>style.flex</code> on panes yourself. For <code>&lt;o-split-view&gt;</code> mark the list and detail with <code>slot="list"</code> / <code>slot="detail"</code> and render the detail in response to <code>o-select</code>.</p>
+  </section>
+</main>
+</body>
+</html>

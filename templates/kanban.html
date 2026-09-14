@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project board — Orion Admin</title>
+<script src="../dist/orion.js"></script>
+<link rel="stylesheet" href="assets/shell.css">
+<script>
+  window.PAGE = {
+    id: 'kanban', title: 'Website redesign', subtitle: 'Sprint 14 · 24 tasks · due in 9 days',
+    breadcrumbs: [{ label: 'Home', href: 'dashboard.html' }, { label: 'Work' }, { label: 'Board' }],
+    actions: '<div class="o-avatar-group o-me-2"><o-avatar name="Aisha Rahman" size="sm"></o-avatar><o-avatar name="Ben Tan" size="sm"></o-avatar><o-avatar name="Chen Wei" size="sm"></o-avatar><span class="o-avatar o-avatar-sm o-avatar-more">+4</span></div>'
+      + '<button class="o-btn" id="filter-mine"><o-icon name="filter"></o-icon>My tasks</button>'
+      + '<button class="o-btn o-btn-primary" id="add-task"><o-icon name="plus"></o-icon>New task</button>',
+  };
+</script>
+<script src="assets/shell.js" defer></script>
+</head>
+<body>
+<div id="app-content">
+  <o-kanban id="board" class="tpl-full-height" persist="tpl-board"></o-kanban>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const D = Orion.date;
+    const board = document.getElementById('board');
+    if (!board.columns) return;   // kanban package not loaded
+
+    board.columns = [
+      { id: 'backlog', title: 'Backlog', color: 'secondary' },
+      { id: 'todo', title: 'To do', color: 'info', limit: 6 },
+      { id: 'doing', title: 'In progress', color: 'primary', limit: 4 },
+      { id: 'review', title: 'In review', color: 'warning' },
+      { id: 'done', title: 'Done', color: 'success' },
+    ];
+    board.cards = [
+      { id: 1, columnId: 'backlog', title: 'Audit current information architecture', labels: [{ text: 'research', color: 'info' }], assignees: [{ name: 'Grace Kim' }], due: D.add(new Date(), 12, 'd') },
+      { id: 2, columnId: 'backlog', title: 'Collect brand assets from marketing', labels: [{ text: 'content', color: 'secondary' }], assignees: [{ name: 'Omar Haddad' }] },
+      { id: 3, columnId: 'todo', title: 'Design system: colour + type tokens', description: 'Define the token set and document contrast ratios.', labels: [{ text: 'design', color: 'primary' }], assignees: [{ name: 'Aisha Rahman' }], due: D.add(new Date(), 3, 'd'), priority: 'high', checklist: { done: 2, total: 6 } },
+      { id: 4, columnId: 'todo', title: 'Migrate the marketing pages', labels: [{ text: 'frontend', color: 'success' }], assignees: [{ name: 'Ben Tan' }], priority: 'medium' },
+      { id: 5, columnId: 'todo', title: 'Accessibility review of forms', labels: [{ text: 'a11y', color: 'warning' }], assignees: [{ name: 'Chen Wei' }] },
+      { id: 6, columnId: 'doing', title: 'Rebuild the dashboard layout', description: 'Grid + KPI cards + charts.', labels: [{ text: 'frontend', color: 'success' }], assignees: [{ name: 'Ben Tan' }, { name: 'Mei Lin' }], due: D.add(new Date(), 1, 'd'), priority: 'urgent', progress: 60, comments: 4 },
+      { id: 7, columnId: 'doing', title: 'Data table performance pass', labels: [{ text: 'perf', color: 'danger' }], assignees: [{ name: 'Diego Silva' }], progress: 35, priority: 'high' },
+      { id: 8, columnId: 'review', title: 'New onboarding illustrations', labels: [{ text: 'design', color: 'primary' }], assignees: [{ name: 'Aisha Rahman' }], attachments: 3 },
+      { id: 9, columnId: 'done', title: 'Set up staging environment', labels: [{ text: 'devops', color: 'secondary' }], assignees: [{ name: 'Farid Haddad' }] },
+      { id: 10, columnId: 'done', title: 'Pick an icon set', labels: [{ text: 'design', color: 'primary' }], assignees: [{ name: 'Grace Kim' }] },
+    ];
+
+    board.addEventListener('o-card-move', e => Orion.toast?.(`Moved to ${board.columns.find(c => c.id === e.detail.to)?.title}`, { duration: 1500 }));
+    board.addEventListener('o-card-open', e => Orion.toast?.info(`Open card: ${e.detail.card.title}`));
+
+    document.getElementById('add-task')?.addEventListener('click', async () => {
+      const title = Orion.prompt ? await Orion.prompt({ title: 'New task', label: 'Task title', required: true }) : window.prompt('Task title');
+      if (!title) return;
+      const card = { id: Date.now(), columnId: 'todo', title, assignees: [{ name: 'Aisha Rahman' }] };
+      board.addCard ? board.addCard(card) : (board.cards = [...board.cards, card]);
+    });
+    let mine = false;
+    document.getElementById('filter-mine')?.addEventListener('click', e => {
+      mine = !mine;
+      e.currentTarget.classList.toggle('is-active', mine);
+      board.filter ? board.filter(mine ? { assignee: 'Aisha Rahman' } : null) : null;
+    });
+  });
+</script>
+</body>
+</html>

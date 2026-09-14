@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heatmap, Treemap &amp; Funnel — Orion Admin</title>
+<meta name="docs:section" content="Charts">
+<meta name="docs:order" content="40">
+<meta name="docs:desc" content="Heatmap matrix, GitHub-style calendar heatmap, treemap and conversion funnel">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Heatmap, treemap &amp; funnel</h1>
+    <p class="docs-lead">Grids and hierarchies: a sequential or diverging heatmap, a GitHub-style calendar, a squarified treemap and a conversion funnel. Magnitude uses one hue from light to dark — and the ramp is re-anchored for dark mode, where "near zero" recedes into the dark surface.</p>
+  </header>
+
+  <section id="heatmap">
+    <h2>Heatmap</h2>
+    <p>Rows are series, columns are <code>labels</code> (or pass flat <code>{ x, y, value }</code> cells). Values are binned into up to seven steps of the sequential ramp, cells keep a 2px surface gap, and each cell has its own tooltip. A scale legend replaces the series legend.</p>
+    <div class="docs-demo">
+      <template>
+        <h3 class="o-section-title">Activity by weekday and hour</h3>
+        <o-chart id="heat-demo"></o-chart>
+        <script>
+          {
+            const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0') + ':00');
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            const rnd = docs.rand(12);
+            const load = (d, hh) => {
+              const work = d < 5 ? Math.exp(-Math.pow((hh - 11) / 3.2, 2)) * 140 + Math.exp(-Math.pow((hh - 15.5) / 2.2, 2)) * 110 : Math.exp(-Math.pow((hh - 13) / 4, 2)) * 60;
+              return Math.round(work + 6 + rnd() * 18);
+            };
+            document.getElementById('heat-demo').config = {
+              type: 'heatmap',
+              labels: hours.map(hh => hh.slice(0, 2)),
+              yAxis: { title: 'sessions' },
+              series: days.map((name, d) => ({ name, data: hours.map((_, hh) => load(d, hh)) })),
+            };
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="diverging">
+    <h2>Diverging heatmap</h2>
+    <p>For values around a meaningful midpoint (change vs. last year, correlation, budget variance) set <code>heatmap.scale: 'diverging'</code>: two opposite hues with a neutral gray at <code>heatmap.mid</code> (default 0). Values with labels that fit are printed in the cells in white or ink, chosen by the fill's luminance.</p>
+    <div class="docs-demo">
+      <template>
+        <o-chart id="div-demo"></o-chart>
+        <script>
+          {
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const teams = ['Platform', 'Web', 'Mobile', 'Data', 'Support'];
+            const rnd = docs.rand(30);
+            document.getElementById('div-demo').config = {
+              type: 'heatmap',
+              heatmap: { scale: 'diverging' },
+              dataLabels: true,
+              labels: months,
+              yAxis: { format: v => (v > 0 ? '+' : '') + Math.round(v) + '%' },
+              series: teams.map((name, t) => ({ name, data: months.map((_, m) => Math.round((Math.sin((m + t * 2) / 2.4) * 18 + (rnd() - 0.5) * 14))) })),
+            };
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="calendar">
+    <h2>Calendar heatmap</h2>
+    <p>GitHub-style contribution grid: weeks as columns, weekdays as rows (first day of week from the locale), month labels on top, and a "Less → More" legend. Days without activity use the neutral surface step.</p>
+    <div class="docs-demo">
+      <template>
+        <h3 class="o-section-title">Deployments, last 12 months</h3>
+        <o-chart id="cal-demo"></o-chart>
+        <script>
+          {
+            const rnd = docs.rand(77);
+            const end = new Date(); end.setHours(0, 0, 0, 0);
+            const data = [];
+            for (let i = 364; i >= 0; i--) {
+              const d = new Date(end.getFullYear(), end.getMonth(), end.getDate() - i);
+              const weekend = d.getDay() === 0 || d.getDay() === 6;
+              const busy = rnd();
+              data.push({ date: d, value: weekend ? (busy > 0.85 ? 1 : 0) : busy > 0.25 ? Math.round(busy * busy * 12 + (i < 90 ? 3 : 0)) : 0 });
+            }
+            document.getElementById('cal-demo').config = { type: 'calendar', yAxis: { title: 'deployments' }, series: [{ name: 'Deployments', data }] };
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="treemap">
+    <h2>Treemap</h2>
+    <p>Squarified layout. Top-level groups take the categorical slots in order (and appear in the legend); their children share the group's hue and are separated by 2px surface gaps. Labels are drawn only inside tiles they fit.</p>
+    <div class="docs-demo">
+      <template>
+        <o-chart id="tree-demo" height="340"></o-chart>
+        <script>
+          document.getElementById('tree-demo').config = {
+            type: 'treemap',
+            yAxis: { format: 'currency-compact' },
+            series: [{ name: 'Cloud spend', data: [
+              { name: 'Compute', children: [{ name: 'Kubernetes', value: 48200 }, { name: 'VMs', value: 21700 }, { name: 'Functions', value: 6400 }, { name: 'Batch', value: 3900 }] },
+              { name: 'Storage', children: [{ name: 'Object', value: 18300 }, { name: 'Block', value: 9600 }, { name: 'Backups', value: 4100 }] },
+              { name: 'Database', children: [{ name: 'Postgres', value: 22400 }, { name: 'Redis', value: 5200 }, { name: 'Search', value: 7300 }] },
+              { name: 'Network', children: [{ name: 'Egress', value: 11800 }, { name: 'CDN', value: 6900 }, { name: 'Load balancers', value: 2600 }] },
+            ] }],
+          };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="funnel">
+    <h2>Conversion funnel</h2>
+    <p>Stages are <em>ordered</em>, so they take a one-hue ordinal ramp (darkest first) rather than categorical colors. The right column shows the share of the first stage and the step conversion from the previous one; below 460px the layout stacks the labels over the bars.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-card">
+          <div class="o-card-header"><div><h3 class="o-card-title">Trial funnel</h3><p class="o-card-subtitle">Q3 · all channels</p></div></div>
+          <div class="o-card-body"><o-chart id="funnel-demo"></o-chart></div>
+        </div>
+        <script>
+          document.getElementById('funnel-demo').config = {
+            type: 'funnel',
+            labels: ['Visited pricing', 'Started trial', 'Invited a teammate', 'Connected data', 'Converted to paid'],
+            series: [{ name: 'Accounts', data: [24800, 6120, 3310, 2240, 1180] }],
+          };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>Options</h2>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>heatmap.scale</td><td><code>'sequential'</code> <code>'diverging'</code></td><td>One hue light→dark, or two poles with a neutral midpoint.</td></tr>
+        <tr><td>heatmap.bins</td><td><code>3–7</code></td><td>Number of color steps (default 7).</td></tr>
+        <tr><td>heatmap.min / max / mid</td><td><code>number</code></td><td>Fix the color domain (and diverging midpoint).</td></tr>
+        <tr><td>series[i].data[j] | data: [{ x, y, value }]</td><td></td><td>Matrix rows, or flat cells (<code>heatmap.yLabels</code> orders rows).</td></tr>
+        <tr><td>calendar.from / to</td><td><code>Date | string</code></td><td>Visible range (default: the 365 days ending at the last data point).</td></tr>
+        <tr><td>calendar.levels / max / weekStart</td><td><code>number</code></td><td>Color levels (4), value mapped to the top level, first weekday (from locale).</td></tr>
+        <tr><td>treemap data</td><td><code>[{ name, value</code> <code>children }]</code></td><td>One level of grouping; flat lists use a single hue.</td></tr>
+        <tr><td>funnel</td><td><code>labels</code> + one series</td><td>Stages in order; up to five use the validated ordinal ramp.</td></tr>
+        <tr><td>dataLabels</td><td><code>'auto'</code> <code>true</code> <code>false</code></td><td>Heatmap cell values (auto when cells are at least 34px wide).</td></tr>
+      </tbody>
+    </table>
+    <p>Keyboard: arrow keys move cell by cell (calendar: day/week), <kbd class="o-kbd">Home</kbd>/<kbd class="o-kbd">End</kbd> jump to the first/last cell.</p>
+  </section>
+</main>
+</body>
+</html>

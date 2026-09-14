@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wizard — Orion Admin</title>
+<meta name="docs:section" content="Forms">
+<meta name="docs:order" content="80">
+<meta name="docs:desc" content="Multi-step forms with per-step validation, optional steps, a review step and free or linear navigation">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Wizard</h1>
+    <p class="docs-lead"><code>&lt;o-wizard&gt;</code> turns a set of <code>&lt;section data-step&gt;</code> children into a multi-step form: a stepper header, Back/Next/Finish buttons, per-step validation (via <a href="validation.html">Orion.validate</a>), optional steps, and an auto-generated review step.</p>
+  </header>
+
+  <section id="job-application">
+    <h2>Realistic example: job application</h2>
+    <p>Step 2 embeds an <code>&lt;o-repeater&gt;</code> for repeatable work-experience rows (see <a href="dynamic-forms.html">Dynamic forms</a>). Step 3 is optional (Skip is shown). The Review step is generated automatically from every field's label/value.</p>
+    <div class="docs-demo">
+      <template>
+        <form data-o-validate>
+          <o-wizard id="job-wizard">
+            <section data-step="Personal info" data-icon="user" data-description="Who are you?">
+              <div class="o-form-grid">
+                <div class="o-field"><label class="o-label is-required" for="jw-name">Full name</label><input class="o-input" id="jw-name" name="name" required></div>
+                <div class="o-field"><label class="o-label is-required" for="jw-email">Email</label><input class="o-input" id="jw-email" name="email" type="email" required></div>
+                <div class="o-field"><label class="o-label" for="jw-role">Role applied for</label><input class="o-input" id="jw-role" name="role" value="Frontend Engineer"></div>
+              </div>
+            </section>
+            <section data-step="Work experience" data-icon="briefcase" data-description="Add every relevant position">
+              <o-repeater name="experience" min="1" max="5" item-label="Position {n}" sortable>
+                <template>
+                  <div class="o-form-grid" style="--o-cols:3">
+                    <div class="o-field"><label class="o-label" for="jw-company">Company</label><input class="o-input" id="jw-company" name="company" required></div>
+                    <div class="o-field"><label class="o-label" for="jw-title">Title</label><input class="o-input" id="jw-title" name="title"></div>
+                    <div class="o-field"><label class="o-label" for="jw-years">Years</label><input class="o-input" id="jw-years" name="years" type="number" min="0"></div>
+                  </div>
+                </template>
+              </o-repeater>
+            </section>
+            <section data-step="Portfolio" data-icon="link" data-optional data-description="Optional links">
+              <div class="o-field"><label class="o-label" for="jw-portfolio">Portfolio URL</label><input class="o-input" id="jw-portfolio" name="portfolio" type="url" placeholder="https://"></div>
+            </section>
+            <section data-step="Review" data-review></section>
+          </o-wizard>
+        </form>
+        <div class="docs-log" id="job-log"></div>
+        <script>
+          const jobWizard = document.getElementById('job-wizard');
+          jobWizard.addEventListener('o-finish', e => { e.preventDefault(); docs.log('#job-log', 'o-finish: ' + JSON.stringify(e.detail.data)); });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="free-nav">
+    <h2>Free navigation &amp; vertical layout</h2>
+    <p><code>linear="false"</code> lets the visitor click ahead to any step immediately (no per-step gate).</p>
+    <div class="docs-demo">
+      <template>
+        <o-wizard linear="false" orientation="vertical">
+          <section data-step="Plan" data-icon="package"><div class="o-field"><label class="o-label" for="fw-plan">Plan</label><select class="o-select" id="fw-plan" name="plan"><option>Starter</option><option>Pro</option></select></div></section>
+          <section data-step="Add-ons" data-icon="plus"><label class="o-switch"><input type="checkbox" name="support"> <span>Priority support</span></label></section>
+          <section data-step="Confirm" data-icon="check" data-review></section>
+        </o-wizard>
+      </template>
+    </div>
+  </section>
+
+  <section id="persist">
+    <h2>Draft persistence</h2>
+    <p>Add <code>persist="a-unique-key"</code> to remember the current step (and, when the <a href="autosave.html">autosave</a> package is loaded, the field values too) across reloads. <code>restore="prompt"</code> (the default) shows a restore banner instead of restoring silently.</p>
+    <pre class="docs-code-block" data-lang="html">&lt;o-wizard persist="job-application" restore="prompt"&gt;…&lt;/o-wizard&gt;</pre>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Prop</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>current</td><td>0-based active step index.</td></tr>
+        <tr><td>linear</td><td>Default <code>true</code>: can't jump ahead of the furthest step reached.</td></tr>
+        <tr><td>validate</td><td>Default <code>true</code>: runs Orion.validate on the current step before advancing.</td></tr>
+        <tr><td>persist / restore</td><td>Storage key; <code>restore</code> is <code>'auto'</code> or <code>'prompt'</code> (default).</td></tr>
+        <tr><td>orientation / stepperVariant</td><td>Passed through to the internal <code>&lt;o-stepper&gt;</code> (see <a href="stepper.html">Stepper</a>).</td></tr>
+        <tr><td>nextText / backText / finishText / skipText</td><td>Button label overrides.</td></tr>
+        <tr><td>guard(from, to, wizard)</td><td>Return (or resolve) <code>false</code> to veto a navigation.</td></tr>
+      </tbody>
+    </table>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>next() / prev() / skip() / goTo(i, opts?)</td><td>All return <code>Promise&lt;boolean&gt;</code> (whether the navigation happened).</td></tr>
+        <tr><td>finish()</td><td>Validates every step, emits <code>o-finish</code>, then calls <code>form.requestSubmit()</code> if inside a <code>&lt;form&gt;</code>.</td></tr>
+        <tr><td>reset()</td><td>Resets the form, clears persistence, returns to step 0.</td></tr>
+        <tr><td>review()</td><td>Returns <code>[{ index, title, fields: [{ name, label, value }] }]</code> — what the auto-generated review step renders.</td></tr>
+        <tr><td>o-step-change { from, to, direction, waitUntil(promise) }</td><td>Cancelable; call <code>waitUntil</code> with a promise resolving <code>false</code> to block.</td></tr>
+        <tr><td>o-finish { data }</td><td>Cancelable — call <code>preventDefault()</code> to stop the automatic form submit.</td></tr>
+        <tr><td>o-step { index, from } / o-reset</td><td>Fired after every navigation / after <code>reset()</code>.</td></tr>
+      </tbody>
+    </table>
+    <p>Section attributes: <code>data-step="Title"</code> (required) · <code>data-icon</code> · <code>data-description</code> · <code>data-optional</code> · <code>data-review</code>.</p>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Enter (in a text field)</td><td>Advances to the next step, or Finish on the last step.</td></tr>
+        <tr><td>Arrow keys on the step header</td><td>Navigate steps when <code>clickable</code> (inherited from the internal stepper).</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Map — Orion Admin</title>
+<meta name="docs:section" content="Maps">
+<meta name="docs:order" content="10">
+<meta name="docs:desc" content="A self-contained slippy map: tiles, markers, clustering, popups, vector layers and geolocation">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Map</h1>
+    <p class="docs-lead"><code>&lt;o-map&gt;</code> is a small slippy map written from scratch — Web Mercator projection, its own tile pyramid, pointer/wheel/pinch/keyboard navigation, markers with clustering, popups and an SVG vector layer. No Leaflet, MapLibre or OpenLayers. Every demo below uses deterministic <b>offline</b> placeholder tiles by default so it works without a network connection; flip the switch to see real OpenStreetMap tiles.</p>
+  </header>
+
+  <section id="map">
+    <h2>Basic map</h2>
+    <p>Set <code>lat</code>, <code>lng</code>, <code>zoom</code> and a <code>tiles</code> source. <code>tiles="offline"</code> draws deterministic placeholder tiles on a canvas (a grid, coordinate label and a few land shapes) — no network, so screenshots and tests never flake. <code>tiles="osm"</code> uses the real <a href="https://www.openstreetmap.org" target="_blank" rel="noopener">OpenStreetMap</a> tile server, and any URL template (<code>https://…/{z}/{x}/{y}.png</code>) or your own function works too.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-p-3">
+          <div class="o-d-flex o-items-center o-gap-3 o-mb-3 o-flex-wrap">
+            <div class="o-segmented" role="radiogroup" aria-label="Tile source">
+              <label><input type="radio" name="maps-basic-tiles" value="offline" checked><span>Offline demo tiles</span></label>
+              <label><input type="radio" name="maps-basic-tiles" value="osm"><span>Real OpenStreetMap</span></label>
+            </div>
+            <label class="o-check o-check-inline o-mb-0"><input type="checkbox" id="maps-basic-dark"><span>Dark tile filter</span></label>
+            <label class="o-check o-check-inline o-mb-0"><input type="checkbox" id="maps-basic-retina"><span>Retina (@2x) tiles</span></label>
+          </div>
+          <o-map id="maps-basic" lat="3.1390" lng="101.6869" zoom="12" tiles="offline" controls="zoom,locate,fullscreen,scale" style="height:22rem"></o-map>
+          <p class="o-help o-mt-2">Drag to pan, scroll/pinch to zoom, double-click to zoom in, arrow keys to pan and +/- to zoom when the map has focus. Attribution is shown bottom-right (required for OSM).</p>
+        </div>
+        <script>
+          (() => {
+            const map = document.getElementById('maps-basic');
+            document.getElementsByName('maps-basic-tiles').forEach(r => r.addEventListener('change', () => { map.tiles = r.value; }));
+            document.getElementById('maps-basic-dark').addEventListener('change', e => { map.tileFilter = e.target.checked ? 'dark' : ''; });
+            document.getElementById('maps-basic-retina').addEventListener('change', e => { map.retina = e.target.checked; });
+          })();
+        </script>
+      </template>
+    </div>
+    <p class="o-callout o-callout-info"><b>OpenStreetMap tile usage policy:</b> the public <code>tile.openstreetmap.org</code> server is for light, low-volume evaluation only — no automated bulk downloading, and you must show the “© OpenStreetMap contributors” attribution (Orion does this for you automatically). For a real application, run your own tile server (e.g. from an <code>.mbtiles</code>/<code>.pmtiles</code> extract) or use a commercial provider (MapTiler, Mapbox, Stadia, Geoapify, …) and point <code>tiles</code> at its URL template, e.g. <code>tiles="https://api.maptiler.com/maps/streets/{z}/{x}/{y}.png?key=YOUR_KEY"</code>, updating <code>attribution</code> to match their terms.</p>
+  </section>
+
+  <section id="markers">
+    <h2>Markers</h2>
+    <p>Pass an array to <code>markers</code> (or call <code>addMarker/updateMarker/removeMarker/setMarkers</code>). A marker can use the default pin, a solid <code>color</code>, a built-in <code>icon</code> name or fully custom <code>html</code>; <code>draggable</code> markers fire <code>o-marker-drag-end</code>.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-p-3">
+          <o-map id="maps-markers" lat="3.1500" lng="101.7000" zoom="12" tiles="offline" controls="zoom" style="height:20rem"></o-map>
+          <div class="docs-log o-mt-2" id="maps-markers-log"></div>
+        </div>
+        <script>
+          (() => {
+            const map = document.getElementById('maps-markers');
+            map.markers = [
+              { id: 'a', lat: 3.1579, lng: 101.7116, title: 'KLCC (default pin)', popup: '<strong>KLCC</strong><br>Default pin marker.' },
+              { id: 'b', lat: 3.1478, lng: 101.6953, title: 'Merdeka Square (colored)', color: '#dc2626', popup: 'A marker with a custom <code>color</code>.' },
+              { id: 'c', lat: 3.1490, lng: 101.7133, title: 'Bukit Bintang (icon)', icon: String(Orion.icon('star', { size: 26 })), popup: 'A marker using a built-in <code>icon</code>.' },
+              { id: 'd', lat: 3.1600, lng: 101.6900, title: 'Drag me', draggable: true, popup: 'Try dragging this marker.' },
+            ];
+            map.addEventListener('o-marker-click', e => docs.log('#maps-markers-log', 'marker-click: ' + e.detail.marker.title));
+            map.addEventListener('o-marker-drag-end', e => docs.log('#maps-markers-log', `marker-drag-end: ${e.detail.id} -> ${e.detail.lat.toFixed(4)}, ${e.detail.lng.toFixed(4)}`));
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="popups">
+    <h2>Popups</h2>
+    <p>Give a marker (or a vector layer) a <code>popup</code> — a trusted HTML string or a function <code>(marker) =&gt; html</code>. Click the marker or press <kbd class="o-kbd">Enter</kbd>/<kbd class="o-kbd">Space</kbd> while it has focus (markers are real, focusable buttons). The map pans to keep an opened popup in view, and <kbd class="o-kbd">Escape</kbd> closes it.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-p-3">
+          <o-map id="maps-popups" lat="1.2900" lng="103.8500" zoom="12" tiles="offline" controls="zoom" style="height:18rem"></o-map>
+        </div>
+        <script>
+          (() => {
+            const map = document.getElementById('maps-popups');
+            // Set the `markers` property (not the setMarkers() method) here: a freshly
+            // template-cloned element may not have finished its first connect yet, and the
+            // property setter safely defers to the element's own init flush; setMarkers()
+            // called immediately after insertion would not. See map/README.md "Demo gotcha".
+            map.markers = [
+              { id: 'p1', lat: 1.2834, lng: 103.8607, title: 'Marina Bay Sands', popup: m => `<strong>${m.title}</strong><br>10 Bayfront Avenue<br><button class="o-btn o-btn-xs o-btn-primary" onclick="alert('Directions to ' + '${m.title}')">Directions</button>` },
+              { id: 'p2', lat: 1.2868, lng: 103.8545, title: 'Merlion Park', popup: '<strong>Merlion Park</strong><br>1 Fullerton Road' },
+            ];
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="clustering">
+    <h2>Clustering &amp; a store locator</h2>
+    <p>With more than one marker close together, <code>cluster</code> (on by default) groups them into a count bubble. Click a cluster to zoom into it, or spiderfy it at the maximum zoom. The side list stays in sync with the map — a classic store-locator layout.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="maps-locator o-p-3">
+          <div class="maps-locator-list o-scroll" id="maps-locator-list" role="list" aria-label="Stores"></div>
+          <o-map id="maps-locator" lat="2.2" lng="102.7" zoom="7" tiles="offline" controls="zoom,locate,fullscreen" style="height:24rem"></o-map>
+        </div>
+        <style>
+          .maps-locator { display: flex; flex-direction: column; gap: .75rem; }
+          .maps-locator-list { flex: 0 0 auto; max-height: 10rem; border: 1px solid var(--o-border); border-radius: var(--o-radius); }
+          .maps-locator-item { display: block; width: 100%; text-align: start; padding: .5rem .75rem; border: 0; border-bottom: 1px solid var(--o-border); background: var(--o-surface); cursor: pointer; font: inherit; color: var(--o-text); }
+          .maps-locator-item:last-child { border-bottom: 0; }
+          .maps-locator-item:hover, .maps-locator-item.is-active { background: var(--o-primary-subtle); }
+          .maps-locator-item small { display: block; color: var(--o-text-muted); }
+          @media (min-width: 800px) {
+            .maps-locator { flex-direction: row; }
+            .maps-locator-list { max-height: 24rem; width: 16rem; flex: 0 0 16rem; }
+            .maps-locator-list ~ o-map { flex: 1 1 auto; }
+          }
+        </style>
+        <script>
+          (async () => {
+            const map = document.getElementById('maps-locator');
+            const listEl = document.getElementById('maps-locator-list');
+            const stores = await (await fetch('../fixtures/maps/stores.json')).json();
+            map.setMarkers(stores.map(s => ({ id: s.id, lat: s.lat, lng: s.lng, title: s.name, popup: `<strong>${s.name}</strong><br>${s.address}` })));
+            listEl.innerHTML = stores.map(s => `<button type="button" class="maps-locator-item" data-id="${s.id}" role="listitem">${s.name}<small>${s.city}</small></button>`).join('');
+            listEl.addEventListener('click', e => {
+              const btn = e.target.closest('.maps-locator-item'); if (!btn) return;
+              listEl.querySelectorAll('.is-active').forEach(x => x.classList.remove('is-active'));
+              btn.classList.add('is-active');
+              const s = stores.find(x => x.id === btn.dataset.id);
+              map.flyTo(s.lat, s.lng, 15);
+            });
+            map.addEventListener('o-marker-click', e => {
+              listEl.querySelectorAll('.is-active').forEach(x => x.classList.remove('is-active'));
+              listEl.querySelector(`[data-id="${e.detail.marker.id}"]`)?.classList.add('is-active');
+            });
+          })();
+        </script>
+      </template>
+    </div>
+    <p class="o-help">Accessibility: every map also exposes a “View markers as a list” button (in the control stack) that opens a full keyboard/screen-reader-friendly list of every marker — useful when a marker sits under another one or off-screen.</p>
+  </section>
+
+  <section id="layers">
+    <h2>Vector layers &amp; GeoJSON</h2>
+    <p>An SVG overlay draws polylines, polygons, circles (metre radius) and rectangles, all repositioned as you pan/zoom. <code>addGeoJSON()</code> decomposes a FeatureCollection into markers/layers for you, with an optional <code>style(feature)</code> and <code>popup(feature)</code> function.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-p-3">
+          <o-map id="maps-layers" lat="3.14" lng="101.70" zoom="11" tiles="offline" controls="zoom" style="height:22rem"></o-map>
+        </div>
+        <script>
+          (async () => {
+            const map = document.getElementById('maps-layers');
+            const route = await (await fetch('../fixtures/maps/delivery-route.json')).json();
+            map.addLayer({ type: 'polyline', points: route.points, style: { color: '#2a78d6', weight: 4, dashArray: '2 6' }, popup: route.name });
+            route.points.forEach((p, i) => map.addMarker({ id: 'stop-' + i, lat: p[0], lng: p[1], color: i === 0 ? '#1baf7a' : i === route.points.length - 1 ? '#e34948' : '#94a3b8', title: `Stop ${i + 1}` }));
+            map.addLayer({ type: 'circle', center: [3.1579, 101.7116], radius: 1500, style: { color: '#eda100', fillOpacity: 0.08 }, popup: '1.5 km radius around KLCC' });
+            const zones = await (await fetch('../fixtures/maps/service-areas.geojson')).json();
+            map.addGeoJSON(zones, {
+              style: f => ({ color: f.properties.color, weight: 2, fillOpacity: 0.12 }),
+              popup: f => f.properties.popup,
+            });
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="geolocation">
+    <h2>Geolocation</h2>
+    <p>The <b>locate</b> control (<code>controls="locate"</code>) asks for the device position, shows a pulsing dot with an accuracy circle and centres the map. <code>Orion.geo</code> also works standalone for distance, bearing and formatting.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-p-3">
+          <o-map id="maps-geo" lat="3.139" lng="101.6869" zoom="12" tiles="offline" controls="zoom,locate" style="height:16rem"></o-map>
+          <div class="o-mt-3 o-d-flex o-gap-3 o-flex-wrap">
+            <button class="o-btn o-btn-sm" id="maps-geo-calc">Orion.geo.distance / bearing (KLCC → Merlion Park)</button>
+          </div>
+          <div class="docs-log o-mt-2" id="maps-geo-log"></div>
+        </div>
+        <script>
+          document.getElementById('maps-geo-calc').addEventListener('click', () => {
+            const a = { lat: 3.1579, lng: 101.7116 }, b = { lat: 1.2868, lng: 103.8545 };
+            const km = (Orion.geo.distance(a, b) / 1000).toFixed(1);
+            const bearing = Orion.geo.bearing(a, b).toFixed(0);
+            docs.log('#maps-geo-log', `${km} km, bearing ${bearing}°, ${Orion.geo.format(a, 'dms')}`);
+          });
+          document.getElementById('maps-geo').addEventListener('o-locate-error', () => docs.log('#maps-geo-log', 'Location unavailable in this environment (expected in a headless/sandboxed browser).'));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="dark-rtl">
+    <h2>Dark mode &amp; RTL</h2>
+    <p>The chrome (controls, popups, attribution, scale bar) follows the page theme automatically because it only uses design tokens. Tiles do not — set <code>tile-filter="dark"</code> to invert/desaturate them for a dark UI (shown above as a toggle). Controls and the scale bar switch sides automatically under <code>dir="rtl"</code>.</p>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>&lt;o-map&gt; attributes / properties</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>lat, lng, zoom</td><td>number</td><td>20, 0, 3</td><td>Centre and zoom (fractional zoom supported). Reflected.</td></tr>
+        <tr><td>min-zoom, max-zoom</td><td>number</td><td>1, 19</td><td>Zoom limits.</td></tr>
+        <tr><td>tiles</td><td>"osm" | "offline" | URL template | function</td><td>osm</td><td>URL templates use <code>{z}{x}{y}{r}</code>. A function receives <code>{x,y,z,size}</code> and may return a URL, an element, or a Promise of either.</td></tr>
+        <tr><td>tile-size, retina</td><td>number, boolean</td><td>256, false</td><td>Logical tile size and @2x tile requests.</td></tr>
+        <tr><td>tile-filter</td><td>"dark"</td><td></td><td>CSS filter to darken real tile imagery.</td></tr>
+        <tr><td>attribution</td><td>string</td><td></td><td>Overrides the automatic attribution text (OSM's is filled in for you and required by their usage policy).</td></tr>
+        <tr><td>controls</td><td>comma list of zoom, locate, fullscreen, scale, layers</td><td>zoom</td><td>Chrome to show. Attribution is always shown when relevant.</td></tr>
+        <tr><td>scroll-zoom</td><td>boolean</td><td>true</td><td>Mouse-wheel / trackpad zoom.</td></tr>
+        <tr><td>cluster, cluster-radius</td><td>boolean, number</td><td>true, 60</td><td>Marker clustering and its pixel radius.</td></tr>
+        <tr><td>markers</td><td>array</td><td>[]</td><td>See the marker shape below. Re-assigning replaces all markers (use the imperative methods to mutate).</td></tr>
+        <tr><td>base-layers</td><td>array</td><td>[]</td><td><code>[{ id, label, tiles, attribution }]</code> — shown by the <code>layers</code> control when there are 2+.</td></tr>
+        <tr><td>height</td><td>string</td><td></td><td>Convenience for <code>style="height:…"</code>.</td></tr>
+        <tr><td>label</td><td>string</td><td></td><td>Accessible name for the map region (default "Map").</td></tr>
+        <tr><td>provider, api-key, map-id</td><td>string</td><td></td><td>Set <code>provider="google"</code> to render a real Google Map instead — see the Google Maps page.</td></tr>
+      </tbody>
+    </table>
+    <h3>Marker shape</h3>
+    <table class="docs-api">
+      <thead><tr><th>Field</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>id, lat, lng</td><td>Identity and position (id is generated if omitted).</td></tr>
+        <tr><td>title</td><td>Accessible label (also the list-view text).</td></tr>
+        <tr><td>icon | html</td><td>Trusted HTML replacing the default pin (icon centred, html sized as-is).</td></tr>
+        <tr><td>color</td><td>Tints the default pin.</td></tr>
+        <tr><td>draggable</td><td>Fires <code>o-marker-drag-end</code> on release.</td></tr>
+        <tr><td>popup</td><td>Trusted HTML string, or <code>(marker) =&gt; html</code>.</td></tr>
+        <tr><td>tooltip</td><td>Native title tooltip text.</td></tr>
+        <tr><td>data</td><td>Anything you want back in event payloads.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>setView(lat, lng, zoom?)</td><td>Jump immediately.</td></tr>
+        <tr><td>flyTo(lat, lng, zoom?, { duration })</td><td>Eased animation (skipped under reduced motion).</td></tr>
+        <tr><td>fitBounds(bounds | points[], { padding, animate })</td><td>Frame a <code>{north,south,east,west}</code> box or an array of points/<code>[lat,lng]</code>.</td></tr>
+        <tr><td>addMarker(m) / updateMarker(id, patch) / removeMarker(id) / setMarkers(list)</td><td>Marker CRUD; returns the id.</td></tr>
+        <tr><td>addLayer({ type, … }) / removeLayer(id) / clearLayers()</td><td>type: polyline (points), polygon (points), rectangle (bounds), circle (center, radius in metres). Optional style, popup.</td></tr>
+        <tr><td>addGeoJSON(geojson, { style, popup })</td><td>Point → marker, Line/Polygon(+Multi*) → layer(s); returns the created ids.</td></tr>
+        <tr><td>project(latlng) / unproject(point)</td><td>Convert to/from pixel coordinates relative to the map element.</td></tr>
+        <tr><td>getCenter() / getZoom() / getBounds()</td><td>Current view.</td></tr>
+        <tr><td>invalidateSize()</td><td>Call after resizing the map's container programmatically.</td></tr>
+        <tr><td>locate()</td><td>Same as clicking the locate control; returns a Promise.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>o-click</td><td>{ lat, lng } — a tap/click that was not a drag.</td></tr>
+        <tr><td>o-move / o-zoom</td><td>{ lat, lng } / { zoom } — fired once a pan or zoom gesture settles.</td></tr>
+        <tr><td>o-marker-click</td><td>{ marker }</td></tr>
+        <tr><td>o-marker-drag-end</td><td>{ id, lat, lng, marker }</td></tr>
+        <tr><td>o-locate / o-locate-error</td><td>The resolved position, or { error }.</td></tr>
+      </tbody>
+    </table>
+    <h3>Keyboard</h3>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Arrow keys</td><td>Pan (mirrored in RTL).</td></tr>
+        <tr><td>+ / -</td><td>Zoom in/out, centred.</td></tr>
+        <tr><td>Home</td><td>Reset to the initial view.</td></tr>
+        <tr><td>Tab</td><td>Moves between markers, clusters and controls — each is a real button.</td></tr>
+        <tr><td>Enter / Space</td><td>Open a focused marker's popup, or the control under focus.</td></tr>
+        <tr><td>Escape</td><td>Close an open popup.</td></tr>
+      </tbody>
+    </table>
+    <h3>Orion.geo</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>current(opts) → Promise</td><td>One-shot position (wraps <code>navigator.geolocation</code>).</td></tr>
+        <tr><td>watch(fn, opts) → stop()</td><td>Continuous updates.</td></tr>
+        <tr><td>distance(a, b) → metres</td><td>Haversine great-circle distance.</td></tr>
+        <tr><td>bearing(a, b) → degrees</td><td>Initial bearing from a to b.</td></tr>
+        <tr><td>format(latlng, 'dms'|'decimal')</td><td>Human-readable coordinates.</td></tr>
+        <tr><td>bounds(points) → { north, south, east, west }</td><td>Bounding box of a point list.</td></tr>
+      </tbody>
+    </table>
+    <h3>Frameworks</h3>
+    <p>Set <code>markers</code>/<code>base-layers</code> as a property for live objects (React/Vue/Angular), or as a JSON attribute string. Listen for <code>o-*</code> events through a ref. <code>tiles</code> as a function property lets you plug in any raster/vector source.</p>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Theme &amp; Language Switchers — Orion Admin</title>
+<meta name="docs:section" content="Foundation">
+<meta name="docs:order" content="80">
+<meta name="docs:desc" content="<o-theme-switch> and <o-lang-switch>: small controls bound to Orion.theme and Orion.i18n">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Theme &amp; Language Switchers</h1>
+    <p class="docs-lead"><code>&lt;o-theme-switch&gt;</code> is a small control bound to <code>Orion.theme</code>
+      (light/dark/auto, plus optional high-contrast and text-size steppers). <code>&lt;o-lang-switch&gt;</code> lists the
+      locales registered with <code>Orion.i18n.add()</code> and switches with <code>Orion.i18n.set()</code>. Both update live
+      and reflect external changes (e.g. the docs site's own theme button in the header).</p>
+  </header>
+
+  <section id="theme-variants">
+    <h2>Theme switch variants</h2>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-stack" style="--o-gap:1.25rem">
+          <div class="o-hstack"><span class="o-text-muted" style="width:7rem">icon</span><o-theme-switch variant="icon"></o-theme-switch></div>
+          <div class="o-hstack"><span class="o-text-muted" style="width:7rem">segmented</span><o-theme-switch variant="segmented"></o-theme-switch></div>
+          <div class="o-hstack"><span class="o-text-muted" style="width:7rem">select</span><o-theme-switch variant="select"></o-theme-switch></div>
+          <div class="o-hstack"><span class="o-text-muted" style="width:7rem">toggle</span><o-theme-switch variant="toggle"></o-theme-switch></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="theme-extra">
+    <h2>High contrast &amp; text size</h2>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-theme-switch variant="segmented" show-contrast show-font-size></o-theme-switch>
+        <p class="o-text-muted o-mt-3">Double-click the percentage to reset the text size to 100%.</p>
+      </template>
+    </div>
+  </section>
+
+  <section id="lang-variants">
+    <h2>Language switch variants</h2>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-stack" style="--o-gap:1.25rem">
+          <div class="o-hstack"><span class="o-text-muted" style="width:7rem">select</span><o-lang-switch variant="select"></o-lang-switch></div>
+          <div class="o-hstack"><span class="o-text-muted" style="width:7rem">menu</span><o-lang-switch variant="menu"></o-lang-switch></div>
+          <div class="o-hstack"><span class="o-text-muted" style="width:7rem">flags</span><o-lang-switch variant="flags"></o-lang-switch></div>
+        </div>
+        <p class="o-text-muted o-mt-3">Switching language updates <code>&lt;html lang&gt;</code>/<code>dir</code> and re-renders every component on the page (try Arabic for RTL).</p>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>&lt;o-theme-switch&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>variant</td><td><code>icon｜segmented｜select｜toggle</code></td><td>Default <code>icon</code>. <code>toggle</code> is binary (light/dark only).</td></tr>
+        <tr><td>show-contrast</td><td>Boolean</td><td>Adds a high-contrast switch bound to <code>Orion.theme.setContrast()</code>.</td></tr>
+        <tr><td>show-font-size</td><td>Boolean</td><td>Adds a −/percentage/+ stepper bound to <code>Orion.theme.setFontScale()</code>.</td></tr>
+        <tr><td>texts</td><td>Object</td><td>Per-instance string overrides.</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-lang-switch&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>variant</td><td><code>select｜menu｜flags</code></td><td>Default <code>select</code>. Locales come from <code>Orion.i18n.locales()</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS</h3>
+    <p><code>.o-theme-switch</code>, <code>.o-lang-switch</code> and their variant sub-elements — see the source for the full
+      class list. Both reuse core control classes (<code>.o-btn</code>, <code>.o-segmented</code>, <code>.o-select</code>,
+      <code>.o-switch</code>, <code>.o-floating</code>) so they inherit any theme customization automatically.</p>
+  </section>
+
+  <section id="frameworks">
+    <h2>Frameworks</h2>
+    <p>Both elements have no props that need to be set from JavaScript for the common case — attributes are enough. They listen
+      for <code>Orion.theme.onChange()</code> / the global locale bus internally, so external changes (another switcher, a
+      keyboard shortcut, a saved preference restored on boot) keep every instance on the page in sync without any wiring.</p>
+  </section>
+</main>
+</body>
+</html>

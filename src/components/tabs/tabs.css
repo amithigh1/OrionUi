@@ -1,0 +1,104 @@
+/* Tabs — reuses .o-nav / .o-nav-link / .o-nav-tabs / .o-nav-pills / .o-nav-boxed visuals.
+ *   <o-tabs variant="line|pills|boxed|enclosed" orientation="horizontal|vertical"> + <o-tab-panel label>
+ *   Custom properties: --o-tabs-accent (indicator color), --o-tabs-vertical-w (vertical tab column width)
+ */
+o-tabs { display: block; min-width: 0; --o-tabs-accent: var(--o-primary); }
+o-tabs:not(:defined) { visibility: hidden; }
+o-tab-panel { display: block; min-width: 0; }
+.o-tab-panel { padding-top: 1rem; }
+.o-tab-panel:focus-visible { outline: 2px solid var(--o-focus); outline-offset: 2px; border-radius: var(--o-radius-xs); }
+.o-tab-panel.is-active { animation: o-fade-in var(--o-dur-fast) ease both; }
+
+.o-tabs-bar { position: relative; display: flex; align-items: center; gap: .125rem; min-width: 0; }
+.o-tabs-list { position: relative; flex: 1 1 auto; min-width: 0; overflow: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
+.o-tabs-list::-webkit-scrollbar { display: none; }
+.o-tabs-list.o-nav { flex-wrap: nowrap; }
+.o-tabs-bar > .o-btn { flex-shrink: 0; color: var(--o-text-muted); }
+.o-tabs-bar > .o-tabs-scroll:disabled { opacity: .3; }
+
+.o-tab { position: relative; z-index: 1; flex-shrink: 0; max-width: 16rem; }
+.o-tab > .o-icon { width: 1rem; height: 1rem; }
+.o-tab-label { overflow: hidden; text-overflow: ellipsis; }
+.o-tab-badge { margin-inline-start: -.125rem; }
+.o-tab-close {
+  display: inline-grid; place-items: center; width: 1.25rem; height: 1.25rem; margin-inline: .125rem -.375rem; border-radius: var(--o-radius-xs);
+  color: var(--o-text-subtle); opacity: .75; transition: background-color var(--o-dur-fast), color var(--o-dur-fast);
+}
+.o-tab-close > .o-icon { width: .875rem; height: .875rem; }
+.o-tab-close:hover { color: var(--o-text); background: color-mix(in srgb, var(--o-text) 12%, transparent); opacity: 1; }
+.o-tab.is-dragging { opacity: .85; box-shadow: var(--o-shadow); background: var(--o-surface); cursor: grabbing; z-index: 3; }
+.o-tabs-list.is-reordering { cursor: grabbing; }
+
+/* sliding indicator (line = underline, pills/boxed = moving background) */
+.o-tabs-indicator { position: absolute; top: 0; left: 0; pointer-events: none; width: var(--w, 0); height: var(--h, 0); transform: translate(var(--x, 0), var(--y, 0)); }
+.o-tabs-indicator.is-ready { transition: transform var(--o-dur) var(--o-ease), width var(--o-dur) var(--o-ease), height var(--o-dur) var(--o-ease); }
+
+/* line */
+o-tabs.is-line:not(.is-vertical) > .o-tabs-bar, o-tabs.is-line:not(.is-vertical) > .o-tabs-list { box-shadow: inset 0 -1px 0 var(--o-border); }
+.o-tabs-list.o-nav-tabs { border-bottom: 0; }
+.o-tabs-list.o-nav-tabs > .o-nav-link { margin-bottom: 0; }
+o-tabs.is-line .o-tabs-indicator { top: auto; bottom: 0; height: 2px; transform: translateX(var(--x, 0)); background: var(--o-tabs-accent); border-radius: 2px 2px 0 0; }
+o-tabs.is-line .o-tabs-list.has-indicator > .o-tab.is-active,
+o-tabs.is-line .o-tabs-list.has-indicator > [role=tab].is-active { border-bottom-color: transparent; }
+/* pills */
+o-tabs.is-pills .o-tabs-indicator { background: var(--o-tabs-accent); border-radius: var(--o-radius-sm); box-shadow: var(--o-shadow-xs); }
+o-tabs.is-pills .o-tabs-list.has-indicator > [role=tab].is-active { background: transparent; color: var(--o-on-primary); }
+o-tabs.is-pills .o-tabs-list.has-indicator > [role=tab].is-active .o-tab-badge { background: color-mix(in srgb, var(--o-on-primary) 22%, transparent); color: inherit; }
+o-tabs.is-pills .o-tabs-list.has-indicator > [role=tab].is-active .o-tab-close { color: inherit; }
+/* boxed */
+o-tabs.is-boxed > .o-tabs-bar { display: flex; }
+o-tabs.is-boxed .o-tabs-list.o-nav-boxed { display: flex; flex: 0 1 auto; }
+o-tabs.is-boxed.is-fill .o-tabs-list.o-nav-boxed { flex: 1 1 auto; }
+o-tabs.is-boxed .o-tabs-indicator { background: var(--o-surface); border-radius: calc(var(--o-radius) - 2px); box-shadow: var(--o-shadow-sm); }
+o-tabs.is-boxed .o-tabs-list.has-indicator > [role=tab].is-active { background: transparent; box-shadow: none; }
+/* enclosed (folder tabs connected to a bordered panel) */
+o-tabs.is-enclosed > .o-tabs-bar { box-shadow: inset 0 -1px 0 var(--o-border); }
+.o-tabs-enclosed-list { gap: .125rem; padding-inline: .25rem; }
+.o-tabs-enclosed-list > .o-nav-link { border: 1px solid transparent; border-bottom: 0; border-radius: var(--o-radius) var(--o-radius) 0 0; padding: .5rem .875rem; }
+.o-tabs-enclosed-list > .o-nav-link:hover { background: var(--o-surface-2); }
+.o-tabs-enclosed-list > .o-nav-link.is-active { color: var(--o-text); background: var(--o-surface); border-color: var(--o-border); box-shadow: 0 1px 0 var(--o-surface); }
+o-tabs.is-enclosed > .o-tab-panel { padding: 1rem 1.25rem; background: var(--o-surface); border: 1px solid var(--o-border); border-top: 0; border-radius: 0 0 var(--o-radius) var(--o-radius); }
+.o-tabs-list.has-indicator > .o-nav-link { transition: color var(--o-dur-fast), background-color var(--o-dur-fast); }
+
+/* vertical */
+o-tabs.is-vertical { display: flex; align-items: flex-start; gap: 1.25rem; }
+o-tabs.is-vertical > .o-tabs-bar { flex: 0 0 auto; width: var(--o-tabs-vertical-w, 13rem); max-width: 45%; flex-direction: column; align-items: stretch; }
+o-tabs.is-vertical .o-tabs-list { overflow: auto; max-height: var(--o-tabs-vertical-max-h, none); }
+o-tabs.is-vertical .o-tab { max-width: none; justify-content: flex-start; }
+o-tabs.is-vertical .o-tab-close, o-tabs.is-vertical .o-tab-badge { margin-inline-start: auto; }
+o-tabs.is-vertical .o-tab-badge + .o-tab-close { margin-inline-start: .25rem; }
+o-tabs.is-vertical > .o-tab-panel, o-tabs.is-vertical > [role=tabpanel] { flex: 1 1 0; padding-top: 0; }
+o-tabs.is-vertical.is-line .o-tabs-list { box-shadow: inset -1px 0 0 var(--o-border); }
+o-tabs.is-vertical.is-line .o-tabs-list:dir(rtl) { box-shadow: inset 1px 0 0 var(--o-border); }
+o-tabs.is-vertical.is-line .o-tab { border-radius: 0; padding-inline: 1rem; border: 0; }
+o-tabs.is-vertical.is-line .o-tab.is-active { background: var(--o-primary-subtle); }
+o-tabs.is-vertical.is-line .o-tabs-indicator { left: auto; inset-inline-end: 0; bottom: auto; top: 0; width: 2px; height: var(--h, 0); transform: translateY(var(--y, 0)); border-radius: 2px 0 0 2px; }
+o-tabs.is-vertical.is-pills .o-tabs-list, o-tabs.is-vertical.is-boxed .o-tabs-list { gap: .125rem; }
+o-tabs.is-vertical.is-boxed .o-tabs-list.o-nav-boxed { flex-direction: column; }
+
+/* fill */
+o-tabs.is-fill .o-tabs-list > .o-tab { flex: 1 1 0; justify-content: center; max-width: none; }
+
+/* built-in menu (overflow list, workspace/dock actions) */
+.o-tabs-menu { min-width: 11rem; max-width: min(22rem, calc(100vw - 16px)); padding: .25rem; overflow: auto; outline: none; }
+.o-tabs-menu-item {
+  display: flex; align-items: center; gap: .5rem; width: 100%; min-height: 2rem; padding: .3rem .625rem; font: inherit; font-size: var(--o-fs-sm);
+  color: var(--o-text); text-align: start; background: none; border: 0; border-radius: var(--o-radius-sm); cursor: pointer; white-space: nowrap;
+}
+.o-tabs-menu-item > .o-icon { width: 1rem; height: 1rem; color: var(--o-text-muted); }
+.o-tabs-menu-item.is-active, .o-tabs-menu-item:focus-visible, .o-tabs-menu-item:hover { background: var(--o-surface-3); outline: none; }
+.o-tabs-menu-item:disabled { opacity: .45; cursor: default; background: none; }
+.o-tabs-menu-item.is-danger { color: var(--o-danger-text); }
+.o-tabs-menu-label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.o-tabs-menu-check { display: inline-grid; place-items: center; width: 1rem; color: var(--o-primary-text); }
+.o-tabs-menu-check > .o-icon { width: .875rem; height: .875rem; }
+.o-tabs-menu-kbd { margin-inline-start: 1rem; font: 500 .6875rem/1 var(--o-font-mono); color: var(--o-text-subtle); }
+.o-tabs-menu-sep { height: 1px; margin: .25rem .375rem; background: var(--o-border); }
+.o-tabs-menu-header { padding: .375rem .625rem .125rem; font-size: var(--o-fs-xs); font-weight: 600; color: var(--o-text-muted); }
+
+/* plain-markup tabs */
+[role=tabpanel].is-active:not(o-tab-panel) { animation: o-fade-in var(--o-dur-fast) ease both; }
+
+@media (max-width: 575.98px) {
+  .o-tab { max-width: 12rem; padding-inline: .75rem; }
+}

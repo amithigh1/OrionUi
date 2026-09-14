@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Team directory — Orion Admin</title>
+<script src="../../dist/orion.js"></script>
+<style>
+  body { margin: 0; height: 100vh; display: flex; flex-direction: column; background: var(--o-bg); color: var(--o-text); font: var(--o-fs-base)/1.5 var(--o-font-sans); }
+  header { display: flex; align-items: center; gap: .75rem; padding: .75rem 1.25rem; background: var(--o-surface); border-bottom: 1px solid var(--o-border); }
+  header h1 { margin: 0; font-size: var(--o-fs-lg); }
+  main { flex: 1 1 auto; display: flex; min-height: 0; }
+  .chart-wrap { flex: 1 1 auto; min-width: 0; padding: 1rem; }
+  o-orgchart { height: 100%; }
+  aside { flex: 0 0 20rem; padding: 1.25rem; border-inline-start: 1px solid var(--o-border); overflow: auto; }
+  aside h2 { margin: 0 0 1rem; font-size: var(--o-fs-xs); text-transform: uppercase; letter-spacing: .04em; color: var(--o-text-muted); }
+  .person { display: flex; flex-direction: column; align-items: center; gap: .5rem; text-align: center; padding-bottom: 1rem; border-bottom: 1px solid var(--o-border); margin-bottom: 1rem; }
+  .person .name { font-weight: 600; font-size: var(--o-fs-md); }
+  .person .title { color: var(--o-text-muted); font-size: var(--o-fs-sm); }
+  .empty { color: var(--o-text-muted); font-size: var(--o-fs-sm); text-align: center; padding: 2rem 0; }
+  .crumbs { display: flex; flex-direction: column; gap: .375rem; }
+  .crumbs button { text-align: start; border: 0; background: none; padding: .25rem 0; color: var(--o-text-muted); cursor: pointer; font: inherit; }
+  .crumbs button:hover { color: var(--o-primary-text); text-decoration: underline; }
+  @media (max-width: 720px) { main { flex-direction: column; } aside { flex: 0 0 auto; border-inline-start: 0; border-top: 1px solid var(--o-border); max-height: 40vh; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="o-dot o-c-primary" aria-hidden="true"></span>
+  <h1>Orion Admin — Team directory</h1>
+  <span class="o-badge o-badge-sm" id="count"></span>
+</header>
+<main>
+  <div class="chart-wrap">
+    <o-orgchart id="chart" search collapsible draggable toolbar label="Company directory"></o-orgchart>
+  </div>
+  <aside>
+    <h2>Selected person</h2>
+    <div id="detail"><p class="empty">Click a card, or search above, to see details here.</p></div>
+  </aside>
+</main>
+<script>
+  (() => {
+    const FIRST = ['Aisha', 'Ben', 'Chen', 'Diego', 'Elena', 'Farid', 'Grace', 'Hiro', 'Isabel', 'Jamal', 'Kavya', 'Liam', 'Mei', 'Noah', 'Olivia', 'Priya', 'Rahul', 'Sofia', 'Tomas', 'Zara'];
+    const LAST = ['Rahman', 'Tan', 'Garcia', 'Smith', 'Nguyen', 'Okafor', 'Silva', 'Lim', 'Patel', 'Kim', 'Wong', 'Dubois', 'Sato', 'Brown', 'Novak'];
+    const DEPTS = ['Engineering', 'Sales', 'Marketing'];
+    let seed = 42;
+    const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+    const pick = a => a[Math.floor(rnd() * a.length)];
+
+    const nodes = [];
+    nodes.push({ id: 0, parentId: null, name: pick(FIRST) + ' ' + pick(LAST), title: 'Chief Executive Officer', department: '', email: 'ceo@example.com' });
+    let nextId = 1;
+    const vpIds = [];
+    DEPTS.forEach(dept => {
+      const id = nextId++;
+      vpIds.push({ id, dept });
+      nodes.push({ id, parentId: 0, name: pick(FIRST) + ' ' + pick(LAST), title: 'VP ' + dept, department: dept, email: `vp.${dept.toLowerCase()}@example.com` });
+    });
+    vpIds.forEach(({ id: vpId, dept }) => {
+      const mgrCount = 1 + Math.floor(rnd() * 2);
+      for (let m = 0; m < mgrCount; m++) {
+        const mid = nextId++;
+        nodes.push({ id: mid, parentId: vpId, name: pick(FIRST) + ' ' + pick(LAST), title: dept + ' Manager', department: dept, email: `m${mid}@example.com` });
+        const icCount = 2 + Math.floor(rnd() * 3);
+        for (let c = 0; c < icCount; c++) {
+          const cid = nextId++;
+          nodes.push({ id: cid, parentId: mid, name: pick(FIRST) + ' ' + pick(LAST), title: dept + ' Specialist', department: dept, email: `p${cid}@example.com` });
+        }
+      }
+    });
+
+    const chart = document.getElementById('chart');
+    chart.nodes = nodes;
+    document.getElementById('count').textContent = nodes.length + ' people';
+
+    const detail = document.getElementById('detail');
+    const showPerson = id => {
+      const n = chart.getNode(id);
+      if (!n) { detail.innerHTML = '<p class="empty">Click a card, or search above, to see details here.</p>'; return; }
+      const reports = chart.getChildren(id);
+      const ancestors = chart.getAncestors(id).reverse();
+      detail.replaceChildren();
+      const card = document.createElement('div');
+      card.className = 'person';
+      card.innerHTML = `
+        <span class="o-avatar o-avatar-lg o-c-primary">${Orion.util.esc(n.name.split(' ').map(s => s[0]).join(''))}</span>
+        <div class="name">${Orion.util.esc(n.name)}</div>
+        <div class="title">${Orion.util.esc(n.title)}</div>
+        <a class="o-link-primary o-text-sm" href="mailto:${Orion.util.esc(n.email)}">${Orion.util.esc(n.email)}</a>
+        <span class="o-badge o-badge-sm o-badge-soft-primary">${reports.length} direct report${reports.length === 1 ? '' : 's'}</span>
+      `;
+      detail.append(card);
+      if (ancestors.length) {
+        const wrap = document.createElement('div');
+        wrap.innerHTML = '<h2>Reporting line</h2>';
+        const crumbs = document.createElement('div');
+        crumbs.className = 'crumbs';
+        ancestors.forEach(a => {
+          const b = document.createElement('button');
+          b.type = 'button'; b.textContent = a.name + ' — ' + a.title;
+          b.onclick = () => { chart.focusPerson(a.id); showPerson(a.id); };
+          crumbs.append(b);
+        });
+        wrap.append(crumbs);
+        detail.append(wrap);
+      }
+    };
+    chart.addEventListener('o-node-click', e => showPerson(e.detail.node.id));
+    chart.addEventListener('o-select', e => { if (e.detail.node) showPerson(e.detail.node.id); });
+  })();
+</script>
+</body>
+</html>

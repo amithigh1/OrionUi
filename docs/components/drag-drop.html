@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drag &amp; Drop — Orion Admin</title>
+<meta name="docs:section" content="Boards & Diagrams">
+<meta name="docs:order" content="10">
+<meta name="docs:desc" content="Sortable lists and grids, connected lists, clone mode, free dragging, dropzones and keyboard drag and drop">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .dd-cols { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr)); align-items: start; }
+  .dd-col-title { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin: 0 0 .5rem; font-size: var(--o-fs-sm); font-weight: 600; color: var(--o-text-muted); }
+  .dd-list { min-height: 3rem; }
+  .dd-tile { padding: 1rem; cursor: grab; user-select: none; }
+  .dd-tile .o-stat-value { font-size: var(--o-fs-xl); }
+  .dd-nested, .dd-nested ul { list-style: none; margin: 0; padding: 0; }
+  .dd-nested ul { display: flex; flex-direction: column; gap: .375rem; min-height: 2.25rem; margin-top: .5rem; padding: .375rem; padding-inline-start: 1.25rem; border-inline-start: 2px solid var(--o-border); }
+  .dd-nested > li { margin-bottom: .5rem; padding: .625rem .75rem; background: var(--o-surface); border: 1px solid var(--o-border); border-radius: var(--o-radius); }
+  .dd-nested li li { display: flex; align-items: center; gap: .5rem; padding: .375rem .625rem; background: var(--o-surface-2); border: 1px solid var(--o-border); border-radius: var(--o-radius-sm); font-size: var(--o-fs-sm); }
+  .dd-section-head { display: flex; align-items: center; gap: .5rem; font-weight: 600; }
+  .dd-canvas { position: relative; height: 19rem; overflow: hidden; border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); background-color: var(--o-surface-2); background-image: radial-gradient(var(--o-border-strong) 1px, transparent 1px); background-size: 16px 16px; }
+  .dd-note { position: absolute; width: 11.5rem; }
+  .dd-note .o-card-header { min-height: 0; padding: .5rem .5rem .5rem .75rem; gap: .25rem; cursor: grab; font-size: var(--o-fs-sm); font-weight: 600; }
+  .dd-note .o-card-body { padding: .625rem .75rem; font-size: var(--o-fs-sm); color: var(--o-text-muted); }
+  .dd-chips { display: flex; flex-wrap: nowrap; gap: .5rem; overflow-x: auto; padding: .25rem; }
+  .dd-chips > .o-chip { cursor: grab; flex-shrink: 0; }
+  .dd-files .o-list-item { font-size: var(--o-fs-sm); }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Drag &amp; Drop</h1>
+    <p class="docs-lead">A hand-written drag and drop engine: sortable lists and grids, connected lists, clone mode, nested lists, free
+      positioning, dropzones for internal and native (file) drops, auto-scroll, FLIP animations and full keyboard support.</p>
+  </header>
+
+  <section id="overview">
+    <h2>Overview</h2>
+    <p>Four APIs share one engine. <code>Orion.sortable()</code> reorders children of a container, <code>Orion.draggable()</code>
+      moves an element freely, <code>Orion.dropzone()</code> receives Orion drags and files dropped from the desktop, and
+      <code>Orion.dnd.start()</code> is the low-level primitive other components (kanban, tree, dashboards, gantt) build on.</p>
+    <ul>
+      <li><strong>Pointer events</strong> for mouse, pen and touch. On touch a 200&nbsp;ms long-press starts the drag, so swiping still scrolls the page. Handles start immediately.</li>
+      <li><strong>Auto-scroll</strong> near the edges of the window and of any scroll container under the pointer.</li>
+      <li><strong>Keyboard</strong>: <kbd class="o-kbd">Space</kbd> picks up, arrows move, <kbd class="o-kbd">Space</kbd> drops, <kbd class="o-kbd">Esc</kbd> cancels, with screen-reader announcements.</li>
+      <li><strong>Frameworks</strong>: <code>controlled: true</code> restores the DOM and reports <code>oldIndex / newIndex</code> so React, Vue or Angular own the order.</li>
+    </ul>
+  </section>
+
+  <section id="sortable-list">
+    <h2>Sortable list</h2>
+    <p>Every direct child of the container is an item. Drag an item, or focus it and press <kbd class="o-kbd">Space</kbd>.</p>
+    <div class="docs-demo">
+      <template>
+        <ul class="o-list dd-list" id="sl-basic" aria-label="Release checklist">
+          <li class="o-list-item" data-id="1"><o-icon name="check-circle"></o-icon><span class="o-list-content"><span class="o-list-title">Freeze the release branch</span><span class="o-list-sub">Engineering · due Monday</span></span></li>
+          <li class="o-list-item" data-id="2"><o-icon name="file"></o-icon><span class="o-list-content"><span class="o-list-title">Update the changelog</span><span class="o-list-sub">Docs · 12 entries</span></span></li>
+          <li class="o-list-item" data-id="3"><o-icon name="bell"></o-icon><span class="o-list-content"><span class="o-list-title">Notify enterprise customers</span><span class="o-list-sub">Success team · template ready</span></span></li>
+          <li class="o-list-item" data-id="4"><o-icon name="upload"></o-icon><span class="o-list-content"><span class="o-list-title">Publish packages</span><span class="o-list-sub">npm, CDN and Docker images</span></span></li>
+          <li class="o-list-item" data-id="5"><o-icon name="star"></o-icon><span class="o-list-content"><span class="o-list-title">Announce on the blog</span><span class="o-list-sub">Marketing · draft in review</span></span></li>
+        </ul>
+        <div class="docs-log" id="sl-basic-log"></div>
+        <script>
+          {
+            const s = Orion.sortable('#sl-basic', {
+              onEnd: e => { if (!e.cancelled && e.oldIndex !== e.newIndex) docs.log('#sl-basic-log', `moved ${e.oldIndex} → ${e.newIndex}  order: ${s.toArray().join(', ')}`); },
+            });
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="handle">
+    <h2>Handle only</h2>
+    <p>With <code>handle</code> the rest of the item stays interactive (inputs, buttons, text selection). Handles become focusable
+      keyboard grips and start touch drags without a long-press.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-list dd-list" id="sl-handle" aria-label="Form fields">
+          <div class="o-list-item" data-id="name"><button type="button" class="o-drag-handle" aria-label="Reorder"><o-icon name="grip-vertical"></o-icon></button><input class="o-input o-input-sm" value="Full name" aria-label="Field label"><span class="o-badge o-badge-soft-primary">Text</span><button type="button" class="o-btn o-btn-ghost o-btn-icon o-btn-sm" aria-label="Remove field"><o-icon name="trash"></o-icon></button></div>
+          <div class="o-list-item" data-id="email"><button type="button" class="o-drag-handle" aria-label="Reorder"><o-icon name="grip-vertical"></o-icon></button><input class="o-input o-input-sm" value="Work email" aria-label="Field label"><span class="o-badge o-badge-soft-info">Email</span><button type="button" class="o-btn o-btn-ghost o-btn-icon o-btn-sm" aria-label="Remove field"><o-icon name="trash"></o-icon></button></div>
+          <div class="o-list-item" data-id="team"><button type="button" class="o-drag-handle" aria-label="Reorder"><o-icon name="grip-vertical"></o-icon></button><input class="o-input o-input-sm" value="Team" aria-label="Field label"><span class="o-badge o-badge-soft-success">Select</span><button type="button" class="o-btn o-btn-ghost o-btn-icon o-btn-sm" aria-label="Remove field"><o-icon name="trash"></o-icon></button></div>
+          <div class="o-list-item" data-id="start"><button type="button" class="o-drag-handle" aria-label="Reorder"><o-icon name="grip-vertical"></o-icon></button><input class="o-input o-input-sm" value="Start date" aria-label="Field label"><span class="o-badge o-badge-soft-warning">Date</span><button type="button" class="o-btn o-btn-ghost o-btn-icon o-btn-sm" aria-label="Remove field"><o-icon name="trash"></o-icon></button></div>
+        </div>
+        <script>
+          {
+            const list = document.getElementById('sl-handle');
+            Orion.sortable(list, { handle: '.o-drag-handle' });
+            list.addEventListener('click', e => { const b = e.target.closest('[aria-label="Remove field"]'); if (b) b.closest('.o-list-item').remove(); });
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="grid">
+    <h2>Sortable grid</h2>
+    <p>Wrapping flex and CSS grid layouts are detected automatically (<code>direction: 'grid'</code>); all four arrow keys move items.</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-grid-auto" id="sl-grid" style="--o-min: 10.5rem; --o-gap: .75rem" aria-label="Dashboard tiles">
+          <div class="o-card dd-tile" data-id="rev"><div class="o-stat"><span class="o-stat-label">Revenue</span><span class="o-stat-value">$48.2k</span><span class="o-stat-meta"><span class="o-trend is-up">12%</span> vs last month</span></div></div>
+          <div class="o-card dd-tile" data-id="users"><div class="o-stat"><span class="o-stat-label">Active users</span><span class="o-stat-value">3,904</span><span class="o-stat-meta"><span class="o-trend is-up">4.1%</span> this week</span></div></div>
+          <div class="o-card dd-tile" data-id="churn"><div class="o-stat"><span class="o-stat-label">Churn</span><span class="o-stat-value">1.8%</span><span class="o-stat-meta"><span class="o-trend is-down">0.3%</span> improved</span></div></div>
+          <div class="o-card dd-tile" data-id="tickets"><div class="o-stat"><span class="o-stat-label">Open tickets</span><span class="o-stat-value">27</span><span class="o-stat-meta"><span class="o-trend is-flat">0%</span> steady</span></div></div>
+          <div class="o-card dd-tile" data-id="nps"><div class="o-stat"><span class="o-stat-label">NPS</span><span class="o-stat-value">62</span><span class="o-stat-meta"><span class="o-trend is-up">5</span> points</span></div></div>
+          <div class="o-card dd-tile" data-id="mrr"><div class="o-stat"><span class="o-stat-label">MRR</span><span class="o-stat-value">$21.7k</span><span class="o-stat-meta"><span class="o-trend is-up">2.4%</span> growth</span></div></div>
+          <div class="o-card dd-tile" data-id="orders"><div class="o-stat"><span class="o-stat-label">Orders</span><span class="o-stat-value">812</span><span class="o-stat-meta"><span class="o-trend is-down">1.2%</span> vs target</span></div></div>
+          <div class="o-card dd-tile" data-id="uptime"><div class="o-stat"><span class="o-stat-label">Uptime</span><span class="o-stat-value">99.98%</span><span class="o-stat-meta">30-day window</span></div></div>
+        </div>
+        <script>Orion.sortable('#sl-grid');</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="connected">
+    <h2>Connected lists &amp; clone</h2>
+    <p>Lists with the same <code>group</code> exchange items. <code>pull: 'clone'</code> leaves a copy behind (palettes),
+      <code>put: false</code> refuses drops and <code>sort: false</code> keeps the source order fixed.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="dd-cols">
+          <div>
+            <h3 class="dd-col-title">Components <span class="o-badge o-badge-sm">clone</span></h3>
+            <div class="o-list dd-list" id="cl-palette" aria-label="Components palette">
+              <div class="o-list-item" data-type="text"><o-icon name="edit"></o-icon>Text field</div>
+              <div class="o-list-item" data-type="date"><o-icon name="calendar"></o-icon>Date picker</div>
+              <div class="o-list-item" data-type="upload"><o-icon name="upload"></o-icon>File upload</div>
+              <div class="o-list-item" data-type="rating"><o-icon name="star"></o-icon>Rating</div>
+            </div>
+          </div>
+          <div>
+            <h3 class="dd-col-title">Form <span class="o-badge o-badge-sm" id="cl-count">2</span></h3>
+            <div class="o-list dd-list" id="cl-form" aria-label="Form">
+              <div class="o-list-item" data-type="text"><o-icon name="edit"></o-icon>Text field</div>
+              <div class="o-list-item" data-type="date"><o-icon name="calendar"></o-icon>Date picker</div>
+            </div>
+          </div>
+          <div>
+            <h3 class="dd-col-title">Archive</h3>
+            <div class="o-list dd-list" id="cl-archive" aria-label="Archive">
+              <div class="o-list-item" data-type="rating"><o-icon name="star"></o-icon>Rating</div>
+            </div>
+          </div>
+        </div>
+        <div class="docs-log" id="cl-log"></div>
+        <script>
+          {
+            const count = () => { document.getElementById('cl-count').textContent = document.getElementById('cl-form').children.length; };
+            Orion.sortable('#cl-palette', { group: { name: 'form', pull: 'clone', put: false }, sort: false });
+            Orion.sortable('#cl-form', {
+              group: 'form',
+              onAdd: e => { docs.log('#cl-log', `added "${e.item.textContent.trim()}" at ${e.newIndex}${e.clone ? ' (cloned)' : ''}`); count(); },
+              onRemove: count, onUpdate: e => docs.log('#cl-log', `reordered ${e.oldIndex} → ${e.newIndex}`),
+            });
+            Orion.sortable('#cl-archive', { group: 'form' });
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="nested">
+    <h2>Nested lists</h2>
+    <p>Sortables can live inside items of other sortables. The innermost list under the pointer wins; a list never accepts its own ancestor.</p>
+    <div class="docs-demo">
+      <template>
+        <ul class="dd-nested" id="nest-root" aria-label="Sections">
+          <li data-id="s1"><div class="dd-section-head"><button type="button" class="o-drag-handle" aria-label="Move section"><o-icon name="grip-vertical"></o-icon></button>Getting started</div>
+            <ul aria-label="Getting started pages"><li data-id="p1"><o-icon name="file"></o-icon>Installation</li><li data-id="p2"><o-icon name="file"></o-icon>Quick start</li><li data-id="p3"><o-icon name="file"></o-icon>Theming</li></ul></li>
+          <li data-id="s2"><div class="dd-section-head"><button type="button" class="o-drag-handle" aria-label="Move section"><o-icon name="grip-vertical"></o-icon></button>Guides</div>
+            <ul aria-label="Guides pages"><li data-id="p4"><o-icon name="file"></o-icon>Forms &amp; validation</li><li data-id="p5"><o-icon name="file"></o-icon>Data tables</li></ul></li>
+          <li data-id="s3"><div class="dd-section-head"><button type="button" class="o-drag-handle" aria-label="Move section"><o-icon name="grip-vertical"></o-icon></button>Reference</div>
+            <ul aria-label="Reference pages"><li data-id="p6"><o-icon name="file"></o-icon>JavaScript API</li></ul></li>
+        </ul>
+        <script>
+          {
+            const root = document.getElementById('nest-root');
+            Orion.sortable(root, { handle: '.o-drag-handle' });
+            root.querySelectorAll('ul').forEach(ul => Orion.sortable(ul, { group: 'pages' }));
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="horizontal">
+    <h2>Horizontal list</h2>
+    <p>A no-wrap row is sorted horizontally; <kbd class="o-kbd">←</kbd> <kbd class="o-kbd">→</kbd> follow the reading direction in RTL.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="dd-chips" id="sl-chips" aria-label="Pinned filters">
+          <span class="o-chip" data-id="open"><span>Status: open</span></span>
+          <span class="o-chip" data-id="me"><span>Assignee: me</span></span>
+          <span class="o-chip" data-id="bug"><span>Label: bug</span></span>
+          <span class="o-chip" data-id="p1"><span>Priority: high</span></span>
+          <span class="o-chip" data-id="week"><span>Updated this week</span></span>
+        </div>
+        <script>Orion.sortable('#sl-chips', { direction: 'horizontal' });</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard drag &amp; drop</h2>
+    <p>Items are focusable and described by hidden instructions. Moves are announced through a live region
+      (“Picked up Publish packages. Position 4 of 5.”). Arrows perpendicular to a list, or past its ends, jump to the nearest connected list.</p>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Space / Enter</td><td>Pick up the focused item; press again to drop it (<code>pickKeys</code>).</td></tr>
+        <tr><td>↑ ↓</td><td>Move in vertical lists and grids (a whole row in grids).</td></tr>
+        <tr><td>← →</td><td>Move in horizontal lists and grids (mirrored in RTL); in vertical lists, move to the list on that side.</td></tr>
+        <tr><td>Home / End</td><td>Move to the first / last position.</td></tr>
+        <tr><td>Escape</td><td>Cancel and return to the original position (also cancels pointer drags).</td></tr>
+        <tr><td>Tab</td><td>Blocked while an item is picked up, so focus cannot get lost.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="controlled">
+    <h2>Controlled mode (React, Vue, Angular)</h2>
+    <p>With <code>controlled: true</code> the DOM is put back on drop and you apply the move to your own state, which then re-renders.
+      This demo re-renders the whole list from an array, as a framework would.</p>
+    <div class="docs-demo">
+      <template>
+        <ol class="o-list o-list-numbered dd-list" id="ctl-list" aria-label="Priorities"></ol>
+        <div class="docs-log" id="ctl-log"></div>
+        <script>
+          {
+            let state = ['Customer onboarding', 'Billing migration', 'Mobile app beta', 'SOC 2 audit'];
+            const list = document.getElementById('ctl-list');
+            const render = () => { list.innerHTML = state.map(s => `<li class="o-list-item" data-id="${s}">${s}</li>`).join(''); };
+            render();
+            Orion.sortable(list, {
+              controlled: true,
+              onEnd: ({ oldIndex, newIndex, cancelled }) => {
+                if (cancelled || oldIndex === newIndex) return;
+                const next = [...state]; next.splice(newIndex, 0, next.splice(oldIndex, 1)[0]);
+                state = next; render();
+                docs.log('#ctl-log', 'state = ' + JSON.stringify(state));
+              },
+            });
+          }
+        </script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+      // React 19
+      function Tasks({ tasks, setTasks }) {
+        const ref = useRef(null);
+        useEffect(() => {
+          const s = Orion.sortable(ref.current, {
+            controlled: true,
+            onEnd: ({ oldIndex, newIndex }) => setTasks(t => { const n = [...t]; n.splice(newIndex, 0, n.splice(oldIndex, 1)[0]); return n; }),
+          });
+          return () => s.destroy();
+        }, []);
+        return &lt;ul ref={ref}&gt;{tasks.map(t => &lt;li key={t.id}&gt;{t.title}&lt;/li&gt;)}&lt;/ul&gt;;
+      }
+      // Vue 3: onMounted(() => { s = Orion.sortable(listRef.value, { controlled: true, onEnd: e => move(e) }) }); onUnmounted(() => s.destroy())
+    </pre>
+  </section>
+
+  <section id="draggable">
+    <h2>Free dragging</h2>
+    <p><code>Orion.draggable()</code> moves an element with a CSS <code>translate</code>, optionally inside <code>bounds</code>, on an
+      <code>axis</code> and snapped to a <code>grid</code>. Focus a note and use the arrow keys (<kbd class="o-kbd">Shift</kbd> for bigger steps).</p>
+    <div class="docs-demo">
+      <template>
+        <div class="dd-canvas" id="dd-canvas">
+          <div class="o-card dd-note" style="inset-inline-start: 16px; top: 16px">
+            <div class="o-card-header"><span>Sprint goal</span><span class="o-badge o-badge-soft-primary o-badge-sm">grid 16</span></div>
+            <div class="o-card-body">Ship the billing page and close 12 support tickets.</div>
+          </div>
+          <div class="o-card dd-note" style="inset-inline-start: 224px; top: 96px">
+            <div class="o-card-header"><span>Risks</span><span class="o-badge o-badge-soft-warning o-badge-sm">free</span></div>
+            <div class="o-card-body">Payment provider sandbox is unstable this week.</div>
+          </div>
+          <div class="o-card dd-note" style="inset-inline-start: 48px; top: 176px">
+            <div class="o-card-header"><span>Horizontal only</span><span class="o-badge o-badge-soft-info o-badge-sm">axis x</span></div>
+            <div class="o-card-body">Constrained to the x axis.</div>
+          </div>
+        </div>
+        <p class="o-muted o-text-sm o-mt-2" id="dd-pos">Drag a note by its title.</p>
+        <script>
+          {
+            const notes = document.querySelectorAll('#dd-canvas .dd-note');
+            const out = document.getElementById('dd-pos');
+            const show = e => { out.textContent = `x: ${Math.round(e.x)}  y: ${Math.round(e.y)}${e.keyboard ? '  (keyboard)' : ''}`; };
+            Orion.draggable(notes[0], { handle: '.o-card-header', bounds: 'parent', grid: 16, onDrag: show });
+            Orion.draggable(notes[1], { handle: '.o-card-header', bounds: 'parent', onDrag: show });
+            Orion.draggable(notes[2], { handle: '.o-card-header', bounds: 'parent', axis: 'x', onDrag: show });
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="dropzone">
+    <h2>Dropzones</h2>
+    <p><code>Orion.dropzone()</code> receives Orion drags (with the payload from <code>data</code>) and native drops of files, text and
+      links from outside the page. <code>accept(data)</code> decides; <code>.is-drop-active</code> marks compatible zones while a drag runs.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="dd-cols">
+          <div>
+            <h3 class="dd-col-title">Attachments</h3>
+            <div class="o-list dd-list dd-files" id="dz-files" aria-label="Attachments">
+              <div class="o-list-item" data-name="brief.pdf"><o-icon name="file"></o-icon><span class="o-list-content">brief.pdf</span><span class="o-list-meta">1.2 MB</span></div>
+              <div class="o-list-item" data-name="hero.png"><o-icon name="image"></o-icon><span class="o-list-content">hero.png</span><span class="o-list-meta">640 KB</span></div>
+              <div class="o-list-item" data-name="budget.xlsx"><o-icon name="file"></o-icon><span class="o-list-content">budget.xlsx</span><span class="o-list-meta">88 KB</span></div>
+            </div>
+          </div>
+          <div class="o-stack" style="--o-gap: .75rem">
+            <div class="o-drop-area is-danger" id="dz-trash"><o-icon name="trash"></o-icon><strong>Trash</strong><span>Drag an attachment here</span></div>
+            <div class="o-drop-area" id="dz-native"><o-icon name="upload"></o-icon><strong>Drop files from your computer</strong><span>or text and links from another tab</span></div>
+          </div>
+        </div>
+        <div class="docs-log" id="dz-log"></div>
+        <script>
+          {
+            const files = document.getElementById('dz-files');
+            Orion.sortable(files, { data: item => ({ kind: 'attachment', item, name: item.dataset.name }) });
+            Orion.dropzone('#dz-trash', {
+              native: false,
+              accept: d => d && d.kind === 'attachment',
+              onDrop: d => { Orion.animate(d.item, 'zoomOut', { duration: 150 }).then(() => d.item.remove()); docs.log('#dz-log', `deleted ${d.name}`); Orion.announce(`${d.name} deleted`); },
+            });
+            Orion.dropzone('#dz-native', {
+              internal: false,
+              onDrop: d => {
+                if (d.files.length) d.files.forEach(f => {
+                  files.insertAdjacentHTML('beforeend', `<div class="o-list-item" data-name="${Orion.util.esc(f.name)}">${Orion.icon(f.type.startsWith('image/') ? 'image' : 'file')}<span class="o-list-content">${Orion.util.esc(f.name)}</span><span class="o-list-meta">${Orion.format.bytes(f.size)}</span></div>`);
+                  docs.log('#dz-log', `received ${f.name} (${Orion.format.bytes(f.size)})`);
+                });
+                else docs.log('#dz-log', `received ${d.uri ? 'link ' + d.uri : 'text "' + d.text.slice(0, 60) + '"'}`);
+              },
+            });
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="declarative">
+    <h2>Declarative</h2>
+    <p>No JavaScript needed: behaviors initialise every current and future element, so they work with server-rendered pages and frameworks.
+      Listen for <code>o-sort-end</code> on the container.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="dd-cols">
+          <ul class="o-list dd-list" data-o-sortable data-o-sortable-group="decl" aria-label="Today">
+            <li class="o-list-item">Stand-up</li><li class="o-list-item">Code review</li><li class="o-list-item">Deploy</li>
+          </ul>
+          <ul class="o-list dd-list" data-o-sortable data-o-sortable-group="decl" aria-label="Tomorrow">
+            <li class="o-list-item">Planning</li><li class="o-list-item">1:1 with Mei</li>
+          </ul>
+        </div>
+        <div class="docs-log" id="decl-log"></div>
+        <script>
+          document.addEventListener('o-sort-end', e => {
+            if (!e.target.matches('[data-o-sortable-group="decl"]') || e.detail.cancelled) return;
+            docs.log('#decl-log', `o-sort-end: "${e.detail.item.textContent}" ${e.detail.oldIndex} → ${e.detail.to.getAttribute('aria-label')} #${e.detail.newIndex}`);
+          });
+        </script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="html">
+      &lt;ul data-o-sortable data-o-sortable-group="decl"&gt;…&lt;/ul&gt;
+      &lt;!-- -handle=".grip"  -items=".row"  -filter=".locked"  -direction="grid"  -animation="0"
+           -clone  (pull: 'clone')  -put="false"  -sort="false"  -controlled --&gt;
+      &lt;div data-o-draggable data-o-draggable-bounds="parent" data-o-draggable-handle=".title"&gt;…&lt;/div&gt;
+      &lt;div class="o-drop-area" data-o-dropzone data-o-dropzone-accept="files"&gt;Drop files&lt;/div&gt;  &lt;!-- o-drop { data } --&gt;
+    </pre>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Orion.sortable(container, options) → Sortable</h3>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>items</td><td><code>'*'</code></td><td>Selector matched against direct children (<code>'&gt; .row'</code> works too).</td></tr>
+        <tr><td>handle</td><td><code>null</code></td><td>Only drag from this selector inside an item. Handles are focusable and start touch drags immediately.</td></tr>
+        <tr><td>group</td><td><code>null</code></td><td><code>'name'</code> or <code>{ name, pull: true|false|'clone'|fn, put: true|false|['names']|fn }</code>.</td></tr>
+        <tr><td>animation</td><td><code>180</code></td><td>FLIP duration (ms); 0 disables. Reduced motion is respected.</td></tr>
+        <tr><td>direction</td><td><code>'auto'</code></td><td><code>vertical | horizontal | grid</code>; detected from flex/grid layout.</td></tr>
+        <tr><td>disabled / sort</td><td><code>false / true</code></td><td>Disable dragging / disallow reordering within this list.</td></tr>
+        <tr><td>filter / ignore</td><td>—</td><td>Items that cannot be dragged / inner elements that never start a drag (inputs, buttons…).</td></tr>
+        <tr><td>placeholderClass</td><td><code>'o-sortable-placeholder'</code></td><td>Class on the item while it marks the drop position.</td></tr>
+        <tr><td>ghostClass</td><td><code>'o-sortable-ghost'</code></td><td>Class on the floating drag preview.</td></tr>
+        <tr><td>dragClass</td><td><code>'o-sortable-drag'</code></td><td>Class on the item during any drag (pointer or keyboard).</td></tr>
+        <tr><td>preview</td><td><code>'clone'</code></td><td><code>'none'</code> or <code>(item) =&gt; Element</code> for a custom drag image.</td></tr>
+        <tr><td>delayOnTouch / threshold</td><td><code>200 / 4</code></td><td>Touch long-press (ms) / mouse distance (px) before a drag starts.</td></tr>
+        <tr><td>autoScroll / scrollSensitivity / scrollSpeed</td><td><code>true / 56 / 22</code></td><td>Edge auto-scroll of the window and scroll containers.</td></tr>
+        <tr><td>swapThreshold</td><td><code>0.5</code></td><td>Part of a target the pointer must cross before swapping.</td></tr>
+        <tr><td>revertOnSpill</td><td><code>false</code></td><td>Return the item when dropped outside every list.</td></tr>
+        <tr><td>controlled</td><td><code>false</code></td><td>Restore the DOM on drop; apply the move yourself in <code>onEnd</code>.</td></tr>
+        <tr><td>keyboard / pickKeys</td><td><code>true / [' ', 'Enter']</code></td><td>Keyboard drag and drop.</td></tr>
+        <tr><td>data</td><td>—</td><td><code>(item) =&gt; payload</code> offered to dropzones.</td></tr>
+        <tr><td>onStart, onMove, onChange, onEnd, onAdd, onRemove, onUpdate</td><td>—</td><td>Callbacks; <code>onMove</code> returns <code>false</code> to veto a position.</td></tr>
+      </tbody>
+    </table>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>toArray(attr = 'data-id')</td><td>Current order of the item attribute.</td></tr>
+        <tr><td>sort(ids, animate = true)</td><td>Reorder items to match ids.</td></tr>
+        <tr><td>option(key, value?)</td><td>Read or change an option at runtime.</td></tr>
+        <tr><td>items() / pick(item)</td><td>Current items / start a keyboard drag from code.</td></tr>
+        <tr><td>cancel() / destroy()</td><td>Abort a running drag / remove every listener and attribute.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>o-sort-start</td><td><code>{ item, from, to, oldIndex, newIndex, keyboard }</code> on the source list.</td></tr>
+        <tr><td>o-sort-move</td><td>Cancelable, on the target list: <code>{ …, related, willInsertAfter, newIndex }</code>.</td></tr>
+        <tr><td>o-sort-change</td><td>The position changed during the drag.</td></tr>
+        <tr><td>o-sort-add / o-sort-remove</td><td>On the target / source list after a drag between lists.</td></tr>
+        <tr><td>o-sort-update</td><td>Order changed inside one list.</td></tr>
+        <tr><td>o-sort-end</td><td><code>{ item, from, to, oldIndex, newIndex, clone, pullMode, cancelled, dropzone, controlled, revert() }</code>.</td></tr>
+        <tr><td>o-drag-start / o-drag-move / o-drag-end</td><td>Draggable: <code>{ x, y, dx, dy, dropzone, cancelled, keyboard }</code>.</td></tr>
+        <tr><td>o-drop-enter / o-drop-leave / o-drop</td><td>Dropzone: <code>{ data, native }</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>Orion.draggable(el, options)</h3>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>handle / axis</td><td><code>null / 'both'</code></td><td>Drag handle selector / <code>'x' | 'y' | 'both'</code>.</td></tr>
+        <tr><td>bounds</td><td><code>null</code></td><td><code>'parent' | 'window' | selector | Element | { left, top, right, bottom }</code> (object = position limits).</td></tr>
+        <tr><td>grid</td><td><code>null</code></td><td>Snap: <code>16</code> or <code>[x, y]</code>.</td></tr>
+        <tr><td>helper</td><td><code>'self'</code></td><td><code>'clone'</code> drags a preview and leaves the element (palettes onto dropzones).</td></tr>
+        <tr><td>apply</td><td><code>'transform'</code></td><td><code>'transform'</code> (CSS translate), <code>'position'</code> (left/top) or <code>'none'</code> (callbacks only).</td></tr>
+        <tr><td>data / keyboard / step</td><td>— / <code>true / 10</code></td><td>Payload for dropzones / arrow keys move by step (Shift × 5).</td></tr>
+        <tr><td>onStart, onDrag, onEnd</td><td>—</td><td><code>{ x, y, dx, dy, dropzone }</code>; <code>onStart</code> may return false.</td></tr>
+      </tbody>
+    </table>
+    <p>Methods: <code>position()</code>, <code>setPosition(x, y, animate)</code>, <code>reset()</code>, <code>option()</code>, <code>destroy()</code>.</p>
+    <h3>Orion.dropzone(el, options)</h3>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>accept</td><td>all</td><td><code>(data, { native }) =&gt; boolean</code>. Native data: <code>{ native, types, hasFiles, files, text, html, uri, uris, json }</code> (files/text are readable on drop only).</td></tr>
+        <tr><td>native / internal</td><td><code>true / true</code></td><td>Accept HTML5 drops from outside / Orion drags.</td></tr>
+        <tr><td>overClass / activeClass</td><td><code>'is-over' / 'is-drop-active'</code></td><td>Hover class / class while a compatible drag runs.</td></tr>
+        <tr><td>dropEffect</td><td><code>'copy'</code></td><td>Native cursor feedback.</td></tr>
+        <tr><td>onEnter, onLeave, onOver, onDrop</td><td>—</td><td><code>(data, eventOrSession)</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>Orion.dnd (for component authors)</h3>
+    <pre class="docs-code-block" data-lang="js">
+      // in a pointerdown handler
+      Orion.dnd.start(e, {
+        el: row, data: { id }, preview: el => myPreview(el), delayOnTouch: 200,
+        onStart: s => { /* return false to abort */ },
+        onMove: s => { /* s.x, s.y, s.target (element under pointer), s.dropzone */ },
+        onDrop: s => s.settle(finalRect),          // animate the preview home
+        onCancel: s => s.settle(originRect),
+      });
+      Orion.dnd.touchGuard(container);             // once: lets drags block touch scrolling
+      Orion.dnd.flip(items, () => list.append(item), { duration: 180 });
+    </pre>
+    <h3>CSS</h3>
+    <p><code>.o-sortable-placeholder</code>, <code>.o-dnd-ghost</code> (+ <code>--o-dnd-ghost-rotate</code>, <code>--o-dnd-ghost-scale</code>,
+      <code>--o-dnd-ghost-shadow</code>), <code>.o-sortable-drag</code>, <code>.o-sortable-over</code>, <code>.o-sortable-droppable</code>,
+      <code>.o-drag-handle</code>, <code>.o-drop-area</code> (<code>.is-over</code>, <code>.is-drop-active</code>, <code>.is-danger</code>).
+      Give empty lists a <code>min-height</code> so they can receive drops.</p>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI helpdesk — Orion Admin</title>
+<script src="../../dist/orion.js"></script>
+<style>
+  body { margin: 0; height: 100vh; display: flex; flex-direction: column; background: var(--o-bg); color: var(--o-text); font: var(--o-fs-base)/1.5 var(--o-font-sans); }
+  header { display: flex; align-items: center; gap: .75rem; padding: .625rem 1.25rem; background: var(--o-surface); border-bottom: 1px solid var(--o-border); flex-shrink: 0; }
+  header h1 { margin: 0; font-size: var(--o-fs-lg); flex-shrink: 0; }
+  header > *:not(.o-global-search-wrap) { flex-shrink: 0; }
+  header .o-global-search-wrap { flex: 1 1 auto; min-width: 0; max-width: 26rem; margin-inline: auto; }
+  header .o-global-search-wrap o-global-search, header .o-global-search-wrap .o-global-search { min-width: 0; }
+  @media (max-width: 560px) {
+    header { gap: .5rem; padding-inline: .75rem; }
+    header h1 { font-size: var(--o-fs-md); }
+  }
+  main { flex: 1 1 auto; display: flex; min-height: 0; }
+  .hd-queue { flex: 0 0 16rem; border-inline-end: 1px solid var(--o-border); overflow: auto; }
+  .hd-queue h2 { margin: 1rem 1rem .5rem; font-size: var(--o-fs-xs); text-transform: uppercase; letter-spacing: .04em; color: var(--o-text-muted); }
+  .hd-ticket-row { display: block; width: 100%; text-align: start; padding: .625rem 1rem; border: 0; border-inline-start: 3px solid transparent; background: transparent; cursor: pointer; }
+  .hd-ticket-row:hover { background: var(--o-surface-2); }
+  .hd-ticket-row.is-active { background: var(--o-primary-subtle); border-inline-start-color: var(--o-primary); }
+  .hd-ticket-row .hd-subject { display: block; font-weight: 600; font-size: var(--o-fs-sm); }
+  .hd-ticket-row .hd-meta { display: block; font-size: var(--o-fs-xs); color: var(--o-text-muted); }
+  .hd-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; padding: 1.25rem; gap: 1rem; overflow: auto; }
+  .hd-side { flex: 0 0 21rem; border-inline-start: 1px solid var(--o-border); padding: 1.25rem; overflow: auto; }
+  .hd-side h2 { margin: 0 0 .75rem; font-size: var(--o-fs-xs); text-transform: uppercase; letter-spacing: .04em; color: var(--o-text-muted); }
+  .hd-msg { padding: .875rem 1rem; background: var(--o-surface-2); border-radius: var(--o-radius-lg); max-width: 40rem; }
+  .hd-analysis { padding: .875rem 1rem; background: var(--o-surface-2); border-radius: var(--o-radius); font-size: var(--o-fs-sm); margin-block-end: 1.5rem; }
+  @media (max-width: 960px) { .hd-side { display: none; } }
+  @media (max-width: 680px) { .hd-queue { display: none; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>🎧 Orion Helpdesk</h1>
+  <div class="o-global-search-wrap"><o-global-search id="kb-search" placeholder="Ask the knowledge base…" shortcut="/"></o-global-search></div>
+  <button class="o-btn o-btn-ghost o-btn-icon" id="asst-toggle" title="AI assistant" aria-label="AI assistant"></button>
+  <o-avatar name="Priya Nair" size="sm" status="online"></o-avatar>
+</header>
+<main>
+  <aside class="hd-queue">
+    <h2>Open tickets</h2>
+    <nav id="queue"></nav>
+  </aside>
+
+  <section class="hd-main">
+    <div>
+      <div class="o-cluster o-mb-2">
+        <span class="o-badge o-badge-primary">#48213</span>
+        <button class="o-btn o-btn-sm" id="analyze-btn">Analyze with AI</button>
+      </div>
+      <div class="hd-msg o-prose" id="ticket-body">
+        Hi, this is Morgan Lee (morgan.lee@example.com, +1 555 0199). My order #48213 for the Steel Desk Organizer
+        still hasn't arrived — it was expected last Friday. Could someone confirm the new delivery date? I need it
+        before the 30th for a home office move. Thanks so much!
+      </div>
+    </div>
+    <div id="analysis" hidden></div>
+
+    <div>
+      <label class="o-label" for="reply">Reply to Morgan</label>
+      <textarea class="o-input" id="reply" rows="5" data-o-ai-complete="a helpful, empathetic customer support reply" data-o-ai-suggest placeholder="Type your reply — pause for a suggestion, or use the ✦ button to improve it…"></textarea>
+      <div class="o-cluster o-mt-2">
+        <button class="o-btn o-btn-primary o-btn-sm" id="send-reply">Send reply</button>
+        <span class="o-muted o-text-sm" id="send-status"></span>
+      </div>
+    </div>
+  </section>
+
+  <aside class="hd-side">
+    <h2>Customer info</h2>
+    <form class="o-form-grid" id="customer-form" style="margin-block-end:.75rem">
+      <div class="o-field"><label class="o-label" for="c-name">Name</label><input class="o-input" id="c-name" name="name"></div>
+      <div class="o-field"><label class="o-label" for="c-email">Email</label><input class="o-input" id="c-email" name="email" type="email"></div>
+      <div class="o-field"><label class="o-label" for="c-phone">Phone</label><input class="o-input" id="c-phone" name="phone" type="tel"></div>
+      <div class="o-field"><label class="o-label" for="c-order">Order #</label><input class="o-input" id="c-order" name="order"></div>
+    </form>
+    <button class="o-btn o-btn-sm" id="fill-btn">Fill from ticket with AI</button>
+  </aside>
+</main>
+
+<o-chatbot id="helper" title="Agent helper" welcome="Ask me for macros, policy lookups, or a quick summary of this ticket." suggestions='["Summarize this ticket", "What is our return policy?"]'></o-chatbot>
+<o-assistant id="asst" title="AI assistant"></o-assistant>
+
+<script>
+(() => {
+  /* One offline mock provider drives every AI feature on this page: chatbot, assistant, ghost-text,
+     "improve with AI", fillForm, analyze and AI search. Swap for Orion.ai.http({ url: '/api/ai' }) in production. */
+  Orion.ai.configure({ provider: Orion.ai.mock({
+    latency: 200, speed: 16,
+    responses: (text, ctx) => {
+      if (/return policy/i.test(text || '')) return 'Standard orders can be returned within 30 days, unworn/unused, with the original receipt.';
+      return undefined; // fall through to the built-in default (handles summarize/rewrite/translate/extract/classify)
+    },
+  }) });
+
+  document.getElementById('asst-toggle').append(Orion.iconEl('sparkles'));
+  const ticketText = document.getElementById('ticket-body').textContent.trim();
+
+  /* ticket queue (static demo data — selecting a row is cosmetic here) */
+  const tickets = [
+    { id: '48213', subject: 'Order delayed', customer: 'Morgan Lee', time: '2m ago', active: true },
+    { id: '48190', subject: 'Wrong item received', customer: 'Alex Rivera', time: '18m ago' },
+    { id: '48177', subject: 'Refund status?', customer: 'Sam Okafor', time: '1h ago' },
+    { id: '48162', subject: 'Can I change my address?', customer: 'Jordan Blake', time: '3h ago' },
+  ];
+  document.getElementById('queue').append(...tickets.map(t => {
+    const btn = document.createElement('button');
+    btn.className = 'hd-ticket-row' + (t.active ? ' is-active' : '');
+    btn.innerHTML = `<span class="hd-subject">${t.subject}</span><span class="hd-meta">${t.customer} · ${t.time}</span>`;
+    return btn;
+  }));
+
+  /* Analyze with AI -> summary / key points / entities */
+  document.getElementById('analyze-btn').onclick = async () => {
+    const box = document.getElementById('analysis');
+    box.hidden = false;
+    box.innerHTML = '<div class="hd-analysis">Analyzing…</div>';
+    const r = await Orion.ai.analyze(ticketText);
+    box.innerHTML = `<div class="hd-analysis">
+      <strong>Summary</strong><p class="o-mb-2">${r.summary}</p>
+      <strong>Key points</strong><ul class="o-mb-2">${r.keyPoints.map(k => `<li>${k}</li>`).join('')}</ul>
+      <strong>Entities</strong><p class="o-mb-0">${r.entities.map(e => `${e.name} (${e.type})`).join(', ') || '—'}</p>
+    </div>`;
+  };
+
+  /* Fill the customer info form from the ticket text */
+  document.getElementById('fill-btn').onclick = () => {
+    Orion.ai.fillForm(document.getElementById('customer-form'), ticketText);
+  };
+
+  /* Send reply — demo only, just confirms and clears */
+  document.getElementById('send-reply').onclick = () => {
+    const reply = document.getElementById('reply');
+    if (!reply.value.trim()) return;
+    document.getElementById('send-status').textContent = 'Sent to Morgan Lee.';
+    reply.value = '';
+    setTimeout(() => { document.getElementById('send-status').textContent = ''; }, 3000);
+  };
+
+  /* AI-answer category in the header search, alongside a plain "macros" provider */
+  const macros = [
+    { id: 'm1', title: 'Delayed shipment macro', subtitle: 'Apologize + offer 10% credit', icon: 'file' },
+    { id: 'm2', title: 'Return policy macro', subtitle: '30-day return window', icon: 'file' },
+  ];
+  document.getElementById('kb-search').providers = [
+    Orion.ai.searchProvider(),
+    { id: 'macros', title: 'Macros', icon: 'file', search: async q => macros.filter(m => m.title.toLowerCase().includes(q.toLowerCase())) },
+  ];
+
+  /* Assistant panel toggle + agent helper chatbot */
+  document.getElementById('asst-toggle').onclick = () => document.getElementById('asst').toggle();
+})();
+</script>
+</body>
+</html>

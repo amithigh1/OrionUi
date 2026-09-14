@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Network graph — Orion Admin</title>
+<meta name="docs:section" content="Boards & Diagrams">
+<meta name="docs:order" content="43">
+<meta name="docs:title" content="Network Graph">
+<meta name="docs:desc" content="Force-directed network graph: Barnes-Hut charge, link springs, drag to pin, neighbour highlighting">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Network Graph</h1>
+    <p class="docs-lead"><code>&lt;o-graph&gt;</code> is a force-directed network graph: velocity-Verlet integration over a Barnes-Hut quadtree charge approximation, link springs, center gravity and spatial-hash collision. Drag a node to pin it, hover to highlight its neighbours, and pan/zoom/export the same way as the other <a href="diagram.html">diagram-family</a> widgets.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Force layout</h2>
+    <p>A random graph with three groups. The layout runs until it settles (<code>o-settle</code>) or you interact with it. The legend on the right toggles a group's visibility by dimming it — click "Ops".</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-graph id="gr" label="Service dependency graph" style="--o-gr-height: 30rem; border: 0; border-radius: 0"></o-graph>
+        <div class="docs-log" id="gr-log"></div>
+        <script>
+          {
+            const rnd = docs.rand(9), groups = ['Web', 'API', 'Ops'];
+            const nodes = Array.from({ length: 24 }, (_, i) => ({ id: 'n' + i, label: 'Service ' + i, group: groups[i % 3], size: 8 + Math.floor(rnd() * 10) }));
+            const edges = [];
+            for (let i = 1; i < 24; i++) edges.push({ source: 'n' + i, target: 'n' + Math.floor(rnd() * i) });
+            for (let i = 0; i < 10; i++) { const a = Math.floor(rnd() * 24), b = Math.floor(rnd() * 24); if (a !== b) edges.push({ source: 'n' + a, target: 'n' + b, weight: 1 + Math.floor(rnd() * 3) }); }
+            const el = document.getElementById('gr');
+            el.nodes = nodes; el.edges = edges;
+            el.addEventListener('o-settle', () => docs.log('#gr-log', 'o-settle — layout stopped moving'));
+            el.addEventListener('o-node-click', e => docs.log('#gr-log', `o-node-click → ${e.detail.node.label}`));
+            el.addEventListener('o-pin', e => docs.log('#gr-log', `o-pin ${e.detail.id} → ${e.detail.pinned}`));
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="pin">
+    <h2>Pin, freeze &amp; reheat</h2>
+    <p>Dragging a node always pins it (<code>o-pin</code>, <code>pinned: true</code>); double-click a pinned node to release it. <code>frozen</code> stops the whole simulation loop (dragging still re-pins, it just doesn't move anything else); <code>reheat(alpha)</code> restarts it without touching pins.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-sm" id="pin-freeze">Freeze / resume</button>
+          <button class="o-btn o-btn-sm o-btn-ghost" id="pin-reheat">Restart layout</button>
+        </div>
+        <o-graph id="gr2" style="--o-gr-height: 18rem"></o-graph>
+        <script>
+          {
+            const el = document.getElementById('gr2');
+            const rnd = docs.rand(3);
+            const nodes = Array.from({ length: 14 }, (_, i) => ({ id: i, label: 'N' + i }));
+            const edges = Array.from({ length: 14 }, (_, i) => i).filter(i => i > 0).map(i => ({ source: i, target: Math.floor(rnd() * i) }));
+            el.nodes = nodes; el.edges = edges;
+            document.getElementById('pin-freeze').onclick = () => { el.frozen = !el.frozen; };
+            document.getElementById('pin-reheat').onclick = () => el.reheat(1);
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="labels">
+    <h2>Edge labels &amp; weight</h2>
+    <p>An edge's <code>label</code> is drawn at its midpoint; <code>weight</code> thickens the line (and softens the spring so heavier links pull tighter).</p>
+    <div class="docs-demo">
+      <template>
+        <o-graph id="gr3" legend="false" style="--o-gr-height: 16rem"></o-graph>
+        <script>
+          document.getElementById('gr3').nodes = [{ id: 'a', label: 'Client' }, { id: 'b', label: 'API' }, { id: 'c', label: 'Database' }, { id: 'd', label: 'Cache' }];
+          document.getElementById('gr3').edges = [
+            { source: 'a', target: 'b', label: 'HTTPS', weight: 2 }, { source: 'b', target: 'c', label: 'SQL', weight: 3 }, { source: 'b', target: 'd', label: 'get/set', weight: 1 },
+          ];
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard &amp; accessibility</h2>
+    <p>The canvas is a focusable <code>role="application"</code> region with a live <code>aria-label</code> summary (node/edge counts). Dragging, hover-to-highlight and double-click-to-unpin are pointer-only.</p>
+    <table class="docs-api">
+      <thead><tr><th>Keys</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>+ · − · 0 · 1</td><td>Zoom in · zoom out · 100% · zoom to fit.</td></tr>
+        <tr><td>Wheel / pinch, drag on empty canvas</td><td>Zoom / pan.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Data</h3>
+    <pre class="docs-code-block" data-lang="js">
+      el.nodes = [{ id, label, group, size, data }];
+      el.edges = [{ source, target, weight, label }];   // { from, to } also accepted
+    </pre>
+    <h3>Attributes &amp; properties</h3>
+    <table class="docs-api">
+      <thead><tr><th>Name</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>nodes / edges</td><td>array (property only)</td><td>[]</td><td>Graph data (see above).</td></tr>
+        <tr><td>legend</td><td>boolean</td><td>true</td><td>Group-color legend (shown only when a node has a <code>group</code>); click an entry to dim it.</td></tr>
+        <tr><td>toolbar</td><td>boolean</td><td>true</td><td>Freeze/resume, restart, export.</td></tr>
+        <tr><td>frozen</td><td>boolean (reflects)</td><td>false</td><td>Stops the simulation loop.</td></tr>
+        <tr><td>link-distance</td><td>number</td><td>70</td><td>Target link length.</td></tr>
+        <tr><td>charge</td><td>number</td><td>-220</td><td>Node repulsion strength.</td></tr>
+        <tr><td>min-zoom / max-zoom</td><td>number</td><td>0.05 / 6</td><td>Zoom limits.</td></tr>
+        <tr><td>label</td><td>string</td><td>—</td><td>Accessible name; also the export title and file name.</td></tr>
+        <tr><td>texts</td><td>object (property only)</td><td>—</td><td>Per-instance string overrides (<code>graph.*</code> keys).</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>select(id | null) · getSelection()</td><td>Selection (single).</td></tr>
+        <tr><td>pin(id, x?, y?) · unpin(id)</td><td>Pin / release a node.</td></tr>
+        <tr><td>freeze() · unfreeze()</td><td>Same as the <code>frozen</code> prop.</td></tr>
+        <tr><td>reheat(alpha = 1)</td><td>Restart/boost the simulation.</td></tr>
+        <tr><td>getValue()</td><td>{ nodes, edges } deep copy.</td></tr>
+        <tr><td>getNode(id) · getNeighbors(id)</td><td>Read helpers.</td></tr>
+        <tr><td>fit(opts) · zoomTo(k | 'fit') · zoom</td><td>View control.</td></tr>
+        <tr><td>exportSVG(opts) · exportPNG(opts) · download(format, name)</td><td>Export (<code>'svg' | 'png' | 'json'</code>).</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-node-click</td><td>{ node, originalEvent }</td><td>Click without drag.</td></tr>
+        <tr><td>o-select</td><td>{ node }</td><td></td></tr>
+        <tr><td>o-pin</td><td>{ id, pinned }</td><td>After a drag ends, a double-click releases, or <code>pin()</code>/<code>unpin()</code>.</td></tr>
+        <tr><td>o-settle</td><td>{}</td><td>Does not bubble. Fires once the layout's alpha drops below its minimum and the loop stops.</td></tr>
+        <tr><td>o-viewport</td><td>{ x, y, zoom }</td><td>Does not bubble.</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS variables</h3>
+    <p><code>--o-gr-height</code>, <code>--o-gr-bg</code>, <code>--o-gr-edge</code>, <code>--o-gr-select</code>.</p>
+    <h3>Frameworks</h3>
+    <p>Set <code>nodes</code>/<code>edges</code> as properties (React 19, Vue <code>:nodes</code>, Angular <code>[nodes]</code>); React 18 may pass them as JSON strings.</p>
+  </section>
+</main>
+</body>
+</html>

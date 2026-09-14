@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tour — Orion Admin</title>
+<meta name="docs:section" content="Auth & Onboarding">
+<meta name="docs:order" content="40">
+<meta name="docs:desc" content="Product tours with a spotlight, an onboarding checklist and hotspot beacons">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .tour-mock { display: grid; grid-template-columns: 8rem 1fr; gap: 0; border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); overflow: hidden; }
+  .tour-mock-side { background: var(--o-surface-2); padding: 1rem .75rem; display: flex; flex-direction: column; gap: .5rem; font-size: var(--o-fs-sm); }
+  .tour-mock-main { padding: 1.25rem; background: var(--o-surface); }
+  .tour-mock-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; margin-bottom: 1rem; }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Tour</h1>
+    <p class="docs-lead"><code>Orion.tour()</code> walks users through a page with an animated spotlight and
+      a step popover, <code>&lt;o-checklist&gt;</code> tracks onboarding progress, and
+      <code>data-o-hotspot</code> adds "did you know" beacons. Try the tour over the mock dashboard below.</p>
+  </header>
+
+  <section id="demo">
+    <h2>Live demo</h2>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-cluster o-mb-4">
+          <button class="o-btn o-btn-primary" id="tour-start"><o-icon name="play"></o-icon> Start the tour</button>
+          <button class="o-btn" id="tour-restart">Restart (ignore "already seen")</button>
+        </div>
+        <div class="tour-mock">
+          <div class="tour-mock-side">
+            <b>Orion</b>
+            <span>Dashboard</span>
+            <span id="tour-target-reports">Reports</span>
+            <span>Settings</span>
+          </div>
+          <div class="tour-mock-main">
+            <div class="tour-mock-stats">
+              <div class="o-stat" id="tour-target-kpi"><span class="o-stat-label">Revenue</span><span class="o-stat-value">$48.2k</span></div>
+              <div class="o-stat"><span class="o-stat-label">Users</span><span class="o-stat-value">1,204</span></div>
+              <div class="o-stat"><span class="o-stat-label">Churn</span><span class="o-stat-value">2.1%</span></div>
+            </div>
+            <button class="o-btn o-btn-primary o-btn-sm" id="tour-target-new">New report</button>
+            <button class="o-btn o-btn-ghost o-btn-icon o-btn-sm" id="tour-target-help" aria-label="Help" data-o-hotspot="Press F1 any time for contextual help." data-o-hotspot-placement="left" style="margin-inline-start:.5rem"><o-icon name="help-circle"></o-icon></button>
+          </div>
+        </div>
+        <o-checklist id="tour-checklist" heading="Getting started" style="margin-top:1.5rem;max-width:22rem"
+          tasks='[{"id":"tour","title":"Take the tour","description":"See what is new"},{"id":"report","title":"Create your first report"},{"id":"invite","title":"Invite a teammate"}]'></o-checklist>
+        <div class="docs-log" id="tour-log"></div>
+        <script>
+          const tour = Orion.tour({
+            id: 'docs-dashboard-tour', persist: true, keyboard: true,
+            steps: [
+              { title: 'Welcome to Orion!', content: 'A 20-second look at the essentials.' },
+              { target: '#tour-target-kpi', title: 'Your KPIs', content: 'Live numbers, updated every minute.', placement: 'bottom' },
+              { target: '#tour-target-reports', title: 'Reports', content: 'All your saved reports live here.', placement: 'right' },
+              { target: '#tour-target-new', title: 'Create a report', content: 'Click the button to try it — it still works while the tour is open.', advanceOn: { event: 'click' } },
+              { target: '#tour-target-help', title: 'Need help?', content: 'This button has its own beacon tip — try it after the tour.', placement: 'left' },
+            ],
+            onFinish: () => { docs.log('#tour-log', 'Tour finished'); document.getElementById('tour-checklist').complete('tour'); },
+            onSkip: () => docs.log('#tour-log', 'Tour skipped'),
+          });
+          document.getElementById('tour-start').addEventListener('click', () => tour.start());
+          document.getElementById('tour-restart').addEventListener('click', () => tour.start({ force: true }));
+          document.getElementById('tour-target-new').addEventListener('click', () => docs.log('#tour-log', 'New report clicked (target stayed clickable)'));
+          document.getElementById('tour-checklist').addEventListener('o-task', e => { if (e.detail.task.id === 'tour') { e.preventDefault(); tour.start({ force: true }); } });
+          document.getElementById('tour-checklist').addEventListener('o-all-done', () => docs.log('#tour-log', 'Checklist complete!'));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API — <code>Orion.tour(config)</code></h2>
+    <table class="docs-api">
+      <tbody>
+        <tr><td>Config</td><td><code>id steps onFinish onSkip persist keyboard(=true) overlayClose(=false) targetTimeout(=8000)</code></td></tr>
+        <tr><td>Step</td><td><code>target title content placement spotlightPadding radius beforeShow advanceOn:{selector,event} media:{type,src,alt}</code></td></tr>
+        <tr><td>Returns</td><td><code>{ start({force}?), next(), prev(), end(reason?), goTo(i), isActive }</code></td></tr>
+        <tr><td><code>Orion.tour.get(id)</code></td><td>Look up a running/registered tour by id.</td></tr>
+      </tbody>
+    </table>
+    <h3><code>&lt;o-checklist&gt;</code></h3>
+    <table class="docs-api">
+      <tbody>
+        <tr><td>Props</td><td><code>tasks heading list-id dismissible(=true) floating collapsed texts</code></td></tr>
+        <tr><td>Methods</td><td><code>complete(id) uncomplete(id) toggle(id) isDone(id) progress() reset() show() hide()</code></td></tr>
+        <tr><td>Events</td><td><code>o-task</code> (cancelable) <code>o-complete o-all-done o-dismiss</code></td></tr>
+      </tbody>
+    </table>
+    <h3>Hotspots</h3>
+    <p><code>data-o-hotspot="text"</code> [<code>data-o-hotspot-id</code>] [<code>data-o-hotspot-placement</code>] —
+      see the pulsing dot on the help button above; once opened it never shows again (remembered in <code>localStorage</code>).</p>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <tbody>
+        <tr><td><kbd>→</kbd> / <kbd>←</kbd></td><td>Next / back (mirrored in RTL).</td></tr>
+        <tr><td><kbd>Tab</kbd></td><td>Cycles inside the step dialog only; <code>advanceOn</code> targets stay mouse/touch-clickable.</td></tr>
+        <tr><td><kbd>Escape</kbd></td><td>Skip the tour (when <code>keyboard</code> is enabled).</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

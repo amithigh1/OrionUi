@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in — Orion Admin</title>
+<script src="../dist/orion.js"></script>
+<style>
+  body { margin: 0; }
+  .auth { display: grid; min-height: 100vh; grid-template-columns: 1fr; }
+  @media (min-width: 992px) { .auth { grid-template-columns: 1.1fr 1fr; } }
+  .auth-side { display: none; position: relative; overflow: hidden; padding: 3rem; color: #fff;
+    background: radial-gradient(900px 400px at 110% -10%, color-mix(in srgb, var(--o-info) 75%, transparent), transparent 60%),
+                linear-gradient(140deg, var(--o-primary), color-mix(in srgb, var(--o-primary) 45%, #0b1020)); }
+  @media (min-width: 992px) { .auth-side { display: flex; flex-direction: column; justify-content: space-between; } }
+  .auth-side h1 { color: #fff; font-size: 2.25rem; letter-spacing: -.02em; margin: 0 0 .75rem; }
+  .auth-side p { color: rgba(255,255,255,.85); font-size: 1.0625rem; max-width: 28rem; }
+  .auth-quote { padding: 1.25rem; border-radius: var(--o-radius-lg); background: rgba(255,255,255,.12); backdrop-filter: blur(6px); }
+  .auth-main { display: grid; place-items: center; padding: 2rem 1.25rem; background: var(--o-bg); }
+  .auth-card { width: 100%; max-width: 25rem; }
+  .auth-brand { display: flex; align-items: center; gap: .625rem; font-weight: 700; font-size: 1.125rem; margin-bottom: 2rem; }
+  .auth-logo { display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: 10px; color: #fff;
+    background: linear-gradient(135deg, var(--o-primary), color-mix(in srgb, var(--o-primary) 50%, var(--o-info))); }
+  .auth-social { display: grid; gap: .5rem; grid-template-columns: 1fr 1fr; }
+</style>
+</head>
+<body>
+<div class="auth">
+  <aside class="auth-side">
+    <div class="auth-brand" style="color:#fff"><span class="auth-logo" style="background:rgba(255,255,255,.2)"><o-icon name="sparkles" size="20"></o-icon></span> Orion Admin</div>
+    <div>
+      <h1>Everything your back-office needs.</h1>
+      <p>Data tables, charts, calendars, editors and 300+ more components — in a single file, with dark mode and full keyboard support.</p>
+    </div>
+    <div class="auth-quote">
+      <p style="margin:0 0 .75rem">“We replaced four libraries with Orion and shipped our admin in a week.”</p>
+      <div class="o-hstack"><o-avatar name="Mei Lin" size="sm"></o-avatar><div><b>Mei Lin</b><div style="font-size:.8125rem;color:rgba(255,255,255,.7)">CTO, Globex</div></div></div>
+    </div>
+  </aside>
+
+  <main class="auth-main">
+    <div class="auth-card">
+      <div class="auth-brand"><span class="auth-logo"><o-icon name="sparkles" size="20"></o-icon></span> Orion Admin</div>
+      <h2 class="o-h3" style="margin-bottom:.25rem">Sign in</h2>
+      <p class="o-text-muted">Welcome back. Please enter your details.</p>
+
+      <form id="login" class="o-mt-5" data-o-validate novalidate>
+        <div class="o-field">
+          <label class="o-label is-required" for="email">Email</label>
+          <div class="o-input-wrap"><o-icon name="mail"></o-icon>
+            <input class="o-input" id="email" name="email" type="email" autocomplete="username" placeholder="you@company.com" data-o-rules="required|email">
+          </div>
+          <div class="o-error"></div>
+        </div>
+        <div class="o-field">
+          <label class="o-label is-required" for="password">Password
+            <a class="o-label-hint" href="forgot-password.html">Forgot?</a></label>
+          <input class="o-input" id="password" name="password" type="password" autocomplete="current-password" placeholder="••••••••" data-o-password-toggle data-o-rules="required|minlength:8">
+          <div class="o-error"></div>
+        </div>
+        <label class="o-check"><input type="checkbox" name="remember" checked> <span>Remember me for 30 days</span></label>
+        <button class="o-btn o-btn-primary o-btn-block o-btn-lg o-mt-4" type="submit">Sign in</button>
+      </form>
+
+      <div class="o-divider o-my-5">or continue with</div>
+      <div class="auth-social">
+        <button class="o-btn" data-provider="google"><o-icon name="brand-google"></o-icon>Google</button>
+        <button class="o-btn" data-provider="microsoft"><o-icon name="brand-microsoft"></o-icon>Microsoft</button>
+      </div>
+      <o-biometric-login class="o-mt-3" label="Sign in with a passkey"></o-biometric-login>
+
+      <p class="o-text-center o-text-muted o-mt-6 o-mb-0">Don't have an account? <a href="register.html">Create one</a></p>
+    </div>
+  </main>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('login');
+    const validator = Orion.validate ? Orion.validate(form, { live: 'blur' }) : null;
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      if (validator && !(await validator.validate())) return;
+      const btn = form.querySelector('button[type=submit]');
+      btn.classList.add('is-loading');
+      const data = Orion.serialize ? Orion.serialize(form) : Object.fromEntries(new FormData(form));
+      // Replace with your API: await Orion.http.post('/api/login', data)
+      setTimeout(() => {
+        btn.classList.remove('is-loading');
+        if (data.password === 'wrongpassword') { Orion.toast?.error('Those credentials do not match'); return; }
+        Orion.toast?.success('Signed in — redirecting…');
+        setTimeout(() => (location.href = 'dashboard.html'), 700);
+      }, 800);
+    });
+    document.querySelectorAll('[data-provider]').forEach(b => b.addEventListener('click', () => Orion.toast?.(`Redirecting to ${b.dataset.provider}…`)));
+  });
+</script>
+</body>
+</html>

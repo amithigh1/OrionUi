@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings — Orion Admin</title>
+<script src="../dist/orion.js"></script>
+<link rel="stylesheet" href="assets/shell.css">
+<script>
+  window.PAGE = {
+    id: 'settings', title: 'Settings', subtitle: 'Workspace, appearance, notifications and access.',
+    breadcrumbs: [{ label: 'Home', href: 'dashboard.html' }, { label: 'System' }, { label: 'Settings' }],
+    actions: '<button class="o-btn" id="reset-settings">Discard</button><button class="o-btn o-btn-primary" id="save-settings">Save changes</button>',
+  };
+</script>
+<script src="assets/shell.js" defer></script>
+</head>
+<body>
+<div id="app-content">
+  <o-tabs variant="line" hash="tab">
+    <o-tab-panel label="General" icon="settings" id="general">
+      <form id="general-form" class="o-card o-card-body o-form-grid" data-o-validate data-o-autosave="tpl-settings-general" style="max-width:56rem">
+        <div class="o-field o-span-full"><label class="o-label is-required" for="s-name">Workspace name</label>
+          <input class="o-input" id="s-name" name="workspace" value="Orion Labs" data-o-rules="required|minlength:2">
+          <div class="o-help">Shown in the sidebar and in emails.</div></div>
+        <div class="o-field"><label class="o-label" for="s-url">Workspace URL</label>
+          <div class="o-input-group"><span class="o-input-addon">orion.app/</span><input class="o-input" id="s-url" name="slug" value="orion-labs" data-o-mask="aaaaaaaaaaaaaaaaaaaa"></div></div>
+        <div class="o-field"><label class="o-label" for="s-support">Support email</label>
+          <input class="o-input" id="s-support" name="support" type="email" value="support@orionlabs.example" data-o-rules="email"></div>
+        <div class="o-field"><label class="o-label" for="s-currency">Default currency</label>
+          <o-select id="s-currency" name="currency" value="USD" options='[{"value":"USD","label":"US dollar (USD)"},{"value":"MYR","label":"Malaysian ringgit (MYR)"},{"value":"EUR","label":"Euro (EUR)"},{"value":"JPY","label":"Japanese yen (JPY)"}]'></o-select></div>
+        <div class="o-field"><label class="o-label" for="s-tz">Time zone</label>
+          <o-select id="s-tz" name="timezone" value="Asia/Kuala_Lumpur" searchable options='["Asia/Kuala_Lumpur","Asia/Singapore","Europe/London","America/New_York","Asia/Tokyo","Australia/Sydney"]'></o-select></div>
+        <div class="o-field o-span-full"><label class="o-label" for="s-desc">Description</label>
+          <textarea class="o-textarea" id="s-desc" name="description" data-o-counter maxlength="200" rows="3">Internal admin workspace for the Orion team.</textarea></div>
+        <span class="o-text-muted o-text-xs o-span-full" data-o-autosave-status></span>
+      </form>
+    </o-tab-panel>
+
+    <o-tab-panel label="Appearance" icon="palette" id="appearance">
+      <div class="o-card o-card-body o-mb-4"><o-preferences sections="appearance,accessibility,language"></o-preferences></div>
+      <div class="o-card">
+        <div class="o-card-header"><h2 class="o-card-title">Brand theme</h2><p class="o-card-subtitle">Changes apply instantly and can be exported as CSS.</p></div>
+        <div class="o-card-body"><o-theme-builder></o-theme-builder></div>
+      </div>
+    </o-tab-panel>
+
+    <o-tab-panel label="Notifications" icon="bell" id="notifications">
+      <div class="o-card o-card-body" style="max-width:44rem">
+        <h3 class="o-h6">Email</h3>
+        <label class="o-switch"><input type="checkbox" checked> <span>Weekly summary<span class="o-check-desc">Every Monday at 9:00</span></span></label>
+        <label class="o-switch"><input type="checkbox" checked> <span>New order placed</span></label>
+        <label class="o-switch"><input type="checkbox"> <span>Product updates and tips</span></label>
+        <hr>
+        <h3 class="o-h6">In-app</h3>
+        <label class="o-switch"><input type="checkbox" checked> <span>Mentions and replies</span></label>
+        <label class="o-switch"><input type="checkbox" checked> <span>Task assignments</span></label>
+        <label class="o-switch"><input type="checkbox"> <span>Play a sound for new notifications</span></label>
+        <hr>
+        <h3 class="o-h6">Browser push</h3>
+        <p class="o-text-muted o-text-sm">Get notified even when this tab is in the background.</p>
+        <button class="o-btn" id="enable-push"><o-icon name="bell"></o-icon>Enable push notifications</button>
+      </div>
+    </o-tab-panel>
+
+    <o-tab-panel label="Access" icon="shield" id="access">
+      <div class="o-card o-card-body o-mb-4">
+        <h3 class="o-h6">Your role</h3>
+        <p class="o-text-muted o-text-sm">Switch role to preview what other people can see. Elements marked with <code>data-o-permission</code> react instantly.</p>
+        <div class="o-segmented" id="role-switch"><button class="is-active" data-role="admin">Admin</button><button data-role="manager">Manager</button><button data-role="viewer">Viewer</button></div>
+        <div class="o-cluster o-mt-4">
+          <button class="o-btn o-btn-primary" data-o-permission="users.edit" data-o-denied="disable">Edit users</button>
+          <button class="o-btn o-btn-danger" data-o-permission="users.delete" data-o-denied="hide">Delete users</button>
+          <button class="o-btn" data-o-role="admin" data-o-denied="disable">Billing settings</button>
+          <span class="o-badge o-badge-soft-secondary" data-o-permission="reports.view">Reports visible</span>
+        </div>
+      </div>
+      <div class="o-card">
+        <div class="o-card-header"><h2 class="o-card-title">Two-factor authentication</h2></div>
+        <div class="o-card-body"><o-2fa-setup issuer="Orion Admin" account="aisha@orionlabs.example"></o-2fa-setup></div>
+      </div>
+    </o-tab-panel>
+
+    <o-tab-panel label="Danger zone" icon="alert-triangle" id="danger">
+      <div class="o-card o-card-body" style="max-width:44rem">
+        <div class="o-alert o-alert-danger o-alert-accent"><o-icon name="alert-triangle"></o-icon>
+          <div class="o-alert-content"><div class="o-alert-title">Deleting the workspace is permanent</div>
+            All data, users and integrations are removed immediately.</div></div>
+        <button class="o-btn o-btn-danger" id="delete-workspace"><o-icon name="trash"></o-icon>Delete workspace</button>
+      </div>
+    </o-tab-panel>
+  </o-tabs>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const ROLES = {
+      admin: { roles: ['admin'], permissions: ['*'] },
+      manager: { roles: ['manager'], permissions: ['users.edit', 'reports.view'] },
+      viewer: { roles: ['viewer'], permissions: ['reports.view'] },
+    };
+    Orion.auth?.setUser({ id: 1, name: 'Aisha Rahman', ...ROLES.admin });
+    document.getElementById('role-switch')?.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      [...b.parentElement.children].forEach(x => x.classList.toggle('is-active', x === b));
+      Orion.auth?.setUser({ id: 1, name: 'Aisha Rahman', ...ROLES[b.dataset.role] });
+      Orion.toast?.(`Previewing as ${b.textContent}`, { duration: 1500 });
+    });
+
+    document.getElementById('save-settings')?.addEventListener('click', async e => {
+      const form = document.getElementById('general-form');
+      if (Orion.validate) { const v = Orion.validate(form); if (!(await v.validate())) { Orion.toast?.error('Please fix the highlighted fields'); return; } }
+      e.currentTarget.classList.add('is-loading');
+      setTimeout(() => { e.currentTarget.classList.remove('is-loading'); Orion.toast?.success('Settings saved'); }, 700);
+    });
+    document.getElementById('reset-settings')?.addEventListener('click', () => document.getElementById('general-form').reset());
+    document.getElementById('enable-push')?.addEventListener('click', async () => {
+      if (Orion.notify?.request) { const ok = await Orion.notify.request(); Orion.toast?.[ok ? 'success' : 'error'](ok ? 'Push notifications enabled' : 'Permission denied'); }
+      else Orion.toast?.('Load the PWA package for push notifications');
+    });
+    document.getElementById('delete-workspace')?.addEventListener('click', async () => {
+      const ok = Orion.confirm ? await Orion.confirm({ title: 'Delete workspace?', text: 'This cannot be undone. Type DELETE to confirm.', requireText: 'DELETE', danger: true, confirmText: 'Delete forever' }) : window.confirm('Delete workspace?');
+      if (ok) Orion.toast?.error('Workspace deleted (demo)');
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+/* <o-live-indicator> */
+o-live-indicator:not(:defined) { visibility: hidden; }
+.o-live-indicator { --o-live-c: var(--o-text-subtle); display: inline-flex; align-items: center; gap: .4375rem; font-size: var(--o-fs-sm); font-weight: 500; color: var(--o-text-muted); white-space: nowrap; vertical-align: middle; }
+.o-live-indicator[data-tone="good"] { --o-live-c: var(--o-status-good); }
+.o-live-indicator[data-tone="warning"] { --o-live-c: var(--o-status-warning); }
+.o-live-indicator[data-tone="critical"] { --o-live-c: var(--o-status-critical); }
+.o-live-dot { position: relative; flex-shrink: 0; width: .5rem; height: .5rem; border-radius: 50%; background: var(--o-live-c); }
+/* shape cues so status is not conveyed by color alone */
+.o-live-indicator[data-status="open"] .o-live-dot::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: inherit; animation: o-ping 1.6s cubic-bezier(0, 0, .2, 1) infinite; }
+.o-live-indicator[data-tone="warning"] .o-live-dot { animation: o-pulse 1s ease-in-out infinite; }
+.o-live-indicator[data-status="closed"] .o-live-dot, .o-live-indicator[data-status="offline"] .o-live-dot, .o-live-indicator[data-status="idle"] .o-live-dot { background: transparent; box-shadow: inset 0 0 0 2px var(--o-live-c); }
+.o-live-indicator[data-status="closed"] .o-live-label { color: var(--o-danger-text); }
+.o-live-indicator[pill] { height: 1.625rem; padding: 0 .625rem; background: var(--o-surface); border: 1px solid var(--o-border); border-radius: var(--o-radius-pill); font-size: var(--o-fs-xs); }
+.o-live-indicator[compact] { gap: 0; }
+.o-live-indicator[compact] .o-live-label { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+[data-o-live-error] { outline: 1px dashed var(--o-danger-border); outline-offset: 2px; }

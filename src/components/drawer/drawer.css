@@ -1,0 +1,55 @@
+/* Drawer: <o-drawer> renders <dialog class="o-drawer o-drawer-{side}"> > .o-drawer-backdrop + .o-drawer-panel */
+.o-drawer {
+  --o-drawer-size: 24rem;
+  position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none;
+  margin: 0; padding: 0; border: 0; background: transparent; color: var(--o-text); overflow: hidden;
+}
+.o-drawer:not([open]) { display: none; }
+.o-drawer::backdrop { background: transparent; }
+.o-drawer.is-closing { pointer-events: none; }
+.o-drawer-backdrop { position: absolute; }
+.o-drawer.no-backdrop > .o-drawer-backdrop, .o-drawer.is-modeless > .o-drawer-backdrop { display: none; }
+.o-drawer.is-modeless { pointer-events: none; }
+.o-drawer.is-modeless > .o-drawer-panel { pointer-events: auto; }
+.o-drawer.is-modeless.is-closing > .o-drawer-panel { pointer-events: none; }
+
+.o-drawer-panel {
+  position: absolute; display: flex; flex-direction: column; max-width: 100%; max-height: 100%;
+  background: var(--o-elevated); color: var(--o-text); box-shadow: var(--o-shadow-xl); outline: none; touch-action: pan-y;
+}
+.o-drawer-start > .o-drawer-panel, .o-drawer-end > .o-drawer-panel { inset-block: 0; width: var(--o-drawer-size); }
+.o-drawer-start > .o-drawer-panel { inset-inline-start: 0; border-inline-end: 1px solid var(--o-border); }
+.o-drawer-end > .o-drawer-panel { inset-inline-end: 0; border-inline-start: 1px solid var(--o-border); }
+.o-drawer-top > .o-drawer-panel, .o-drawer-bottom > .o-drawer-panel { inset-inline: 0; height: var(--o-drawer-vsize, auto); max-height: min(100%, var(--o-drawer-vmax, 85vh)); touch-action: auto; }
+.o-drawer-top > .o-drawer-panel { top: 0; border-bottom: 1px solid var(--o-border); border-end-start-radius: var(--o-radius-xl); border-end-end-radius: var(--o-radius-xl); }
+.o-drawer-bottom > .o-drawer-panel { bottom: 0; border-top: 1px solid var(--o-border); border-start-start-radius: var(--o-radius-xl); border-start-end-radius: var(--o-radius-xl); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.o-drawer-bottom > .o-drawer-panel::before {
+  content: ""; position: absolute; top: .375rem; inset-inline: 0; width: 2.25rem; height: .25rem; margin-inline: auto;
+  border-radius: var(--o-radius-pill); background: var(--o-border-strong);
+}
+.o-drawer-sm { --o-drawer-size: 18rem; --o-drawer-vsize: 30vh; }
+.o-drawer-lg { --o-drawer-size: 32rem; --o-drawer-vsize: 70vh; }
+.o-drawer-xl { --o-drawer-size: 44rem; --o-drawer-vsize: 85vh; }
+.o-drawer-full { --o-drawer-size: 100%; --o-drawer-vsize: 100%; --o-drawer-vmax: 100%; }
+.o-drawer-full > .o-drawer-panel { border-radius: 0; }
+
+.o-drawer-header { display: flex; align-items: center; gap: .75rem; min-height: 3.5rem; padding: .75rem 1rem .75rem 1.25rem; border-bottom: 1px solid var(--o-border); flex-shrink: 0; }
+.o-drawer-top .o-drawer-header, .o-drawer-bottom .o-drawer-header { touch-action: none; }
+.o-drawer-header > :not(.o-drawer-close) { flex: 1 1 auto; min-width: 0; }
+.o-drawer-title { margin: 0; font-size: var(--o-fs-md); font-weight: 600; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.o-drawer-close { margin-inline-start: auto; }
+.o-drawer-panel:not(.has-title) > .o-drawer-header { justify-content: flex-end; min-height: 3rem; border-bottom: 0; }
+.o-drawer-body { flex: 1 1 auto; min-height: 0; padding: 1.25rem; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--o-scrollbar) transparent; }
+.o-drawer-body > :last-child { margin-bottom: 0; }
+.o-drawer-body.is-flush, .o-drawer-body:has(> .o-drawer-flush) { padding: 0; }
+.o-drawer-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .5rem; flex-shrink: 0; padding: .875rem 1.25rem; border-top: 1px solid var(--o-border); background: var(--o-surface-2); }
+.o-drawer-footer > [slot="footer"]:not(.o-btn), .o-drawer-footer > .o-drawer-footer, .o-drawer-footer > .o-modal-actions { display: contents; }
+.o-drawer .o-loading-overlay { z-index: 5; }
+.o-drawer-panel.is-swiping { transition: none; user-select: none; -webkit-user-select: none; }
+@media (max-width: 575.98px) {
+  .o-drawer:not(.o-drawer-full) { --o-drawer-size: min(22rem, calc(100vw - 3rem)); }
+  .o-drawer-sm:not(.o-drawer-full) { --o-drawer-size: min(18rem, calc(100vw - 3rem)); }
+  .o-drawer-header { padding-inline-start: 1rem; }
+  .o-drawer-body { padding: 1rem; }
+  .o-drawer-footer { padding: .75rem 1rem; }
+}

@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Email Preview — Orion Admin</title>
+<meta name="docs:section" content="Editors">
+<meta name="docs:order" content="40">
+<meta name="docs:desc" content="Sandboxed HTML email preview with device widths, dark-mode simulation, text/source/inbox views">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Email Preview</h1>
+    <p class="docs-lead"><code>&lt;o-email-preview&gt;</code> renders an HTML email body inside a <strong>sandboxed iframe</strong> — the sandbox never includes <code>allow-scripts</code>, so nothing in the message can ever run, no matter what it contains. It ships a device-width toolbar, a dark-mode simulation, images on/off, zoom, a plain-text view, a syntax-highlighted source view and a one-line inbox-row view.</p>
+  </header>
+
+  <section id="overview">
+    <h2>Overview</h2>
+    <p>Give it an <code>html</code> string (and optionally <code>subject</code>, <code>from</code>, <code>to</code>, <code>preheader</code>). The body is sanitized (scripts, event handlers and unsafe URLs are stripped; <code>&lt;style&gt;</code> is kept since email HTML relies on it) and set as the iframe's <code>srcdoc</code> — never as <code>src</code> with a blob/data URL, which can inherit privileges in some browsers.</p>
+    <div class="docs-demo" data-preview="flush" data-open>
+      <template>
+        <o-email-preview id="ep-main" subject="Your September Orion digest" from="Orion Admin &lt;news@orionadmin.example&gt;" to="devs@example.com" preheader="New chart types, a faster data table, and a look at what's next."></o-email-preview>
+        <script>{
+          // A data: URI placeholder image for the sample newsletter. Rendered as a PNG (via canvas), not an
+          // inline SVG data URI: Orion's core sanitize() only allows raster data: URIs for <img src> (SVG
+          // data URIs are excluded everywhere, including here, as a defense against SVG-borne script payloads)
+          // — exactly the same sanitize() the preview iframe itself runs the email HTML through.
+          const placeholderPng = (w, h, bg, fg, label) => {
+            const c = document.createElement('canvas'); c.width = w; c.height = h;
+            const cx = c.getContext('2d');
+            cx.fillStyle = bg; cx.fillRect(0, 0, w, h);
+            cx.fillStyle = fg; cx.font = 'bold ' + Math.round(w / 14) + 'px Arial, sans-serif';
+            cx.textAlign = 'center'; cx.textBaseline = 'middle';
+            cx.fillText(label, w / 2, h / 2);
+            return c.toDataURL('image/png');
+          };
+          const hero = placeholderPng(560, 220, '#4f46e5', '#ffffff', 'Orion Admin');
+          const shot1 = placeholderPng(160, 160, '#dbeafe', '#1e3a8a', 'Charts');
+          const shot2 = placeholderPng(160, 160, '#dcfce7', '#14532d', 'Tables');
+          const html = `
+<div style="background:#f4f6fa;padding:24px 0;font-family:Arial,Helvetica,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+    <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;background:#ffffff;border-radius:8px;overflow:hidden;">
+      <tr><td style="background:#4f46e5;padding:20px 32px;">
+        <span style="color:#ffffff;font-size:20px;font-weight:bold;">Orion Admin</span>
+        <span style="color:#c7d2fe;font-size:12px;float:right;line-height:28px;">September digest</span>
+      </td></tr>
+      <tr><td style="padding:0;">
+        <img src="${hero}" width="600" height="220" alt="Orion Admin — building blocks for admin UIs" style="display:block;width:100%;height:auto;">
+      </td></tr>
+      <tr><td style="padding:28px 32px 8px;">
+        <h1 style="margin:0 0 12px;font-size:22px;color:#0f172a;">What shipped this month</h1>
+        <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#334155;">Hi there — three big additions landed in Orion Admin this month: a redesigned chart engine, a much faster data table for 100k+ rows, and a new email preview widget (the one rendering this message). Here's the short version.</p>
+      </td></tr>
+      <tr><td style="padding:0 32px 8px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+          <td width="48%" valign="top" style="padding:8px;">
+            <img src="${shot1}" width="160" height="160" alt="Preview of the new chart engine" style="display:block;width:100%;height:auto;border-radius:6px;">
+            <p style="margin:10px 0 0;font-size:13px;color:#0f172a;font-weight:bold;">New chart engine</p>
+            <p style="margin:4px 0 0;font-size:13px;color:#64748b;line-height:1.5;">Eight validated categorical colors, dark mode for free.</p>
+          </td>
+          <td width="4%"></td>
+          <td width="48%" valign="top" style="padding:8px;">
+            <img src="${shot2}" width="160" height="160" alt="Preview of the faster data table" style="display:block;width:100%;height:auto;border-radius:6px;">
+            <p style="margin:10px 0 0;font-size:13px;color:#0f172a;font-weight:bold;">Faster data table</p>
+            <p style="margin:4px 0 0;font-size:13px;color:#64748b;line-height:1.5;">Virtual scrolling keeps 100k rows smooth.</p>
+          </td>
+        </tr></table>
+      </td></tr>
+      <tr><td align="center" style="padding:20px 32px 32px;">
+        <table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background:#4f46e5;border-radius:6px;">
+          <a href="https://example.com/changelog" style="display:inline-block;padding:12px 28px;font-size:14px;font-weight:bold;color:#ffffff;text-decoration:none;">Read the full changelog</a>
+        </td></tr></table>
+      </td></tr>
+      <tr><td style="background:#f8fafc;padding:20px 32px;border-top:1px solid #e2e8f0;">
+        <p style="margin:0 0 6px;font-size:12px;color:#94a3b8;">Orion Admin · 123 Component Ave · Kuala Lumpur, Malaysia</p>
+        <p style="margin:0;font-size:12px;color:#94a3b8;">
+          <a href="https://example.com/preferences" style="color:#64748b;">Email preferences</a> &middot;
+          <a href="https://example.com/unsubscribe" style="color:#64748b;">Unsubscribe</a>
+        </p>
+      </td></tr>
+    </table>
+  </td></tr></table>
+</div>`.trim();
+          document.getElementById('ep-main').html = html;
+          window.__epNewsletterHTML = html; // reused by the other demos on this page
+        }</script>
+      </template>
+    </div>
+    <p>Use the toolbar to switch <strong>Preview / Text / Source / Inbox row</strong>, resize to <strong>Desktop / Tablet / Mobile</strong>, toggle <strong>Dark</strong> mode simulation and <strong>Images</strong>, and change <strong>Zoom</strong>.</p>
+  </section>
+
+  <section id="dark-mode">
+    <h2>Dark-mode simulation</h2>
+    <p>The <strong>Dark</strong> toggle simulates a mail client that forces its own dark palette onto a message with no dark styles of its own — an approximation, not a pixel-accurate reproduction (see the README for the documented limits: a colored CTA button gets muddled here exactly like it would in a real forced-dark inbox). If the email already declares <code>&lt;meta name="color-scheme" content="light dark"&gt;</code> or a <code>prefers-color-scheme: dark</code> rule, this component leaves its styling alone instead of double-darkening it.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-email-preview id="ep-dark" view="preview" device="mobile" dark subject="Dark mode simulation" from="Orion Admin &lt;news@orionadmin.example&gt;"></o-email-preview>
+        <script>{ document.getElementById('ep-dark').html = window.__epNewsletterHTML || '<p>Loading…</p>'; }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="text-source">
+    <h2>Text-only &amp; highlighted source</h2>
+    <p>The <strong>Text</strong> view is a small dependency-free HTML→text pass (block elements become line breaks, links become <code>label (url)</code>, images become <code>[alt text]</code>). The <strong>Source</strong> view is the raw HTML, syntax highlighted with <code>Orion.highlight(html, 'html')</code> — the same highlighter used by <a href="code-editor.html">&lt;o-code-editor&gt;</a> — with a plain escaped fallback when that component isn't part of the bundle.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-grid" style="--o-cols:1;gap:1rem">
+          <div>
+            <div class="o-eyebrow o-mb-2">view="text"</div>
+            <o-email-preview id="ep-text" view="text" toolbar="false" subject="Your September Orion digest"></o-email-preview>
+          </div>
+          <div>
+            <div class="o-eyebrow o-mb-2">view="source"</div>
+            <o-email-preview id="ep-source" view="source" toolbar="false" subject="Your September Orion digest"></o-email-preview>
+          </div>
+        </div>
+        <script>{
+          const src = window.__epNewsletterHTML || '<p>Loading…</p>';
+          document.getElementById('ep-text').html = src;
+          document.getElementById('ep-source').html = src;
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="inbox">
+    <h2>Inbox-row view</h2>
+    <p><code>view="inbox"</code> is not a separate custom element — it swaps the same component's toolbar/meta for a single truncating row (sender initial, bold sender, subject and preheader). Set <code>toolbar="false"</code> to stack several as a plain list, like a real inbox.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-ep-inbox-demo" style="border:1px solid var(--o-border);border-radius:var(--o-radius-lg);overflow:hidden;background:var(--o-surface);">
+          <o-email-preview view="inbox" toolbar="false" from="Priya Sharma &lt;priya@example.com&gt;" subject="Q3 roadmap review — feedback needed" preheader="Please take a look before Thursday's planning call, especially the pivot table section." html="<p>placeholder</p>"></o-email-preview>
+          <o-email-preview view="inbox" toolbar="false" from="Orion Admin &lt;news@orionadmin.example&gt;" subject="Your September Orion digest" preheader="New chart types, a faster data table, and a look at what's next." html="<p>placeholder</p>"></o-email-preview>
+          <o-email-preview view="inbox" toolbar="false" from="billing@example.com" subject="Your invoice INV-1048 is ready" preheader="Total due: $214.00, payable by 30 September." html="<p>placeholder</p>"></o-email-preview>
+          <o-email-preview view="inbox" toolbar="false" from="GitHub &lt;notifications@github.com&gt;" subject="[orion-admin] New issue: dark mode contrast on toast" preheader="Opened by a contributor — 3 comments so far." html="<p>placeholder</p>"></o-email-preview>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="send-test">
+    <h2>Send test</h2>
+    <p>The <strong>Send test</strong> toolbar button (or <code>el.sendTest()</code>) asks for an address — <code>Orion.prompt()</code> when the dialogs component is loaded, otherwise a small built-in popover — and emits <code>o-send-test</code> with <code>{ to }</code>. Wire that up to your real test-send API.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-email-preview id="ep-send" subject="Testing the send-test hook" to="qa@example.com"></o-email-preview>
+        <div class="docs-log o-m-3" id="send-test-log"></div>
+        <script>{
+          const el = document.getElementById('ep-send');
+          el.html = window.__epNewsletterHTML || '<p>Loading…</p>';
+          el.addEventListener('o-send-test', e => docs.log('#send-test-log', 'o-send-test ' + JSON.stringify(e.detail)));
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="modal">
+    <h2>Programmatic modal</h2>
+    <p><code>Orion.emailPreview(html, options)</code> opens the same viewer in a small focus-trapped modal, built directly on the core overlay stack (no dependency on <code>Orion.modal</code>). Returns a handle with <code>close()</code> and a <code>closed</code> promise.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-primary" id="ep-modal-btn">Open Orion.emailPreview()</button>
+        <div class="docs-log o-m-3" id="ep-modal-log"></div>
+        <script>{
+          document.getElementById('ep-modal-btn').addEventListener('click', () => {
+            const handle = Orion.emailPreview(window.__epNewsletterHTML || '<p>Hello</p>', {
+              title: 'September digest — preview',
+              subject: 'Your September Orion digest', from: 'Orion Admin <news@orionadmin.example>', to: 'devs@example.com',
+              trigger: document.getElementById('ep-modal-btn'),
+            });
+            handle.closed.then(reason => docs.log('#ep-modal-log', 'closed (' + reason + ')'));
+          });
+        }</script>
+      </template>
+    </div>
+    <h3>Keyboard</h3>
+    <ul>
+      <li><kbd class="o-kbd">Esc</kbd> closes the modal.</li>
+      <li><kbd class="o-kbd">Tab</kbd> / <kbd class="o-kbd">Shift</kbd>+<kbd class="o-kbd">Tab</kbd> cycle through the toolbar, panel controls and close button without leaving the dialog (focus trap).</li>
+      <li>Every toolbar control is a native <code>&lt;button&gt;</code>, so <kbd class="o-kbd">Enter</kbd> / <kbd class="o-kbd">Space</kbd> activates it and normal <kbd class="o-kbd">Tab</kbd> order reaches all of them.</li>
+    </ul>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Prop</th><th>Attr</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>html</td><td>html</td><td>String</td><td>''</td><td>Email body HTML; sanitized before display.</td></tr>
+        <tr><td>subject</td><td>subject</td><td>String</td><td>''</td><td>Shown in the meta line, inbox row and iframe title.</td></tr>
+        <tr><td>from</td><td>from</td><td>String</td><td>''</td><td>"Name &lt;email&gt;" or either alone; drives the inbox-row initial.</td></tr>
+        <tr><td>to</td><td>to</td><td>String | String[]</td><td>''</td><td>JSON array or plain string in attributes.</td></tr>
+        <tr><td>preheader</td><td>preheader</td><td>String</td><td>''</td><td>Hidden preview text; hidden in the UI when empty.</td></tr>
+        <tr><td>device</td><td>device</td><td>'desktop'|'tablet'|'mobile'</td><td>'desktop'</td><td>Reflected. Preview frame width.</td></tr>
+        <tr><td>dark</td><td>dark</td><td>Boolean</td><td>false</td><td>Reflected. Dark-mode simulation.</td></tr>
+        <tr><td>images</td><td>images</td><td>Boolean</td><td>true</td><td>Reflected. false = show alt-text placeholders.</td></tr>
+        <tr><td>zoom</td><td>zoom</td><td>75|100|125</td><td>100</td><td>Reflected. Preview scale.</td></tr>
+        <tr><td>view</td><td>view</td><td>'preview'|'text'|'source'|'inbox'</td><td>'preview'</td><td>Reflected. Visible panel.</td></tr>
+        <tr><td>toolbar</td><td>toolbar</td><td>Boolean</td><td>true</td><td>Reflected. false hides the whole toolbar.</td></tr>
+        <tr><td>texts</td><td>— (property only)</td><td>Object</td><td>—</td><td>Per-instance text overrides.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Returns</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>refresh()</td><td>void</td><td>Re-renders every panel from the current props.</td></tr>
+        <tr><td>getPlainText()</td><td>string</td><td>The HTML→text conversion shown in the Text view.</td></tr>
+        <tr><td>getSanitizedHTML()</td><td>string</td><td>The sanitized HTML actually rendered in the iframe.</td></tr>
+        <tr><td>sendTest(to?)</td><td>Promise&lt;string|null&gt;</td><td>Prompts for an address if omitted; emits <code>o-send-test</code>; resolves the address or null if cancelled.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Fired when</th></tr></thead>
+      <tbody>
+        <tr><td>o-send-test</td><td><code>{ to: string }</code></td><td><code>sendTest()</code> resolves with an address.</td></tr>
+        <tr><td>o-view-change</td><td><code>{ view, previous }</code></td><td>The visible panel changes (not on the initial render).</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS variables</h3>
+    <p><code>--o-ep-w-desktop</code> (640px), <code>--o-ep-w-tablet</code> (480px), <code>--o-ep-w-mobile</code> (375px) control the preview frame's width per device preset.</p>
+    <h3>Orion.emailPreview(html, options?)</h3>
+    <p>See the <a href="#modal">programmatic modal</a> demo above. Returns <code>{ el, viewer, close(reason?), closed }</code>; <code>options</code> accepts every prop above plus <code>title</code>, <code>trigger</code> and <code>onClose(reason)</code>.</p>
+  </section>
+</main>
+</body>
+</html>

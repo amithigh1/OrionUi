@@ -1,0 +1,77 @@
+/* ============================================================================
+ * FAB: circular / extended / mini action button + <o-fab> speed dial.
+ * ========================================================================== */
+.o-fab {
+  display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+  width: 3.5rem; height: 3.5rem; padding: 0; flex-shrink: 0;
+  font: inherit; font-weight: 600; color: var(--o-on-primary); background: var(--o-primary);
+  border: 0; border-radius: 50%; box-shadow: var(--o-shadow-lg); cursor: pointer;
+  transition: background-color var(--o-dur-fast), box-shadow var(--o-dur-fast), transform var(--o-dur-fast);
+}
+.o-fab:hover { background: var(--o-primary-hover); box-shadow: var(--o-shadow-xl); }
+.o-fab:active { transform: translateY(1px); }
+.o-fab:focus-visible { outline: none; box-shadow: var(--o-shadow-lg), 0 0 0 var(--o-ring-width) color-mix(in srgb, var(--o-focus) var(--o-ring-alpha), transparent); }
+.o-fab > .o-icon, .o-fab > o-icon, .o-fab-trigger-icon > .o-icon { width: 1.375rem; height: 1.375rem; }
+.o-fab-mini { width: 2.5rem; height: 2.5rem; }
+.o-fab-mini > .o-icon, .o-fab-mini > o-icon { width: 1.125rem; height: 1.125rem; }
+.o-fab-extended { width: auto; padding-inline: 1.25rem 1.5rem; border-radius: var(--o-radius-pill); font-size: var(--o-fs-base); white-space: nowrap; }
+.o-fab-extended > .o-icon, .o-fab-extended > o-icon { margin-inline-end: -.125rem; }
+
+/* standalone position (no dial) */
+.o-fab-bottom-end, .o-fab-bottom-start, .o-fab-top-end, .o-fab-top-start { position: fixed; z-index: var(--o-z-fixed); }
+.o-fab-bottom-end { inset-block-end: 1.5rem; inset-inline-end: 1.5rem; }
+.o-fab-bottom-start { inset-block-end: 1.5rem; inset-inline-start: 1.5rem; }
+.o-fab-top-end { inset-block-start: 1.5rem; inset-inline-end: 1.5rem; }
+.o-fab-top-start { inset-block-start: 1.5rem; inset-inline-start: 1.5rem; }
+
+/* ── speed dial ──────────────────────────────────────────────────────────── */
+o-fab:not(:defined) { display: none; }
+.o-fab-dial {
+  position: fixed; z-index: var(--o-z-fixed); display: flex; align-items: center; gap: .875rem;
+  inset-block-end: 1.5rem; inset-inline-end: 1.5rem;
+}
+.o-fab-dial[direction="up"] { flex-direction: column-reverse; }
+.o-fab-dial[direction="down"] { flex-direction: column; }
+.o-fab-dial[direction="end"] { flex-direction: row; }
+.o-fab-dial[direction="start"] { flex-direction: row-reverse; }
+.o-fab-dial[direction="radial"] { position: fixed; display: block; width: 3.5rem; height: 3.5rem; }
+.o-fab-dial .o-fab-trigger { position: relative; z-index: 1; }
+
+.o-fab-action {
+  display: inline-flex; align-items: center; gap: .625rem; cursor: pointer;
+  opacity: 0; transform: scale(.6); pointer-events: none;
+  transition: opacity var(--o-dur-fast) var(--o-ease), transform var(--o-dur-fast) var(--o-ease);
+  transition-delay: calc(var(--o-fab-i, 0) * 25ms);
+}
+.o-fab-dial[open] .o-fab-action { opacity: 1; transform: none; pointer-events: auto; }
+.o-fab-dial[direction="start"] .o-fab-action, .o-fab-dial[direction="end"] .o-fab-action, .o-fab-dial[direction="radial"] .o-fab-action { flex-direction: column; gap: .375rem; }
+.o-fab-action:focus-visible { outline: none; }
+.o-fab-action:focus-visible .o-fab-action-icon { box-shadow: var(--o-shadow-lg), 0 0 0 var(--o-ring-width) color-mix(in srgb, var(--o-focus) var(--o-ring-alpha), transparent); }
+.o-fab-action[aria-disabled="true"] { opacity: .45 !important; pointer-events: none; }
+
+.o-fab-action-icon {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 2.75rem; height: 2.75rem; color: var(--o-text); background: var(--o-elevated);
+  border: 1px solid var(--o-border); border-radius: 50%; box-shadow: var(--o-shadow-lg);
+}
+.o-fab-action-icon > .o-icon, .o-fab-action-icon > o-icon { width: 1.125rem; height: 1.125rem; }
+.o-fab-action:hover .o-fab-action-icon { color: var(--o-primary-text); border-color: var(--o-primary-border); }
+.o-fab-action-label {
+  padding: .3125rem .625rem; font-size: var(--o-fs-sm); font-weight: 500; color: var(--o-text); white-space: nowrap;
+  background: var(--o-elevated); border: 1px solid var(--o-border); border-radius: var(--o-radius-sm); box-shadow: var(--o-shadow-sm);
+}
+.o-fab-dial[direction="radial"] .o-fab-action-label { display: none; }
+
+.o-fab-dial[direction="radial"] .o-fab-action {
+  position: absolute; inset-block-start: 0; inset-inline-start: 0; transform: translate(0, 0) scale(.5);
+}
+.o-fab-dial[direction="radial"][open] .o-fab-action {
+  transform: translate(var(--o-fab-tx, 0), var(--o-fab-ty, 0)) scale(1);
+}
+
+.o-fab-backdrop { position: fixed; inset: 0; z-index: calc(var(--o-z-fixed) - 1); background: var(--o-backdrop); }
+
+@media (max-width: 575.98px) {
+  .o-fab-dial, .o-fab-bottom-end, .o-fab-bottom-start { inset-block-end: calc(1rem + var(--o-bottom-nav-space, 0px)); }
+}
+@media print { .o-fab, .o-fab-dial, .o-fab-backdrop { display: none; } }

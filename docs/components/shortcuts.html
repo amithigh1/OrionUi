@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Keyboard Shortcuts — Orion Admin</title>
+<meta name="docs:section" content="Services &amp; Utilities">
+<meta name="docs:order" content="70">
+<meta name="docs:desc" content="Hotkeys with sequences, scopes, platform-aware labels and a searchable help overlay">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .sc-flash { padding: .75rem 1rem; border: 1px dashed var(--o-border-strong); border-radius: var(--o-radius); color: var(--o-text-muted); transition: background-color .3s, color .3s; }
+  .sc-flash.is-hit { background: var(--o-primary-subtle); color: var(--o-primary-text); border-color: var(--o-primary-border); }
+  .sc-list { display: grid; gap: .25rem; margin: 0 0 1rem; padding: 0; list-style: none; }
+  .sc-list li { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .375rem .5rem; border-bottom: 1px dashed var(--o-border); font-size: var(--o-fs-sm); }
+  .sc-editor { padding: 1rem; border: 2px solid var(--o-border); border-radius: var(--o-radius-lg); transition: border-color .2s; }
+  .sc-editor.is-scoped { border-color: var(--o-primary); }
+  .sc-fmt td:nth-child(2), .sc-fmt td:nth-child(3) { font-family: var(--o-font-mono); }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Keyboard Shortcuts</h1>
+    <p class="docs-lead"><code>Orion.shortcuts</code> registers hotkeys (<code>mod+k</code>), sequences (<code>g i</code>) and alternatives (<code>mod+s, ctrl+shift+s</code>). <code>mod</code> is <kbd class="o-kbd">⌘</kbd> on Mac and <kbd class="o-kbd">Ctrl</kbd> elsewhere. Scopes let dialogs own keys, labels follow the platform, and <kbd class="o-kbd">?</kbd> opens a searchable list of everything available.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Register shortcuts</h2>
+    <p><code>add()</code> returns a function that removes the binding. By default shortcuts do not fire while typing in a text field and call <code>preventDefault()</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <ul class="sc-list" id="sc-basic-list"></ul>
+        <div class="sc-flash" id="sc-flash" aria-live="polite">Press one of the shortcuts above…</div>
+        <script>
+          (() => {
+            const S = Orion.shortcuts, flash = msg => { const f = document.getElementById('sc-flash'); f.textContent = msg; f.classList.add('is-hit'); setTimeout(() => f.classList.remove('is-hit'), 600); };
+            const defs = [
+              ['mod+k', 'Open command palette', 'General'],
+              ['mod+shift+p', 'Show all commands', 'General'],
+              ['alt+n', 'New record', 'Records'],
+              ['shift+ArrowRight', 'Next record', 'Records'],
+              ['mod+s, ctrl+shift+s', 'Save (two alternatives)', 'Records'],
+            ];
+            defs.forEach(([combo, description, group]) => S.add(combo, () => flash(`${description}  (${S.format(combo)})`), { description, group }));
+            document.getElementById('sc-basic-list').innerHTML = defs.map(([c, d]) => `<li><span>${d}</span>${S.kbd(c)}</li>`).join('');
+          })();
+        </script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+      const off = Orion.shortcuts.add('mod+k', () => palette.open(), { description: 'Open command palette', group: 'General' });
+      Orion.shortcuts.add({ 'alt+n': newRecord, 'shift+ArrowRight': nextRecord }, { group: 'Records' });   // many at once
+      off();   // remove
+    </pre>
+  </section>
+
+  <section id="elements">
+    <h2>Shortcuts on elements</h2>
+    <p><code>data-o-shortcut</code> clicks the element (or focuses it when it is a field), sets <code>aria-keyshortcuts</code> and adds the hint to its <code>title</code>. <code>data-o-shortcut-hint="kbd"</code> renders the keys inside the element. Disabled or hidden elements are skipped, so the key stays free for others.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-primary" data-o-shortcut="mod+enter" data-o-shortcut-hint="kbd" data-o-shortcut-group="Editor" id="sc-el-save">Publish</button>
+          <button class="o-btn" data-o-shortcut="n" data-o-shortcut-hint="kbd" data-o-shortcut-group="Editor" id="sc-el-new">New</button>
+          <button class="o-btn" data-o-shortcut="r" data-o-shortcut-hint="kbd" disabled>Refresh (disabled)</button>
+          <label class="o-check o-check-inline"><input type="checkbox" data-o-shortcut="shift+w" data-o-shortcut-description="Toggle word wrap" id="sc-el-wrap"><span>Word wrap <kbd class="o-kbd">⇧W</kbd></span></label>
+        </div>
+        <input class="o-input" placeholder="Press F to focus me" data-o-shortcut="f" data-o-shortcut-description="Focus the filter" style="max-width:20rem">
+        <div class="docs-log" id="sc-el-log"></div>
+        <script>
+          (() => {
+            ['sc-el-save', 'sc-el-new'].forEach(id => document.getElementById(id).addEventListener('click', e => docs.log('#sc-el-log', 'clicked ' + e.currentTarget.firstChild.textContent.trim())));
+            document.getElementById('sc-el-wrap').addEventListener('change', e => docs.log('#sc-el-log', 'word wrap ' + (e.target.checked ? 'on' : 'off')));
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="sequences">
+    <h2>Sequences</h2>
+    <p>Space-separated steps form a sequence; each key must follow within one second (<code>configure({ sequenceTimeout })</code>). A continuing sequence wins over a single-key binding.</p>
+    <div class="docs-demo">
+      <template>
+        <ul class="sc-list" id="sc-seq-list"></ul>
+        <div class="docs-log" id="sc-seq-log"></div>
+        <script>
+          (() => {
+            const S = Orion.shortcuts, go = id => () => { document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }); docs.log('#sc-seq-log', 'go to #' + id); };
+            const defs = [['g b', 'Go to “Register shortcuts”', go('basic')], ['g s', 'Go to “Scopes”', go('scopes')], ['g a', 'Go to the API', go('api')], ['alt+k alt+c', 'Chord: comment (VS Code style)', () => docs.log('#sc-seq-log', 'chord alt+k alt+c')]];
+            defs.forEach(([c, d, fn]) => S.add(c, fn, { description: d, group: 'Navigation' }));
+            document.getElementById('sc-seq-list').innerHTML = defs.map(([c, d]) => `<li><span>${d}</span>${S.kbd(c)}</li>`).join('');
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="scopes">
+    <h2>Scopes</h2>
+    <p>Bindings with a <code>scope</code> only fire while that scope is on top of the stack. Global bindings keep working unless the scope is pushed with <code>{ exclusive: true }</code> (typical for modal dialogs). Bindings with <code>scope: '*'</code> (like the help key) always work.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="sc-editor" id="sc-editor">
+          <div class="o-between o-mb-2">
+            <strong>Editor <span class="o-badge o-badge-soft-primary" id="sc-scope">scope: global</span></strong>
+            <div class="o-cluster">
+              <label class="o-switch"><input type="checkbox" id="sc-excl"><span>exclusive</span></label>
+              <button class="o-btn o-btn-sm" id="sc-enter">Enter editor scope</button>
+            </div>
+          </div>
+          <ul class="sc-list o-mb-0">
+            <li><span>Bold (editor scope only)</span><span id="sc-k1"></span></li>
+            <li><span>Italic (editor scope only)</span><span id="sc-k2"></span></li>
+            <li><span>Global “Open command palette”</span><span id="sc-k3"></span></li>
+          </ul>
+        </div>
+        <div class="docs-log" id="sc-scope-log"></div>
+        <script>
+          (() => {
+            const S = Orion.shortcuts, btn = document.getElementById('sc-enter'), box = document.getElementById('sc-editor');
+            let pop = null;
+            S.add('mod+b', () => docs.log('#sc-scope-log', 'bold (editor)'), { scope: 'editor', description: 'Bold', group: 'Editor' });
+            S.add('mod+i', () => docs.log('#sc-scope-log', 'italic (editor)'), { scope: 'editor', description: 'Italic', group: 'Editor' });
+            document.getElementById('sc-k1').innerHTML = S.kbd('mod+b'); document.getElementById('sc-k2').innerHTML = S.kbd('mod+i'); document.getElementById('sc-k3').innerHTML = S.kbd('mod+k');
+            const paint = () => { document.getElementById('sc-scope').textContent = 'scope: ' + S.scope; box.classList.toggle('is-scoped', !!pop); btn.textContent = pop ? 'Leave editor scope' : 'Enter editor scope'; btn.setAttribute('aria-pressed', String(!!pop)); };
+            btn.onclick = () => { if (pop) { pop(); pop = null; } else pop = S.pushScope('editor', { exclusive: document.getElementById('sc-excl').checked }); paint(); docs.log('#sc-scope-log', 'scopes: ' + (S.scopes.join(' > ') || 'global')); };
+            paint();
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="format">
+    <h2>Platform-aware labels</h2>
+    <p><code>format(combo)</code> returns text for titles and menus; <code>kbd(combo)</code> returns key caps; <code>ariaKeys(combo)</code> gives the <code>aria-keyshortcuts</code> value.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-table-wrap"><table class="o-table o-table-sm sc-fmt"><thead><tr><th>Combo</th><th>macOS</th><th>Windows / Linux</th><th>kbd()</th></tr></thead><tbody id="sc-fmt"></tbody></table></div>
+        <script>
+          (() => {
+            const S = Orion.shortcuts;
+            document.getElementById('sc-fmt').innerHTML = ['mod+shift+p', 'mod+alt+ArrowUp', 'ctrl+enter', 'shift+?', 'g i', 'mod+plus', 'escape', 'mod+backspace'].map(c =>
+              `<tr><td><code>${c}</code></td><td>${Orion.util.esc(S.format(c, { mac: true }))}</td><td>${Orion.util.esc(S.format(c, { mac: false }))}</td><td>${S.kbd(c)}</td></tr>`).join('');
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="help">
+    <h2>Help overlay</h2>
+    <p>Press <kbd class="o-kbd">?</kbd> anywhere (outside a text field) or call <code>Orion.shortcuts.help()</code>. It lists every binding that has a <code>description</code> and is active in the current scope, grouped, with fuzzy search. Change the key with <code>configure({ helpKey: 'shift+/' })</code> or disable it with <code>helpKey: false</code>.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-primary" id="sc-help">Show keyboard shortcuts</button>
+        <script>document.getElementById('sc-help').onclick = () => Orion.shortcuts.help();</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="record">
+    <h2>Record a shortcut</h2>
+    <p><code>await Orion.shortcuts.record()</code> captures the next key combination as a portable string (with <code>mod</code>), ready to store in user preferences.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster">
+          <button class="o-btn" id="sc-rec">Record…</button>
+          <span id="sc-rec-out" class="o-text-muted" aria-live="polite">No shortcut assigned</span>
+          <button class="o-btn o-btn-sm o-btn-ghost" id="sc-rec-clear" hidden>Remove</button>
+        </div>
+        <script>
+          (() => {
+            const S = Orion.shortcuts, btn = document.getElementById('sc-rec'), out = document.getElementById('sc-rec-out'), clr = document.getElementById('sc-rec-clear');
+            let off = null;
+            btn.onclick = async () => {
+              btn.textContent = 'Press keys… (Esc cancels)'; btn.classList.add('is-active');
+              const combo = await S.record();
+              btn.textContent = 'Record…'; btn.classList.remove('is-active');
+              if (!combo) return;
+              off?.();
+              off = S.add(combo, () => Orion.announce('Custom shortcut ran') || (out.innerHTML = `${S.kbd(combo)} ran at ${new Date().toLocaleTimeString()}`), { description: 'My custom shortcut', group: 'Custom' });
+              out.innerHTML = `Assigned ${S.kbd(combo)} <code>${Orion.util.esc(combo)}</code>`; clr.hidden = false;
+            };
+            clr.onclick = () => { off?.(); off = null; out.textContent = 'No shortcut assigned'; clr.hidden = true; };
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="inputs">
+    <h2>Inside text fields</h2>
+    <p>Pass <code>allowInInputs: true</code> for keys that make sense while typing, like submitting with <kbd class="o-kbd">Ctrl</kbd> <kbd class="o-kbd">Enter</kbd>.</p>
+    <div class="docs-demo">
+      <template>
+        <textarea class="o-textarea" id="sc-ta" placeholder="Type, then press mod+Enter to send"></textarea>
+        <div class="docs-log" id="sc-ta-log"></div>
+        <script>
+          Orion.shortcuts.add('mod+enter', () => { const ta = document.getElementById('sc-ta'); if (document.activeElement !== ta) return false; docs.log('#sc-ta-log', 'sent: ' + (ta.value || '(empty)')); ta.value = ''; }, { allowInInputs: true, when: () => document.activeElement?.id === 'sc-ta', description: 'Send message', group: 'Composer' });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard (help overlay)</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>?</td><td>Open / close the list (configurable).</td></tr>
+        <tr><td>Typing</td><td>Filters the list (fuzzy, highlighted matches, result count announced).</td></tr>
+        <tr><td>Escape</td><td>Clears the search first, then closes and returns focus.</td></tr>
+        <tr><td>Tab</td><td>Focus stays inside the dialog.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Method / property</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>add(combo, handler, options) → remove()</td><td><code>handler(event, { combo, binding, scope })</code>; return <code>false</code> to also prevent default. <code>add({ combo: handler, … }, options)</code> registers many.</td></tr>
+        <tr><td>remove(bindingOrId | combo, handler?)</td><td>Remove bindings.</td></tr>
+        <tr><td>pushScope(name, { exclusive }) → pop()</td><td>Activate a scope; returns a function that removes exactly that entry.</td></tr>
+        <tr><td>popScope(name?) · setScope(name) · scope · scopes</td><td>Scope stack helpers (default scope is <code>'global'</code>).</td></tr>
+        <tr><td>enable() · disable() · enabled</td><td>Globally pause handling.</td></tr>
+        <tr><td>format(combo, { mac })</td><td><code>'⌘⇧P'</code> / <code>'Ctrl+Shift+P'</code>; sequences read “G then I”.</td></tr>
+        <tr><td>kbd(combo, { mac })</td><td>SafeHTML with <code>&lt;kbd class="o-kbd"&gt;</code> key caps.</td></tr>
+        <tr><td>ariaKeys(combo)</td><td>Value for <code>aria-keyshortcuts</code> (single-step combos).</td></tr>
+        <tr><td>parse(combo) · comboFromEvent(e) · isTyping(el)</td><td>Low-level helpers.</td></tr>
+        <tr><td>list({ all, scope })</td><td>Described bindings (active ones by default): <code>[{ id, combo, description, group, scope, formatted }]</code>.</td></tr>
+        <tr><td>help({ title }) · closeHelp() · toggleHelp() · helpOpen</td><td>Help overlay.</td></tr>
+        <tr><td>record({ allowEscape }) → Promise&lt;string|null&gt;</td><td>Capture the next combination.</td></tr>
+        <tr><td>trigger(combo)</td><td>Run the handler registered for a combo (menus, tests).</td></tr>
+        <tr><td>configure({ helpKey, sequenceTimeout })</td><td>Defaults: <code>'?'</code>, <code>1000</code> ms.</td></tr>
+        <tr><td>isMac</td><td>Platform used for <code>mod</code> and labels.</td></tr>
+      </tbody>
+    </table>
+    <h3>Binding options</h3>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>description · group</td><td>'' · 'General'</td><td>Shown in the help overlay (strings or functions for i18n).</td></tr>
+        <tr><td>scope</td><td>'global'</td><td>Scope name, or <code>'*'</code> for always.</td></tr>
+        <tr><td>preventDefault</td><td>true</td><td>Stop the browser action (e.g. Save page).</td></tr>
+        <tr><td>allowInInputs</td><td>false</td><td>Fire while typing in inputs, textareas, selects and contenteditable.</td></tr>
+        <tr><td>repeat</td><td>false</td><td>Fire on auto-repeat while the key is held.</td></tr>
+        <tr><td>when(event)</td><td>—</td><td>Return <code>false</code> to leave the key alone (other bindings may match).</td></tr>
+        <tr><td>hidden</td><td>false</td><td>Hide from the help overlay.</td></tr>
+      </tbody>
+    </table>
+    <h3>Combo syntax</h3>
+    <p>Modifiers <code>mod</code> <code>ctrl</code> <code>alt</code>/<code>option</code> <code>shift</code> <code>meta</code>/<code>cmd</code> joined with <code>+</code>; keys are <code>KeyboardEvent.key</code> names (case-insensitive) plus aliases <code>esc up down left right space plus comma pgup pgdn del</code>. Symbols such as <code>?</code> imply Shift. Letters and digits also match by physical key when a layout or Option produces another character.</p>
+    <h3>data-o-shortcut attributes</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>data-o-shortcut</td><td>Combo that clicks / focuses the element.</td></tr>
+        <tr><td>data-o-shortcut-hint</td><td><code>title</code> (default), <code>kbd</code> (render key caps inside) or <code>none</code>.</td></tr>
+        <tr><td>data-o-shortcut-description / -group / -scope</td><td>Help overlay text and scope.</td></tr>
+        <tr><td>data-o-shortcut-inputs</td><td>Also fire while typing.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <p>Bus events: <code>shortcuts:change</code> (bindings added/removed), <code>shortcuts:help</code> <code>{ open }</code>.</p>
+    <h3>i18n keys</h3>
+    <p><code>shortcuts.title · search · empty · then · or · general · page · showHelp · footer</code></p>
+    <h3>Frameworks</h3>
+    <p>Register in a mount effect and call the returned function on unmount. Elements rendered by React/Vue/Angular with <code>data-o-shortcut</code> are picked up and cleaned up automatically.</p>
+  </section>
+</main>
+</body>
+</html>

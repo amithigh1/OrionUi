@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Permissions — Orion Admin</title>
+<meta name="docs:section" content="Services &amp; Utilities">
+<meta name="docs:order" content="110">
+<meta name="docs:desc" content="Role- and permission-based UI: data-o-permission/data-o-role, <o-can>, Orion.can/hasRole">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Permissions</h1>
+    <p class="docs-lead"><code>Orion.auth</code> holds the current user's roles and permissions; <code>data-o-permission</code> / <code>data-o-role</code> hide, disable, blur or remove elements the user can't use, and <code>&lt;o-can&gt;</code> does the same declaratively with a fallback slot. Re-evaluated automatically whenever the user changes.</p>
+    <div class="o-alert o-alert-info o-mt-3"><o-icon name="info"></o-icon><div class="o-alert-content">UI checks are cosmetic — always enforce permissions on the server too.</div></div>
+  </header>
+
+  <section id="switcher">
+    <h2>Role switcher</h2>
+    <p>Switching roles calls <code>Orion.auth.setUser({ roles, permissions })</code>, which re-evaluates every element on the page. Try each role against the panel below.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-segmented" role="radiogroup" aria-label="Role" id="perm-switch">
+          <label><input type="radio" name="perm-role" value="viewer" checked><span>Viewer</span></label>
+          <label><input type="radio" name="perm-role" value="editor"><span>Editor</span></label>
+          <label><input type="radio" name="perm-role" value="admin"><span>Admin</span></label>
+          <label><input type="radio" name="perm-role" value="none"><span>Signed out</span></label>
+        </div>
+
+        <div class="o-card o-mt-3" style="padding:1rem">
+          <div class="o-cluster o-mb-3">
+            <button class="o-btn o-btn-sm" data-o-permission="posts.create">New post</button>
+            <button class="o-btn o-btn-sm o-btn-danger" data-o-permission="posts.delete" data-o-denied="disable">Delete post</button>
+            <button class="o-btn o-btn-sm" data-o-role="admin" data-o-denied="hide">Admin settings</button>
+          </div>
+          <fieldset data-o-permission="posts.edit" data-o-denied="readonly" style="border:0;padding:0;margin:0 0 .75rem">
+            <label class="o-label" for="perm-title">Title</label>
+            <input class="o-input o-input-sm" id="perm-title" value="Quarterly update">
+          </fieldset>
+          <o-can permission="billing.view" mode="hide">
+            <div class="o-alert o-alert-success"><o-icon name="check-circle"></o-icon><div class="o-alert-content">Billing details: MYR 1,240 due 30 Sep.</div></div>
+            <template slot="denied"><div class="o-alert o-alert-secondary"><o-icon name="lock"></o-icon><div class="o-alert-content">Billing is restricted.</div></div></template>
+          </o-can>
+        </div>
+        <script>
+          Orion.auth.defineRoles({
+            viewer: ['*.view'],
+            editor: { permissions: ['posts.*', '-posts.delete'], inherits: ['viewer'] },
+            admin: ['*'],
+          });
+          const applyRole = role => {
+            if (role === 'none') { Orion.auth.clear(); return; }
+            Orion.auth.setUser({ id: 'u1', name: 'Demo user', roles: [role] });
+          };
+          document.getElementById('perm-switch').addEventListener('change', e => applyRole(e.target.value));
+          applyRole('viewer');
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="modes">
+    <h2>Denied modes</h2>
+    <table class="docs-api">
+      <thead><tr><th><code>data-o-denied</code></th><th>Effect</th></tr></thead>
+      <tbody>
+        <tr><td>hide (default)</td><td>Adds <code>.o-perm-hidden</code> (display: none).</td></tr>
+        <tr><td>disable</td><td>Native controls get <code>disabled</code>; other elements get <code>aria-disabled="true"</code>, lose <code>href</code>/tabbing, and swallow clicks — with a tooltip explaining why.</td></tr>
+        <tr><td>readonly</td><td>Form fields inside become read-only (or disabled where read-only isn't supported); the element gets <code>aria-readonly</code>.</td></tr>
+        <tr><td>remove</td><td>Detached from the DOM entirely (replaced by a comment placeholder) and reinserted if access is granted again.</td></tr>
+        <tr><td>blur</td><td>Made <code>inert</code> and visually blurred (<code>.o-perm-blur</code>) with a screen-reader-only explanation.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Orion.auth.setUser({ id, name, roles, permissions })</td><td>Sets the current user (<code>null</code> to sign out). Permissions accept wildcards (<code>'posts.*'</code>, <code>'*.view'</code>, <code>'*'</code>) and explicit denies (<code>'-posts.delete'</code> or <code>'!posts.delete'</code>).</td></tr>
+        <tr><td>Orion.auth.defineRoles({ role: [...] | { permissions, inherits } })</td><td>Registers roles; <code>inherits</code> pulls in another role's permissions.</td></tr>
+        <tr><td>Orion.can(permission, { any, user }) → boolean</td><td>Accepts one, an array, or a <code>'a, b'</code> string; <code>any: true</code> = OR instead of AND.</td></tr>
+        <tr><td>Orion.hasRole(role, { all, user }) → boolean</td><td>Any by default (OR); <code>all: true</code> requires every role. Inherited roles count.</td></tr>
+        <tr><td>Orion.auth.guard(permission, onDenied?, { any, role }) → boolean</td><td>Like <code>can()</code> but shows a toast/announcement (or calls <code>onDenied</code>) when denied.</td></tr>
+        <tr><td>Orion.auth.protect(permission, fn, onDenied?, opts) → fn</td><td>Wraps a function so it only runs when allowed.</td></tr>
+        <tr><td>Orion.auth.user / .isAuthenticated / .roles / .permissions</td><td>Read-only getters (<code>roles</code>/<code>permissions</code> are the effective, expanded sets).</td></tr>
+        <tr><td>Orion.auth.update(patch) / .clear() / .refresh() / .onChange(fn)</td><td>Patch the current user, sign out, force re-evaluation, or subscribe.</td></tr>
+      </tbody>
+    </table>
+    <h3>Attributes</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>data-o-permission="a.b, c.d"</td><td>Requires every listed permission (add <code>data-o-permission-any</code> for OR).</td></tr>
+        <tr><td>data-o-role="admin, manager"</td><td>Requires any listed role.</td></tr>
+        <tr><td>data-o-denied="hide|disable|readonly|remove|blur"</td><td>How to react when denied (default <code>hide</code>).</td></tr>
+        <tr><td>data-o-denied-message="…"</td><td>Custom tooltip/description text.</td></tr>
+        <tr><td>data-o-access</td><td>Set automatically to <code>granted</code> or <code>denied</code> (useful for CSS/testing hooks).</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-can&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>permission / role</td><td>string</td><td>Same semantics as the attributes above.</td></tr>
+        <tr><td>any</td><td>boolean</td><td>OR instead of AND for <code>permission</code>.</td></tr>
+        <tr><td>mode</td><td>string</td><td><code>hide</code> (default, CSS) or <code>remove</code> (detach children from the DOM).</td></tr>
+      </tbody>
+      <tbody><tr><td colspan="3"><code>&lt;template slot="denied"&gt;</code> content is shown instead when denied. Property: <code>allowed</code>. Event: <code>o-change</code> <code>{ allowed }</code>.</td></tr></tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

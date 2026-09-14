@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>App Shell — Orion Admin</title>
+<meta name="docs:section" content="Layout &amp; Navigation">
+<meta name="docs:order" content="10">
+<meta name="docs:desc" content="The .o-app responsive shell: sidebar, header, main, footer, mobile drawer">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .shell-frame { display: block; width: 100%; height: 32rem; border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); background: var(--o-surface); }
+  .shell-frame-sm { height: 26rem; }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>App Shell</h1>
+    <p class="docs-lead">The <code>.o-app</code> CSS grid shell wires together the sidebar, header, main content and footer into a
+      responsive admin layout: full sidebar on desktop, a mini icon rail on tablet, and an off-canvas drawer with a backdrop and
+      swipe gestures on mobile. Everything is driven by CSS custom properties and a couple of state classes, so it works from
+      plain HTML as much as from a framework.</p>
+  </header>
+
+  <section id="pages">
+    <h2>Full-page examples</h2>
+    <p>A shell is best judged as a whole page rather than a fragment. Open any of these in a new tab, or resize the embedded
+      frames below (they are real, independent pages — try the sidebar toggle, the mobile drawer and the theme switcher inside them).</p>
+    <div class="o-grid" style="--o-cols:1;--o-gap:1.5rem">
+      <div>
+        <div class="o-between o-mb-2"><h3 class="o-h6" style="margin:0">Vertical dashboard</h3><a class="o-btn o-btn-ghost o-btn-sm" href="../examples/shell-dashboard.html" target="_blank" rel="noopener">Open full page <o-icon name="external-link"></o-icon></a></div>
+        <iframe class="shell-frame" src="../examples/shell-dashboard.html" loading="lazy" title="Vertical dashboard shell example"></iframe>
+      </div>
+      <div>
+        <div class="o-between o-mb-2"><h3 class="o-h6" style="margin:0">Horizontal navigation</h3><a class="o-btn o-btn-ghost o-btn-sm" href="../examples/shell-horizontal.html" target="_blank" rel="noopener">Open full page <o-icon name="external-link"></o-icon></a></div>
+        <iframe class="shell-frame shell-frame-sm" src="../examples/shell-horizontal.html" loading="lazy" title="Horizontal shell example"></iframe>
+      </div>
+      <div>
+        <div class="o-between o-mb-2"><h3 class="o-h6" style="margin:0">Mobile / compact</h3><a class="o-btn o-btn-ghost o-btn-sm" href="../examples/shell-mobile.html" target="_blank" rel="noopener">Open full page <o-icon name="external-link"></o-icon></a></div>
+        <iframe class="shell-frame shell-frame-sm" style="max-width:24rem" src="../examples/shell-mobile.html" loading="lazy" title="Mobile shell example"></iframe>
+      </div>
+    </div>
+  </section>
+
+  <section id="markup">
+    <h2>Markup</h2>
+    <p>A shell is one <code>.o-app</code> element with four regions. <code>data-o-app</code> is added automatically to every
+      <code>.o-app</code> and wires the toggle behavior, the mobile backdrop, the header scroll shadow and swipe gestures.</p>
+    <pre class="docs-code-block" data-lang="html">
+      &lt;div class="o-app"&gt;
+        &lt;a class="o-skip-link" href="#main"&gt;Skip to main content&lt;/a&gt;
+        &lt;aside class="o-app-sidebar o-sidebar" data-o-sidebar aria-label="Main"&gt;…&lt;/aside&gt;
+        &lt;header class="o-app-header"&gt;
+          &lt;button class="o-btn o-btn-ghost o-btn-icon o-app-toggle" data-o-toggle="sidebar" aria-label="Toggle sidebar"&gt;&lt;o-icon name="panel-left-close"&gt;&lt;/o-icon&gt;&lt;/button&gt;
+          &lt;div class="o-app-header-end"&gt;…&lt;/div&gt;
+        &lt;/header&gt;
+        &lt;main class="o-app-main" id="main"&gt;&lt;div class="o-app-content"&gt;…&lt;/div&gt;&lt;/main&gt;
+        &lt;footer class="o-app-footer"&gt;…&lt;/footer&gt;
+      &lt;/div&gt;
+    </pre>
+  </section>
+
+  <section id="live">
+    <h2>Collapse, expand, mobile drawer</h2>
+    <p>A minimal shell you can interact with directly on this page. The toggle button collapses the sidebar to a mini icon rail
+      on wide viewports, or opens/closes an off-canvas drawer with a backdrop below 768px.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-app" data-o-app="demo1" style="height:22rem;border:1px solid var(--o-border);border-radius:var(--o-radius-lg);overflow:hidden">
+          <aside class="o-app-sidebar o-sidebar" data-o-sidebar="manual" aria-label="Demo">
+            <div class="o-sidebar-brand"><span class="o-sidebar-brand-mark"><o-icon name="layout-grid"></o-icon></span><span class="o-sidebar-brand-text">Demo</span></div>
+            <nav class="o-sidebar-body"><ul class="o-menu">
+              <li class="o-menu-item"><a class="o-menu-link is-active" href="#" aria-current="page"><o-icon name="dashboard" class="o-menu-icon"></o-icon><span class="o-menu-label">Dashboard</span></a></li>
+              <li class="o-menu-item"><a class="o-menu-link" href="#"><o-icon name="users" class="o-menu-icon"></o-icon><span class="o-menu-label">Users</span></a></li>
+              <li class="o-menu-item"><a class="o-menu-link" href="#"><o-icon name="settings" class="o-menu-icon"></o-icon><span class="o-menu-label">Settings</span></a></li>
+            </ul></nav>
+          </aside>
+          <header class="o-app-header">
+            <button class="o-btn o-btn-ghost o-btn-icon o-app-toggle" data-o-toggle="sidebar" data-o-target="#demo1-app" aria-label="Toggle sidebar"><o-icon name="panel-left-close"></o-icon></button>
+            <h2 class="o-app-title">Dashboard</h2>
+          </header>
+          <main class="o-app-main"><div class="o-app-content"><p class="o-text-muted">Resize this panel narrower than 768px (or shrink the browser) to see the off-canvas drawer with a backdrop and swipe support instead of the mini rail.</p></div></main>
+        </div>
+        <div class="docs-log" id="log-shell1"></div>
+        <script>
+          document.querySelector('[data-o-app="demo1"]').addEventListener('o-sidebar-toggle', e => docs.log('#log-shell1', `o-sidebar-toggle → ${JSON.stringify(e.detail)}`));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="variants">
+    <h2>Variants</h2>
+    <table class="docs-api">
+      <thead><tr><th>Class</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.o-app-horizontal</td><td>Top navbar layout; the sidebar (if present) becomes a drawer at every width.</td></tr>
+        <tr><td>.o-app-compact</td><td>Smaller sidebar/header sizes and tighter gutters — good for dense, information-heavy apps.</td></tr>
+        <tr><td>.o-app-boxed</td><td>Centers the whole shell with a max width and a border, for very wide screens.</td></tr>
+        <tr><td>.o-app-sidebar-end</td><td>Moves the sidebar to the end (right in LTR, left in RTL).</td></tr>
+        <tr><td>.o-app-fixed</td><td>Shell fills the viewport height and only <code>.o-app-main</code> scrolls.</td></tr>
+        <tr><td>.o-app-no-mini</td><td>Skips the tablet mini-rail step; the sidebar behaves like mobile (drawer) below desktop.</td></tr>
+        <tr><td>.is-collapsed</td><td>Desktop: sidebar is a mini icon rail (persisted). Toggle with <code>data-o-toggle="sidebar"</code>.</td></tr>
+        <tr><td>.is-mobile-open</td><td>The off-canvas drawer is open (tablet overlay or mobile).</td></tr>
+        <tr><td>.o-app-content-boxed / -narrow</td><td>Constrains <code>.o-app-content</code> to a max width.</td></tr>
+        <tr><td>.o-app-header-blur</td><td>Translucent, blurred header background.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="skip-link">
+    <h2>Skip link &amp; sticky header</h2>
+    <p>Include <code>&lt;a class="o-skip-link" href="#main"&gt;Skip to main content&lt;/a&gt;</code> as the first child of
+      <code>.o-app</code> — it is invisible until focused (press <kbd class="o-kbd">Tab</kbd> from the top of the page in the
+      example above). <code>.o-app-header</code> is sticky by default and gains a <code>.is-scrolled</code> shadow once the page
+      (or <code>.o-app-main</code> in <code>.o-app-fixed</code> shells) scrolls.</p>
+  </section>
+
+  <section id="print">
+    <h2>Print</h2>
+    <p>Printing a shell hides the sidebar, header, footer and backdrop automatically and lets <code>.o-app-content</code> flow
+      the full page width — no extra markup needed.</p>
+  </section>
+
+  <section id="api">
+    <h2>JavaScript API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Orion.layout.toggleSidebar(app?, trigger?)</td><td>Collapse/expand on desktop, open/close the drawer on tablet &amp; mobile.</td></tr>
+        <tr><td>collapse(app?) / expand(app?)</td><td>Desktop mini-rail state, persisted to <code>localStorage</code>.</td></tr>
+        <tr><td>openMobile(app?, trigger?) / closeMobile(app?)</td><td>Off-canvas drawer (also reachable by swiping from the edge).</td></tr>
+        <tr><td>mode(app?)</td><td><code>'desktop' | 'tablet' | 'mobile'</code>, read from <code>--o-app-mode</code>.</td></tr>
+        <tr><td>isCollapsed(app?) / isOpen(app?)</td><td>Current state booleans.</td></tr>
+        <tr><td>setPageTitle(title, breadcrumbs?)</td><td>Updates <code>document.title</code>, <code>[data-o-page-title]</code> and <code>[data-o-page-breadcrumb]</code> elements, and announces the change.</td></tr>
+        <tr><td>sync()</td><td>Re-run active-link detection after a router navigation that did not fire <code>popstate</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>Actions</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>data-o-toggle="sidebar" [data-o-target="#app"]</td><td>Toggle the sidebar (mode-aware).</td></tr>
+        <tr><td>data-o-dismiss="sidebar"</td><td>Close the mobile drawer (used by the auto-created backdrop).</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-sidebar-toggle</td><td><code>{ state, mode, collapsed, open }</code></td><td>Dispatched on <code>.o-app</code> whenever the sidebar state changes. <code>state</code> is one of <code>collapsed｜expanded｜open｜closed</code>.</td></tr>
+        <tr><td>o-page-title (document)</td><td><code>{ title, breadcrumbs }</code></td><td>Fired by <code>setPageTitle()</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS custom properties</h3>
+    <p><code>--o-sidebar-w</code>, <code>--o-sidebar-w-mini</code>, <code>--o-header-h</code>, <code>--o-app-gutter</code>,
+      <code>--o-app-boxed-max</code>, <code>--o-content-max</code> (set by the content modifiers).</p>
+  </section>
+</main>
+</body>
+</html>

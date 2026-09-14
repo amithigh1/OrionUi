@@ -1,0 +1,110 @@
+[
+  {
+    "name": "Aisha Müller",
+    "email": "aisha.muller1@example.com",
+    "phone": "+60 12-380 4926",
+    "dept": "Engineering",
+    "salary": 126300,
+    "start": "2019-07-13",
+    "active": true
+  },
+  {
+    "name": "Grace Smith",
+    "email": "grace.smith2@example.com",
+    "phone": "+60 12-742 2220",
+    "dept": "Engineering",
+    "salary": 79300,
+    "start": "2021-10-11",
+    "active": false
+  },
+  {
+    "name": "Elena Patel",
+    "email": "elena.patel3@example.com",
+    "phone": "+60 12-633 1110",
+    "dept": "Finance",
+    "salary": 88900,
+    "start": "2018-04-22",
+    "active": false
+  },
+  {
+    "name": "Elena Silva",
+    "email": "elena.silva4@example.com",
+    "phone": "+60 12-741 7868",
+    "dept": "Engineering",
+    "salary": 79600,
+    "start": "2023-07-03",
+    "active": true
+  },
+  {
+    "name": "Zoë Kowalski",
+    "email": "not-an-email",
+    "phone": "+60 12-911 2700",
+    "dept": "Engineering",
+    "salary": 112300,
+    "start": "2023-12-08",
+    "active": false
+  },
+  {
+    "name": "Rahul Haddad",
+    "email": "rahul.haddad6@example.com",
+    "phone": "+60 12-758 6004",
+    "dept": "Design",
+    "salary": 120500,
+    "start": "2019-04-17",
+    "active": false
+  },
+  {
+    "name": "Uma Rossi",
+    "email": "uma.rossi7@example.com",
+    "phone": "+60 12-416 5220",
+    "dept": "Design",
+    "salary": 42100,
+    "start": "2021-12-15",
+    "active": true
+  },
+  {
+    "name": "Liam Rossi",
+    "email": "liam.rossi8@example.com",
+    "phone": "+60 12-490 3691",
+    "dept": "Design",
+    "salary": 139800,
+    "start": "2019-10-14",
+    "active": true
+  },
+  {
+    "name": "Ben Rahman",
+    "email": "ben.rahman9@example.com",
+    "phone": "+60 12-844 4991",
+    "dept": "Engineering",
+    "salary": 76400,
+    "start": "2020-05-13",
+    "active": false
+  },
+  {
+    "name": "",
+    "email": "isabel.garcia10@example.com",
+    "phone": "+60 12-615 7074",
+    "dept": "Finance",
+    "salary": 132600,
+    "start": "2016-12-27",
+    "active": true
+  },
+  {
+    "name": "Mei Nguyen",
+    "email": "mei.nguyen11@example.com",
+    "phone": "+60 12-875 0508",
+    "dept": "Finance",
+    "salary": 91200,
+    "start": "2018-07-07",
+    "active": true
+  },
+  {
+    "name": "Mei Kim",
+    "email": "mei.kim12@example.com",
+    "phone": "+60 12-232 3819",
+    "dept": "Engineering",
+    "salary": 136200,
+    "start": "2022-04-23",
+    "active": true
+  }
+]

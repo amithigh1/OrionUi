@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Notifications — Orion Admin</title>
+<meta name="docs:section" content="Communication">
+<meta name="docs:order" content="20">
+<meta name="docs:desc" content="A shared notification store, a header bell with an unread badge, and a notification center list">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Notifications</h1>
+    <p class="docs-lead"><code>Orion.notifications</code> is a shared, event-emitting store (push, read state, pagination, cross-tab sync); <code>&lt;o-notification-bell&gt;</code> and <code>&lt;o-notifications&gt;</code> both read it live, so any number of them on a page always agree with each other.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Bell + center</h2>
+    <p><code>&lt;o-notification-bell&gt;</code> needs no setup beyond notifications existing in the store — click it to open the list in a floating panel. The same list also works standalone (right), e.g. for a dedicated notifications page.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-grid-auto" style="--o-min:15rem;--o-gap:1.5rem">
+          <div>
+            <h4 class="o-h6">Bell (click to open)</h4>
+            <div class="o-card o-p-4 o-hstack" style="justify-content:center">
+              <o-notification-bell id="bell-basic"></o-notification-bell>
+            </div>
+          </div>
+          <div>
+            <h4 class="o-h6">Standalone center</h4>
+            <o-notifications id="center-basic" class="o-card" style="max-height:20rem;overflow-y:auto"></o-notifications>
+          </div>
+        </div>
+        <script>
+          {
+            const now = Date.now();
+            Orion.notifications.setItems([
+              { id: 1, title: 'New order #10231', body: 'Aisha Rahman · RM 1,240.00', type: 'success', createdAt: now - 6e4 },
+              { id: 2, title: 'Payment failed', body: 'Invoice INV-2031 could not be charged', type: 'error', createdAt: now - 36e5 },
+              { id: 3, title: 'Ben mentioned you', body: '"can you review the Q3 report?"', type: 'mention', createdAt: now - 5.4e6 },
+              { id: 4, title: 'Storage almost full', body: '92% of your plan quota used', type: 'warning', createdAt: now - 864e5 },
+              { id: 5, title: 'Weekly summary is ready', body: '1,284 orders, RM 84,210 revenue', type: 'info', createdAt: now - 2 * 864e5 },
+            ]);
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="interactions">
+    <h2>Mark read, dismiss, and push</h2>
+    <p>Clicking a row marks it read; the × button removes it. <code>push()</code> prepends a brand-new item (optionally bridged to <code>Orion.toast</code> — off by default, turn it on with <code>configure({ toast: true })</code>).</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-sm o-btn-primary" id="push-one">Push a notification</button>
+          <button class="o-btn o-btn-sm" id="read-all">Mark all read</button>
+        </div>
+        <o-notifications id="center-int" style="max-height:18rem;overflow-y:auto" class="o-card"></o-notifications>
+        <div class="docs-log" id="log-int"></div>
+        <script>
+          {
+            Orion.notifications.configure({ toast: true });
+            const center = document.getElementById('center-int');
+            center.addEventListener('o-select', e => docs.log('#log-int', 'o-select → ' + e.detail.item.title));
+            center.addEventListener('o-dismiss', e => docs.log('#log-int', 'o-dismiss → ' + e.detail.item.title));
+            let n = 0;
+            const kinds = [['success', 'Export finished', 'orders.csv is ready to download'], ['info', 'New comment', 'Grace Kim replied to your review'], ['warning', 'Session expiring', 'You will be signed out in 5 minutes']];
+            document.getElementById('push-one').onclick = () => { const [type, title, body] = kinds[n++ % kinds.length]; Orion.notifications.push({ title, body, type }); };
+            document.getElementById('read-all').onclick = () => center.markAllRead();
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="grouping">
+    <h2>Day grouping &amp; compact mode</h2>
+    <p><code>group-by-day</code> (default on) inserts a divider between calendar days. <code>compact</code> — used internally by the bell's panel — tightens the rows for a small popover.</p>
+    <div class="docs-demo">
+      <template>
+        <o-notifications id="center-compact" compact show-header="false" style="max-width:22rem" class="o-card"></o-notifications>
+        <script>
+          {
+            const now = Date.now();
+            const compact = document.getElementById('center-compact');
+            // reuses the same shared store as every other demo on this page — nothing to set here.
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="connect">
+    <h2>Real-time source (<code>connect()</code>)</h2>
+    <p><code>Orion.notifications.connect(client, { event })</code> wires any <code>Emitter</code>-shaped realtime client as a push source — every matching event calls <code>push()</code>. This demo uses an in-browser <a href="realtime.html">mock WebSocket server</a> ticking every few seconds.</p>
+    <div class="docs-demo">
+      <template>
+        <o-notification-bell id="bell-live" show-dot></o-notification-bell>
+        <div class="docs-log o-mt-3" id="log-live"></div>
+        <script>
+          {
+            const srv = Orion.realtime.mockServer('wss://demo.local/notifications-docs', socket => {
+              const events = [['success', 'Deploy finished', 'v1.4.2 is live'], ['info', 'New follower', 'Diego Silva started following your project'], ['warning', 'Rate limit near', '92% of your API quota used this hour']];
+              let i = 0;
+              const t = setInterval(() => { const [type, title, body] = events[i++ % events.length]; socket.send({ type: 'notification', data: { title, body, type } }); }, 4000);
+              socket.on('close', () => clearInterval(t));
+            });
+            const ws = Orion.ws('wss://demo.local/notifications-docs', { id: 'notif-docs' });
+            ws.on('notification', payload => Orion.notifications.push(payload.data));
+            document.getElementById('bell-live').addEventListener('o-open', () => docs.log('#log-live', 'o-open'));
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="persist">
+    <h2>Persistence &amp; cross-tab sync</h2>
+    <p><code>configure({ persist: true })</code> round-trips <code>items</code> (including read state) through <code>localStorage</code>; <code>crossTab</code> (on by default) mirrors every push/read/remove to other tabs of the same origin via <code>BroadcastChannel</code> — open this page in two tabs and mark one read.</p>
+    <pre class="docs-code-block" data-lang="js">
+Orion.notifications.configure({ persist: true, storageKey: 'orion:notifications:items', crossTab: true });
+    </pre>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3><code>Orion.notifications</code></h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>push(item, overrides?)</td><td><code>{ title, body, icon?, type?, url?, actions? }</code> — prepends; <code>type</code>: success/error/warning/info/mention.</td></tr>
+        <tr><td>setItems(list) / append(list)</td><td>Replace, or append older (pagination).</td></tr>
+        <tr><td>markRead(id | 'all')</td><td></td></tr>
+        <tr><td>remove(id | 'all')</td><td></td></tr>
+        <tr><td>unreadCount</td><td>Getter.</td></tr>
+        <tr><td>configure({toast,browserNotify,sound,persist,crossTab,storageKey,channel,maxItems})</td><td></td></tr>
+        <tr><td>connect(client, {event}) → disconnect()</td><td>Push source adapter.</td></tr>
+        <tr><td>on('change', fn)</td><td><code>{ type, item?, id?, items? }</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-notification-bell&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>max</td><td>number</td><td>Default 99 — badge reads "{max}+" past this.</td></tr>
+        <tr><td>show-dot</td><td>boolean</td><td>Dot instead of a count.</td></tr>
+        <tr><td>placement</td><td>string</td><td>Default <code>bottom-end</code>.</td></tr>
+      </tbody>
+    </table>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>o-open / o-close</td><td><code>{}</code> / <code>{ reason }</code></td></tr>
+        <tr><td>o-select / o-dismiss</td><td><code>{ item }</code> — forwarded from the internal list; the panel closes after o-select.</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-notifications&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>compact</td><td>boolean</td><td></td></tr>
+        <tr><td>group-by-day</td><td>boolean</td><td>Default true.</td></tr>
+        <tr><td>show-header</td><td>boolean</td><td>Default true — title, unread count, mark all read / clear all.</td></tr>
+        <tr><td>source</td><td><code>(page,{pageSize}) =&gt; items[] | {items,hasMore}</code></td><td>Property only — pulls <em>older</em> notifications for <code>load()</code>.</td></tr>
+        <tr><td>page-size / auto-load</td><td>number / boolean</td><td></td></tr>
+      </tbody>
+    </table>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>markAllRead() / clearAll()</td><td></td></tr>
+        <tr><td>load(page?) → Promise&lt;newItems[]&gt;</td><td>Appends via <code>Orion.notifications.append()</code>.</td></tr>
+        <tr><td>o-select / o-dismiss / o-load / o-error</td><td>Events — see the component README for details.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Enter / Space on the bell</td><td>Open/close the panel.</td></tr>
+        <tr><td>Escape</td><td>Close the panel (focus returns to the bell).</td></tr>
+        <tr><td>Tab to a row, Enter / Space</td><td>Select (marks read).</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

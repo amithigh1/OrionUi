@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="csrf-token" content="test-csrf-123">
+<title>Services A tests: HTTP, offline, storage — Orion Admin</title>
+<script src="../../dist/orion.js"></script>
+</head>
+<body class="o-container o-py-5">
+<h1 class="o-h3">Services A — HTTP, offline &amp; storage tests</h1>
+<p class="o-muted">Run with <code>node build/check.mjs docs/examples/services-a-tests.html --eval="runAll()"</code>. Failures are reported through <code>console.error</code>.</p>
+<p><button class="o-btn o-btn-primary" id="run" type="button">Run tests</button> <span id="sum" class="o-badge"></span></p>
+<div id="out" class="o-stack" style="--o-gap:.25rem"></div>
+
+<div id="sandbox" hidden>
+  <form id="f422" data-o-ajax action="/t/profile" method="post">
+    <div class="o-field"><label class="o-label" for="t-name">Name</label><input class="o-input" id="t-name" name="name"></div>
+    <div class="o-field"><label class="o-label" for="t-email">Email</label><input class="o-input" id="t-email" name="email"><div class="o-error">static</div></div>
+    <div class="o-field"><input class="o-input" name="tags[]" value="a"><input class="o-input" name="tags[]" value="b"><input class="o-input" name="address.city" value="KL"></div>
+    <div data-o-ajax-message></div>
+    <button class="o-btn" type="submit">Save</button>
+  </form>
+  <div id="frag"></div>
+</div>
+
+<script>
+const T = [];
+const test = (name, fn) => T.push({ name, fn });
+const assert = (c, m) => { if (!c) throw new Error(m || 'assertion failed'); };
+const eq = (a, b, m) => assert(JSON.stringify(a) === JSON.stringify(b), `${m || 'eq'}: expected ${JSON.stringify(b)} got ${JSON.stringify(a)}`);
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const until = async (fn, ms = 3000, msg = 'condition') => { const t0 = Date.now(); while (!(await fn())) { if (Date.now() - t0 > ms) throw new Error('timeout waiting for ' + msg); await wait(15); } };
+const rejects = async (p, check) => { try { await p; } catch (e) { if (check) check(e); return e; } throw new Error('expected rejection'); };
+async function runAll() {
+  const out = document.getElementById('out'); out.innerHTML = '';
+  let pass = 0; const failures = [];
+  for (const t of T) {
+    try { await Promise.race([t.fn(), wait(15000).then(() => { throw new Error('test timeout'); })]); pass++; out.insertAdjacentHTML('beforeend', `<div class="o-alert o-alert-success" style="margin:0;padding:.25rem .75rem">✔ ${t.name}</div>`); }
+    catch (e) { failures.push(t.name + ': ' + e.message); console.error('✖ ' + t.name + ': ' + (e && e.stack || e)); out.insertAdjacentHTML('beforeend', `<div class="o-alert o-alert-danger" style="margin:0;padding:.25rem .75rem">✖ ${t.name}: ${String(e.message).replace(/</g, '&lt;')}</div>`); }
+  }
+  document.getElementById('sum').textContent = `${pass}/${T.length}`;
+  return { pass, fail: failures.length, total: T.length, failures };
+}
+document.getElementById('run').onclick = () => runAll();
+
+const H = Orion.http;
+const FX = '../fixtures/services-a/';
+const srv = H.mock([
+  { method: 'POST', url: '/t/echo', response: req => ({ body: req.body, headers: req.headers, query: req.query }) },
+  { method: 'GET', url: '/t/users/:id', response: req => ({ id: +req.params.id, q: req.query }) },
+  { url: '/t/flaky', fail: 2, status: 503, response: { ok: true } },
+  { url: '/t/down', status: 503 },
+  { url: '/t/slow', error: 'timeout' },
+  { url: '/t/net', error: 'network' },
+  { url: '/t/404', status: 404, response: { message: 'Nope' } },
+  { url: '/t/badjson', reply: () => [200, 'not json', { 'content-type': 'application/json' }] },
+  { url: '/t/429', fail: 1, failStatus: 429, headers: { 'retry-after': '0' }, response: { ok: 1 } },
+  { method: 'GET', url: '/t/counter', delay: 40, response: () => ({ n: (window.__cnt = (window.__cnt || 0) + 1) }) },
+  { method: 'POST', url: '/t/items', status: 201, response: req => ({ saved: req.body }) },
+  { method: 'GET', url: '/t/items', response: () => ({ n: (window.__items = (window.__items || 0) + 1) }) },
+  { method: 'POST', url: '/t/upload', delay: 200, response: req => ({ files: req.body instanceof FormData ? [...req.body.keys()] : [] }) },
+  { method: 'POST', url: '/t/profile', reply: req => (req.body.email && req.body.email.includes('taken') ? [422, { message: 'Invalid', errors: { email: ['Email already taken'], name: 'Name too short' } }] : [200, { ok: true, received: req.body }]) },
+  { method: 'POST', url: '/t/todos', reply: req => { (window.__todos = window.__todos || []).push(req.body.title); return /conflict/.test(req.body.title) ? [409, { message: 'Conflict' }] : [201, { id: window.__todos.length }]; } },
+  { method: 'GET', url: '/t/auth', reply: req => (req.headers.Authorization === 'Bearer fresh' ? [200, { user: 'ada' }] : [401, { message: 'expired' }]) },
+  { method: 'GET', url: '/t/wrapped', response: { data: { value: 42 } } },
+]);
+
+/* ── HTTP ─────────────────────────────────────────────────────────────── */
+test('GET fixture JSON (fetch)', async () => { const u = await H.get(FX + 'users.json'); assert(Array.isArray(u) && u.length === 12, 'users'); });
+test('params, route params, baseURL via create()', async () => {
+  const api = H.create({ baseURL: '/t' });
+  const r = await api.get('users/7', { params: { a: 1, b: [2, 3], skip: null, d: new Date(Date.UTC(2024, 0, 2)) } });
+  eq(r.id, 7); eq(r.q, { a: '1', b: '3', d: '2024-01-02T00:00:00.000Z' }, 'query (last b wins in Object.fromEntries)');
+  eq(H.params({ a: 1, b: [2, 3] }), 'a=1&b=2&b=3');
+});
+test('POST JSON body + headers + CSRF meta', async () => {
+  const r = await H.post('/t/echo', { name: 'Ada' }, { headers: { 'X-Test': '1' } });
+  eq(r.body, { name: 'Ada' }); assert(/json/.test(r.headers['Content-Type']), 'content-type json'); eq(r.headers['X-CSRF-Token'], 'test-csrf-123', 'csrf'); eq(r.headers['X-Test'], '1');
+});
+test('FormData / URLSearchParams passthrough', async () => {
+  const fd = new FormData(); fd.append('a', '1');
+  const r = await H.post('/t/upload', fd);
+  eq(r.files, ['a']);
+  const r2 = await H.post('/t/echo', new URLSearchParams({ x: '1' }));
+  eq(r2.body, { x: '1' });
+});
+test('retry with backoff succeeds after 2 failures', async () => {
+  const events = []; const off = H.on('retry', e => events.push(e.attempt));
+  srv.reset();
+  const r = await H.get('/t/flaky', { retry: { count: 3, delay: 10 } });
+  off(); eq(r, { ok: true }); eq(events, [1, 2], 'retry events');
+});
+test('retry exhausted -> HttpError 503 with attempts', async () => {
+  const e = await rejects(H.get('/t/down', { retry: { count: 1, delay: 5 } }));
+  assert(e instanceof Orion.HttpError, 'type'); eq(e.status, 503); eq(e.attempts, 2); assert(e.isServerError && !e.isNetwork);
+});
+test('Retry-After honoured (429)', async () => { srv.reset(); const r = await H.get('/t/429', { retry: { count: 1, delay: 5000 } }); eq(r, { ok: 1 }); });
+test('timeout -> isTimeout', async () => { const e = await rejects(H.get('/t/slow', { timeout: 120 })); assert(e.isTimeout && e.code === 'ETIMEDOUT', e.code); });
+test('abort -> isAbort (no retry)', async () => {
+  const ctl = new AbortController(); const p = H.get('/t/slow', { signal: ctl.signal, retry: 3, timeout: 5000 });
+  setTimeout(() => ctl.abort(), 30); const e = await rejects(p); assert(e.isAbort, e.code);
+});
+test('network error -> isNetwork', async () => { const e = await rejects(H.get('/t/net')); assert(e.isNetwork && e.code === 'ENETWORK', e.code); });
+test('404 -> data + userMessage', async () => { const e = await rejects(H.get('/t/404')); eq(e.status, 404); eq(e.userMessage, 'Nope'); eq(e.data, { message: 'Nope' }); });
+test('invalid JSON -> EPARSE', async () => { const e = await rejects(H.get('/t/badjson')); eq(e.code, 'EPARSE'); });
+test('responseType text / blob / arrayBuffer / response / full', async () => {
+  const txt = await H.get(FX + 'users.json', { responseType: 'text' }); assert(typeof txt === 'string' && txt.startsWith('['));
+  const b = await H.get(FX + 'report.csv', { responseType: 'blob' }); assert(b instanceof Blob && b.size > 20000, 'blob');
+  const ab = await H.get(FX + 'stats.json', { responseType: 'arrayBuffer' }); assert(ab instanceof ArrayBuffer);
+  const res = await H.get(FX + 'stats.json', { responseType: 'response' }); assert(res instanceof Response && res.ok);
+  const full = await H.get(FX + 'stats.json', { full: true }); eq(full.status, 200); assert(full.headers.get('content-type').includes('json'));
+  const csv = await H.get(FX + 'report.csv'); assert(typeof csv === 'string', 'auto text for csv');
+});
+test('interceptors: request/response/error + eject', async () => {
+  const api = H.create();
+  let token = 'old';
+  const ej = api.interceptors.request.use(cfg => { cfg.headers.Authorization = 'Bearer ' + token; });
+  api.interceptors.error.use(async err => { if (err.status === 401 && !err.config.__retried) { token = 'fresh'; return api.request({ ...err.config, __retried: true }); } });
+  eq(await api.get('/t/auth'), { user: 'ada' });
+  const unwrap = api.interceptors.response.use(res => ({ ...res, data: res.data && res.data.data !== undefined ? res.data.data : res.data }));
+  eq(await api.get('/t/wrapped'), { value: 42 });
+  unwrap(); eq(await api.get('/t/wrapped'), { data: { value: 42 } }); ej();
+  assert(api.interceptors.request.size === 0, 'ejected');
+});
+test('dedupe concurrent GETs (1 request, independent copies, per-caller abort)', async () => {
+  window.__cnt = 0;
+  const ctl = new AbortController();
+  const ps = [H.get('/t/counter'), H.get('/t/counter'), H.get('/t/counter', { signal: ctl.signal }).then(() => null, err => err)];
+  ctl.abort();
+  const [a, b] = await Promise.all(ps.slice(0, 2)); const e = await ps[2];
+  eq(window.__cnt, 1, 'one call'); eq(a, b); assert(a !== b, 'copies'); assert(e.isAbort, 'aborted caller');
+});
+test('memory cache + invalidation on mutation', async () => {
+  window.__items = 0; H.cache.clear();
+  const r1 = await H.get('/t/items', { cache: 5000, full: true }); const r2 = await H.get('/t/items', { cache: 5000, full: true });
+  eq(r1.data.n, 1); eq(r2.data.n, 1); assert(r2.cached, 'cached flag');
+  await H.post('/t/items', { a: 1 });
+  const r3 = await H.get('/t/items', { cache: 5000 }); eq(r3.n, 2, 'invalidated');
+});
+test('upload progress (XHR path via mock) + upload() helper', async () => {
+  const prog = [];
+  const r = await H.upload('/t/upload', new File([new Uint8Array(200000)], 'big.bin'), { onProgress: p => prog.push(p.progress), data: { folder: 'x' } });
+  eq(r.files, ['file', 'folder']); assert(prog.length >= 3 && prog[prog.length - 1] === 1, 'progress ' + prog.join(','));
+});
+test('download progress (streamed fetch) + download({ save: false })', async () => {
+  const prog = [];
+  const blob = await H.download(FX + 'report.csv', { save: false, toast: false, onProgress: p => prog.push(p) });
+  assert(blob.size > 20000, 'size'); assert(prog.length >= 2 && prog[prog.length - 1].loaded === blob.size, 'progress');
+});
+test('abortAll()', async () => { const p = H.get('/t/slow', { timeout: 5000, dedupe: false }); setTimeout(() => H.abortAll(), 20); const e = await rejects(p); assert(e.isAbort, e.code); });
+test('http events + bus http:error', async () => {
+  let got = 0; const off = Orion.on('http:error', () => got++);
+  await rejects(H.get('/t/404')); off(); eq(got, 1);
+});
+
+/* ── behaviors ─────────────────────────────────────────────────────────── */
+test('<form data-o-ajax> 422 -> field errors; success -> o-ajax-success', async () => {
+  const f = document.getElementById('f422');
+  f.name.value = 'A'; f.email.value = 'x@taken.com';
+  let err = null; f.addEventListener('o-ajax-error', e => { err = e.detail; }, { once: true });
+  f.requestSubmit();
+  await until(() => err, 3000, 'o-ajax-error');
+  eq(err.status, 422); eq(err.errors, { email: 'Email already taken', name: 'Name too short' });
+  const em = f.email; assert(em.getAttribute('aria-invalid') === 'true' && em.closest('.o-field').classList.contains('is-invalid'), 'invalid state');
+  eq(em.closest('.o-field').querySelector('.o-error').textContent, 'Email already taken');
+  em.value = 'ok@x.com'; em.dispatchEvent(new Event('input', { bubbles: true }));
+  assert(!em.hasAttribute('aria-invalid'), 'cleared on input'); eq(em.closest('.o-field').querySelector('.o-error').textContent, 'static', 'restored static text');
+  let ok = null; f.addEventListener('o-ajax-success', e => { ok = e.detail; }, { once: true });
+  f.name.value = 'Ada Lovelace'; f.requestSubmit();
+  await until(() => ok, 3000, 'o-ajax-success');
+  eq(ok.data.received.tags, ['a', 'b']); eq(ok.data.received.address, { city: 'KL' });
+  assert(!f.querySelector('button').disabled, 'button re-enabled');
+});
+test('extractErrors variants', () => {
+  eq(H.extractErrors({ errors: { Email: ['A', 'B'] } }), { Email: 'A B' });
+  eq(H.extractErrors({ errors: [{ path: 'name', msg: 'Required' }] }), { name: 'Required' });
+  eq(H.extractErrors({ message: 'x' }), null);
+});
+test('data-o-load sanitizes fetched HTML', async () => {
+  const el = document.getElementById('frag');
+  let loaded = false; el.addEventListener('o-load', () => { loaded = true; }, { once: true });
+  el.setAttribute('data-o-load', FX + 'fragment.html');
+  await until(() => loaded, 3000, 'o-load');
+  assert(el.querySelector('.o-feed'), 'content'); assert(!el.querySelector('script'), 'script stripped'); assert(!el.querySelector('[onclick]'), 'handler stripped'); assert(!window.__fragmentScriptRan);
+  const html = await H.load(el, FX + 'news.html', { swap: 'append' }); assert(html && el.querySelectorAll('.o-list-item').length === 2, 'append');
+});
+
+/* ── offline queue ─────────────────────────────────────────────────────── */
+test('offline: simulate + queue + ordered replay + conflict hook', async () => {
+  const off = Orion.offline; await off.queue.ready; await off.queue.clear();
+  window.__todos = [];
+  const changes = []; const offC = off.onChange(v => changes.push(v));
+  off.simulate(true);
+  assert(off.isOffline && document.documentElement.classList.contains('o-is-offline'), 'offline class');
+  const e = await rejects(H.get('/t/items')); assert(e.isOffline, 'non-queued fails fast offline');
+  const r1 = await H.post('/t/todos', { title: 'one' }, { offline: 'queue' });
+  await H.post('/t/todos', { title: 'two conflict' }, { offline: 'queue' });
+  await H.post('/t/todos', { title: 'three' }, { offline: 'queue' });
+  assert(r1.queued && r1.id, 'queued result'); eq(off.queue.size, 3);
+  eq(off.queue.list().map(x => x.body.title), ['one', 'two conflict', 'three']);
+  const conflicts = []; const offH = off.queue.onConflict((entry, err) => { conflicts.push([entry.body.title, err.status]); return 'drop'; });
+  const synced = new Promise(r => { const o = off.on('sync', res => { o(); r(res); }); });
+  off.simulate(false);
+  const res = await synced;
+  offH(); offC();
+  eq(window.__todos, ['one', 'two conflict', 'three'], 'replayed in order'); eq(conflicts, [['two conflict', 409]]);
+  eq(res, { sent: 2, failed: 1, remaining: 0 }); eq(off.queue.size, 0); eq(changes, [true, false]);
+  off.simulate(null);
+});
+test('offline: persistence backend + serialization', async () => {
+  const off = Orion.offline; await off.queue.ready;
+  assert(['idb', 'local', 'memory'].includes(off.queue.persistence), off.queue.persistence);
+  const fd = new FormData(); fd.append('f', new Blob(['x']), 'x.txt');
+  const s = off.serialize(fd); assert(s.type === 'formdata'); assert(off.deserialize(s) instanceof FormData);
+  eq(off.deserialize(off.serialize({ a: [1] })), { a: [1] });
+});
+test('offline: http offline:"queue" falls back to queue on network error', async () => {
+  const off = Orion.offline; await off.queue.clear(); off.configure({ autoSync: false });
+  const r = await H.post('/t/net', { a: 1 }, { offline: 'queue' });
+  assert(r.queued, 'queued on network error'); eq(off.queue.size, 1);
+  await off.queue.clear(); off.configure({ autoSync: true });
+});
+
+/* ── storage ───────────────────────────────────────────────────────────── */
+test('store: JSON, TTL, namespace, keys, clear, onChange', async () => {
+  const s = Orion.store.namespace('test');
+  s.clear();
+  const seen = []; const off = s.onChange('a', (v, o, info) => seen.push([v, o, info.source]));
+  assert(s.set('a', { x: 1 }) && s.has('a')); eq(s.get('a'), { x: 1 }); eq(localStorage.getItem('test:a'), '{"x":1}');
+  s.set('t', 5, { ttl: 40 }); assert(s.ttl('t') > 0 && s.ttl('a') === Infinity);
+  await wait(60); eq(s.get('t', 'gone'), 'gone'); assert(!s.has('t'));
+  s.set('pre:1', 1); s.set('pre:2', 2);
+  eq(s.keys().sort(), ['a', 'pre:1', 'pre:2']); eq(s.clear('pre:'), 2);
+  s.update('a', v => ({ ...v, y: 2 })); eq(s.get('a'), { x: 1, y: 2 });
+  s.remove('a'); off();
+  eq(seen.map(x => x[2]), ['local', 'local', 'local']); eq(seen[2][0], undefined);
+  eq(Orion.storage.parseTTL('2h'), 7200000);
+});
+test('store: memory fallback when storage is unavailable', () => {
+  const s = Orion.storage.createStore('noSuchStorage', 'fb');
+  assert(!s.persistent, 'memory'); s.set('k', [1, 2]); eq(s.get('k'), [1, 2]); eq(s.keys(), ['k']);
+});
+test('session store', () => { Orion.session.set('s1', 'v'); eq(Orion.session.get('s1'), 'v'); eq(sessionStorage.getItem('orion:store:s1'), '"v"'); Orion.session.remove('s1'); });
+test('idb: open, CRUD, indexes, tx commit/abort, iterate, auto version bump', async () => {
+  await Orion.idb.deleteDatabase('orion-test');
+  const db = await Orion.idb.open('orion-test', { stores: { users: { keyPath: 'id', autoIncrement: true, indexes: ['email', { name: 'tags', keyPath: 'tags', multiEntry: true }] } } });
+  const id = await db.add('users', { email: 'ada@x.io', tags: ['a', 'b'] });
+  await db.bulkPut('users', [{ id: 10, email: 'bob@x.io', tags: ['b'] }, { id: 11, email: 'cy@x.io', tags: [] }]);
+  eq((await db.get('users', id)).email, 'ada@x.io'); eq(await db.count('users'), 3);
+  eq((await db.index('users', 'email').get('bob@x.io')).id, 10);
+  eq((await db.index('users', 'tags').getAll('b')).length, 2);
+  eq((await db.getAll('users', Orion.idb.range.bound(10, 11))).length, 2);
+  eq((await db.getAll('users', u => u.tags.length === 0)).map(u => u.id), [11]);
+  const err = await rejects(db.add('users', { id: 10, email: 'dup' })); eq(err.code, 'ECONSTRAINT');
+  const sum = await db.tx('users', 'readwrite', async t => { await t.store('users').put({ id: 12, email: 'd@x', tags: [] }); return t.store('users').count(); });
+  eq(sum, 4);
+  await rejects(db.tx('users', 'readwrite', async t => { await t.store('users').put({ id: 13, email: 'e', tags: [] }); throw new Error('boom'); }));
+  eq(await db.get('users', 13), undefined, 'aborted tx rolled back');
+  const seen = []; await db.iterate('users', (v, k) => { seen.push(k); if (seen.length === 2) return false; }); eq(seen.length, 2);
+  await db.delete('users', 12); eq((await db.keys('users')).length, 3);
+  const v1 = db.version; db.close();
+  const db2 = await Orion.idb.open('orion-test', { stores: { users: { keyPath: 'id' }, notes: null } });
+  assert(db2.version === v1 + 1 && db2.stores.includes('notes'), 'auto bump'); await db2.put('notes', 'hello', 'n1'); eq(await db2.get('notes', 'n1'), 'hello');
+  await db2.clear('notes'); eq(await db2.count('notes'), 0);
+  await db2.destroy();
+});
+test('idb.kv', async () => {
+  await Orion.idb.kv.set('draft', { t: 'hi' }); eq(await Orion.idb.kv.get('draft'), { t: 'hi' }); assert(await Orion.idb.kv.has('draft'));
+  assert((await Orion.idb.kv.keys()).includes('draft')); await Orion.idb.kv.del('draft'); eq(await Orion.idb.kv.get('draft', 'none'), 'none'); assert(await Orion.idb.kv.persistent());
+});
+test('cache: put/match/ttl/delete/keys/size/clear', async () => {
+  const C = Orion.cache; assert(C.supported, 'secure context');
+  await C.clear('orion-data');
+  await C.put('/api/me', { name: 'Ada' }); eq(await C.match('/api/me'), { name: 'Ada' });
+  await C.put('/greeting.txt', 'hello'); eq(await C.match('/greeting.txt'), 'hello');
+  await C.put('/short', 1, { ttl: 30 }); await wait(50); eq(await C.match('/short'), undefined, 'expired');
+  const res = await fetch(FX + 'stats.json'); await C.put(FX + 'stats.json', res); eq((await C.match(FX + 'stats.json')).orders, 1824);
+  assert((await C.match('/api/me', { as: 'response' })) instanceof Response);
+  eq((await C.keys()).length, 3); assert(await C.size('orion-data') > 20, 'size');
+  assert(await C.delete('/api/me')); assert(!(await C.has('/api/me')));
+  const st = await C.stats(); assert(st.some(s => s.name === 'orion-data'));
+  eq(await C.clear('orion-data'), 1);
+});
+test('storage.estimate / persisted', async () => {
+  const e = await Orion.storage.estimate(); assert(e && e.quota > 0 && typeof e.usage === 'number'); assert(typeof (await Orion.storage.persisted()) === 'boolean');
+});
+</script>
+</body>
+</html>

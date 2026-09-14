@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Help — Orion Admin</title>
+<meta name="docs:section" content="Auth & Onboarding">
+<meta name="docs:order" content="50">
+<meta name="docs:desc" content="Inline help, a searchable contextual help panel and a &quot;What's this?&quot; mode">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .help-mock-settings { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+  .help-mock-settings .o-card-body { display: flex; flex-direction: column; gap: .625rem; }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Help</h1>
+    <p class="docs-lead">Register articles once with <code>Orion.help.register()</code>, then link into them
+      from anywhere: an inline <code>&lt;o-help&gt;</code> "?", a full <code>&lt;o-help-panel&gt;</code> with
+      search and history, or a <code>data-o-help</code> hook lit up by "What's this?" mode. Press
+      <kbd>F1</kbd> or <kbd>?</kbd> anywhere on this page to try it.</p>
+  </header>
+
+  <section id="registry">
+    <h2>Register articles</h2>
+    <pre class="docs-code-block" data-lang="js">
+      Orion.help.register({
+        billing: { title: 'Billing & invoices', content: '&lt;p&gt;Your plan renews monthly on the 1st.&lt;/p&gt;', related: ['payment-methods'] },
+        'payment-methods': { title: 'Payment methods', content: '&lt;p&gt;Add a card in Settings → Billing.&lt;/p&gt;' },
+        notifications: { title: 'Notification settings', content: '&lt;p&gt;Control email and push notifications per project.&lt;/p&gt;' },
+      });
+    </pre>
+  </section>
+
+  <section id="settings-demo">
+    <h2>Contextual help over a settings page</h2>
+    <p>Turn on "What's this?" and click a highlighted card.</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-cluster o-mb-4">
+          <button class="o-btn" data-o-action="help-whats-this"><o-icon name="help-circle"></o-icon> What's this?</button>
+          <button class="o-btn" data-o-action="help">Open help panel</button>
+          <o-help text="Totals shown here exclude tax and are refreshed hourly." article="billing"></o-help>
+        </div>
+        <div class="help-mock-settings">
+          <div class="o-card" data-o-help="billing"><div class="o-card-header"><h4 class="o-card-title">Billing</h4></div><div class="o-card-body"><p class="o-text-muted">Plan, invoices, payment method.</p></div></div>
+          <div class="o-card" data-o-help="notifications"><div class="o-card-header"><h4 class="o-card-title">Notifications</h4></div><div class="o-card-body"><p class="o-text-muted">Email and push preferences.</p></div></div>
+          <div class="o-card" data-o-help="payment-methods"><div class="o-card-header"><h4 class="o-card-title">Payment methods</h4></div><div class="o-card-body"><p class="o-text-muted">Cards and billing address.</p></div></div>
+        </div>
+        <script>
+          Orion.help.register({
+            billing: { title: 'Billing & invoices', content: '<p>Your plan renews monthly on the 1st. Invoices are emailed to the account owner.</p>', related: ['payment-methods'] },
+            'payment-methods': { title: 'Payment methods', content: '<p>Add or remove a card in Settings → Billing → Payment methods.</p>', related: ['billing'] },
+            notifications: { title: 'Notification settings', content: '<p>Control email and push notifications per project in Settings → Notifications.</p>' },
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API — <code>Orion.help</code></h2>
+    <table class="docs-api">
+      <tbody>
+        <tr><td><code>register(map)</code></td><td><code>{ key: { title, content, related?, video? } }</code>, merged into the registry.</td></tr>
+        <tr><td><code>get(key)</code> / <code>keys()</code> / <code>search(query)</code></td><td>Read the registry / fuzzy search.</td></tr>
+        <tr><td><code>open(key?)</code> / <code>close()</code> / <code>toggle(key?)</code></td><td>Show/hide the shared <code>&lt;o-help-panel&gt;</code> (auto-created).</td></tr>
+        <tr><td><code>whatsThis(on?)</code> / <code>inspecting</code></td><td>Toggle inspect mode.</td></tr>
+      </tbody>
+    </table>
+    <h3><code>&lt;o-help-panel&gt;</code></h3>
+    <table class="docs-api">
+      <tbody>
+        <tr><td>Props</td><td><code>placement(=end) width texts</code></td></tr>
+        <tr><td>Methods</td><td><code>open(key?) close() toggle(key?) navigate(key,{push}) back() forward() search(q)</code></td></tr>
+        <tr><td>Events</td><td><code>o-open o-close{reason} o-navigate{key}</code></td></tr>
+      </tbody>
+    </table>
+    <h3><code>&lt;o-help text placement article&gt;</code></h3>
+    <p>An inline "?" popover; add <code>article="key"</code> to link into the full panel.</p>
+    <h3><code>data-o-help="key"</code></h3>
+    <p>Inert until <code>Orion.help.whatsThis(true)</code>; then outlined, and a click opens that article.</p>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <tbody>
+        <tr><td><kbd>F1</kbd></td><td>Open the help panel anywhere on the page.</td></tr>
+        <tr><td><kbd>?</kbd></td><td>Same, when focus isn't in a text field.</td></tr>
+        <tr><td><kbd>Escape</kbd></td><td>Cancel "What's this?" inspect mode, or close the panel.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

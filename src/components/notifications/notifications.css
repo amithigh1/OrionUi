@@ -1,0 +1,57 @@
+/* ============================================================================
+ * <o-notification-bell>, <o-notifications>
+ * Reuses core classes: `.o-badge` / `.o-badge-counter` (bell count, `:empty` already collapses it to a
+ * dot — that's how `show-dot` works, no extra class needed), `.o-feed` / `.o-feed-item` / `.o-feed-content`
+ * / `.o-feed-time` (list rows), `.o-divider` (day headers), `.o-empty` (empty state), `.o-floating`
+ * (the bell's panel). This package owns everything under `.o-notif-*` (kept distinct from activity's
+ * `.o-feed-icon`/`.o-feed-avatar` on purpose, so the two packages never define the same bare selector).
+ * Tokens + logical properties throughout so RTL mirrors automatically.
+ * ========================================================================== */
+o-notification-bell:not(:defined), o-notifications:not(:defined) { visibility: hidden; }
+
+/* ── <o-notification-bell> ───────────────────────────────────────────── */
+.o-notification-bell { display: inline-flex; position: relative; }
+.o-notif-bell-btn {
+  position: relative; display: inline-grid; place-items: center; width: var(--o-control-h); height: var(--o-control-h);
+  padding: 0; border: 0; border-radius: 50%; background: none; color: var(--o-text-muted); cursor: pointer;
+}
+.o-notif-bell-btn:hover { background: var(--o-surface-2); color: var(--o-text); }
+.o-notif-bell-btn:focus-visible { outline: none; box-shadow: 0 0 0 var(--o-ring-width) color-mix(in srgb, var(--o-focus) var(--o-ring-alpha), transparent); }
+.o-notif-bell-btn.has-unread { color: var(--o-text); }
+.o-notification-bell.is-open .o-notif-bell-btn { background: var(--o-surface-2); color: var(--o-text); }
+
+.o-notif-bell-panel { display: flex; flex-direction: column; width: min(23rem, calc(100vw - 2rem)); max-height: min(30rem, calc(100vh - 6rem)); padding: 0; overflow: hidden; }
+.o-notif-bell-panel .o-notifications { display: flex; flex-direction: column; min-height: 0; overflow-y: auto; }
+.o-notif-bell-panel .o-notif-header { position: sticky; top: 0; z-index: 1; background: var(--o-elevated); }
+
+/* ── <o-notifications> ───────────────────────────────────────────────── */
+.o-notifications { display: block; min-width: 0; }
+.o-notif-header { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .75rem .875rem; border-bottom: 1px solid var(--o-border); }
+.o-notif-header-title { font-weight: 600; font-size: var(--o-fs-sm); }
+.o-notif-header-actions { display: flex; align-items: center; gap: .125rem; flex-shrink: 0; }
+.o-notifications .o-feed { padding: 0 .5rem; }
+.o-notifications .o-feed-item { position: relative; padding-inline-end: 1.75rem; }
+.o-notifications .o-feed-item.is-unread { background: color-mix(in srgb, var(--o-primary) 6%, transparent); border-radius: var(--o-radius); }
+.o-notifications .o-feed-item.is-unread::before { content: ""; position: absolute; top: 1.1rem; inset-inline-start: -.375rem; width: .375rem; height: .375rem; border-radius: 50%; background: var(--o-primary); }
+.o-notifications .o-feed-content { display: flex; flex-direction: column; gap: .0625rem; min-width: 0; }
+.o-notif-title-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: .0625rem .5rem; }
+.o-notif-title { flex: 1 1 auto; min-width: 40%; font-size: var(--o-fs-sm); font-weight: 500; }
+.o-notifications .o-feed-item.is-unread .o-notif-title { font-weight: 700; }
+.o-notif-title-row .o-feed-time { flex-shrink: 0; }
+.o-notif-body { font-size: var(--o-fs-xs); color: var(--o-text-muted); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+
+.o-notif-icon { display: grid; place-items: center; flex-shrink: 0; width: 1.75rem; height: 1.75rem; margin-top: .0625rem; border-radius: 50%; color: var(--o-c-text, var(--o-text-muted)); background: var(--o-c-subtle, var(--o-surface-3)); }
+.o-notif-icon .o-icon { width: .9375rem; height: .9375rem; }
+.o-notif-dismiss {
+  position: absolute; top: .5rem; inset-inline-end: 0; display: inline-grid; place-items: center; width: 1.375rem; height: 1.375rem;
+  padding: 0; border: 0; border-radius: 50%; background: none; color: var(--o-text-subtle); cursor: pointer; opacity: 0; transition: opacity var(--o-dur-fast);
+}
+.o-notifications .o-feed-item:hover .o-notif-dismiss, .o-notif-dismiss:focus-visible { opacity: 1; }
+.o-notif-dismiss:hover { background: var(--o-surface-3); color: var(--o-text); }
+.o-notif-dismiss .o-icon { width: .75rem; height: .75rem; }
+@media (hover: none) { .o-notif-dismiss { opacity: 1; } }
+
+.o-notifications[compact] .o-notif-icon { width: 1.5rem; height: 1.5rem; }
+.o-notifications[compact] .o-notif-icon .o-icon { width: .8125rem; height: .8125rem; }
+.o-notifications[compact] .o-notif-title, .o-notifications[compact] .o-notif-body { font-size: .75rem; }
+.o-notifications[compact] .o-feed-time { font-size: .6875rem; }

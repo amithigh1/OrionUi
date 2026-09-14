@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kanban — Orion Admin</title>
+<meta name="docs:section" content="Boards & Diagrams">
+<meta name="docs:order" content="20">
+<meta name="docs:desc" content="Drag-and-drop task boards: columns, swimlanes, WIP limits, a compact list variant and full keyboard support">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .kb-demo { height: 34rem; }
+  .kb-demo-sm { height: 24rem; }
+  .kb-toolbar { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .75rem; }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Kanban</h1>
+    <p class="docs-lead"><code>&lt;o-kanban&gt;</code> is a full drag-and-drop task board: columns and swimlanes, WIP limits, quick-add,
+      a compact list variant, custom card templates, filtering and complete keyboard drag &amp; drop. It is built entirely on the
+      <a href="drag-drop.html"><code>Orion.sortable</code></a> engine from this package.</p>
+  </header>
+
+  <section id="overview">
+    <h2>Overview</h2>
+    <p>Give the board <code>columns</code> and <code>cards</code> (plain data — arrays of objects); the board renders and keeps them in
+      sync as the user drags, adds, edits and deletes. Everything also works as HTML attributes (JSON strings) for server-rendered pages.</p>
+    <pre class="docs-code-block" data-lang="js">
+      const kb = document.querySelector('o-kanban');
+      kb.columns = [{ id: 'todo', title: 'To do', color: 'info', limit: 5 }, { id: 'doing', title: 'In progress', color: 'primary' }];
+      kb.cards = [{ id: 1, columnId: 'todo', title: 'Design the empty states', priority: 'high', due: '2026-09-20',
+        labels: [{ text: 'Design', color: 'info' }], assignees: [{ name: 'Mei Tan' }], progress: 40 }];
+      kb.onMove = async ({ cardId, to, index }) => api.moveCard(cardId, to, index);   // return false / throw to revert
+      kb.addEventListener('o-card-move', e => console.log(e.detail));
+    </pre>
+  </section>
+
+  <section id="board">
+    <h2>Project board</h2>
+    <p>A five-column board with labels, assignees, due dates, priority, progress, checklists, cover images, comment/attachment
+      counts and a search + filter toolbar. <strong>Design</strong> has a WIP limit of 4 and is already over it. Drag a card
+      within or between columns, drag a column header to reorder columns, or focus a card and press
+      <kbd class="o-kbd">Space</kbd> for keyboard drag &amp; drop. Click a card to open its detail panel.</p>
+    <div class="docs-demo">
+      <template>
+        <o-kanban id="kb-main" class="kb-demo" filterable wip-block persist="docs-project-board"></o-kanban>
+        <div class="docs-log" id="kb-main-log"></div>
+        <script>
+          {
+            const people = docs.people(7, 42);
+            const cover = hue => 'data:image/svg+xml,' + encodeURIComponent(
+              `<svg xmlns="http://www.w3.org/2000/svg" width="480" height="180"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">` +
+              `<stop offset="0" stop-color="hsl(${hue} 70% 58%)"/><stop offset="1" stop-color="hsl(${hue + 46} 70% 42%)"/></linearGradient></defs>` +
+              `<rect width="480" height="180" fill="url(#g)"/></svg>`);
+            const LABELS = [{ text: 'Bug', color: 'danger' }, { text: 'Feature', color: 'primary' }, { text: 'Design', color: 'info' }, { text: 'Docs', color: 'secondary' }, { text: 'Perf', color: 'warning' }];
+            const PRIO = ['low', 'medium', 'high', 'urgent'];
+            const rnd = docs.rand(11);
+            const pick = a => a[Math.floor(rnd() * a.length)];
+            const person = () => ({ name: pick(people).name });
+            const due = offset => { const d = new Date(); d.setDate(d.getDate() + offset); return d.toISOString().slice(0, 10); };
+            let cid = 1;
+            const card = (columnId, title, opts = {}) => ({
+              id: cid++, columnId, title,
+              labels: opts.labels ?? (rnd() < .8 ? [pick(LABELS)] : []),
+              assignees: opts.assignees ?? Array.from({ length: 1 + Math.floor(rnd() * 2) }, person),
+              priority: opts.priority ?? pick(PRIO),
+              due: 'due' in opts ? opts.due : (rnd() < .7 ? due(Math.floor(rnd() * 20) - 6) : null),
+              progress: 'progress' in opts ? opts.progress : (rnd() < .6 ? Math.floor(rnd() * 100) : null),
+              checklist: opts.checklist ?? (rnd() < .4 ? { done: Math.floor(rnd() * 3), total: 3 + Math.floor(rnd() * 3) } : null),
+              comments: opts.comments ?? (rnd() < .5 ? Math.floor(rnd() * 8) : 0),
+              attachments: opts.attachments ?? (rnd() < .3 ? Math.floor(rnd() * 3) : 0),
+              cover: opts.cover !== undefined ? opts.cover : (rnd() < .3 ? cover(Math.floor(rnd() * 360)) : null),
+            });
+            const kb = document.getElementById('kb-main');
+            kb.columns = [
+              { id: 'backlog', title: 'Backlog', color: 'secondary' },
+              { id: 'todo', title: 'To do', color: 'info' },
+              { id: 'design', title: 'Design', color: 'primary', limit: 4 },
+              { id: 'review', title: 'Review', color: 'warning' },
+              { id: 'done', title: 'Done', color: 'success', done: true },
+            ];
+            kb.cards = [
+              card('backlog', 'Explore multi-currency pricing'), card('backlog', 'Research SSO providers'),
+              card('backlog', 'Spike: offline mode for mobile'), card('backlog', 'Audit third-party scripts'),
+              card('todo', 'Wire up the billing webhook'), card('todo', 'Add CSV export to reports'),
+              card('todo', 'Fix pagination on the audit log'),
+              card('design', 'Design the empty states', { priority: 'high', progress: 40 }),
+              card('design', 'Onboarding checklist UI', { priority: 'urgent' }),
+              card('design', 'Dark mode pass on charts'),
+              card('design', 'Redesign the notifications drawer'),
+              card('design', 'New icon set for file types'),
+              card('review', 'Accessibility pass on the datepicker', { progress: 90 }),
+              card('review', 'PR #482 — datatable virtualization'),
+              card('done', 'Set up staging environment', { due: null, progress: 100 }),
+              card('done', 'Migrate sessions to Redis', { due: null, progress: 100 }),
+              card('done', 'Ship the new pricing page', { due: null, progress: 100 }),
+            ];
+            kb.onMove = async ({ cardId, to, index }) => { await new Promise(r => setTimeout(r, 250)); return true; };
+            kb.addEventListener('o-card-move', e => docs.log('#kb-main-log', `card-move: #${e.detail.cardId} → ${e.detail.to} @ ${e.detail.index}`));
+            kb.addEventListener('o-column-move', e => docs.log('#kb-main-log', `column-move: ${e.detail.columnId} → position ${e.detail.to + 1}`));
+            kb.addEventListener('o-card-open', e => docs.log('#kb-main-log', `card-open: ${e.detail.card.title}`));
+            kb.addEventListener('o-card-add', e => docs.log('#kb-main-log', `card-add: "${e.detail.card.title}"`));
+            kb.addEventListener('o-card-update', e => docs.log('#kb-main-log', `card-update: #${e.detail.card.id}`));
+            kb.addEventListener('o-card-remove', e => docs.log('#kb-main-log', `card-remove: #${e.detail.card.id}`));
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="swimlanes">
+    <h2>Swimlanes</h2>
+    <p>Add <code>swimlanes</code> (and give cards a <code>laneId</code>) to group rows by team, epic or anything else. Columns become a
+      sticky header row shared by every lane; drag cards across lanes and columns freely. Lane rows collapse independently.</p>
+    <div class="docs-demo">
+      <template>
+        <o-kanban id="kb-lanes" class="kb-demo-sm"></o-kanban>
+        <script>
+          {
+            const kb = document.getElementById('kb-lanes');
+            kb.columns = [{ id: 'todo', title: 'To do', color: 'secondary' }, { id: 'doing', title: 'In progress', color: 'info' }, { id: 'done', title: 'Done', color: 'success', done: true }];
+            kb.swimlanes = [{ id: 'web', title: 'Web' }, { id: 'mobile', title: 'Mobile' }, { id: 'platform', title: 'Platform' }];
+            let id = 1;
+            const c = (columnId, laneId, title, extra = {}) => ({ id: id++, columnId, laneId, title, priority: extra.priority, assignees: extra.assignees || [{ name: 'Priya Patel' }] });
+            kb.cards = [
+              c('todo', 'web', 'Landing page A/B test'), c('doing', 'web', 'Checkout redesign', { priority: 'high' }), c('done', 'web', 'SEO metadata pass'),
+              c('todo', 'mobile', 'Push notification opt-in'), c('doing', 'mobile', 'Biometric login', { priority: 'urgent' }),
+              c('todo', 'platform', 'Rate limiting middleware'), c('doing', 'platform', 'Move queues to SQS'), c('done', 'platform', 'Upgrade Postgres'),
+            ];
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="wip-limits">
+    <h2>WIP limits</h2>
+    <p>Set a column <code>limit</code> to show a count badge (<code>3 / 3</code>) that turns amber at the limit and red over it.
+      With <code>wip-block</code> (or a per-column <code>hardLimit</code>) the board refuses to drop another card in — try dragging
+      a card into <strong>In review</strong>.</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <o-kanban id="kb-wip" class="kb-demo-sm" wip-block></o-kanban>
+        <script>
+          {
+            const kb = document.getElementById('kb-wip');
+            kb.columns = [{ id: 'todo', title: 'To do', color: 'secondary' }, { id: 'doing', title: 'Doing', color: 'info', limit: 3 }, { id: 'review', title: 'In review', color: 'warning', limit: 2, hardLimit: true }];
+            let id = 1;
+            const c = (columnId, title) => ({ id: id++, columnId, title, assignees: [{ name: 'Sofia Rossi' }] });
+            kb.cards = [c('todo', 'Write release notes'), c('todo', 'Update pricing copy'), c('todo', 'Triage support backlog'),
+              c('doing', 'Refactor the auth module'), c('doing', 'Add rate-limit headers'), c('doing', 'Fix flaky e2e test'),
+              c('review', 'PR #501'), c('review', 'PR #506')];
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="list-variant">
+    <h2>List variant</h2>
+    <p><code>variant="list"</code> turns the board into a single scrollable column of compact rows — a task list grouped by status,
+      handy on narrow screens or as a dense "my work" view. Columns still reorder and cards still drag between them.</p>
+    <div class="docs-demo">
+      <template>
+        <o-kanban id="kb-list" variant="list" class="kb-demo-sm"></o-kanban>
+        <script>
+          {
+            const kb = document.getElementById('kb-list');
+            kb.columns = [{ id: 'todo', title: 'To do', color: 'secondary' }, { id: 'doing', title: 'Doing', color: 'info' }, { id: 'done', title: 'Done', color: 'success', done: true }];
+            let id = 1;
+            const c = (columnId, title, priority, progress) => ({ id: id++, columnId, title, priority, progress, due: '2026-09-18', assignees: [{ name: 'Liam Brown' }] });
+            kb.cards = [c('todo', 'Prepare board meeting deck', 'high'), c('todo', 'Renew SSL certificates', 'medium'),
+              c('doing', 'Quarterly security review', 'urgent', 55), c('doing', 'Vendor contract renewal', 'low', 20),
+              c('done', 'Payroll run for September', 'medium', 100)];
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="custom-card">
+    <h2>Custom card template</h2>
+    <p>Set <code>renderCard(card, kanban)</code> to fully control card markup — return an HTML string, an <code>Orion.util.html</code>
+      template, or a DOM node. The board still adds the card menu button, drag handling and keyboard support around it.</p>
+    <div class="docs-demo">
+      <template>
+        <o-kanban id="kb-custom" class="kb-demo-sm"></o-kanban>
+        <script>
+          {
+            const kb = document.getElementById('kb-custom');
+            kb.columns = [{ id: 'todo', title: 'To do' }, { id: 'doing', title: 'Doing' }, { id: 'done', title: 'Done' }];
+            kb.cards = [
+              { id: 1, columnId: 'todo', title: 'Interview 3 candidates', priority: 'high', assignees: [{ name: 'Noah Kim' }] },
+              { id: 2, columnId: 'doing', title: 'Ship v2.3.0', priority: 'urgent', assignees: [{ name: 'Uma Rahman' }] },
+              { id: 3, columnId: 'done', title: 'Close Q3 books', priority: 'low', assignees: [{ name: 'Zara Lim' }] },
+            ];
+            const dot = { low: 'secondary', medium: 'info', high: 'warning', urgent: 'danger' };
+            kb.renderCard = card => Orion.util.html`
+              <div class="o-flex o-items-center o-gap-2" style="padding:.5rem .25rem">
+                <span class="o-dot o-c-${dot[card.priority] || 'secondary'}"></span>
+                <strong style="flex:1 1 auto">${card.title}</strong>
+                <span class="o-avatar o-avatar-xs">${(card.assignees[0]?.name || '?')[0]}</span>
+              </div>`;
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard drag &amp; drop</h2>
+    <p>Cards and column headers are focusable. The same engine as <a href="drag-drop.html">drag &amp; drop</a> powers keyboard
+      moves, with kanban-specific announcements ("Moved Ship v2 to Doing, position 2").</p>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>↑ / ↓</td><td>Move focus between cards in a column (or the next/previous lane's column in swimlane mode).</td></tr>
+        <tr><td>← / →</td><td>Move focus to the nearest card in the column on that side (mirrored in RTL). Not used in the list variant.</td></tr>
+        <tr><td>Space</td><td>Pick up the focused card or column header; press again to drop it in place.</td></tr>
+        <tr><td>Arrow keys (while picked up)</td><td>Move the card within the list, or to the nearest connected column/lane past the ends.</td></tr>
+        <tr><td>Escape</td><td>Cancel the pick-up and return to the original position.</td></tr>
+        <tr><td>Enter</td><td>Open the focused card's detail panel.</td></tr>
+        <tr><td>Shift+F10 / ContextMenu</td><td>Open the card's menu.</td></tr>
+        <tr><td>F2 / double-click title</td><td>Rename the focused column.</td></tr>
+        <tr><td>Home / End</td><td>Jump to the first / last card in the column.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="methods-demo">
+    <h2>Methods</h2>
+    <p>Every mutation is also a plain method, so you can drive the board from your own UI (forms, an import wizard, realtime
+      updates). Each one emits the matching cancelable event first.</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <o-kanban id="kb-api" class="kb-demo-sm"></o-kanban>
+        <div class="kb-toolbar">
+          <button class="o-btn o-btn-sm" id="kb-api-add-card">addCard()</button>
+          <button class="o-btn o-btn-sm" id="kb-api-update">updateCard()</button>
+          <button class="o-btn o-btn-sm" id="kb-api-move">moveCard()</button>
+          <button class="o-btn o-btn-sm" id="kb-api-remove">removeCard()</button>
+          <button class="o-btn o-btn-sm" id="kb-api-add-col">addColumn()</button>
+          <button class="o-btn o-btn-sm o-btn-outline-primary" id="kb-api-data">getData()</button>
+        </div>
+        <div class="docs-log" id="kb-api-log"></div>
+        <script>
+          {
+            const kb = document.getElementById('kb-api');
+            kb.columns = [{ id: 'todo', title: 'To do' }, { id: 'doing', title: 'Doing' }];
+            kb.cards = [{ id: 'a', columnId: 'todo', title: 'Sample task' }];
+            document.getElementById('kb-api-add-card').onclick = () => { const c = kb.addCard({ title: 'New task ' + (kb.cards.length + 1), columnId: 'todo' }); docs.log('#kb-api-log', 'addCard -> #' + c.id); };
+            document.getElementById('kb-api-update').onclick = () => { const c = kb.cards[0]; if (c) { kb.updateCard(c.id, { priority: 'high' }); docs.log('#kb-api-log', 'updateCard(' + c.id + ', { priority: "high" })'); } };
+            document.getElementById('kb-api-move').onclick = () => { const c = kb.cards[0]; if (c) { kb.moveCard(c.id, 'doing', 0); docs.log('#kb-api-log', 'moveCard(' + c.id + ', "doing", 0)'); } };
+            document.getElementById('kb-api-remove').onclick = () => { const c = kb.cards[kb.cards.length - 1]; if (c) { kb.removeCard(c.id); docs.log('#kb-api-log', 'removeCard(' + c.id + ')'); } };
+            document.getElementById('kb-api-add-col').onclick = () => { const col = kb.addColumn({ title: 'Column ' + (kb.columns.length + 1) }); docs.log('#kb-api-log', 'addColumn -> ' + col.id); };
+            document.getElementById('kb-api-data').onclick = () => docs.log('#kb-api-log', JSON.stringify(kb.getData()).slice(0, 220) + '…');
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="factory">
+    <h2>Programmatic factory — <code>Orion.kanban()</code></h2>
+    <p><code>Orion.kanban(target, options)</code> creates an <code>&lt;o-kanban&gt;</code> inside <code>target</code>
+      (a selector or element) and assigns <code>options</code> as properties, returning the element — an alternative
+      to writing the tag and assigning properties yourself.</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div id="kb-factory-host"></div>
+        <script>
+          {
+            const kb = Orion.kanban('#kb-factory-host', {
+              columns: [{ id: 'todo', title: 'To do' }, { id: 'doing', title: 'Doing' }, { id: 'done', title: 'Done', done: true }],
+              cards: [{ id: 1, columnId: 'todo', title: 'Set up via Orion.kanban()' }, { id: 2, columnId: 'doing', title: 'Drag me around' }],
+            });
+            kb.id = 'kb-factory'; kb.classList.add('kb-demo-sm'); // Orion.kanban() replaces the host element, so id/size classes go on the returned element
+            kb.addEventListener('o-card-move', e => docs.log('#kb-factory-log', `card-move: #${e.detail.cardId} → ${e.detail.to}`));
+          }
+        </script>
+        <div class="docs-log" id="kb-factory-log"></div>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+      const kb = Orion.kanban('#host', { columns: [...], cards: [...], onMove: async (d) => api.moveCard(d) });
+      // If #host isn't already an &lt;o-kanban&gt;, it is REPLACED by a new one (not appended inside) — style/size the returned element.
+    </pre>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Props / attributes</h3>
+    <table class="docs-api">
+      <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>columns</td><td>Array</td><td><code>{ id, title, color, limit, hardLimit, collapsed, done }</code>. <code>color</code> is a semantic token (<code>primary</code>…) or any CSS color.</td></tr>
+        <tr><td>cards</td><td>Array</td><td><code>{ id, columnId, laneId, title, description, labels[], assignees[], due, priority, progress, checklist:{done,total}, comments, attachments, cover }</code>.</td></tr>
+        <tr><td>swimlanes</td><td>Array</td><td><code>{ id, title, collapsed }</code>. Presence (outside <code>variant="list"</code>) switches the board into swimlane layout.</td></tr>
+        <tr><td>variant</td><td>String</td><td><code>'board'</code> (default) or <code>'list'</code> — a single compact column of rows.</td></tr>
+        <tr><td>renderCard</td><td>Function</td><td><code>(card, kanban) =&gt; string | SafeHTML | Node</code> — full control of card markup.</td></tr>
+        <tr><td>onMove</td><td>Function</td><td><code>async ({ cardId, from, to, index, ... }) =&gt; boolean</code>. Returning/throwing false reverts the move.</td></tr>
+        <tr><td>wipBlock</td><td>Boolean</td><td>Refuse drops (and disable "Add card") once a column's <code>limit</code> is reached. A column's own <code>hardLimit: true</code> does the same regardless of this flag.</td></tr>
+        <tr><td>filterable</td><td>Boolean</td><td>Shows the search + assignee/label filter toolbar.</td></tr>
+        <tr><td>readonly</td><td>Boolean</td><td>Disables dragging, add/edit/delete UI; the board is still browsable and <code>openCard</code> still works.</td></tr>
+        <tr><td>lockColumns</td><td>Boolean</td><td>Cards still drag; columns cannot be reordered, added, renamed or deleted.</td></tr>
+        <tr><td>addPosition</td><td>String</td><td><code>'top' | 'bottom'</code> (default) — where the column menu's "Add card" inserts.</td></tr>
+        <tr><td>detail</td><td>String</td><td><code>'panel'</code> (default, built-in side panel) or <code>'none'</code> (only fire <code>o-card-open</code>; you supply the UI).</td></tr>
+        <tr><td>persist</td><td>String</td><td>Remembers column order, collapsed state and card order/position in <code>localStorage</code> under this key.</td></tr>
+        <tr><td>cardActions</td><td>Array</td><td>Extra <code>{ id, label, icon }</code> items appended to the card menu; picking one fires <code>o-card-action</code>.</td></tr>
+        <tr><td>texts</td><td>Object</td><td>Per-instance text overrides (see <code>this.t()</code> in ARCHITECTURE.md).</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>addCard(data, { position, after, before, user })</td><td>Insert a card; returns the card or <code>false</code> if vetoed.</td></tr>
+        <tr><td>updateCard(id, patch, { user })</td><td>Merge fields into a card (title, labels, due, columnId…).</td></tr>
+        <tr><td>removeCard(id, { user, quiet })</td><td>Delete a card.</td></tr>
+        <tr><td>moveCard(id, columnId, index?, laneId?, { user })</td><td>Move/reorder a card programmatically (same flow as a drag, including <code>onMove</code>).</td></tr>
+        <tr><td>addColumn(data, index?, { user })</td><td>Insert a column.</td></tr>
+        <tr><td>updateColumn(id, patch, { user })</td><td>Merge fields into a column (title, color, limit…).</td></tr>
+        <tr><td>removeColumn(id, { user })</td><td>Delete a column and its cards.</td></tr>
+        <tr><td>moveColumn(id, toIndex, { user })</td><td>Reorder a column.</td></tr>
+        <tr><td>collapseColumn(id, collapsed?, { user })</td><td>Collapse/expand (omit <code>collapsed</code> to toggle).</td></tr>
+        <tr><td>openCard(id) / closeCard() / focusCard(id)</td><td>Open/close the detail panel; move roving focus to a card.</td></tr>
+        <tr><td>filter({ text, assignee: [], label: [] }) / clearFilter()</td><td>Apply or clear the toolbar filter from code.</td></tr>
+        <tr><td>getData()</td><td><code>{ columns, cards, swimlanes }</code> deep-cloned snapshot.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>o-card-move <em>(cancelable)</em></td><td><code>{ cardId, card, from, to, fromLane, toLane, oldIndex, index, keyboard }</code>.</td></tr>
+        <tr><td>o-card-move-revert</td><td>Fired after <code>onMove</code> returned/threw false and the card was moved back.</td></tr>
+        <tr><td>o-card-add / o-card-update / o-card-remove <em>(cancelable)</em></td><td><code>{ card }</code> (and <code>{ patch }</code> for update).</td></tr>
+        <tr><td>o-card-open <em>(cancelable)</em> / o-card-close</td><td><code>{ card }</code> / <code>{ cardId }</code>. Prevent default to show your own UI instead of the built-in panel.</td></tr>
+        <tr><td>o-card-menu / o-column-menu <em>(cancelable)</em></td><td><code>{ card|column, items, anchor, run(id) }</code> — mutate <code>items</code> or call <code>run()</code> yourself; <code>preventDefault()</code> replaces the built-in menu entirely.</td></tr>
+        <tr><td>o-card-action</td><td><code>{ action, card }</code> — a <code>cardActions</code> entry (or unhandled built-in id) was picked.</td></tr>
+        <tr><td>o-column-move / o-column-add / o-column-update / o-column-remove / o-column-toggle <em>(cancelable)</em></td><td>Same shape as the card events, with <code>column</code>.</td></tr>
+        <tr><td>o-filter</td><td><code>{ filter, visible, total }</code> after the toolbar filter changes.</td></tr>
+        <tr><td>o-change</td><td><code>{ reason, columns, cards }</code> — fired after every mutation (good for one debounced autosave hook).</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS</h3>
+    <p>Custom properties: <code>--o-kanban-col-w</code> (column width, default <code>18.5rem</code>), <code>--o-kanban-gap</code>.
+      Structural classes: <code>.o-kanban-board</code>, <code>.o-kanban-col</code> (<code>.is-collapsed</code>, <code>.is-over-limit</code>,
+      <code>.is-blocked</code>), <code>.o-kanban-card</code> (<code>[data-priority]</code>, <code>.is-pending</code>), <code>.o-kanban-lane</code>,
+      <code>.o-kanban-cell</code>. Drag visuals reuse <a href="drag-drop.html"><code>.o-sortable-placeholder</code> / <code>.o-dnd-ghost</code></a>
+      from the drag &amp; drop engine.</p>
+  </section>
+</main>
+</body>
+</html>

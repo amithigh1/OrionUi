@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recorder — Orion Admin</title>
+<meta name="docs:section" content="Devices &amp; Capture">
+<meta name="docs:order" content="66">
+<meta name="docs:desc" content="Audio and video/screen recording via MediaRecorder: pause/resume, level meter, duration limit, playback">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Recorder</h1>
+    <p class="docs-lead"><code>&lt;o-audio-recorder&gt;</code> and <code>&lt;o-video-recorder&gt;</code> wrap
+      <code>MediaRecorder</code> with pause/resume, a live level meter and waveform (audio) or camera/screen
+      preview (video), a duration limit that auto-stops, playback and download. <code>&lt;o-video-recorder
+      source="both"&gt;</code> composites a screen share with a rounded camera picture-in-picture and mixes both
+      audio tracks.</p>
+  </header>
+
+  <section id="audio">
+    <h2><code>&lt;o-audio-recorder&gt;</code></h2>
+    <p>Form-associated — its <code>value</code> is the recorded <code>File</code>. <code>max-duration</code> (in
+      seconds) auto-stops and shows a progress bar; <code>level-meter</code>/<code>waveform</code> (both default
+      on) visualize the input in real time.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-stack" style="max-width:26rem">
+          <o-audio-recorder id="audio-rec" name="memo" max-duration="30"></o-audio-recorder>
+          <div class="docs-log" id="audio-log"></div>
+        </div>
+        <script>
+          document.getElementById('audio-rec').addEventListener('o-stop', e => docs.log('#audio-log', `o-stop → ${e.detail.file.name} (${e.detail.file.size} bytes, ${e.detail.file.type})`));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="video">
+    <h2><code>&lt;o-video-recorder&gt;</code></h2>
+    <p><code>source</code> selects <code>camera</code> (default), <code>screen</code> (<code>getDisplayMedia</code>)
+      or <code>both</code>. Stopping the browser's native "stop sharing" control also stops the recording.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-stack" style="max-width:30rem">
+          <o-video-recorder id="video-rec" source="camera" max-duration="30"></o-video-recorder>
+          <div class="docs-log" id="video-log"></div>
+        </div>
+        <script>
+          document.getElementById('video-rec').addEventListener('o-stop', e => docs.log('#video-log', `o-stop → ${e.detail.file.name} (${e.detail.file.size} bytes, ${e.detail.file.type})`));
+        </script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="html">
+&lt;o-video-recorder source="camera"&gt;&lt;/o-video-recorder&gt;
+&lt;o-video-recorder source="screen"&gt;&lt;/o-video-recorder&gt;
+&lt;o-video-recorder source="both"&gt;&lt;/o-video-recorder&gt;   &lt;!-- screen + camera PiP, composited on canvas --&gt;
+</pre>
+  </section>
+
+  <section id="fixture">
+    <h2>No microphone/camera at all: the <code>stream</code> property</h2>
+    <p>Set <code>stream</code> to a <code>MediaStream</code>-like value and <code>start()</code> records it
+      directly, skipping <code>getUserMedia()</code>/<code>getDisplayMedia()</code> entirely — a real
+      <code>MediaRecorder</code> round trip with no hardware. This demo feeds <code>&lt;o-audio-recorder&gt;</code> a
+      silent oscillator tone and <code>&lt;o-video-recorder&gt;</code> a plain animated <code>canvas.captureStream()</code>.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-stack" style="max-width:26rem">
+          <o-audio-recorder id="fixture-audio"></o-audio-recorder>
+          <o-video-recorder id="fixture-video"></o-video-recorder>
+          <div class="docs-log" id="fixture-log"></div>
+        </div>
+        <script>
+          const fixtureAudio = document.getElementById('fixture-audio');
+          const fixtureVideo = document.getElementById('fixture-video');
+          fixtureAudio.addEventListener('o-stop', e => docs.log('#fixture-log', `audio o-stop → ${e.detail.file.size} bytes`));
+          fixtureVideo.addEventListener('o-stop', e => docs.log('#fixture-log', `video o-stop → ${e.detail.file.size} bytes`));
+          // Deferred a tick: this <script> runs before the recorders' own setup() during the same template
+          // insertion (see docs/components/scanner.html#source for the general timing note).
+          setTimeout(() => {
+            if (window.AudioContext || window.webkitAudioContext) {
+              const AC = window.AudioContext || window.webkitAudioContext;
+              const ctx = new AC();
+              const dest = ctx.createMediaStreamDestination();
+              const osc = ctx.createOscillator(); osc.frequency.value = 220; osc.connect(dest); osc.start();
+              fixtureAudio.stream = dest.stream;
+            }
+            const canvas = document.createElement('canvas'); canvas.width = 320; canvas.height = 180;
+            const cctx = canvas.getContext('2d');
+            let hue = 0;
+            setInterval(() => { hue = (hue + 6) % 360; cctx.fillStyle = `hsl(${hue},70%,50%)`; cctx.fillRect(0, 0, 320, 180); }, 100);
+            if (canvas.captureStream) fixtureVideo.stream = canvas.captureStream(30);
+          }, 0);
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="js">
+    <h2>JavaScript API</h2>
+    <pre class="docs-code-block" data-lang="js">
+Orion.recorder.audio({ maxDuration, deviceId, title, size }) -&gt; Promise&lt;File | null&gt;   // modal helper
+Orion.recorder.video({ source, maxDuration, facing, title, size }) -&gt; Promise&lt;File | null&gt;
+</pre>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Element</th><th>Attribute</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>&lt;o-audio-recorder&gt;</code></td><td>max-duration</td><td>Seconds before auto-stop.</td></tr>
+        <tr><td></td><td>format</td><td><code>MediaRecorder</code> mimeType override.</td></tr>
+        <tr><td></td><td>level-meter / waveform</td><td>Visualizers, both default on.</td></tr>
+        <tr><td></td><td>device-id</td><td>Pin a specific microphone.</td></tr>
+        <tr><td></td><td>stream</td><td>Property only — see <a href="#fixture">above</a>.</td></tr>
+        <tr><td><code>&lt;o-video-recorder&gt;</code></td><td>source</td><td><code>camera</code> (default) / <code>screen</code> / <code>both</code>; reflected.</td></tr>
+        <tr><td></td><td>max-duration / format / facing</td><td>Same as audio, plus camera facing for camera/both.</td></tr>
+        <tr><td></td><td>stream</td><td>Property only — see <a href="#fixture">above</a>.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events (both elements)</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-start / o-pause / o-resume</td><td>—</td><td>Recording lifecycle.</td></tr>
+        <tr><td>o-stop</td><td><code>{ file }</code></td><td>Recording finished (also sets the audio recorder's form <code>value</code>).</td></tr>
+        <tr><td>o-error</td><td><code>{ reason, message }</code></td><td><code>denied</code>, <code>nodevice</code>, <code>insecure</code>, <code>unsupported</code>, <code>hardware</code>, <code>cancelled</code> (screen-share cancelled).</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods (both elements)</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>start() / pause() / resume() / stop()</td><td>Recording controls.</td></tr>
+        <tr><td>reRecord()</td><td>Discard the recording and return to idle.</td></tr>
+        <tr><td>download()</td><td>Download the recorded file.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Tab</td><td>Moves through record/pause/stop and, after stopping, the native player's controls plus Download/Record again.</td></tr>
+        <tr><td>Enter / Space</td><td>Activates the focused button.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="a11y">
+    <h2>Accessibility</h2>
+    <p>Recording/paused/saved/discarded states are all announced via <code>announce()</code>; permission and
+      hardware failures are shown as readable text with a retry button where retrying makes sense, not just an
+      icon.</p>
+  </section>
+
+  <section id="limitations">
+    <h2>Limitations</h2>
+    <ul>
+      <li>Every mode requires a secure context (HTTPS or localhost); <code>source="screen"</code>/<code>"both"</code>
+        additionally require <code>getDisplayMedia</code> support.</li>
+      <li><code>MediaRecorder</code> output format depends on the browser (Chromium: WebM/VP9+Opus by default); pass
+        <code>format</code> to force a specific <code>mimeType</code> your support matrix requires.</li>
+      <li>A <code>stream</code> fixture bypasses the composite/mix logic for <code>source="both"</code> — it
+        records whatever single stream is assigned, unmixed.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

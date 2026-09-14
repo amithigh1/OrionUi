@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chat — Orion Admin</title>
+<meta name="docs:section" content="Communication">
+<meta name="docs:order" content="10">
+<meta name="docs:desc" content="Team / support messaging: conversations, threaded messages, reactions, mentions, typing and read receipts">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Chat</h1>
+    <p class="docs-lead"><code>&lt;o-chat&gt;</code> is a conversation list + threaded message pane + composer: day dividers, reactions, replies, editing, attachments, a voice-note hook, in-thread search, an emoji picker (via <code>Orion.mentions.emoji</code>) and read/typing/unread state — all driven by plain data, no framework required.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Conversations, thread &amp; read receipts</h2>
+    <p>Feed <code>conversations</code> and <code>messages</code> as plain arrays (or the <code>set…()</code> methods). The active conversation shows an unread divider at the point where the last <code>markRead()</code> left off, day dividers between calendar days, and per-message ticks (<code>sending → sent → delivered → read</code>, or <em>tap to retry</em> on <code>failed</code>). Try <kbd class="o-kbd">↑</kbd> in the empty composer to edit your last message.</p>
+    <div class="docs-demo">
+      <template>
+        <o-chat id="chat-basic" layout="full" current-user='{"id":"me","name":"Aisha Rahman"}' style="height:32rem"></o-chat>
+        <script>
+          {
+            const chat = document.getElementById('chat-basic');
+            const people = { ben: { id: 'ben', name: 'Ben Tan' }, chen: { id: 'chen', name: 'Chen Wei' }, grace: { id: 'grace', name: 'Grace Kim' } };
+            const hoursAgo = h => Date.now() - h * 36e5;
+            const daysAgo = d => Date.now() - d * 864e5;
+            chat.setConversations([
+              { id: 'c-ben', title: 'Ben Tan', online: true, unread: 2, members: [people.ben], lastMessage: { text: 'Sounds good, see you then', createdAt: hoursAgo(0.2), author: people.ben } },
+              { id: 'c-design', title: 'Design crit', pinned: true, members: [people.chen, people.grace], lastMessage: { text: 'Uploaded the new mockups', createdAt: hoursAgo(4), author: people.chen } },
+              { id: 'c-grace', title: 'Grace Kim', muted: true, members: [people.grace], lastMessage: { text: 'Thanks!', createdAt: daysAgo(2), author: { id: 'me' } } },
+            ]);
+            chat.setMessages([
+              { id: 'm1', conversationId: 'c-ben', author: people.ben, text: 'Hey! Are we still on for the 3pm sync?', createdAt: daysAgo(1), status: 'read' },
+              { id: 'm2', conversationId: 'c-ben', author: { id: 'me' }, text: 'Yep, I moved it to the big meeting room.', createdAt: daysAgo(1) + 6e4, status: 'read' },
+              { id: 'm3', conversationId: 'c-ben', author: people.ben, text: 'Perfect, thank you :thumbsup:', createdAt: hoursAgo(0.6), status: 'delivered', reactions: { '👍': ['me'] } },
+              { id: 'm4', conversationId: 'c-ben', author: { id: 'me' }, text: 'Bringing the Q3 numbers too — check https://example.com/q3 beforehand?', createdAt: hoursAgo(0.4), status: 'sent' },
+              { id: 'm5', conversationId: 'c-ben', author: people.ben, text: 'Sounds good, see you then', createdAt: hoursAgo(0.2), status: 'delivered' },
+              { id: 'm6', conversationId: 'c-design', author: people.chen, text: 'Uploaded the new mockups', createdAt: hoursAgo(4), status: 'delivered', attachments: [{ id: 'a1', name: 'dashboard-v3.png', type: 'image/png', url: 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="240" height="160"><rect width="240" height="160" fill="%23635bff"/><text x="50%25" y="50%25" fill="%23fff" font-size="18" text-anchor="middle" dy=".3em">v3 mockup</text></svg>') }] },
+              { id: 'm7', conversationId: 'c-design', author: people.grace, text: 'Love the new empty states!', createdAt: hoursAgo(3.5), status: 'read' },
+              { id: 'm8', conversationId: 'c-grace', author: { id: 'me' }, text: 'Sent over the invoice PDF', createdAt: daysAgo(2), status: 'read', attachments: [{ id: 'a2', name: 'invoice-INV-2031.pdf', size: 84213, type: 'application/pdf' }] },
+              { id: 'm9', conversationId: 'c-grace', author: people.grace, text: 'Thanks!', createdAt: daysAgo(2) + 3e5, status: 'delivered' },
+            ]);
+            chat.onSend = async ({ message }) => { await new Promise(r => setTimeout(r, 350)); return { status: 'sent' }; };
+            chat.addEventListener('o-typing', e => docs.log && null);
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="mentions-emoji">
+    <h2>@mentions and emoji</h2>
+    <p>Type <kbd class="o-kbd">@</kbd> in the composer for suggestions from <a href="mentions.html"><code>Orion.mentions</code></a> (wired onto the textarea — <code>&lt;o-chat&gt;</code> does not assume you want mentions, so attach it yourself once). The emoji button opens <code>Orion.mentions.emoji.picker()</code> automatically whenever that package is loaded (it falls back to a small built-in grid otherwise); shortcodes like <code>:thumbsup:</code> also auto-convert as you send.</p>
+    <div class="docs-demo">
+      <template>
+        <o-chat id="chat-mentions" layout="thread" current-user='{"id":"me","name":"Aisha Rahman"}' active-id="c1" style="height:26rem"></o-chat>
+        <script>
+          {
+            const chat = document.getElementById('chat-mentions');
+            const team = [
+              { id: 'ben', label: 'Ben Tan', description: 'Engineering' },
+              { id: 'chen', label: 'Chen Wei', description: 'Design' },
+              { id: 'grace', label: 'Grace Kim', description: 'Product' },
+            ];
+            chat.setConversations([{ id: 'c1', title: 'Launch planning', members: team }]);
+            chat.setMessages([{ id: 'm1', conversationId: 'c1', author: { id: 'ben', name: 'Ben Tan' }, text: 'Who is presenting Friday?', createdAt: Date.now() - 6e5, status: 'read' }]);
+            const ta = chat.querySelector('.o-chat-textarea');
+            if (ta && Orion.mentions) Orion.mentions(ta, { source: team, trigger: '@' });
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="typing">
+    <h2>Typing indicator</h2>
+    <p><code>setTyping(userId, isTyping, conversationId?)</code> drives the header subtitle, an animated dots bubble in the thread, and the conversation list preview; it auto-clears after 6 seconds if you never call it with <code>false</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-sm" id="typing-start">Ben starts typing</button>
+          <button class="o-btn o-btn-sm" id="typing-stop">Ben stops typing</button>
+        </div>
+        <o-chat id="chat-typing" layout="thread" current-user='{"id":"me","name":"Aisha Rahman"}' active-id="c1" style="height:22rem"></o-chat>
+        <script>
+          {
+            const chat = document.getElementById('chat-typing');
+            chat.setConversations([{ id: 'c1', title: 'Ben Tan', members: [{ id: 'ben', name: 'Ben Tan' }] }]);
+            chat.setMessages([{ id: 'm1', conversationId: 'c1', author: { id: 'ben', name: 'Ben Tan' }, text: 'One sec, checking…', createdAt: Date.now() - 12e4, status: 'read' }]);
+            document.getElementById('typing-start').onclick = () => chat.setTyping('ben', true, 'c1');
+            document.getElementById('typing-stop').onclick = () => chat.setTyping('ben', false, 'c1');
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="widget">
+    <h2>Widget layout</h2>
+    <p><code>layout="widget"</code> turns <code>&lt;o-chat&gt;</code> into a floating support-chat bubble; toggle it with the <code>open</code> property/attribute or let the built-in launcher handle it. It positions itself fixed to the browser viewport (like a real support widget would), so on this page look for its round launcher button pinned to the bottom-right corner of the <em>window</em>, not inside the box below.</p>
+    <div class="docs-demo" data-preview="bg" style="min-height:20rem">
+      <template>
+        <o-chat id="chat-widget" layout="widget" current-user='{"id":"me","name":"Aisha Rahman"}'></o-chat>
+        <script>
+          {
+            const chat = document.getElementById('chat-widget');
+            chat.setConversations([{ id: 's1', title: 'Support', online: true, unread: 1 }]);
+            chat.setMessages([{ id: 'm1', conversationId: 's1', author: { id: 'agent', name: 'Support' }, text: 'Hi! How can we help today?', createdAt: Date.now() - 3e5, status: 'delivered' }]);
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="connect">
+    <h2>Real-time (<code>Orion.chat.connect</code>)</h2>
+    <p><code>Orion.chat.connect(chatEl, client, opts?)</code> is a template adapter over any <code>Emitter</code>-shaped realtime client. This demo uses a <a href="realtime.html">mock WebSocket server</a> that echoes a reply a second after you send.</p>
+    <div class="docs-demo">
+      <template>
+        <o-chat id="chat-live" layout="thread" current-user='{"id":"me","name":"Aisha Rahman"}' active-id="c1" style="height:22rem"></o-chat>
+        <div class="docs-log" id="log-live"></div>
+        <script>
+          {
+            const chat = document.getElementById('chat-live');
+            chat.setConversations([{ id: 'c1', title: 'Live demo bot', online: true }]);
+            const srv = Orion.realtime.mockServer('wss://demo.local/chat-docs', socket => {
+              socket.on('message', raw => {
+                const msg = JSON.parse(raw);
+                setTimeout(() => socket.send(JSON.stringify({ type: 'chat:message', conversationId: msg.conversationId, id: Orion.util.uid('m'), author: { id: 'bot', name: 'Live demo bot' }, text: 'Echo: ' + msg.message.text, createdAt: new Date().toISOString() })), 700);
+              });
+            });
+            const ws = Orion.ws('wss://demo.local/chat-docs', { id: 'chat-docs' });
+            Orion.chat.connect(chat, ws, { messageEvent: 'chat:message' });
+            chat.addEventListener('o-send', e => docs.log('#log-live', 'o-send → ' + e.detail.message.text));
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>current-user</td><td><code>object</code></td><td><code>{ id, name, avatar }</code> — determines which rows render as "mine".</td></tr>
+        <tr><td>layout</td><td><code>full | thread | widget</code></td><td>Default <code>full</code>. Reflected.</td></tr>
+        <tr><td>conversations / messages</td><td><code>array</code></td><td>Property-only (JSON via attribute also accepted).</td></tr>
+        <tr><td>active-id</td><td><code>string</code></td><td>Open conversation id.</td></tr>
+        <tr><td>open</td><td><code>boolean</code></td><td>Widget layout only. Reflected.</td></tr>
+        <tr><td>onSend</td><td><code>({conversationId,message}) =&gt; Promise&lt;patch?&gt;</code></td><td>Property only. A rejection marks the message <code>failed</code>.</td></tr>
+        <tr><td>texts</td><td><code>object</code></td><td>Per-instance string overrides.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>addMessage(conversationId, message)</td><td>Optimistic append; bumps unread / announces when not the visible, scrolled-to-bottom conversation.</td></tr>
+        <tr><td>updateMessage(id, patch)</td><td>Merge onto a message.</td></tr>
+        <tr><td>removeMessage(id)</td><td></td></tr>
+        <tr><td>setMessages(list) / setConversations(list)</td><td>Property shorthands.</td></tr>
+        <tr><td>setTyping(userId, isTyping, conversationId?)</td><td>Drives the typing indicator; auto-clears after 6s.</td></tr>
+        <tr><td>markRead(id = activeId)</td><td>Fires <code>o-read</code>.</td></tr>
+        <tr><td>scrollToBottom(smooth?)</td><td></td></tr>
+        <tr><td>openConversation(id)</td><td>Fires <code>o-open-conversation</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>o-send</td><td><code>{ conversationId, message }</code></td></tr>
+        <tr><td>o-load-more</td><td><code>{ conversationId, oldest }</code> — scrolled to the top of the loaded window.</td></tr>
+        <tr><td>o-read</td><td><code>{ conversationId }</code></td></tr>
+        <tr><td>o-typing</td><td><code>{ conversationId, userId, typing }</code></td></tr>
+        <tr><td>o-react</td><td><code>{ conversationId, messageId, emoji, reacted }</code></td></tr>
+        <tr><td>o-forward</td><td><code>{ message, targetConversationId }</code></td></tr>
+        <tr><td>o-voice-note-start (cancelable) / o-voice-note-stop</td><td><code>{}</code> / <code>{ duration }</code></td></tr>
+        <tr><td>o-open-conversation</td><td><code>{ conversationId }</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Enter / Shift+Enter</td><td>Send / newline (composer).</td></tr>
+        <tr><td>↑ in an empty composer</td><td>Edit your last message.</td></tr>
+        <tr><td>Escape</td><td>Cancel reply/edit, or close in-thread search.</td></tr>
+        <tr><td>Tab / Shift+Tab</td><td>Reach message actions (react, reply, more), reactions and menu items.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="frameworks">
+    <h2>Frameworks</h2>
+    <p>Set <code>conversations</code>/<code>messages</code>/<code>currentUser</code>/<code>onSend</code> as properties (they are Arrays/Objects/Functions, so React 18's attribute-only diffing needs the JSON-string form or a ref). Listen for <code>o-send</code>/<code>o-react</code>/etc. through a ref's <code>addEventListener</code> in React; Vue/Angular bind them natively as <code>@o-send</code> / <code>(o-send)</code>.</p>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,29 @@
+/* <o-storage-inspector> */
+o-storage-inspector:not(:defined) { visibility: hidden; }
+.o-storage-inspector { display: block; min-width: 0; color: var(--o-text); background: var(--o-surface); border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); overflow: hidden; }
+.o-si-head { display: flex; flex-direction: column; gap: .625rem; padding: .875rem 1rem; border-bottom: 1px solid var(--o-border); }
+.o-si-title { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.o-si-title > strong { font-size: var(--o-fs-md); }
+.o-si-usage { display: flex; flex-wrap: wrap; align-items: center; gap: .375rem .75rem; }
+.o-si-usage > .o-progress { flex: 1 1 10rem; }
+.o-si-usage-text { font-size: var(--o-fs-xs); color: var(--o-text-muted); font-variant-numeric: tabular-nums; }
+.o-si-section { border-bottom: 1px solid var(--o-border); }
+.o-si-section:last-child { border-bottom: 0; }
+.o-si-summary { display: flex; align-items: center; gap: .5rem; padding: .75rem 1rem; cursor: pointer; list-style: none; user-select: none; }
+.o-si-summary::-webkit-details-marker { display: none; }
+.o-si-summary:hover { background: var(--o-surface-2); }
+.o-si-summary:focus-visible { outline: none; box-shadow: inset 0 0 0 var(--o-ring-width) color-mix(in srgb, var(--o-focus) var(--o-ring-alpha), transparent); }
+.o-si-chev { width: 1rem; height: 1rem; color: var(--o-text-muted); transition: transform var(--o-dur-fast) var(--o-ease); }
+.o-si-section[open] > .o-si-summary .o-si-chev { transform: rotate(90deg); }
+[dir="rtl"] .o-si-section:not([open]) > .o-si-summary .o-si-chev { transform: scaleX(-1); }
+.o-si-name { font-weight: 600; }
+.o-si-meta { margin-inline-start: auto; font-size: var(--o-fs-xs); color: var(--o-text-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.o-si-content { padding: 0 1rem 1rem; }
+.o-si-actions { display: flex; justify-content: flex-end; margin-bottom: .5rem; }
+.o-si-table { max-height: 18rem; }
+.o-si-table .o-table { font-size: var(--o-fs-sm); }
+.o-si-key { font-size: var(--o-fs-xs); overflow-wrap: anywhere; }
+.o-si-val { display: inline-block; max-width: 22rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; font-family: var(--o-font-mono); font-size: var(--o-fs-xs); color: var(--o-text-muted); }
+.o-si-empty { margin: 0; padding: .75rem; font-size: var(--o-fs-sm); color: var(--o-text-muted); text-align: center; background: var(--o-surface-2); border-radius: var(--o-radius); }
+.o-si-foot { padding: .375rem .75rem; font-size: var(--o-fs-xs); color: var(--o-text-muted); }
+@media (max-width: 575.98px) { .o-si-val { max-width: 8rem; } .o-si-meta { white-space: normal; text-align: end; } }

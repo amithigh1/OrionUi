@@ -1,0 +1,43 @@
+/* ============================================================================
+ * Icon helpers. Work on the <svg class="o-icon">, on <o-icon>, or on any container.
+ *   .o-icon-xs | -sm | -md | -lg | -xl | -2xl   sizes (via --o-icon-size)
+ *   .o-icon-thin | .o-icon-bold                  stroke width 1.5 / 2.5
+ *   .o-icon-bg (+ .o-c-{color}, -solid, -rounded) tinted circular badge
+ * ========================================================================== */
+.o-icon-xs { --o-icon-size: .75rem; }
+.o-icon-sm { --o-icon-size: 1rem; }
+.o-icon-md { --o-icon-size: 1.25rem; }
+.o-icon-lg { --o-icon-size: 1.5rem; }
+.o-icon-xl { --o-icon-size: 2rem; }
+.o-icon-2xl { --o-icon-size: 3rem; }
+/* an explicit size (icon(name, { size }) / <o-icon size>) wins over the CSS size */
+.o-icon[width] { width: auto; height: auto; }
+
+/* CSS stroke-width beats the stroke-width attribute; the "bold" text glyph keeps its weight */
+.o-icon-thin, .o-icon-thin .o-icon { stroke-width: 1.5; }
+.o-icon-bold .o-icon, svg.o-icon-bold:not(:has(> .o-glyph-bold)) { stroke-width: 2.5; }
+
+.o-icon-bg {
+  box-sizing: content-box;
+  padding: .45em;
+  border-radius: 50%;
+  color: var(--o-c-text);
+  background: var(--o-c-subtle);
+}
+o-icon.o-icon-bg { padding: .45em; }
+.o-icon-bg.o-icon-bg-solid { color: var(--o-on-c); background: var(--o-c); }
+.o-icon-bg.o-icon-bg-rounded { border-radius: var(--o-radius); }
+
+/* directional icons mirror in RTL (in addition to the arrows/chevrons handled by core) */
+[dir="rtl"] .o-icon-arrow-left-circle, [dir="rtl"] .o-icon-arrow-right-circle,
+[dir="rtl"] .o-icon-corner-down-left, [dir="rtl"] .o-icon-corner-down-right,
+[dir="rtl"] .o-icon-corner-up-left, [dir="rtl"] .o-icon-corner-up-right,
+[dir="rtl"] .o-icon-chevron-first, [dir="rtl"] .o-icon-chevron-last,
+[dir="rtl"] .o-icon-undo, [dir="rtl"] .o-icon-redo, [dir="rtl"] .o-icon-reply, [dir="rtl"] .o-icon-reply-all,
+[dir="rtl"] .o-icon-forward, [dir="rtl"] .o-icon-log-in, [dir="rtl"] .o-icon-indent, [dir="rtl"] .o-icon-outdent,
+[dir="rtl"] .o-icon-list, [dir="rtl"] .o-icon-panel-left-close, [dir="rtl"] .o-icon-panel-left-open { transform: scaleX(-1); }
+[dir="rtl"] .o-icon.o-icon-no-flip, [dir="rtl"] .o-icon-no-flip > .o-icon { transform: none; }
+
+@media (forced-colors: active) {
+  .o-icon-bg { forced-color-adjust: auto; border: 1px solid CanvasText; }
+}

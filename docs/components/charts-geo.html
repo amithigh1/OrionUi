@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maps (Geo) — Orion Admin</title>
+<meta name="docs:section" content="Charts">
+<meta name="docs:order" content="60">
+<meta name="docs:desc" content="Choropleth and bubble maps from your own GeoJSON with mercator or equirectangular projection, zoom and pan">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Maps</h1>
+    <p class="docs-lead">Choropleth and bubble maps drawn from GeoJSON you supply — no map tiles, no downloaded datasets. Regions are projected (mercator or equirectangular), fitted to the chart, and can be zoomed and panned with buttons, the keyboard, <kbd class="o-kbd">Ctrl</kbd>/<kbd class="o-kbd">⌘</kbd> + wheel or a double-click.</p>
+  </header>
+
+  <section id="data">
+    <h2>Bring your own GeoJSON</h2>
+    <p>Pass a <code>FeatureCollection</code> (or an array of features) as <code>geo.geojson</code>. <code>Polygon</code> / <code>MultiPolygon</code> features become regions; <code>Point</code> features can anchor bubbles. Values join on <code>geo.key</code> (default: the feature <code>id</code>, then <code>properties.id</code> / <code>properties.name</code>). The demos use <a href="../fixtures/charts/aurelia.geojson"><code>aurelia.geojson</code></a>, a small hand-made map of a fictional country (12 regions, 7 cities, 3.6 KB).</p>
+    <pre class="docs-code-block" data-lang="js">
+      const geojson = await fetch('/maps/regions.geojson').then(r => r.json());
+      Orion.chart('#map', {
+        type: 'choropleth',
+        geo: { geojson, key: 'properties.code', projection: 'mercator' },
+        series: [{ name: 'Revenue', data: [{ id: 'CT', value: 420 }, { id: 'NM', value: 340 }] }],
+      });
+    </pre>
+  </section>
+
+  <section id="choropleth">
+    <h2>Choropleth</h2>
+    <p>Values are binned into steps of the sequential ramp (<code>geo.bins</code>, default 5); regions without data use the neutral surface step and the legend says so. Hover a region for its value; the region outline lifts.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3" role="group" aria-label="Projection">
+          <button class="o-btn o-btn-sm is-active" data-proj="mercator" aria-pressed="true">Mercator</button>
+          <button class="o-btn o-btn-sm" data-proj="equirectangular" aria-pressed="false">Equirectangular</button>
+        </div>
+        <o-chart id="geo-demo" height="420"></o-chart>
+        <div class="docs-log" id="geo-log"></div>
+        <script>
+          {
+            const el = document.getElementById('geo-demo');
+            const sales = [
+              { id: 'WS', value: 128 }, { id: 'NM', value: 342 }, { id: 'HM', value: 91 }, { id: 'EV', value: 214 },
+              { id: 'LK', value: 167 }, { id: 'CT', value: 431 }, { id: 'RV', value: 276 }, { id: 'SC', value: 58 },
+              { id: 'SR', value: 133 }, { id: 'RF', value: 239 }, { id: 'GW', value: 184 },
+            ];
+            fetch('../fixtures/charts/aurelia.geojson').then(r => r.json()).then(geojson => {
+              const draw = projection => { el.config = { type: 'choropleth', yAxis: { format: v => '$' + Math.round(v) + 'K' }, geo: { geojson, projection }, series: [{ name: 'Revenue (K$)', data: sales }] }; };
+              draw('mercator');
+              document.querySelectorAll('[data-proj]').forEach(b => b.addEventListener('click', () => {
+                document.querySelectorAll('[data-proj]').forEach(x => { x.classList.toggle('is-active', x === b); x.setAttribute('aria-pressed', String(x === b)); });
+                draw(b.dataset.proj);
+              }));
+            });
+            el.addEventListener('o-point-click', e => docs.log('#geo-log', `o-point-click ${e.detail.label}: ${e.detail.text}`));
+            el.addEventListener('o-zoom', e => docs.log('#geo-log', `o-zoom scale ${e.detail.scale.toFixed(2)}`));
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="bubble-map">
+    <h2>Bubble map</h2>
+    <p><code>type: 'bubbleMap'</code> draws the regions as a neutral base and places bubbles by <code>{ lon, lat }</code>, <code>coordinates</code>, or the <code>id</code> of a Point feature (or a region's centroid). Bubble <em>area</em> encodes the value; bubbles keep their pixel size while you zoom. Several bubble series get a legend — keep it to three on a map.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-card">
+          <div class="o-card-header"><div><h3 class="o-card-title">Store network</h3><p class="o-card-subtitle">Orders this month by city</p></div></div>
+          <div class="o-card-body"><o-chart id="bmap-demo" height="400"></o-chart></div>
+        </div>
+        <script>
+          fetch('../fixtures/charts/aurelia.geojson').then(r => r.json()).then(geojson => {
+            document.getElementById('bmap-demo').config = {
+              type: 'bubbleMap',
+              geo: { geojson, projection: 'mercator' },
+              series: [
+                { name: 'Flagship stores', data: [{ id: 'c-aur', value: 4820 }, { id: 'c-por', value: 2210 }, { id: 'c-hav', value: 1730 }] },
+                { name: 'Pop-ups', data: [{ id: 'c-riv', value: 640 }, { id: 'c-kes', value: 910 }, { id: 'c-sol', value: 1180 }, { id: 'c-isl', value: 320 }, { lon: 9.4, lat: 51.4, name: 'Brindle Market', value: 540 }] },
+              ],
+            };
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>Options</h2>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>type</td><td><code>'choropleth'</code> <code>'bubbleMap'</code> <code>'geo'</code></td><td><code>geo</code> auto-detects: series with values color regions, <code>type: 'bubble'</code> series draw bubbles.</td></tr>
+        <tr><td>geo.geojson</td><td><code>FeatureCollection</code> <code>Feature[]</code></td><td>Your map data (WGS84 lon/lat).</td></tr>
+        <tr><td>geo.projection</td><td><code>'mercator'</code> <code>'equirectangular'</code></td><td>Projection (default <code>equirectangular</code>); fitted to the plot with 8px padding.</td></tr>
+        <tr><td>geo.key / geo.nameKey</td><td>path, e.g. <code>'properties.iso_a2'</code></td><td>Join key for values, and the display name (default <code>properties.name</code>).</td></tr>
+        <tr><td>geo.bins / min / max</td><td><code>number</code></td><td>Choropleth steps (3–7) and color domain.</td></tr>
+        <tr><td>geo.maxZoom / wheel</td><td><code>number</code>, <code>boolean</code></td><td>Zoom limit (12) and whether the wheel zooms without <kbd class="o-kbd">Ctrl</kbd>/<kbd class="o-kbd">⌘</kbd> (off, so pages keep scrolling).</td></tr>
+        <tr><td>series[].data (choropleth)</td><td><code>[{ id, value }]</code> or <code>{ id: value }</code></td><td>Region values.</td></tr>
+        <tr><td>series[].data (bubbles)</td><td><code>[{ lon, lat, value, name }]</code>, <code>[{ coordinates, value }]</code>, <code>[{ id, value }]</code></td><td>Bubble positions and sizes.</td></tr>
+      </tbody>
+    </table>
+    <h3>Keyboard &amp; pointer</h3>
+    <table class="docs-api">
+      <thead><tr><th>Input</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>← → / ↑ ↓</td><td>Move between regions (alphabetical) and then bubbles, announcing each value.</td></tr>
+        <tr><td>+ / − / 0</td><td>Zoom in, zoom out, reset.</td></tr>
+        <tr><td>Ctrl/⌘ + wheel, double-click</td><td>Zoom at the pointer.</td></tr>
+        <tr><td>Drag (when zoomed)</td><td>Pan.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

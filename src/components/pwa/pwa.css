@@ -1,0 +1,29 @@
+/* <o-install-prompt> */
+o-install-prompt:not(:defined) { display: none; }
+.o-install-prompt { display: block; z-index: calc(var(--o-z-toast) - 20); color: var(--o-text); }
+.o-install-prompt[position="top"], .o-install-prompt[position="bottom"] { position: fixed; inset-inline: .75rem; margin-inline: auto; max-width: 40rem; }
+.o-install-prompt[position="top"] { top: .75rem; }
+.o-install-prompt[position="bottom"] { bottom: .75rem; }
+.o-install-prompt[variant="button"] { display: inline-block; }
+.o-install-inner { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1rem; padding: .875rem 1rem; background: var(--o-elevated); border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); box-shadow: var(--o-shadow-lg); }
+.o-install-prompt[position="inline"] .o-install-inner { box-shadow: var(--o-shadow-sm); }
+.o-install-prompt[variant="card"] .o-install-inner { flex-direction: column; align-items: flex-start; max-width: 22rem; }
+.o-install-icon { flex-shrink: 0; width: 3rem; height: 3rem; border-radius: var(--o-radius-lg); object-fit: cover; }
+.o-install-icon-letter { display: grid; place-items: center; font-size: var(--o-fs-xl); font-weight: 700; color: var(--o-on-primary); background: var(--o-primary); }
+.o-install-body { flex: 1 1 14rem; min-width: 0; }
+.o-install-title { display: block; font-size: var(--o-fs-base); }
+.o-install-desc { margin: .125rem 0 0; font-size: var(--o-fs-sm); color: var(--o-text-muted); }
+.o-install-share { width: 1.125em; height: 1.125em; vertical-align: -.2em; color: var(--o-primary-text); }
+.o-install-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-inline-start: auto; }
+.o-install-prompt[variant="card"] .o-install-actions { margin-inline-start: 0; }
+.o-install-ios-text { font-size: var(--o-fs-sm); color: var(--o-text-muted); }
+
+/* fallback snackbar (only when Orion.toast is not loaded) */
+.o-pwa-snacks { position: fixed; bottom: 1rem; inset-inline-end: 1rem; z-index: var(--o-z-toast); display: flex; flex-direction: column; gap: .5rem; max-width: min(26rem, calc(100vw - 2rem)); pointer-events: none; }
+.o-pwa-snack { display: flex; align-items: center; gap: .75rem; padding-block: .625rem; padding-inline: 1rem .5rem; font-size: var(--o-fs-sm); color: var(--o-surface); background: var(--o-text); border-radius: var(--o-radius); box-shadow: var(--o-shadow-lg); pointer-events: auto; }
+.o-pwa-snack.is-success { color: var(--o-on-success); background: var(--o-success); }
+.o-pwa-snack.is-danger { color: var(--o-on-danger); background: var(--o-danger); }
+.o-pwa-snack-text { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; }
+.o-pwa-snack-action { --o-btn-bg: transparent; --o-btn-fg: inherit; --o-btn-border: color-mix(in srgb, currentColor 45%, transparent); --o-btn-hover-bg: color-mix(in srgb, currentColor 14%, transparent); box-shadow: none; }
+.o-pwa-snack > .o-btn-close { color: inherit; opacity: .8; }
+.o-pwa-snack > .o-btn-close:hover { color: inherit; background: color-mix(in srgb, currentColor 14%, transparent); }

@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Document Scanner — Orion Admin</title>
+<meta name="docs:section" content="Devices &amp; Capture">
+<meta name="docs:order" content="63">
+<meta name="docs:desc" content="Capture or upload a page, auto-detect edges, drag corners, perspective-crop, filter, and export a multi-page PDF">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Document Scanner</h1>
+    <p class="docs-lead"><code>&lt;o-doc-scanner&gt;</code> turns a phone/webcam photo (or an uploaded image) of a
+      paper document into a clean, perspective-corrected page: automatic edge detection with draggable corner
+      handles and a magnifier loupe, filters, rotate, a reorderable multi-page session, and PDF/image export. It is
+      also what <a href="camera.html"><code>&lt;o-camera mode="document"&gt;</code></a> mounts internally.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic</h2>
+    <p>Start the camera or upload an image; either drops you into the corner-editing step with edges already
+      auto-detected (falling back to the full frame when no quadrilateral is found). Drag a handle (or focus it and
+      use the arrow keys — Shift for a bigger step) to adjust, then "Add page".</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-stack" style="align-items:center;--o-gap:.75rem;max-width:28rem">
+          <o-doc-scanner id="basic-scan"></o-doc-scanner>
+          <div class="docs-log" id="basic-log"></div>
+        </div>
+        <script>
+          document.getElementById('basic-scan').addEventListener('o-scan', e => docs.log('#basic-log', `o-scan → page ${e.detail.index + 1}, ${e.detail.pages.length} total`));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="fixture">
+    <h2>A no-camera fixture: <code>loadImage()</code></h2>
+    <p><code>loadImage(source)</code> accepts a <code>File</code>, <code>Blob</code>, data URL, <code>&lt;img&gt;</code>,
+      <code>&lt;canvas&gt;</code>, <code>&lt;video&gt;</code> or <code>ImageBitmap</code> and drops straight into
+      corner-editing — no camera involved. This demo draws a synthetic "photo of a document on a desk" (a light
+      quadrilateral, rotated and skewed, on a dark background) so auto-detect has real edges to find.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-stack" style="align-items:center;--o-gap:.75rem;max-width:28rem">
+          <o-doc-scanner id="fixture-scan"></o-doc-scanner>
+          <div class="o-cluster">
+            <button class="o-btn o-btn-ghost o-btn-sm" id="fixture-reload">Load a new fixture photo</button>
+            <button class="o-btn o-btn-ghost o-btn-sm" id="fixture-file">Load the sample fixture file</button>
+          </div>
+          <div class="docs-log" id="fixture-log"></div>
+        </div>
+        <script>
+          function fixtureDocPhoto() {
+            const c = document.createElement('canvas'); c.width = 480; c.height = 360;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = '#3a3f47'; ctx.fillRect(0, 0, 480, 360); // desk background
+            ctx.save();
+            ctx.translate(240, 180); ctx.rotate((Math.random() * 10 - 5) * Math.PI / 180);
+            ctx.fillStyle = '#fafaf5';
+            ctx.beginPath();
+            ctx.moveTo(-160, -120); ctx.lineTo(170, -100); ctx.lineTo(150, 130); ctx.lineTo(-180, 110);
+            ctx.closePath(); ctx.fill();
+            ctx.fillStyle = '#333'; ctx.font = '14px sans-serif';
+            for (let i = 0; i < 6; i++) ctx.fillRect(-130, -80 + i * 28, 220 - (i % 3) * 30, 6);
+            ctx.restore();
+            return c;
+          }
+          const fixtureScan = document.getElementById('fixture-scan');
+          fixtureScan.addEventListener('o-scan', e => docs.log('#fixture-log', `o-scan → page ${e.detail.index + 1} added (${e.detail.page.canvas.width}×${e.detail.page.canvas.height})`));
+          document.getElementById('fixture-reload').addEventListener('click', () => fixtureScan.loadImage(fixtureDocPhoto()));
+          // A static file version of the same idea (checked-in SVG, not drawn on the fly) — the same `source`
+          // contract also accepts a plain image URL string.
+          document.getElementById('fixture-file').addEventListener('click', () => fixtureScan.loadImage('../fixtures/capture/sample-document.svg'));
+          setTimeout(() => fixtureScan.loadImage(fixtureDocPhoto()), 0);
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="filters">
+    <h2>Filters, rotate &amp; multi-page</h2>
+    <p>Each page in the session gets its own filter (<code>original</code>, <code>grayscale</code>,
+      <code>bw</code> — adaptive black &amp; white for text, <code>enhance</code> — contrast stretch) and rotation,
+      set from its thumbnail's own controls, plus reorder (move earlier/later) and remove. <code>setFilter(i, name)</code>,
+      <code>rotate(i, deg)</code>, <code>reorderPage(from, to)</code> and <code>removePage(i)</code> are also
+      scriptable directly.</p>
+    <pre class="docs-code-block" data-lang="js">
+scanner.setFilter(0, 'bw');       // 'original' | 'grayscale' | 'bw' | 'enhance'
+scanner.rotate(0, 90);
+scanner.reorderPage(1, 0);        // move page 1 before page 0
+scanner.removePage(0);
+</pre>
+  </section>
+
+  <section id="export">
+    <h2>Export</h2>
+    <p><code>exportPDF()</code> builds a single multi-page A4 PDF via <code>Orion.pdf</code> when that package is in
+      the bundle (each page scaled to fit, centered); otherwise it announces that PDF export is unavailable and
+      falls back to <code>exportImages()</code>, which downloads every page as a separate image.</p>
+  </section>
+
+  <section id="js">
+    <h2>JavaScript API</h2>
+    <pre class="docs-code-block" data-lang="js">
+scanner.pages            // read-only [{ canvas, corners, filter, rotation }, ...]
+scanner.corners          // the 4 points [TL, TR, BR, BL] currently being edited, or null
+scanner.autoDetect()     // re-run edge detection on the frame being edited -&gt; corners
+scanner.applyCorners()   // perspective-crop with the current corners and add the page
+</pre>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>facing</td><td>string</td><td>Camera facing for <code>start()</code>. Default <code>"environment"</code>.</td></tr>
+        <tr><td>resolution</td><td>string</td><td>e.g. <code>"1280x720"</code> or a preset (<code>sd hd fhd 4k</code>).</td></tr>
+        <tr><td>format / quality</td><td>string / number</td><td>Export image type/quality for <code>exportImages()</code>.</td></tr>
+        <tr><td>device-id</td><td>string</td><td>Pin a specific camera.</td></tr>
+        <tr><td>source</td><td>property only</td><td>Test/fixture path for <code>start()</code> — a <code>MediaStream</code>-like value or a <code>&lt;video&gt;</code>/<code>&lt;canvas&gt;</code>/<code>ImageBitmap</code>/<code>ImageData</code>, exactly like <a href="camera.html#source"><code>&lt;o-camera source&gt;</code></a>. <code>loadImage(source)</code> (above) is the simpler one-shot alternative that skips the live-preview step entirely.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-ready</td><td><code>{ stream }</code></td><td>The camera/source started.</td></tr>
+        <tr><td>o-error</td><td><code>{ reason, message }</code></td><td>Same reason codes as <a href="camera.html#api"><code>&lt;o-camera&gt;</code></a>.</td></tr>
+        <tr><td>o-scan</td><td><code>{ page, pages, index }</code></td><td>A page was added via <code>applyCorners()</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>start() / stop()</td><td>Start/stop the live preview (camera or <code>source</code>).</td></tr>
+        <tr><td>capture()</td><td>Capture the current live frame and enter corner-editing.</td></tr>
+        <tr><td>loadImage(source)</td><td>Load a still image/canvas/video and enter corner-editing — no camera.</td></tr>
+        <tr><td>autoDetect()</td><td>Re-run edge detection on the frame being edited.</td></tr>
+        <tr><td>applyCorners()</td><td>Perspective-crop with the current corners and add the page.</td></tr>
+        <tr><td>setFilter(i, name) / rotate(i, deg)</td><td>Per-page filter/rotation.</td></tr>
+        <tr><td>removePage(i) / reorderPage(from, to)</td><td>Edit the page list.</td></tr>
+        <tr><td>clear()</td><td>Discard the whole session.</td></tr>
+        <tr><td>exportPDF() / exportImages()</td><td>Download the session as one PDF, or as separate images.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Tab</td><td>Moves through the corner handles and toolbar buttons in DOM order.</td></tr>
+        <tr><td>Arrow keys (on a focused corner handle)</td><td>Nudge that corner 3px (Shift: 12px).</td></tr>
+        <tr><td>Enter / Space</td><td>Activates the focused button.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="a11y">
+    <h2>Accessibility</h2>
+    <p>Each corner handle is a real, focusable <code>role="button"</code> element with an
+      <code>aria-label</code> ("Top-left corner", etc.) so it can be adjusted without a pointer. Page-added/removed
+      and export status are announced via <code>announce()</code>.</p>
+  </section>
+
+  <section id="limitations">
+    <h2>Limitations</h2>
+    <ul>
+      <li>Edge detection is a lightweight JS pipeline (grayscale → blur → Sobel → convex hull), tuned for a
+        document with reasonable contrast against its background; it always falls back to the full frame so the
+        workflow never gets stuck, but manual corner adjustment is sometimes needed on a low-contrast photo.</li>
+      <li><code>exportPDF()</code> needs the <code>pdf</code> package in the build; without it, exporting falls
+        back to per-page images automatically.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

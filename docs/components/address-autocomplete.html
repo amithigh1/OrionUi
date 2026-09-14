@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Address Autocomplete — Orion Admin</title>
+<meta name="docs:section" content="Maps">
+<meta name="docs:order" content="20">
+<meta name="docs:desc" content="Debounced address suggestions on top of Orion.geocode: offline mock, Nominatim, Photon or Google Places">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .demo-grid { display: grid; gap: 1rem 1.5rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); width: 100%; }
+  .demo-grid > div { min-width: 0; }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Address Autocomplete</h1>
+    <p class="docs-lead"><code>&lt;o-address-input&gt;</code> is a debounced address search field built on top of <a href="autocomplete.html">&lt;o-autocomplete&gt;</a> (keyboard, highlighting, loading/empty/error states are inherited) and <code>Orion.geocode</code>, a small forward/reverse geocoding provider registry. The default provider is a tiny offline dataset, so this whole page — including every demo below — works with no network connection.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic</h2>
+    <p>Type at least 2 characters (fuzzy-matched against the address label). Selecting a suggestion — by click or keyboard (<kbd class="o-kbd">↓</kbd> then <kbd class="o-kbd">Enter</kbd>) — sets the element's <code>value</code> to a structured address object and fires <code>o-change</code>. Typing again without picking clears the value.</p>
+    <div class="docs-demo">
+      <template>
+        <div style="max-width:28rem">
+          <label class="o-label" for="aa-basic">Delivery address</label>
+          <o-address-input id="aa-basic" name="address" placeholder="Try “Petronas” or “Merlion”"></o-address-input>
+        </div>
+        <pre class="docs-log" id="aa-basic-log">value: null</pre>
+        <script>
+          document.getElementById('aa-basic').addEventListener('o-change', e => {
+            document.getElementById('aa-basic-log').textContent = 'value: ' + JSON.stringify(e.detail.value, null, 2);
+          });
+        </script>
+      </template>
+    </div>
+    <p class="o-help">The default <code>provider="mock"</code> matches against a small built-in list of Malaysia/Singapore landmarks — see <a href="#providers">Providers</a> below for the full offline/online picture.</p>
+  </section>
+
+  <section id="autofill">
+    <h2>Auto-filling other fields</h2>
+    <p><code>fill='{"city":"#shipping-city", ...}'</code> maps result fields (<code>street, houseNumber, postcode, city, state, country, countryCode</code>) onto other form controls by selector, dispatching <code>input</code>/<code>change</code> on each so masks, validators and frameworks see it.</p>
+    <div class="docs-demo">
+      <template>
+        <form class="o-form-grid" style="max-width:32rem" onsubmit="return false">
+          <div class="o-field" style="grid-column:1/-1">
+            <label class="o-label" for="aa-fill">Search address</label>
+            <o-address-input id="aa-fill" fill='{"street":"#fill-street","postcode":"#fill-postcode","city":"#fill-city","country":"#fill-country"}'></o-address-input>
+          </div>
+          <div class="o-field"><label class="o-label" for="fill-street">Street</label><input class="o-input" id="fill-street" readonly></div>
+          <div class="o-field"><label class="o-label" for="fill-postcode">Postcode</label><input class="o-input" id="fill-postcode" readonly></div>
+          <div class="o-field"><label class="o-label" for="fill-city">City</label><input class="o-input" id="fill-city" readonly></div>
+          <div class="o-field"><label class="o-label" for="fill-country">Country</label><input class="o-input" id="fill-country" readonly></div>
+        </form>
+      </template>
+    </div>
+  </section>
+
+  <section id="fixture">
+    <h2>Custom offline dataset (fixture provider)</h2>
+    <p>Register your own provider with <code>Orion.geocode.addProvider(name, { search, reverse })</code> — or set the <code>source</code> property directly on one element — to plug in any dataset. This demo loads <code>docs/fixtures/geocode/addresses.json</code> (a small fixture file, not the built-in mock list) with <code>fetch()</code> and matches it with <code>Orion.util.fuzzySearch</code>, entirely offline. The same technique is how you would wire up a company directory, a warehouse list or a recorded HTTP fixture in tests.</p>
+    <div class="docs-demo">
+      <template>
+        <div style="max-width:28rem">
+          <label class="o-label" for="aa-fixture">Office search (fixture dataset)</label>
+          <o-address-input id="aa-fixture" placeholder="Try “warehouse” or “Orion”"></o-address-input>
+        </div>
+        <pre class="docs-log" id="aa-fixture-log">value: null</pre>
+        <script>
+          (async () => {
+            const offices = await (await fetch('../fixtures/geocode/addresses.json')).json();
+            Orion.geocode.addProvider('fixture', {
+              search: async (q) => Orion.util.fuzzySearch(offices, q, 'label', 6),
+              reverse: async (lat, lng) => offices[0] ? { ...offices[0], lat, lng } : null,
+            });
+            const el = document.getElementById('aa-fixture');
+            el.provider = 'fixture';
+            el.addEventListener('o-change', e => {
+              document.getElementById('aa-fixture-log').textContent = 'value: ' + JSON.stringify(e.detail.value, null, 2);
+            });
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="country">
+    <h2>Country filter &amp; required validation</h2>
+    <p><code>country-codes="sg"</code> is forwarded to the active provider (Nominatim/Photon/Google honour it; the offline mock provider ignores it since its dataset is fixed). A plain <code>required</code> address field reports a validation message like any other form control.</p>
+    <div class="docs-demo">
+      <template>
+        <form class="o-stack" style="--o-gap:.75rem;max-width:28rem" id="aa-req-form">
+          <div class="o-field">
+            <label class="o-label" for="aa-required">Registered office (required)</label>
+            <o-address-input id="aa-required" name="office" required country-codes="sg" placeholder="Singapore addresses only"></o-address-input>
+          </div>
+          <button class="o-btn o-btn-primary o-btn-sm" type="submit" style="align-self:flex-start">Validate</button>
+        </form>
+      </template>
+    </div>
+  </section>
+
+  <section id="providers">
+    <h2>Providers</h2>
+    <table class="docs-api">
+      <thead><tr><th>Provider</th><th>Network?</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>mock</code> (default)</td><td>No</td><td>~12 built-in Malaysia/Singapore landmarks. Deterministic, used by this whole doc site and by tests.</td></tr>
+        <tr><td><code>nominatim</code></td><td>Yes</td><td>OpenStreetMap's public Nominatim API. Throttled to ≥1 request/second and cached in-memory; pass <code>email</code> to identify your app per their usage policy. Requires the <a href="http.html"><code>http</code></a> package in custom builds.</td></tr>
+        <tr><td><code>photon</code></td><td>Yes</td><td>Komoot's Photon API (no throttling requirement). Also requires <code>http</code>.</td></tr>
+        <tr><td><code>google</code></td><td>Yes</td><td>Google Places Autocomplete + Geocoder, via <code>Orion.maps.google</code> — see the <a href="google-maps.html">Google Maps</a> page. Never used unless you supply your own API key.</td></tr>
+        <tr><td>custom</td><td>Your choice</td><td><code>Orion.geocode.addProvider(name, { search(q, opts), reverse(lat, lng, opts) })</code>, or set the element's <code>source</code> property directly (skips the registry entirely). See <a href="#fixture">Custom offline dataset</a> above.</td></tr>
+      </tbody>
+    </table>
+    <p class="o-callout o-callout-info">This documentation site runs with no network access, so every live demo here uses <code>mock</code> or a <code>fixture</code> provider. <code>nominatim</code>/<code>photon</code>/<code>google</code> work exactly the same way from the developer's side — set <code>provider="nominatim"</code> — they just need a real connection (and for Google, a key).</p>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>&lt;o-address-input&gt; attributes / properties</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>name</td><td>string</td><td></td><td>Form field name (inherited from <code>FormElement</code>).</td></tr>
+        <tr><td>value</td><td>object | null</td><td>null</td><td><code>{ lat, lng, address, street, houseNumber, postcode, city, state, country, countryCode }</code> or <code>null</code>. Setting it as a property also updates the visible text.</td></tr>
+        <tr><td>provider</td><td>string</td><td>mock</td><td>One of <code>Orion.geocode.providers</code>, or a name you registered with <code>addProvider</code>.</td></tr>
+        <tr><td>source</td><td><code>(q, opts) =&gt; results</code></td><td></td><td>Property-only override that bypasses the provider registry entirely for this element (named <code>source</code>, not <code>search</code>, to avoid colliding with the <code>search(q)</code> method below).</td></tr>
+        <tr><td>country-codes</td><td>string</td><td></td><td>Comma-separated ISO country codes, forwarded to providers that support it.</td></tr>
+        <tr><td>lang</td><td>string</td><td></td><td><code>Accept-Language</code> / provider language hint.</td></tr>
+        <tr><td>limit</td><td>number</td><td>6</td><td>Max suggestions.</td></tr>
+        <tr><td>fill</td><td>object</td><td></td><td><code>{ resultField: selectorOrElement }</code> — auto-fills other controls on selection.</td></tr>
+        <tr><td>email</td><td>string</td><td></td><td>Identifies your app to Nominatim, per their usage policy.</td></tr>
+        <tr><td>required, disabled, readonly</td><td>boolean</td><td>false</td><td>Standard form-control behaviour.</td></tr>
+        <tr><td>placeholder</td><td>string</td><td></td><td>Defaults to a localized "Search for an address".</td></tr>
+        <tr><td>texts</td><td>object</td><td></td><td>Per-instance string overrides (<code>placeholder, noResults, error, useLocation, locating, locateError</code>).</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>search(q)</td><td>Programmatically run a search and open the suggestion panel.</td></tr>
+        <tr><td>clear()</td><td>Clear the text and the value.</td></tr>
+        <tr><td>focus(opts)</td><td>Focus the inner input.</td></tr>
+        <tr><td>checkValidity() / reportValidity()</td><td>Standard <code>FormElement</code> validation (honours <code>required</code>).</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-change</td><td><code>{ value }</code></td><td>Fires on selection and on clear; <code>value</code> is the structured address or <code>null</code>. Native <code>input</code>/<code>change</code> also fire on the host.</td></tr>
+        <tr><td>o-input</td><td>(from the inner autocomplete)</td><td>Bubbles as the user types; used internally to clear <code>value</code> once the text no longer matches a selection.</td></tr>
+      </tbody>
+    </table>
+    <h3>Orion.geocode</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>search(q, opts) → Promise&lt;Address[]&gt;</td><td><code>opts</code>: <code>provider, countryCodes, lang, limit, email, signal</code>.</td></tr>
+        <tr><td>reverse(lat, lng, opts) → Promise&lt;Address | null&gt;</td><td>Same <code>opts</code>, minus <code>limit</code>.</td></tr>
+        <tr><td>addProvider(name, { search, reverse, resolve? })</td><td>Register or override a provider.</td></tr>
+        <tr><td>providers</td><td>The live registry object (<code>mock, nominatim, photon, google</code> plus anything you add).</td></tr>
+      </tbody>
+    </table>
+    <p class="o-help">Address shape: <code>{ label, lat, lng, street, houseNumber, postcode, city, state, country, countryCode, raw }</code> — <code>raw</code> is the untouched provider response.</p>
+    <h3>Keyboard</h3>
+    <p>Inherited from <a href="autocomplete.html">&lt;o-autocomplete&gt;</a>: <kbd class="o-kbd">↓</kbd>/<kbd class="o-kbd">↑</kbd> move through suggestions, <kbd class="o-kbd">Enter</kbd> selects the highlighted one, <kbd class="o-kbd">Escape</kbd> closes the panel, <kbd class="o-kbd">Tab</kbd> moves on.</p>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Users — Orion Admin</title>
+<script src="../dist/orion.js"></script>
+<link rel="stylesheet" href="assets/shell.css">
+<script>
+  window.PAGE = {
+    id: 'users', title: 'Users', subtitle: 'Manage accounts, roles and access.',
+    breadcrumbs: [{ label: 'Home', href: 'dashboard.html' }, { label: 'Team' }, { label: 'Users' }],
+    actions: '<button class="o-btn" id="import-users"><o-icon name="upload"></o-icon>Import</button>'
+      + '<button class="o-btn o-btn-primary" id="add-user"><o-icon name="user-plus"></o-icon>Add user</button>',
+  };
+</script>
+<script src="assets/shell.js" defer></script>
+</head>
+<body>
+<div id="app-content">
+  <div class="o-grid-auto o-mb-4" style="--o-min:11rem;--o-gap:1rem">
+    <div class="o-card o-card-body"><o-stat label="Total users" value="248" icon="users"></o-stat></div>
+    <div class="o-card o-card-body"><o-stat label="Active" value="201" color="success" icon="check-circle"></o-stat></div>
+    <div class="o-card o-card-body"><o-stat label="Pending invites" value="12" color="warning" icon="mail"></o-stat></div>
+    <div class="o-card o-card-body"><o-stat label="Suspended" value="5" color="danger" icon="ban"></o-stat></div>
+  </div>
+
+  <div class="o-card">
+    <o-datatable id="users" row-key="id" page-size="15" responsive="stack"></o-datatable>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const D = Orion.date;
+    const ROLES = ['Admin', 'Manager', 'Editor', 'Support', 'Viewer'];
+    const DEPTS = ['Engineering', 'Sales', 'Marketing', 'Finance', 'Design', 'Operations'];
+    const STATUS = ['Active', 'Active', 'Active', 'Pending', 'Suspended'];
+    const FIRST = ['Aisha', 'Ben', 'Chen', 'Diego', 'Elena', 'Farid', 'Grace', 'Hiro', 'Isabel', 'Jamal', 'Kavya', 'Liam', 'Mei', 'Nurul', 'Omar', 'Priya', 'Rahul', 'Sofia', 'Tomas', 'Zara'];
+    const LAST = ['Rahman', 'Tan', 'Garcia', 'Smith', 'Nguyen', 'Okafor', 'Silva', 'Lim', 'Patel', 'Kim', 'Haddad', 'Ivanova', 'Costa', 'Wong', 'Ahmed'];
+
+    /* Demo data — replace with: const rows = await Orion.http.get('/api/users'); */
+    let seed = 7; const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+    const rows = Array.from({ length: 248 }, (_, i) => {
+      const first = FIRST[Math.floor(rnd() * FIRST.length)], last = LAST[Math.floor(rnd() * LAST.length)];
+      return {
+        id: i + 1, name: `${first} ${last}`, email: `${first}.${last}`.toLowerCase() + `${i + 1}@example.com`,
+        role: ROLES[Math.floor(rnd() * ROLES.length)], department: DEPTS[Math.floor(rnd() * DEPTS.length)],
+        status: STATUS[Math.floor(rnd() * STATUS.length)], lastLogin: D.add(new Date(), -Math.floor(rnd() * 30), 'd'),
+        joined: D.add(new Date(), -Math.floor(rnd() * 900), 'd'),
+      };
+    });
+
+    const table = document.getElementById('users');
+    table.columns = [
+      { key: 'name', title: 'User', type: 'avatar', subtitle: 'email', sortable: true },
+      { key: 'role', title: 'Role', type: 'badge', filter: 'select', colors: { Admin: 'primary', Manager: 'info', Editor: 'secondary', Support: 'warning', Viewer: 'light' } },
+      { key: 'department', title: 'Department', filter: 'multiselect' },
+      { key: 'status', title: 'Status', type: 'badge', filter: 'select', colors: { Active: 'success', Pending: 'warning', Suspended: 'danger' } },
+      { key: 'lastLogin', title: 'Last login', type: 'date', format: 'relative' },
+      { key: 'joined', title: 'Joined', type: 'date' },
+      { key: 'actions', title: '', type: 'actions', actions: [
+        { icon: 'edit', label: 'Edit', action: row => editUser(row) },
+        { icon: 'mail', label: 'Email', action: row => Orion.toast?.(`Email sent to ${row.email}`) },
+        { icon: 'trash', label: 'Delete', danger: true, action: row => removeUser(row) },
+      ] },
+    ];
+    table.selectable = true;
+    table.bulkActions = [
+      { label: 'Export selected', icon: 'download', action: sel => Orion.export?.csv(sel, { columns: table.columns.filter(c => c.key !== 'actions'), filename: 'users.csv' }) },
+      { label: 'Suspend', icon: 'ban', variant: 'danger', action: async sel => {
+          if (!await confirmish(`Suspend ${sel.length} user(s)?`)) return;
+          sel.forEach(r => { r.status = 'Suspended'; table.updateRow?.(r) || null; });
+          table.setRows ? table.setRows(table.rows) : null;
+          Orion.toast?.success(`${sel.length} user(s) suspended`);
+        } },
+    ];
+    table.rows = rows;
+
+    const confirmish = async msg => (Orion.confirm ? Orion.confirm({ text: msg, danger: true }) : window.confirm(msg));
+
+    function userForm(user = {}) {
+      return `<form id="user-form" class="o-form-grid" data-o-validate>
+        <div class="o-field"><label class="o-label is-required" for="u-name">Full name</label>
+          <input class="o-input" id="u-name" name="name" value="${user.name || ''}" data-o-rules="required|minlength:3"></div>
+        <div class="o-field"><label class="o-label is-required" for="u-email">Email</label>
+          <input class="o-input" id="u-email" name="email" type="email" value="${user.email || ''}" data-o-rules="required|email"></div>
+        <div class="o-field"><label class="o-label" for="u-role">Role</label>
+          <o-select id="u-role" name="role" value="${user.role || 'Viewer'}" options='${JSON.stringify(ROLES)}'></o-select></div>
+        <div class="o-field"><label class="o-label" for="u-dept">Department</label>
+          <o-select id="u-dept" name="department" value="${user.department || 'Engineering'}" options='${JSON.stringify(DEPTS)}' searchable></o-select></div>
+        <div class="o-field"><label class="o-label" for="u-joined">Joined</label>
+          <o-datepicker id="u-joined" name="joined" value="${user.joined ? D.toISODate(user.joined) : D.toISODate(new Date())}"></o-datepicker></div>
+        <div class="o-field"><label class="o-label" for="u-status">Status</label>
+          <o-select id="u-status" name="status" value="${user.status || 'Pending'}" options='["Active","Pending","Suspended"]'></o-select></div>
+        <label class="o-switch o-span-full"><input type="checkbox" name="notify" checked> <span>Send an invitation email</span></label>
+      </form>`;
+    }
+
+    async function openUserModal(title, user) {
+      return new Promise(resolve => {
+        const handle = Orion.modal({
+          title, size: 'lg', content: userForm(user),
+          buttons: [
+            { text: 'Cancel', close: true, onClick: () => resolve(null) },
+            { text: user ? 'Save changes' : 'Create user', variant: 'primary', close: false, onClick: async () => {
+                const form = document.getElementById('user-form');
+                if (Orion.validate) { const v = Orion.validate(form); if (!(await v.validate())) return; }
+                const data = Orion.serialize ? Orion.serialize(form) : Object.fromEntries(new FormData(form));
+                handle.close(); resolve(data);
+              } },
+          ],
+        });
+      });
+    }
+
+    document.getElementById('add-user')?.addEventListener('click', async () => {
+      const data = await openUserModal('Add user');
+      if (!data) return;
+      const row = { id: Math.max(...table.rows.map(r => r.id)) + 1, ...data, joined: D.parse(data.joined), lastLogin: new Date() };
+      table.addRow ? table.addRow(row) : (table.rows = [row, ...table.rows]);
+      Orion.toast?.success(`${row.name} was added`);
+    });
+
+    async function editUser(row) {
+      const data = await openUserModal('Edit user', row);
+      if (!data) return;
+      Object.assign(row, data, { joined: D.parse(data.joined) });
+      table.updateRow ? table.updateRow(row) : (table.rows = [...table.rows]);
+      Orion.toast?.success('Saved');
+    }
+
+    async function removeUser(row) {
+      if (!await confirmish(`Delete ${row.name}? This cannot be undone.`)) return;
+      table.removeRow ? table.removeRow(row.id) : (table.rows = table.rows.filter(r => r !== row));
+      Orion.toast?.(`${row.name} deleted`);
+    }
+
+    document.getElementById('import-users')?.addEventListener('click', async () => {
+      if (!Orion.importWizard) return Orion.toast?.('Load the data package to import');
+      const imported = await Orion.importWizard({
+        columns: [{ key: 'name', title: 'Name', required: true }, { key: 'email', title: 'Email', required: true, type: 'email' }, { key: 'role', title: 'Role' }],
+      });
+      if (imported?.length) {
+        let id = Math.max(...table.rows.map(r => r.id));
+        table.rows = [...imported.map(r => ({ id: ++id, status: 'Pending', department: 'Engineering', joined: new Date(), lastLogin: new Date(), ...r })), ...table.rows];
+        Orion.toast?.success(`${imported.length} users imported`);
+      }
+    });
+  });
+</script>
+</body>
+</html>

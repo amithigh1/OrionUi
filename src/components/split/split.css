@@ -1,0 +1,53 @@
+/* Split panes and the list–detail split view.
+ *   <o-split direction="horizontal|vertical"> — give it a height (or place it in a flex/grid cell).
+ *   Custom properties: --o-split-gutter (hit area, default 8px), --o-split-line (divider color), --o-split-view-list (list column width)
+ */
+o-split { display: flex; min-width: 0; min-height: 0; --o-split-gutter: 8px; --o-split-line: var(--o-border); }
+o-split.is-vertical { flex-direction: column; }
+o-split > :not(.o-split-gutter) { flex: 1 1 0px; min-width: 0; min-height: 0; overflow: auto; }
+o-split > [data-collapsed] { overflow: hidden; }
+o-split.is-animating > :not(.o-split-gutter) { transition: flex-grow var(--o-dur) var(--o-ease), flex-basis var(--o-dur) var(--o-ease); }
+o-split.is-dragging { user-select: none; -webkit-user-select: none; cursor: col-resize; }
+o-split.is-dragging.is-vertical { cursor: row-resize; }
+o-split.is-dragging iframe { pointer-events: none; }
+
+.o-split-gutter {
+  position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; flex: 0 0 var(--o-split-gutter);
+  cursor: col-resize; touch-action: none; outline: none; background: transparent;
+}
+o-split.is-vertical > .o-split-gutter { cursor: row-resize; }
+.o-split-gutter::before { content: ""; position: absolute; top: 0; bottom: 0; left: calc(50% - .5px); width: 1px; background: var(--o-split-line); transition: background-color var(--o-dur-fast), width var(--o-dur-fast), left var(--o-dur-fast); }
+o-split.is-vertical > .o-split-gutter::before { top: calc(50% - .5px); bottom: auto; left: 0; right: 0; width: auto; height: 1px; transition: background-color var(--o-dur-fast), height var(--o-dur-fast), top var(--o-dur-fast); }
+.o-split-handle { position: relative; width: 4px; height: 2rem; border-radius: var(--o-radius-pill); background: var(--o-border-strong); opacity: .5; transition: opacity var(--o-dur-fast), background-color var(--o-dur-fast); }
+o-split.is-vertical > .o-split-gutter > .o-split-handle { width: 2rem; height: 4px; }
+.o-split-gutter:hover::before, .o-split-gutter.is-active::before, .o-split-gutter:focus-visible::before { background: var(--o-primary); width: 3px; left: calc(50% - 1.5px); }
+o-split.is-vertical > .o-split-gutter:hover::before, o-split.is-vertical > .o-split-gutter.is-active::before, o-split.is-vertical > .o-split-gutter:focus-visible::before { width: auto; height: 3px; top: calc(50% - 1.5px); }
+.o-split-gutter:hover > .o-split-handle, .o-split-gutter.is-active > .o-split-handle, .o-split-gutter:focus-visible > .o-split-handle { opacity: 1; background: var(--o-primary); }
+.o-split-gutter:focus-visible { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--o-focus) 35%, transparent); border-radius: var(--o-radius-xs); }
+.o-split-gutter.is-collapsed > .o-split-handle { opacity: .8; }
+@media (pointer: coarse) { o-split { --o-split-gutter: 14px; } .o-split-handle { opacity: .7; } }
+
+/* list–detail view */
+o-split-view {
+  position: relative; display: grid; min-width: 0; min-height: 0; overflow: hidden;
+  grid-template-columns: var(--o-split-view-list, minmax(16rem, 22rem)) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr);
+}
+.o-split-view-list { grid-column: 1; grid-row: 1 / -1; min-width: 0; min-height: 0; overflow: auto; border-inline-end: 1px solid var(--o-border); }
+.o-split-view-bar { grid-column: 2; grid-row: 1; display: flex; align-items: center; min-height: 2.75rem; padding: .25rem .5rem; background: var(--o-surface); border-bottom: 1px solid var(--o-border); }
+.o-split-view-detail { grid-column: 2; grid-row: 1 / -1; min-width: 0; min-height: 0; overflow: auto; outline: none; }
+.o-split-view-list [data-o-item].is-active, .o-split-view-list [aria-current="true"] { background: var(--o-primary-subtle); }
+
+o-split-view.is-compact { grid-template-columns: minmax(0, 1fr); }
+o-split-view.is-compact > .o-split-view-list { grid-column: 1; grid-row: 1 / -1; border-inline-end: 0; transition: transform var(--o-split-view-dur, var(--o-dur)) var(--o-ease), opacity var(--o-split-view-dur, var(--o-dur)) var(--o-ease), visibility 0s linear 0s; }
+o-split-view.is-compact > .o-split-view-bar { grid-column: 1; grid-row: 1; }
+o-split-view.is-compact > .o-split-view-detail { grid-column: 1; grid-row: 2; background: var(--o-surface); }
+o-split-view.is-compact > .o-split-view-bar, o-split-view.is-compact > .o-split-view-detail {
+  transform: translateX(100%); visibility: hidden;
+  transition: transform var(--o-split-view-dur, var(--o-dur)) var(--o-ease), visibility 0s linear var(--o-split-view-dur, var(--o-dur));
+}
+o-split-view.is-compact.is-detail > .o-split-view-bar, o-split-view.is-compact.is-detail > .o-split-view-detail { transform: none; visibility: visible; transition: transform var(--o-split-view-dur, var(--o-dur)) var(--o-ease), visibility 0s; }
+o-split-view.is-compact.is-detail > .o-split-view-list { transform: translateX(-25%); opacity: 0; visibility: hidden; transition: transform var(--o-split-view-dur, var(--o-dur)) var(--o-ease), opacity var(--o-split-view-dur, var(--o-dur)) var(--o-ease), visibility 0s linear var(--o-split-view-dur, var(--o-dur)); }
+o-split-view.is-compact:dir(rtl) > .o-split-view-bar, o-split-view.is-compact:dir(rtl) > .o-split-view-detail { transform: translateX(-100%); }
+o-split-view.is-compact.is-detail:dir(rtl) > .o-split-view-bar, o-split-view.is-compact.is-detail:dir(rtl) > .o-split-view-detail { transform: none; }
+o-split-view.is-compact.is-detail:dir(rtl) > .o-split-view-list { transform: translateX(25%); }
+o-split-view.no-anim { --o-split-view-dur: 0s; }

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+  <title>Glass Chimes cover</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0f766e"/><stop offset="1" stop-color="#022c22"/></linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <g fill="none" stroke="#5eead4" stroke-width="3" opacity=".8">
+    <circle cx="300" cy="330" r="60"/><circle cx="300" cy="330" r="110" opacity=".7"/><circle cx="300" cy="330" r="160" opacity=".5"/><circle cx="300" cy="330" r="210" opacity=".3"/><circle cx="300" cy="330" r="260" opacity=".15"/>
+  </g>
+  <g stroke="#ccfbf1" stroke-width="6" stroke-linecap="round"><path d="M230 90 V250 M270 90 V290 M310 90 V270 M350 90 V230 M390 90 V260"/></g>
+  <path d="M200 90 H420" stroke="#ccfbf1" stroke-width="10" stroke-linecap="round"/>
+  <text x="300" y="560" fill="#ccfbf1" text-anchor="middle" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="40" font-weight="700">Glass Chimes</text>
+</svg>

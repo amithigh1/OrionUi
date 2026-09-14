@@ -1,0 +1,64 @@
+/* ============================================================================
+ * aitools — data-o-ai-complete (ghost text), data-o-ai-suggest (rewrite/tone toolbar),
+ * Orion.ai.fillForm() confirmation panel.
+ * ========================================================================== */
+
+/* ── data-o-ai-complete: ghost text overlay ─────────────────────────────── */
+.o-ai-complete-ghost {
+  position: fixed; margin: 0; overflow: hidden; z-index: var(--o-z-tooltip); pointer-events: none;
+  background: transparent;
+}
+.o-ai-complete-typed { color: transparent; }
+.o-ai-complete-rest { color: var(--o-text-subtle); }
+
+/* ── data-o-ai-suggest: trigger + floating panel ────────────────────────── */
+.o-ai-suggest-trigger {
+  position: fixed; z-index: var(--o-z-tooltip); display: inline-grid; place-items: center;
+  width: 1.75rem; height: 1.75rem; margin-block-start: -.875rem; margin-inline-end: .375rem;
+  padding: 0; border: 1px solid var(--o-border); border-radius: var(--o-radius-pill);
+  color: var(--o-primary-text); background: var(--o-surface); box-shadow: var(--o-shadow-sm); cursor: pointer;
+}
+.o-ai-suggest-trigger:hover { background: var(--o-primary-subtle); border-color: var(--o-primary-border); }
+.o-ai-suggest-trigger:focus-visible { outline: none; box-shadow: 0 0 0 var(--o-ring-width) color-mix(in srgb, var(--o-focus) var(--o-ring-alpha), transparent); }
+.o-ai-suggest-trigger .o-icon { width: 1rem; height: 1rem; }
+
+.o-ai-suggest-panel { width: min(20rem, calc(100vw - 2rem)); max-height: min(24rem, calc(100vh - 4rem)); overflow-y: auto; padding: .375rem; }
+.o-ai-suggest-menu { display: flex; flex-direction: column; gap: .0625rem; }
+.o-ai-suggest-item {
+  display: block; width: 100%; padding: .5rem .625rem; text-align: start; font-size: var(--o-fs-sm);
+  color: var(--o-text); background: transparent; border: 0; border-radius: var(--o-radius-sm); cursor: pointer;
+}
+.o-ai-suggest-item:hover, .o-ai-suggest-item:focus-visible { background: var(--o-surface-2); outline: none; }
+
+.o-ai-suggest-custom { display: flex; flex-direction: column; gap: .5rem; padding: .25rem; }
+.o-ai-suggest-custom-row { display: flex; align-items: center; gap: .375rem; }
+.o-ai-suggest-custom-row .o-input { flex: 1 1 auto; min-width: 0; }
+
+.o-ai-suggest-result { display: flex; flex-direction: column; gap: .625rem; padding: .5rem; }
+.o-ai-suggest-status { display: flex; align-items: center; gap: .5rem; font-size: var(--o-fs-sm); color: var(--o-text-muted); padding-block: .5rem; }
+.o-ai-suggest-diff { font-size: var(--o-fs-sm); line-height: 1.5; max-height: 14rem; overflow-y: auto; }
+.o-ai-suggest-diff del { color: var(--o-danger-text); background: var(--o-danger-subtle); text-decoration: line-through; border-radius: 2px; }
+.o-ai-suggest-diff ins { color: var(--o-success-text); background: var(--o-success-subtle); text-decoration: none; border-radius: 2px; }
+.o-ai-suggest-actions { display: flex; flex-wrap: wrap; gap: .375rem; }
+.o-ai-suggest-error { display: flex; align-items: center; gap: .5rem; color: var(--o-danger-text); font-size: var(--o-fs-sm); }
+
+/* ── Orion.ai.fillForm() confirmation panel ─────────────────────────────── */
+.o-ai-fill-panel {
+  margin-block-start: .75rem; padding: .875rem 1rem; background: var(--o-surface-2);
+  border: 1px solid var(--o-border); border-radius: var(--o-radius-lg);
+}
+.o-ai-fill-title { display: flex; align-items: center; gap: .5rem; font-weight: 600; font-size: var(--o-fs-sm); margin-block-end: .625rem; }
+.o-ai-fill-title .o-icon { color: var(--o-primary-text); width: 1.1rem; height: 1.1rem; }
+.o-ai-fill-rows { display: flex; flex-direction: column; gap: .5rem; margin-block-end: .75rem; }
+.o-ai-fill-row { align-items: flex-start; gap: .5rem; }
+.o-ai-fill-row-label { flex: 0 0 auto; min-width: 7rem; font-size: var(--o-fs-sm); color: var(--o-text-muted); }
+.o-ai-fill-row-value { font-size: var(--o-fs-sm); word-break: break-word; }
+.o-ai-fill-old { color: var(--o-text-subtle); text-decoration: line-through; margin-inline-end: .3rem; }
+.o-ai-fill-new { color: var(--o-success-text); background: var(--o-success-subtle); border-radius: 2px; text-decoration: none; }
+.o-ai-fill-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+
+@media (max-width: 480px) {
+  .o-ai-suggest-panel { width: calc(100vw - 1.5rem); }
+  .o-ai-fill-row { flex-wrap: wrap; }
+  .o-ai-fill-row-label { min-width: 100%; }
+}

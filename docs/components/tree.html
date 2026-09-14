@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tree — Orion Admin</title>
+<meta name="docs:section" content="Boards & Diagrams">
+<meta name="docs:order" content="30">
+<meta name="docs:desc" content="Hierarchical tree view: lazy loading, tri-state checkboxes, drag-drop reordering, search and 10,000-node virtual scrolling">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .tr-demo { height: 22rem; max-width: 26rem; }
+  .tr-demo-wide { height: 22rem; }
+  .tr-toolbar { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .75rem; }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Tree</h1>
+    <p class="docs-lead"><code>&lt;o-tree&gt;</code> renders a hierarchical list — file explorers, permission trees, org
+      charts, category pickers — with lazy loading, tri-state checkboxes, drag-and-drop reordering, search with
+      highlighting, and virtual scrolling for tens of thousands of nodes. Every row is a real
+      <code>role="treeitem"</code> with full WAI-ARIA keyboard support.</p>
+  </header>
+
+  <section id="overview">
+    <h2>Overview</h2>
+    <p>Give the tree a <code>nodes</code> array of plain objects, or write nested <code>&lt;ul&gt;&lt;li&gt;</code>
+      markup and let it parse that once on connect.</p>
+    <pre class="docs-code-block" data-lang="js">
+      const tr = document.querySelector('o-tree');
+      tr.nodes = [
+        { id: 'src', label: 'src', expanded: true, children: [
+          { id: 'app', label: 'app.js' },
+          { id: 'lib', label: 'lib', children: [{ id: 'util', label: 'util.js' }] },
+        ] },
+      ];
+      tr.addEventListener('o-select', e => console.log(e.detail.node));
+      tr.addEventListener('o-toggle', e => console.log(e.detail.node.label, e.detail.expanded));
+    </pre>
+  </section>
+
+  <section id="explorer">
+    <h2>File explorer with lazy folders</h2>
+    <p>Set <code>filetype</code> for automatic folder/file icons (by extension), and mark a node <code>lazy: true</code>
+      to fetch its children the first time it expands via the <code>load(node)</code> option — the row shows a spinner,
+      and a failed load shows a retry affordance. Drag files and folders to reorder or re-parent them
+      (<code>draggable</code>); drop near the top/bottom third of a row to reorder, or the middle to move inside a folder.</p>
+    <div class="docs-demo">
+      <template>
+        <o-tree id="tr-fs" class="tr-demo" filetype draggable label="Project files"></o-tree>
+        <div class="docs-log" id="tr-fs-log"></div>
+        <script>
+          {
+            const tr = document.getElementById('tr-fs');
+            let uid = 100;
+            const remoteFolder = name => ({ id: 'remote-' + (uid++), label: name, lazy: true });
+            tr.nodes = [
+              { id: 'src', label: 'src', expanded: true, children: [
+                { id: 'components', label: 'components', children: [
+                  { id: 'kanban', label: 'kanban.js' }, { id: 'tree', label: 'tree.js' }, { id: 'icons', label: 'icons.png' },
+                ] },
+                { id: 'core', label: 'core', children: [{ id: 'env', label: 'env.js' }, { id: 'dom', label: 'dom.js' }] },
+                { id: 'app', label: 'app.js' },
+              ] },
+              { id: 'docs', label: 'docs', children: [remoteFolder('components'), { id: 'readme', label: 'README.md' }] },
+              { id: 'archive', label: 'archive (2019)', lazy: true },
+              { id: 'pkg', label: 'package.json' },
+              { id: 'zip', label: 'release-1.4.zip' },
+            ];
+            tr.load = async node => {
+              await new Promise(r => setTimeout(r, 500));
+              if (node.id === 'archive') throw new Error('403 Forbidden');
+              return [{ id: 'f' + (uid++), label: 'notes.md' }, { id: 'f' + (uid++), label: 'budget.csv' }, remoteFolder('nested')];
+            };
+            tr.addEventListener('o-toggle', e => docs.log('#tr-fs-log', `toggle: ${e.detail.node.label} → ${e.detail.expanded}`));
+            tr.addEventListener('o-select', e => docs.log('#tr-fs-log', `select: ${e.detail.node.label}`));
+            tr.addEventListener('o-move', e => docs.log('#tr-fs-log', `move: ${e.detail.node.label} ${e.detail.position} ${e.detail.target.label}`));
+            tr.addEventListener('o-rename', e => docs.log('#tr-fs-log', `rename: "${e.detail.previous}" → "${e.detail.value}"`));
+          }
+        </script>
+      </template>
+    </div>
+    <p class="o-text-sm o-muted">Double-click a name (or press <kbd class="o-kbd">F2</kbd>) to rename it. Right-click
+      (or <kbd class="o-kbd">Shift</kbd>+<kbd class="o-kbd">F10</kbd>) fires <code>o-context</code> — wire it to your
+      own menu (<a href="modal.html">dropdown/menu</a> is a separate package).</p>
+  </section>
+
+  <section id="permissions">
+    <h2>Permissions tree (tri-state checkboxes)</h2>
+    <p>With <code>checkboxes</code>, checking a group checks every descendant; checking some-but-not-all descendants
+      shows the native <code>indeterminate</code> state on every ancestor. <code>getChecked()</code> returns the
+      fully-checked nodes (a partially-checked group is not included).</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <o-tree id="tr-perm" class="tr-demo" checkboxes selection="none"></o-tree>
+        <div class="tr-toolbar">
+          <button class="o-btn o-btn-sm o-btn-outline-primary" id="tr-perm-get">getChecked()</button>
+        </div>
+        <div class="docs-log" id="tr-perm-log"></div>
+        <script>
+          {
+            const tr = document.getElementById('tr-perm');
+            tr.nodes = [
+              { id: 'admin', label: 'Administration', expanded: true, checked: true, children: [
+                { id: 'users', label: 'Manage users', checked: true }, { id: 'billing', label: 'Billing', checked: true }, { id: 'settings', label: 'System settings', checked: true },
+              ] },
+              { id: 'content', label: 'Content', expanded: true, children: [
+                { id: 'posts', label: 'Publish posts', checked: true }, { id: 'edit', label: 'Edit others\' posts' }, { id: 'delete', label: 'Delete posts' },
+              ] },
+              { id: 'reports', label: 'Reports', children: [{ id: 'view', label: 'View reports' }, { id: 'export', label: 'Export data' }] },
+            ];
+            document.getElementById('tr-perm-get').onclick = () => docs.log('#tr-perm-log', tr.getChecked().map(n => n.label).join(', ') || '(none)');
+            tr.addEventListener('o-check', e => docs.log('#tr-perm-log', `check: ${e.detail.node.label} → ${e.detail.checked}`));
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="search">
+    <h2>Search &amp; highlight</h2>
+    <p><code>filterable</code> shows a built-in search box (or call <code>filter(query)</code> yourself). Matches are
+      highlighted and every ancestor of a match is shown, temporarily expanded, without disturbing the tree's real
+      expand state — clear the search and it's exactly as you left it.</p>
+    <div class="docs-demo">
+      <template>
+        <o-tree id="tr-search" class="tr-demo" filterable filetype></o-tree>
+        <script>
+          {
+            const tr = document.getElementById('tr-search');
+            tr.nodes = [
+              { id: 'g1', label: 'components', children: [
+                { id: 'g1a', label: 'datatable', children: [{ id: 'g1a1', label: 'datatable.js' }, { id: 'g1a2', label: 'datatable.css' }] },
+                { id: 'g1b', label: 'kanban', children: [{ id: 'g1b1', label: 'kanban-model.js' }] },
+                { id: 'g1c', label: 'tree', children: [{ id: 'g1c1', label: 'tree-model.js' }, { id: 'g1c2', label: 'tree-render.js' }] },
+              ] },
+              { id: 'g2', label: 'core', children: [{ id: 'g2a', label: 'component.js' }, { id: 'g2b', label: 'dom.js' }, { id: 'g2c', label: 'anim.js' }] },
+              { id: 'g3', label: 'i18n', children: [{ id: 'g3a', label: 'en.js' }, { id: 'g3b', label: 'es.js' }] },
+            ];
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="dnd">
+    <h2>Drag &amp; drop with validation</h2>
+    <p><code>canDrop(dragNode, targetNode, position)</code> vetoes a drop before it happens — here files cannot be
+      dropped directly onto the board's root level, and a category cannot be dropped inside another category.</p>
+    <div class="docs-demo">
+      <template>
+        <o-tree id="tr-dnd" class="tr-demo" draggable filetype></o-tree>
+        <div class="docs-log" id="tr-dnd-log"></div>
+        <script>
+          {
+            const tr = document.getElementById('tr-dnd');
+            tr.nodes = [
+              { id: 'todo', label: 'To do', expanded: true, children: [{ id: 't1', label: 'Write tests.js' }, { id: 't2', label: 'Fix bug.js' }] },
+              { id: 'doing', label: 'Doing', expanded: true, children: [{ id: 'd1', label: 'Refactor.js' }] },
+              { id: 'done', label: 'Done', expanded: true, children: [{ id: 'x1', label: 'Ship it.js' }] },
+            ];
+            tr.canDrop = (drag, target, pos) => {
+              const isCategory = tr.nodes.includes(drag);
+              if (isCategory && pos === 'inside') return false;
+              return true;
+            };
+            tr.addEventListener('o-move', e => docs.log('#tr-dnd-log', `${e.detail.node.label} → ${e.detail.position} ${e.detail.target.label}`));
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="virtual">
+    <h2>Virtual scrolling — 10,000 nodes</h2>
+    <p>Only the rows near the viewport are ever in the DOM (<code>virtual="auto"</code> switches on above 300 visible
+      rows; force it with <code>virtual="on"</code> / <code>"off"</code>). Expanding the root below flattens 10,000
+      leaves into the visible list instantly.</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <o-tree id="tr-big" class="tr-demo-wide" style="height:20rem" label="10,000 items"></o-tree>
+        <div class="docs-log" id="tr-big-log"></div>
+        <script>
+          {
+            const tr = document.getElementById('tr-big');
+            const t0 = performance.now();
+            const children = Array.from({ length: 10000 }, (_, i) => ({ id: 'row-' + i, label: `Item ${String(i + 1).padStart(5, '0')}` }));
+            tr.nodes = [{ id: 'root', label: `10,000 items`, expanded: true, children }];
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+              docs.log('#tr-big-log', `rendered in ${(performance.now() - t0).toFixed(1)} ms · DOM rows: ${tr.querySelectorAll('.o-tree-row').length}`);
+            }));
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>↑ / ↓</td><td>Move focus to the previous / next visible row.</td></tr>
+        <tr><td>→ (← in RTL)</td><td>Expand a collapsed node, or move focus to its first child if already expanded.</td></tr>
+        <tr><td>← (→ in RTL)</td><td>Collapse an expanded node, or move focus to its parent.</td></tr>
+        <tr><td>Home / End</td><td>Move focus to the first / last visible row.</td></tr>
+        <tr><td>Enter</td><td>Select / activate the focused row (<code>o-select</code>).</td></tr>
+        <tr><td>Space</td><td>Toggle the focused row's checkbox (<code>checkboxes</code>), else toggle its selection in <code>selection="multiple"</code>.</td></tr>
+        <tr><td>*</td><td>Expand every sibling at the focused row's level.</td></tr>
+        <tr><td>F2</td><td>Rename the focused row.</td></tr>
+        <tr><td>Shift+F10 / ContextMenu</td><td>Fire <code>o-context</code> for the focused row.</td></tr>
+        <tr><td>A–Z (typeahead)</td><td>Jump to the next visible row whose label starts with what you typed.</td></tr>
+        <tr><td>Ctrl/Cmd+Click, Shift+Click</td><td>Toggle / range-select in <code>selection="multiple"</code>.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="factory">
+    <h2>Programmatic factory — <code>Orion.tree()</code></h2>
+    <p><code>Orion.tree(target, options)</code> builds an <code>&lt;o-tree&gt;</code> from <code>target</code> (a
+      selector or element — if it isn't already an <code>&lt;o-tree&gt;</code>, it is <strong>replaced</strong> by
+      one, not appended inside) and assigns <code>options</code> as properties, returning the element. The tree's row
+      list is a scroll viewport, so give the returned element an explicit height.</p>
+    <div class="docs-demo">
+      <template>
+        <div id="tr-factory-host"></div>
+        <script>
+          {
+            const tr = Orion.tree('#tr-factory-host', {
+              nodes: [{ id: 'root', label: 'Built with Orion.tree()', expanded: true, children: [{ id: 'a', label: 'First child' }, { id: 'b', label: 'Second child' }] }],
+            });
+            tr.id = 'tr-factory'; tr.classList.add('tr-demo'); // Orion.tree() replaces the host, so id/height classes go on the returned element
+            tr.addEventListener('o-select', e => docs.log('#tr-factory-log', 'o-select ' + e.detail.node.label));
+          }
+        </script>
+        <div class="docs-log" id="tr-factory-log"></div>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+      const tr = Orion.tree('#host', { nodes: [...], checkboxes: true });
+      // If #host isn't already an &lt;o-tree&gt;, it is REPLACED by a new one — style/size the returned element (needs an explicit height).
+    </pre>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Props / attributes</h3>
+    <table class="docs-api">
+      <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>nodes</td><td>Array</td><td><code>{ id, label, icon, children, expanded, checked, disabled, lazy, badge, data }</code>, recursive.</td></tr>
+        <tr><td>selection</td><td>String</td><td><code>'none' | 'single'</code> (default) <code>| 'multiple'</code>.</td></tr>
+        <tr><td>checkboxes</td><td>Boolean</td><td>Tri-state checkboxes with automatic parent/child cascade.</td></tr>
+        <tr><td>filetype</td><td>Boolean</td><td>Automatic folder/open-folder/file-by-extension icons when a node has no explicit <code>icon</code>.</td></tr>
+        <tr><td>filterable</td><td>Boolean</td><td>Shows a built-in search box (or call <code>filter(query)</code> yourself).</td></tr>
+        <tr><td>draggable</td><td>Boolean</td><td>Enables drag & drop move/reorder.</td></tr>
+        <tr><td>canDrop</td><td>Function</td><td><code>(dragNode, targetNode, position: 'before'|'after'|'inside') =&gt; boolean</code>.</td></tr>
+        <tr><td>load</td><td>Function</td><td><code>async (node) =&gt; children[]</code> — called once the first time a <code>lazy: true</code> node expands.</td></tr>
+        <tr><td>renderLabel</td><td>Function</td><td><code>(node, tree) =&gt; string | SafeHTML | Node</code> — replaces just the label cell.</td></tr>
+        <tr><td>rowHeight</td><td>Number</td><td>Pixel row height used for layout and virtualization math (default 28).</td></tr>
+        <tr><td>virtual</td><td>String</td><td><code>'auto'</code> (default, on above 300 visible rows) <code>| 'on' | 'off'</code>.</td></tr>
+        <tr><td>readonly</td><td>Boolean</td><td>No rename, drag, or checkbox changes; browsing and <code>o-select</code>/<code>o-toggle</code> still work.</td></tr>
+        <tr><td>texts / label</td><td>Object / String</td><td>Per-instance text overrides / <code>aria-label</code> of the tree region.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>expandAll(id?) / collapseAll(id?)</td><td>Expand/collapse everything, or just one node's subtree.</td></tr>
+        <tr><td>expandTo(id)</td><td>Expand every ancestor of a node and scroll to it.</td></tr>
+        <tr><td>getNode(id)</td><td>The raw node object (or <code>null</code>).</td></tr>
+        <tr><td>addNode(parentId, node, index?)</td><td>Insert a node (root when <code>parentId</code> is <code>null</code>).</td></tr>
+        <tr><td>updateNode(id, patch)</td><td>Merge fields into a node.</td></tr>
+        <tr><td>removeNode(id)</td><td>Remove a node (and its subtree).</td></tr>
+        <tr><td>getChecked() / getSelected()</td><td>Fully-checked nodes / currently selected nodes.</td></tr>
+        <tr><td>select(id, opts?) / toggle(id, expanded?) / check(id, checked?) / rename(id)</td><td>Programmatic equivalents of the user interactions.</td></tr>
+        <tr><td>filter(query) / clearFilter()</td><td>Apply / clear the search (returns the match count).</td></tr>
+        <tr><td>scrollTo(id)</td><td>Expand ancestors and scroll the node into view.</td></tr>
+        <tr><td>setNodes(nodes)</td><td>Replace the whole tree (same as <code>tr.nodes = nodes</code>).</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>o-select</td><td><code>{ node, id, ctrlKey, shiftKey }</code>.</td></tr>
+        <tr><td>o-toggle <em>(cancelable)</em></td><td><code>{ node, expanded }</code>.</td></tr>
+        <tr><td>o-check</td><td><code>{ node, checked }</code> — fired once for the node the user (or <code>check()</code>) toggled; cascade updates are silent.</td></tr>
+        <tr><td>o-move <em>(cancelable)</em></td><td><code>{ node, target, position }</code> — a drag (or nothing else yet) moved a node.</td></tr>
+        <tr><td>o-rename <em>(cancelable)</em></td><td><code>{ node, value, previous }</code>.</td></tr>
+        <tr><td>o-context <em>(cancelable)</em></td><td><code>{ node, x, y }</code> — hook your own context menu (right-click, long-press or Shift+F10).</td></tr>
+        <tr><td>o-filter</td><td><code>{ query, count }</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS</h3>
+    <p>Custom properties: <code>--o-tree-indent</code> (default <code>1.25rem</code>), <code>--o-tree-row-h</code>.
+      Structural classes: <code>.o-tree-scroll</code>, <code>.o-tree-row</code> (<code>.is-selected</code>,
+      <code>.is-disabled</code>, <code>.is-current</code>), <code>.o-tree-toggle</code> (<code>.is-expanded</code>,
+      <code>.is-leaf</code>), drop indicators <code>.drop-before</code> / <code>.drop-after</code> / <code>.drop-inside</code>
+      / <code>.is-drop-denied</code>.</p>
+  </section>
+</main>
+</body>
+</html>

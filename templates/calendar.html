@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calendar — Orion Admin</title>
+<script src="../dist/orion.js"></script>
+<link rel="stylesheet" href="assets/shell.css">
+<script>
+  window.PAGE = {
+    id: 'calendar', title: 'Calendar', subtitle: 'Team schedule, meetings and deadlines.',
+    breadcrumbs: [{ label: 'Home', href: 'dashboard.html' }, { label: 'Work' }, { label: 'Calendar' }],
+    actions: '<button class="o-btn" id="cal-export"><o-icon name="download"></o-icon>Export .ics</button>'
+      + '<button class="o-btn o-btn-primary" id="cal-add"><o-icon name="plus"></o-icon>New event</button>',
+  };
+</script>
+<script src="assets/shell.js" defer></script>
+</head>
+<body>
+<div id="app-content">
+  <div class="o-card">
+    <o-calendar id="cal" view="month" editable selectable now-indicator class="tpl-full-height"></o-calendar>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const D = Orion.date, cal = document.getElementById('cal');
+    if (!cal || !('events' in cal)) return;   // calendar package not loaded
+    const at = (days, h, m = 0) => D.setTime(D.add(D.today(), days, 'd'), { h, m });
+
+    /* Demo events — replace with: cal.source = async ({start, end}) => Orion.http.get('/api/events', { params: { start, end } }); */
+    cal.events = [
+      { id: 1, title: 'Daily standup', start: at(0, 9, 15), end: at(0, 9, 30), rrule: 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR', color: 'info' },
+      { id: 2, title: 'Design review', start: at(0, 11), end: at(0, 12), color: 'primary', location: 'Room 4B' },
+      { id: 3, title: 'Sprint planning', start: at(1, 14), end: at(1, 15, 30), color: 'success' },
+      { id: 4, title: 'Customer call — Globex', start: at(2, 16), end: at(2, 17), color: 'warning' },
+      { id: 5, title: 'Company offsite', start: D.add(D.today(), 5, 'd'), end: D.add(D.today(), 7, 'd'), allDay: true, color: 'secondary' },
+      { id: 6, title: 'Release 2.4', start: D.add(D.today(), 9, 'd'), allDay: true, color: 'danger' },
+      { id: 7, title: '1:1 with Ben', start: at(3, 10), end: at(3, 10, 30), rrule: 'FREQ=WEEKLY;INTERVAL=2;BYDAY=TH' },
+    ];
+
+    cal.addEventListener('o-event-change', e => Orion.toast?.success(`“${e.detail.event.title}” moved`));
+    cal.addEventListener('o-event-click', e => Orion.toast?.info(e.detail.event.title));
+    document.getElementById('cal-add')?.addEventListener('click', () => cal.createEvent?.() ?? Orion.toast?.('Drag on the calendar to create an event'));
+    document.getElementById('cal-export')?.addEventListener('click', () => {
+      const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Orion Admin//Template//EN',
+        ...cal.events.flatMap(ev => ['BEGIN:VEVENT', `UID:${ev.id}@orion`, `SUMMARY:${ev.title}`,
+          `DTSTART:${D.format(ev.start, 'YYYYMMDDTHHmmss')}`, `DTEND:${D.format(ev.end || ev.start, 'YYYYMMDDTHHmmss')}`,
+          ev.rrule ? `RRULE:${ev.rrule}` : null, 'END:VEVENT'].filter(Boolean)),
+        'END:VCALENDAR'].join('\r\n');
+      Orion.download(ics, 'calendar.ics', 'text/calendar');
+    });
+  });
+</script>
+</body>
+</html>

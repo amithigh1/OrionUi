@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Badges, chips &amp; alerts — Orion Admin</title>
+<meta name="docs:section" content="Foundation">
+<meta name="docs:order" content="25">
+<meta name="docs:title" content="Badges, Chips &amp; Alerts">
+<meta name="docs:desc" content="Status badges, counters, chips/tags, dismissible alerts and callouts">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Badges, Chips &amp; Alerts</h1>
+    <p class="docs-lead">Small status indicators, notification counters, removable chips and contextual alert messages.</p>
+  </header>
+
+  <section id="badges">
+    <h2>Badges</h2>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <span class="o-badge o-badge-primary">Primary</span>
+        <span class="o-badge o-badge-success">Success</span>
+        <span class="o-badge o-badge-danger">Danger</span>
+        <span class="o-badge o-badge-warning">Warning</span>
+        <span class="o-badge o-badge-info">Info</span>
+        <span class="o-badge">Neutral</span>
+        <span class="o-badge o-badge-soft-primary">Soft</span>
+        <span class="o-badge o-badge-soft-success o-badge-dot">Active</span>
+        <span class="o-badge o-badge-soft-warning o-badge-dot">Pending</span>
+        <span class="o-badge o-badge-soft-danger o-badge-dot">Failed</span>
+        <span class="o-badge o-badge-outline-primary">Outline</span>
+        <span class="o-badge o-badge-square o-badge-dark">Square</span>
+        <span class="o-badge o-badge-sm o-badge-soft-info">Small</span>
+        <span class="o-badge o-badge-lg o-badge-soft-primary"><o-icon name="star"></o-icon> Large</span>
+      </template>
+    </div>
+    <h3>Counters</h3>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-ghost o-btn-icon" style="position:relative" aria-label="Notifications, 5 unread"><o-icon name="bell"></o-icon><span class="o-badge o-badge-counter">5</span></button>
+        <button class="o-btn o-btn-ghost o-btn-icon" style="position:relative" aria-label="Messages, new"><o-icon name="inbox"></o-icon><span class="o-badge o-badge-counter"></span></button>
+        <span style="position:relative;display:inline-flex"><o-avatar name="Mei Lin" size="lg"></o-avatar><span class="o-badge o-badge-counter">12</span></span>
+        <button class="o-btn">Inbox <span class="o-badge o-badge-primary">24</span></button>
+      </template>
+    </div>
+  </section>
+
+  <section id="chips">
+    <h2>Chips</h2>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <span class="o-chip"><span>Design</span><button class="o-chip-remove" aria-label="Remove Design"></button></span>
+        <span class="o-chip"><o-avatar name="Liam Smith" size="xs"></o-avatar><span>Liam Smith</span><button class="o-chip-remove" aria-label="Remove Liam"></button></span>
+        <button class="o-chip is-active" aria-pressed="true">Filter: Active</button>
+        <button class="o-chip" aria-pressed="false">Filter: Admins</button>
+        <span class="o-chip"><span class="o-dot o-c-success"></span><span>Online</span></span>
+        <script>
+          document.currentScript.parentElement.addEventListener('click', e => {
+            if (e.target.matches('.o-chip-remove')) e.target.closest('.o-chip').remove();
+            const t = e.target.closest('button.o-chip'); if (t) { const on = t.getAttribute('aria-pressed') !== 'true'; t.setAttribute('aria-pressed', on); t.classList.toggle('is-active', on); }
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="alerts">
+    <h2>Alerts</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-alert o-alert-info"><o-icon name="info"></o-icon><div class="o-alert-content">A new software update is available. <a href="#alerts">See what's new</a></div></div>
+        <div class="o-alert o-alert-success" role="status"><o-icon name="check-circle"></o-icon><div class="o-alert-content"><div class="o-alert-title">Payment received</div>Your invoice #INV-2031 has been paid.</div><button class="o-btn-close" data-o-dismiss="alert" aria-label="Close"></button></div>
+        <div class="o-alert o-alert-warning"><o-icon name="alert-triangle"></o-icon><div class="o-alert-content"><div class="o-alert-title">Storage almost full</div>You have used 92% of your storage.<div class="o-alert-actions"><button class="o-btn o-btn-sm o-btn-warning">Upgrade plan</button><button class="o-btn o-btn-sm o-btn-ghost">Later</button></div></div><button class="o-btn-close" data-o-dismiss="alert" aria-label="Close"></button></div>
+        <div class="o-alert o-alert-danger" role="alert"><o-icon name="x-circle"></o-icon><div class="o-alert-content">Could not connect to the server. Retrying in 10 seconds…</div></div>
+        <div class="o-alert o-alert-primary o-alert-accent"><o-icon name="sparkles"></o-icon><div class="o-alert-content">.o-alert-accent adds a strong start border.</div></div>
+        <div class="o-alert o-alert-success o-alert-solid"><o-icon name="check"></o-icon><div class="o-alert-content">.o-alert-solid: high-emphasis message.</div><button class="o-btn-close" data-o-dismiss="alert" aria-label="Close"></button></div>
+      </template>
+    </div>
+    <p>Dismiss buttons use <code>data-o-dismiss="alert"</code> (animated). Listen for <code>o-close</code> (cancelable) and <code>o-closed</code> on the alert. Use <code>role="alert"</code> for urgent messages and <code>role="status"</code> for polite ones.</p>
+  </section>
+
+  <section id="callout">
+    <h2>Callouts</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-callout"><b>Note:</b> callouts are neutral side-notes for documentation and settings pages.</div>
+        <div class="o-callout o-c-warning"><b>Heads up:</b> changing the workspace URL breaks existing links.</div>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>Classes</h2>
+    <table class="docs-api">
+      <thead><tr><th>Class</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.o-badge (-{color}, -soft-{color}, -outline-{color})</td><td>Badge styles.</td></tr>
+        <tr><td>.o-badge-dot / -square / -sm / -lg / -counter</td><td>Modifiers; <code>-counter</code> positions on a relative parent (empty = dot).</td></tr>
+        <tr><td>.o-chip / .o-chip-remove / .is-active</td><td>Chips and filter chips.</td></tr>
+        <tr><td>.o-alert (-{color}, -solid, -accent, -banner)</td><td>Alerts; parts <code>.o-alert-content</code>, <code>.o-alert-title</code>, <code>.o-alert-actions</code>.</td></tr>
+        <tr><td>data-o-dismiss="alert"</td><td>Animated close; events <code>o-close</code> (cancelable), <code>o-closed</code>.</td></tr>
+        <tr><td>.o-callout (+ .o-c-*)</td><td>Side-note block.</td></tr>
+        <tr><td>.o-dot / .o-swatch</td><td>Small color dot / color square.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

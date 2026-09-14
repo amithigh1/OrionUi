@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tooltip &amp; Popover — Orion Admin</title>
+<meta name="docs:section" content="Overlays &amp; Feedback">
+<meta name="docs:order" content="40">
+<meta name="docs:desc" content="Hover/focus hints and interactive floating panels anchored to a trigger">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .demo-truncate { display: inline-block; max-width: 10rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+  .demo-placement-grid { display: grid; grid-template-columns: repeat(3, auto); gap: .75rem 1.5rem; justify-content: center; }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Tooltip &amp; Popover</h1>
+    <p class="docs-lead">Two floating helpers built on the same core positioning (<code>autoPlace</code>, flip/shift, RTL aware): the <strong>tooltip</strong> is a passive hint (hover/focus only, one shared element), the <strong>popover</strong> is an interactive panel that can hold a form and stays open on click.</p>
+  </header>
+
+  <section id="tooltip-basic">
+    <h2>Tooltip — basic</h2>
+    <p><code>data-o-tooltip="text"</code> works on any current or future element (delegated, one shared tooltip). Shows on hover and keyboard focus, hides on Escape, scroll or blur.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn" data-o-tooltip="Save your changes">Save</button>
+        <button class="o-btn o-btn-icon" aria-label="Delete" data-o-tooltip="Delete"><o-icon name="trash"></o-icon></button>
+        <button class="o-btn" data-o-tooltip-html="<b>Bold</b> and <em>rich</em> content">Rich HTML</button>
+        <a class="o-btn o-btn-link" data-o-tooltip="Opens in a new tab" href="#" target="_blank" rel="noopener">External link</a>
+      </template>
+    </div>
+  </section>
+
+  <section id="tooltip-placement">
+    <h2>Placement &amp; truncated text</h2>
+    <p><code>data-o-placement</code> sets the preferred side (flips automatically near an edge). <code>data-o-tooltip="auto"</code> shows the element's full text only when it is visually truncated.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="demo-placement-grid">
+          <button class="o-btn o-btn-sm" data-o-tooltip="Top (default)" data-o-placement="top">Top</button>
+          <button class="o-btn o-btn-sm" data-o-tooltip="Bottom" data-o-placement="bottom">Bottom</button>
+          <button class="o-btn o-btn-sm" data-o-tooltip="Left" data-o-placement="left">Left</button>
+          <button class="o-btn o-btn-sm" data-o-tooltip="Right" data-o-placement="right">Right</button>
+          <button class="o-btn o-btn-sm" data-o-tooltip="Start-aligned" data-o-placement="top-start">Top start</button>
+          <button class="o-btn o-btn-sm" data-o-tooltip="End-aligned" data-o-placement="top-end">Top end</button>
+        </div>
+        <p style="margin-top:1rem">Truncated file name: <span class="demo-truncate" data-o-tooltip="auto">Q3-financial-summary-final-v3.xlsx</span> vs. short one: <span class="demo-truncate" data-o-tooltip="auto">notes.txt</span> (no tooltip — not truncated).</p>
+      </template>
+    </div>
+  </section>
+
+  <section id="tooltip-api">
+    <h2>Orion.tooltip(el, text | options)</h2>
+    <p>Programmatic tooltips: <code>trigger: 'click'</code> toggles on click and closes on outside press/Escape; <code>'manual'</code> is controlled only through the handle.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn" id="demo-tip-click">Click trigger</button>
+        <button class="o-btn" id="demo-tip-manual">Manual trigger</button>
+        <script>
+          Orion.tooltip('#demo-tip-click', { content: 'Toggled by click, closes on outside press.', trigger: 'click', placement: 'bottom' });
+          const manual = Orion.tooltip('#demo-tip-manual', { content: 'Shown only through the handle.', trigger: 'manual' });
+          document.getElementById('demo-tip-manual').addEventListener('click', () => manual.show());
+          document.addEventListener('keydown', e => { if (e.key === 'Escape') manual.hide(); });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="popover-basic">
+    <h2>Popover — attributes</h2>
+    <p><code>data-o-popover="text"</code> for plain content, or <code>#id</code> of a <code>&lt;template&gt;</code> (cloned) / element (moved) for richer content. Default trigger is <code>click</code>.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn" data-o-popover="Invited members can access every project in this workspace." data-o-popover-title="About invitations">Info popover</button>
+        <button class="o-btn" data-o-popover="#demo-share-tpl" data-o-placement="bottom-start" data-o-popover-close>Share link</button>
+        <template id="demo-share-tpl">
+          <div class="o-field" style="margin-bottom:.5rem">
+            <label class="o-label" for="demo-share-input">Shareable link</label>
+            <input class="o-input" id="demo-share-input" value="https://app.example.com/s/8fQ2m" readonly onclick="this.select()">
+          </div>
+          <button class="o-btn o-btn-primary o-btn-sm o-btn-block" data-o-dismiss="popover">Done</button>
+        </template>
+        <button class="o-btn o-btn-ghost" data-o-popover="Appears after a short hover delay." data-o-trigger="hover" data-o-popover-title="Hover trigger">Hover me</button>
+      </template>
+    </div>
+  </section>
+
+  <section id="popover-form">
+    <h2>Popover with a form</h2>
+    <p>Opening moves focus into the panel; <code>Tab</code> past the last field closes it and continues to the next page element (<code>Shift+Tab</code> from the first field returns to the trigger).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-primary" id="demo-filter-btn"><o-icon name="filter"></o-icon> Filters</button>
+        <o-popover for="demo-filter-btn" heading="Filter results" placement="bottom-start" close-button width="18rem">
+          <div class="o-field">
+            <label class="o-label" for="demo-filter-status">Status</label>
+            <select class="o-select" id="demo-filter-status">
+              <option>Any</option><option>Active</option><option>Pending</option><option>Archived</option>
+            </select>
+          </div>
+          <div class="o-field" style="margin-top:.625rem">
+            <label class="o-check"><input type="checkbox" checked> <span>Only mine</span></label>
+          </div>
+          <button class="o-btn o-btn-primary o-btn-sm o-btn-block" style="margin-top:.75rem" data-o-dismiss="popover">Apply</button>
+        </o-popover>
+        <button class="o-btn" id="demo-next-field" style="margin-inline-start:.5rem">Next field</button>
+      </template>
+    </div>
+  </section>
+
+  <section id="popover-events">
+    <h2>Orion.popover() &amp; events</h2>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn" id="demo-pop-api">Open programmatically</button>
+        <div class="docs-log" id="demo-pop-log" style="width:100%"></div>
+        <script>
+          const pop = Orion.popover('#demo-pop-api', {
+            title: 'Programmatic popover', closeButton: true, placement: 'bottom',
+            content: '<p class="o-mb-0">Built entirely from <code>Orion.popover()</code> options.</p>',
+            onOpen: () => docs.log('#demo-pop-log', 'opened'),
+            onClose: reason => docs.log('#demo-pop-log', 'closed: ' + reason),
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Tooltip attributes</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>data-o-tooltip="text"</td><td>Tooltip text. <code>"auto"</code> shows the element's full text only when it is truncated.</td></tr>
+        <tr><td>data-o-tooltip-html="…"</td><td>Rich content, sanitized (wins over <code>data-o-tooltip</code>).</td></tr>
+        <tr><td>data-o-placement</td><td>top (default) ｜ bottom ｜ left ｜ right ｜ start ｜ end, optionally <code>-start</code>/<code>-end</code>. Flips when there is no room.</td></tr>
+        <tr><td>data-o-tooltip-delay</td><td>Show delay in ms for hover (default 300; 0 right after another tooltip closed).</td></tr>
+      </tbody>
+    </table>
+    <h3>Orion.tooltip(el, text | options) → { show, hide, update, destroy }</h3>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>content</td><td>string｜Node｜SafeHTML｜(el) => string</td><td>—</td><td>Text (escaped) unless a trusted <code>SafeHTML</code>/Node is given.</td></tr>
+        <tr><td>html</td><td>boolean</td><td>false</td><td>Treat a string <code>content</code> as HTML (sanitized).</td></tr>
+        <tr><td>placement</td><td>string</td><td>top</td><td>As <code>data-o-placement</code>.</td></tr>
+        <tr><td>trigger</td><td>hover｜focus｜click｜manual</td><td>hover</td><td><code>hover</code> = hover + keyboard focus; <code>click</code> toggles and closes on outside press/Escape; <code>manual</code> = only through the handle.</td></tr>
+        <tr><td>delay</td><td>number</td><td>300</td><td>Hover show delay (ms).</td></tr>
+      </tbody>
+    </table>
+    <p>Icon-only elements without an accessible name get <code>aria-label</code> set to the tooltip text automatically. Z-index <code>Z.tooltip</code> (1300).</p>
+    <h3>Popover — element &lt;o-popover&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute / property</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>for</td><td>string</td><td>—</td><td>Id of the trigger element.</td></tr>
+        <tr><td>placement</td><td>string</td><td>bottom</td><td>Same values as the tooltip.</td></tr>
+        <tr><td>trigger</td><td>click｜hover｜focus｜manual</td><td>click</td><td>Opening interaction.</td></tr>
+        <tr><td>heading</td><td>string</td><td>—</td><td>Title.</td></tr>
+        <tr><td>close-button / closeButton</td><td>boolean</td><td>false</td><td>Close button in the header.</td></tr>
+        <tr><td>width</td><td>string</td><td>—</td><td>CSS width of the panel (e.g. <code>20rem</code>).</td></tr>
+        <tr><td>open (attr) / isOpen (prop)</td><td>boolean</td><td>false</td><td>State (reflected); <code>el.open = true</code> works for frameworks.</td></tr>
+      </tbody>
+    </table>
+    <p>Children are the interactive content, moved into the portaled panel. Methods: <code>open()</code>, <code>close()</code>, <code>toggle()</code>, <code>reposition()</code>. Events: <code>o-open</code>, <code>o-close</code> <code>{ reason }</code>.</p>
+    <h3>Popover attributes (delegated triggers)</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>data-o-popover="text ｜ #id"</td><td>Text (escaped), or <code>#id</code> of a <code>&lt;template&gt;</code> (cloned once) or an element (moved into the popover).</td></tr>
+        <tr><td>data-o-popover-title</td><td>Title.</td></tr>
+        <tr><td>data-o-trigger</td><td>click (default) ｜ hover ｜ focus.</td></tr>
+        <tr><td>data-o-placement</td><td>Same values as the tooltip.</td></tr>
+        <tr><td>data-o-popover-close</td><td>Show a close button.</td></tr>
+        <tr><td>data-o-dismiss="popover"</td><td>On an element inside a popover: closes it.</td></tr>
+      </tbody>
+    </table>
+    <h3>Orion.popover(trigger, options) → { open, close, toggle, update, destroy, el }</h3>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>content</td><td>string (trusted HTML)｜Node｜SafeHTML｜() => Node｜string</td><td>—</td><td>Body. Escape user data with <code>Orion.util.esc</code>.</td></tr>
+        <tr><td>title</td><td>string</td><td>—</td><td>Header title.</td></tr>
+        <tr><td>placement</td><td>string</td><td>bottom</td><td></td></tr>
+        <tr><td>trigger</td><td>click｜hover｜focus｜manual</td><td>click</td><td></td></tr>
+        <tr><td>closeButton</td><td>boolean</td><td>false</td><td>Close button.</td></tr>
+        <tr><td>width</td><td>string｜number</td><td>auto (max 22rem)</td><td>Panel width (numbers are px).</td></tr>
+        <tr><td>className</td><td>string</td><td>—</td><td>Extra class on the panel.</td></tr>
+        <tr><td>onOpen(handle), onClose(reason)</td><td>function</td><td>—</td><td>Callbacks.</td></tr>
+      </tbody>
+    </table>
+    <p><code>update(options | content)</code> re-renders and repositions. <code>destroy()</code> closes, removes listeners and the panel. Events <code>o-open</code>/<code>o-close</code> are also dispatched on the trigger.</p>
+    <h3>Keyboard</h3>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Component</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Tab focus</td><td>Tooltip</td><td>Shows it immediately (no delay).</td></tr>
+        <tr><td>Escape</td><td>Both</td><td>Hides / closes and returns focus to the trigger (popover).</td></tr>
+        <tr><td>Long-press (touch)</td><td>Tooltip</td><td>Shows it; hides 1.5s after release.</td></tr>
+        <tr><td>Enter / Space on the trigger</td><td>Popover</td><td>Toggle (click popovers); focus moves to the first field.</td></tr>
+        <tr><td>Tab past the last field</td><td>Popover</td><td>Closes and continues to the element after the trigger.</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS variables</h3>
+    <p>Tooltip: <code>--o-tooltip-bg</code>, <code>--o-tooltip-fg</code>, <code>--o-tooltip-max-w</code> (inverse colors — dark on light, light on dark). Popover: <code>--o-popover-max-w</code> (22rem), built on <code>.o-floating</code>.</p>
+  </section>
+</main>
+</body>
+</html>

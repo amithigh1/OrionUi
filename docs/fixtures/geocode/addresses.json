@@ -1,0 +1,8 @@
+[
+  { "label": "Orion HQ, 1 Raffles Place, Singapore 048616", "lat": 1.2840, "lng": 103.8512, "street": "Raffles Place", "houseNumber": "1", "postcode": "048616", "city": "Singapore", "state": "", "country": "Singapore", "countryCode": "SG" },
+  { "label": "Orion Support Centre, Menara Orion, Jalan Ampang, 50450 Kuala Lumpur, Malaysia", "lat": 3.1600, "lng": 101.7186, "street": "Jalan Ampang", "houseNumber": "22", "postcode": "50450", "city": "Kuala Lumpur", "state": "W.P. Kuala Lumpur", "country": "Malaysia", "countryCode": "MY" },
+  { "label": "Orion Warehouse, Persiaran Kip 2, Kepong Industrial Park, 52200 Kuala Lumpur, Malaysia", "lat": 3.2110, "lng": 101.6360, "street": "Persiaran Kip 2", "houseNumber": "", "postcode": "52200", "city": "Kuala Lumpur", "state": "W.P. Kuala Lumpur", "country": "Malaysia", "countryCode": "MY" },
+  { "label": "Orion Studio, 71 Ayer Rajah Crescent, Singapore 139951", "lat": 1.3057, "lng": 103.7885, "street": "Ayer Rajah Crescent", "houseNumber": "71", "postcode": "139951", "city": "Singapore", "state": "", "country": "Singapore", "countryCode": "SG" },
+  { "label": "Orion Training Centre, Jalan Sultan Ismail, 50250 Kuala Lumpur, Malaysia", "lat": 3.1516, "lng": 101.7093, "street": "Jalan Sultan Ismail", "houseNumber": "", "postcode": "50250", "city": "Kuala Lumpur", "state": "W.P. Kuala Lumpur", "country": "Malaysia", "countryCode": "MY" },
+  { "label": "Orion Data Centre, Woodlands Avenue 5, Singapore 738322", "lat": 1.4382, "lng": 103.7891, "street": "Woodlands Avenue 5", "houseNumber": "", "postcode": "738322", "city": "Singapore", "state": "", "country": "Singapore", "countryCode": "SG" }
+]

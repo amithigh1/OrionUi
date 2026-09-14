@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1067" width="1600" height="1067">
+  <title>Ocean sunset</title>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#172554"/><stop offset=".35" stop-color="#9d174d"/>
+      <stop offset=".62" stop-color="#f97316"/><stop offset=".7" stop-color="#fde68a"/>
+    </linearGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7c2d12"/><stop offset=".25" stop-color="#1e3a8a"/><stop offset="1" stop-color="#0b1026"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="800" cy="700" r="340" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fffbeb"/><stop offset=".2" stop-color="#fcd34d"/><stop offset=".5" stop-color="#f97316" stop-opacity=".45"/><stop offset="1" stop-color="#f97316" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ref" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#fde68a" stop-opacity="0"/></linearGradient>
+    <clipPath id="above"><rect width="1600" height="720"/></clipPath>
+  </defs>
+  <rect width="1600" height="1067" fill="url(#sky)"/>
+  <circle cx="800" cy="700" r="340" fill="url(#sun)"/>
+  <circle cx="800" cy="700" r="120" fill="#fef3c7" clip-path="url(#above)"/>
+  <g fill="#fb7185" opacity=".55">
+    <ellipse cx="300" cy="300" rx="260" ry="26"/><ellipse cx="420" cy="340" rx="180" ry="18"/>
+    <ellipse cx="1200" cy="250" rx="300" ry="30"/><ellipse cx="1330" cy="300" rx="170" ry="16"/>
+    <ellipse cx="900" cy="420" rx="220" ry="14" fill="#fdba74"/><ellipse cx="560" cy="470" rx="160" ry="12" fill="#fdba74"/>
+  </g>
+  <rect y="720" width="1600" height="347" fill="url(#sea)"/>
+  <g fill="url(#ref)">
+    <rect x="690" y="728" width="220" height="7" rx="3.5"/><rect x="650" y="748" width="300" height="6" rx="3"/>
+    <rect x="705" y="770" width="190" height="6" rx="3"/><rect x="620" y="795" width="360" height="5" rx="2.5"/>
+    <rect x="720" y="822" width="160" height="5" rx="2.5"/><rect x="600" y="852" width="400" height="4" rx="2"/>
+    <rect x="740" y="886" width="120" height="4" rx="2"/><rect x="660" y="924" width="280" height="3" rx="1.5"/>
+  </g>
+  <g stroke="#93c5fd" stroke-opacity=".25" stroke-width="3" stroke-linecap="round">
+    <path d="M60 800 h140 M300 840 h90 M1250 790 h160 M1100 860 h110 M120 930 h200 M1300 960 h180 M420 1000 h120 M980 1010 h160"/>
+  </g>
+  <path d="M1180 722 l40 -18 h60 l30 18z" fill="#1c1917"/><path d="M1238 704 v-70 l34 62z" fill="#1c1917"/>
+  <g fill="none" stroke="#1c1917" stroke-width="4" stroke-linecap="round" opacity=".7"><path d="M380 520 q12 -10 24 0 q12 -10 24 0"/><path d="M450 560 q9 -8 18 0 q9 -8 18 0"/></g>
+</svg>

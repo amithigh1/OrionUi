@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scanner — Orion Admin</title>
+<meta name="docs:section" content="Devices &amp; Capture">
+<meta name="docs:order" content="62">
+<meta name="docs:desc" content="Camera QR/barcode scanning (BarcodeDetector + a pure-JS decoder), plus file/drop and no-camera fixture scanning">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Scanner</h1>
+    <p class="docs-lead"><code>&lt;o-scanner&gt;</code> reads QR codes and 1D barcodes from a live camera — using the
+      browser's native <code>BarcodeDetector</code> where available, and a from-scratch pure-JS decoder everywhere
+      else — or from an uploaded/dropped image, with no camera at all. Every match fires an <code>o-scan</code> event
+      with the decoded text, format and detection points.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic</h2>
+    <p>Call <code>start()</code> to request the camera (a user gesture is required by most browsers). Point it at
+      any code from the <a href="qr-code.html">QR</a> or <a href="barcode.html">barcode</a> pages — or on a device
+      without a camera, use the upload button in the toolbar.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-stack" style="align-items:center;--o-gap:.75rem;max-width:26rem">
+          <o-scanner id="basic-scanner" beep vibrate></o-scanner>
+          <div class="o-cluster">
+            <button class="o-btn o-btn-primary o-btn-sm" id="basic-start">start()</button>
+            <button class="o-btn o-btn-ghost o-btn-sm" id="basic-stop">stop()</button>
+          </div>
+          <div class="docs-log" id="basic-log"></div>
+        </div>
+        <script>
+          const basicScanner = document.getElementById('basic-scanner');
+          document.getElementById('basic-start').onclick = () => basicScanner.start();
+          document.getElementById('basic-stop').onclick = () => basicScanner.stop();
+          basicScanner.addEventListener('o-scan', e => docs.log('#basic-log', `o-scan → ${e.detail.format}: "${e.detail.text}"`));
+          basicScanner.addEventListener('o-error', e => docs.log('#basic-log', `o-error → ${e.detail.error.message}`));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="states">
+    <h2>States</h2>
+    <p>The host reflects its state as <code>data-state</code>: <code>idle</code> (not started, or stopped) →
+      <code>starting</code> (camera permission requested) → <code>scanning</code> (frames are being analysed) →
+      <code>result</code> (a code was just found — a brief green-outline flash, then back to <code>scanning</code>, or
+      to <code>idle</code> in single-shot mode). If the camera cannot be used, the state is <code>unsupported</code>
+      (no <code>getUserMedia</code>, or an insecure — non-HTTPS/localhost — context) or <code>denied</code> (the user
+      declined the permission prompt); the status bar shows a plain-language reason either way. The eval tests for
+      this page mock <code>navigator.mediaDevices.getUserMedia</code> to exercise all of these without real hardware
+      — see <code>tests/evals/codes-scanner.js</code>.</p>
+  </section>
+
+  <section id="file">
+    <h2>Scanning a file, without a camera</h2>
+    <p>The upload button in the toolbar (and dropping a file onto the stage) calls <code>decodeFile(file)</code>,
+      which never touches the camera. It accepts a <code>File</code>, <code>Blob</code>, <code>&lt;img&gt;</code> or
+      <code>ImageData</code> — the same source types <code>Orion.scanner.decodeImage()</code> accepts. Try dropping
+      one of the fixture images below onto the scanner, or use its own upload button.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-stack" style="align-items:center;--o-gap:.75rem;max-width:26rem">
+          <o-scanner id="file-scanner"></o-scanner>
+          <p class="o-muted o-fs-sm">Fixtures (drag one onto the scanner above):</p>
+          <div class="o-cluster">
+            <img src="../fixtures/codes/qr-wifi.svg" width="64" height="64" draggable="true" alt="Wi-Fi QR fixture" style="border:1px solid var(--o-border);border-radius:var(--o-radius-sm)">
+            <img src="../fixtures/codes/barcode-ean13.svg" width="96" height="40" draggable="true" alt="EAN-13 fixture" style="border:1px solid var(--o-border);border-radius:var(--o-radius-sm);background:#fff">
+            <img src="../fixtures/codes/barcode-code39.svg" width="96" height="40" draggable="true" alt="Code 39 fixture" style="border:1px solid var(--o-border);border-radius:var(--o-radius-sm);background:#fff">
+          </div>
+          <div class="docs-log" id="file-log"></div>
+        </div>
+        <script>
+          const fileScanner = document.getElementById('file-scanner');
+          fileScanner.addEventListener('o-scan', e => docs.log('#file-log', `o-scan → ${e.detail.format}: "${e.detail.text}"`));
+          fileScanner.addEventListener('o-error', e => docs.log('#file-log', `o-error → ${e.detail.error.message}`));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="source">
+    <h2>No camera at all: the <code>source</code> property</h2>
+    <p>For automated tests (and this exact demo — the page you're reading may not have a camera either) set
+      <code>source</code> to a <code>MediaStream</code>-like object (anything with <code>getTracks()</code> — a real
+      camera stream, or a fixture stream from <code>canvas.captureStream()</code>) or directly to a live
+      <code>&lt;video&gt;</code>/<code>&lt;canvas&gt;</code>/<code>ImageBitmap</code>. <code>start()</code> then pulls
+      frames from it instead of calling <code>getUserMedia</code> — everything else (continuous scanning, the result
+      flash, torch/switch-camera staying hidden since there is no real device) behaves the same. This demo feeds in
+      a plain <code>&lt;canvas&gt;</code> (redrawn with a fresh QR code every couple of seconds) directly as
+      <code>source</code> — a <code>MediaStream</code> from <code>canvas.captureStream()</code> works the same way,
+      one step removed.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-stack" style="align-items:center;--o-gap:.75rem;max-width:26rem">
+          <o-scanner id="src-scanner" continuous></o-scanner>
+          <div class="docs-log" id="src-log"></div>
+        </div>
+        <script>
+          const srcCanvas = document.createElement('canvas');
+          srcCanvas.width = 320; srcCanvas.height = 320;
+          const srcCtx = srcCanvas.getContext('2d');
+          let srcN = 0;
+          function paintFixtureFrame() {
+            srcCtx.fillStyle = '#fff'; srcCtx.fillRect(0, 0, 320, 320);
+            const qr = Orion.qr.canvas('No-camera fixture frame #' + (srcN++), { size: 300, margin: 2, ecc: 'Q' });
+            srcCtx.drawImage(qr, 10, 10);
+          }
+          paintFixtureFrame();
+          const srcScanner = document.getElementById('src-scanner');
+          srcScanner.addEventListener('o-scan', e => { docs.log('#src-log', `o-scan → "${e.detail.text}"`); setTimeout(paintFixtureFrame, 1200); });
+          srcScanner.addEventListener('o-error', e => docs.log('#src-log', `o-error → ${e.detail.error.message}`));
+          // Deferred a tick: this <script> runs as part of the SAME template-insertion call that connects
+          // <o-scanner> above, so its one-time setup() has not run yet at this exact line (a general timing
+          // trap for any docs demo that calls a method — as opposed to setting a property — on an element
+          // from its own inline <script>; see the final report for this package).
+          setTimeout(() => {
+            srcScanner.source = srcCanvas;
+            srcScanner.start();
+          }, 0);
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="modes">
+    <h2>Continuous vs. single-shot</h2>
+    <p>By default <code>&lt;o-scanner&gt;</code> stops itself after the first match (single-shot — typical for a
+      "scan one item" flow). Add <code>continuous</code> to keep scanning after each hit (a 2.5s cooldown per
+      exact text+format avoids re-firing on the same code every frame); <code>formats</code> narrows detection to
+      specific symbologies for both speed and to avoid cross-format false reads.</p>
+    <pre class="docs-code-block" data-lang="html">
+&lt;o-scanner&gt;&lt;/o-scanner&gt;                              &lt;!-- single-shot, any format --&gt;
+&lt;o-scanner continuous&gt;&lt;/o-scanner&gt;                   &lt;!-- keeps scanning --&gt;
+&lt;o-scanner formats="qr_code"&gt;&lt;/o-scanner&gt;              &lt;!-- QR only --&gt;
+&lt;o-scanner formats="ean13,upca,code128"&gt;&lt;/o-scanner&gt;   &lt;!-- retail barcodes only --&gt;
+</pre>
+  </section>
+
+  <section id="hardware">
+    <h2>Torch, zoom &amp; camera switch</h2>
+    <p><code>torch</code> reflects the flashlight state once a track reports <code>{ torch: true }</code> in its
+      capabilities (most laptop/desktop webcams do not — the button stays hidden). When more than one camera is
+      available, a switch button cycles through them; add <code>camera-select</code> to show a dropdown of named
+      devices instead of cycling.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-scanner camera-select></o-scanner>
+      </template>
+    </div>
+  </section>
+
+  <section id="modal">
+    <h2><code>Orion.scanner.open()</code></h2>
+    <p>A one-line modal picker: opens <code>&lt;o-scanner&gt;</code> in a floating dialog and resolves with the
+      first result (or <code>null</code> if closed without a match).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-primary" id="open-btn">Scan a code…</button>
+        <div class="docs-log" id="open-log"></div>
+        <script>
+          document.getElementById('open-btn').addEventListener('click', async () => {
+            const result = await Orion.scanner.open({ formats: ['qr_code'], title: 'Scan a QR code' });
+            docs.log('#open-log', result ? `${result.format}: "${result.text}"` : 'cancelled');
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="js">
+    <h2>JavaScript API</h2>
+    <pre class="docs-code-block" data-lang="js">
+Orion.scanner.decodeImage(source, { formats }) -&gt; Promise&lt;[{ text, format, points }]&gt;
+  // source: File | Blob | HTMLImageElement | HTMLVideoElement | HTMLCanvasElement | ImageData | ImageBitmap
+Orion.scanner.open({ formats, title }) -&gt; Promise&lt;{ text, format, points } | null&gt;
+Orion.scanner.formats  // -&gt; the full supported-format list
+</pre>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>formats</td><td><code>array</code> (JSON or comma list)</td><td>Symbologies to detect; default is every format below. Values: <code>qr_code ean13 ean8 upca code128 code128a code128b code128c code39 itf itf14 codabar</code>.</td></tr>
+        <tr><td>continuous</td><td><code>boolean</code></td><td>Keep scanning after a match instead of stopping (reflected).</td></tr>
+        <tr><td>beep / vibrate</td><td><code>boolean</code></td><td>Feedback on a match (WebAudio beep / <code>navigator.vibrate</code>).</td></tr>
+        <tr><td>torch</td><td><code>boolean</code></td><td>Current flashlight state (reflected); the button is hidden when unsupported.</td></tr>
+        <tr><td>camera-select</td><td><code>boolean</code></td><td>Show a device <code>&lt;select&gt;</code> instead of a cycle button when there are 2+ cameras.</td></tr>
+        <tr><td>region</td><td><code>boolean</code></td><td>Show the corner-bracket scan frame overlay (default on).</td></tr>
+        <tr><td>source</td><td>property only</td><td>A <code>MediaStream</code>-like (<code>getTracks()</code>) or a <code>&lt;video&gt;</code>/<code>&lt;canvas&gt;</code>/<code>ImageBitmap</code> to pull frames from instead of the camera — see <a href="#source">above</a>.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-scan</td><td><code>{ text, format, points }</code></td><td>A code was decoded (camera, <code>source</code> or file). <code>points</code> is an array of <code>[x, y]</code> corners in source-pixel space.</td></tr>
+        <tr><td>o-start</td><td><code>{}</code></td><td>The camera/source started and the scan loop is running.</td></tr>
+        <tr><td>o-error</td><td><code>{ error }</code></td><td>Permission denied, no camera, insecure context, a bad <code>source</code>, or a file with no recognizable code.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>start() / stop()</td><td>Start (camera or <code>source</code>) / stop scanning and release the camera.</td></tr>
+        <tr><td>switchCamera()</td><td>Next camera, or flips <code>facingMode</code> user/environment on a single-camera device.</td></tr>
+        <tr><td>toggleTorch()</td><td>Toggles the flashlight when the active track supports it.</td></tr>
+        <tr><td>decodeFile(file)</td><td>Decode a still <code>File</code>/<code>Blob</code>/image without the camera; fires <code>o-scan</code>/<code>o-error</code> the same as a live match.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Tab</td><td>Moves through the toolbar controls (switch camera / device select / torch / upload) in DOM order — each is a plain, independently-focusable button or select.</td></tr>
+        <tr><td>Enter / Space</td><td>Activates the focused button (native <code>&lt;button&gt;</code> behaviour).</td></tr>
+        <tr><td>↑ / ↓ (device select)</td><td>Change the selected camera (native <code>&lt;select&gt;</code> behaviour); fires a restart.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="a11y">
+    <h2>Accessibility</h2>
+    <p>The status text is an <code>aria-live="polite"</code> region, so state changes ("Starting camera…", "Camera
+      access is required to scan.") are announced without moving focus. Every toolbar control has an
+      <code>aria-label</code> (icon-only buttons: switch camera, toggle flashlight, upload an image). The live
+      <code>&lt;video&gt;</code> is <code>aria-hidden</code> — it is a visual aid, not content; the result itself is
+      only ever delivered through the <code>o-scan</code> event.</p>
+  </section>
+
+  <section id="limitations">
+    <h2>Limitations</h2>
+    <ul>
+      <li>The pure-JS QR decoder fits a single global homography from the 3 finder patterns plus the nearest
+        alignment pattern; very high versions (~30+) at low pixel density (well under ~5px/module) can occasionally
+        fail where a piecewise/per-alignment-pattern decoder would still succeed. Prefer the native
+        <code>BarcodeDetector</code> (used automatically when the browser supports it) or a higher-resolution
+        capture for those.</li>
+      <li>1D decoding samples 20 evenly-spaced horizontal scanlines (both directions); a barcode tilted more than a
+        few degrees from horizontal, or scanned so close only a few bars are visible, may need reframing.</li>
+      <li><code>toggleTorch()</code>/zoom controls depend entirely on what the active camera's
+        <code>MediaStreamTrack</code> reports — most laptop webcams support neither.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

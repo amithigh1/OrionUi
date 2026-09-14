@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Camera — Orion Admin</title>
+<meta name="docs:section" content="Devices &amp; Capture">
+<meta name="docs:order" content="64">
+<meta name="docs:desc" content="Live webcam capture: photo, face-guided selfie and document modes, countdown, mirror and device switch">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Camera</h1>
+    <p class="docs-lead"><code>&lt;o-camera&gt;</code> is a live webcam capture element with three modes: a plain
+      photo booth, a face-guided selfie mode with auto-capture, and a document mode that delegates to
+      <a href="document-scanner.html"><code>&lt;o-doc-scanner&gt;</code></a>. Every mode shares the same countdown,
+      mirror, grid, review (retake/use) and permission-state handling.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic (photo)</h2>
+    <p>Call <code>start()</code> (or leave <code>auto-start</code>, the default, to call it automatically) to
+      request the camera — a permission prompt is required by every browser. Press the shutter, then Retake or Use
+      photo on the review screen.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-stack" style="align-items:center;--o-gap:.75rem;max-width:26rem">
+          <o-camera id="basic-cam" countdown="3" grid></o-camera>
+          <div class="docs-log" id="basic-log"></div>
+        </div>
+        <script>
+          document.getElementById('basic-cam').addEventListener('o-capture', e => docs.log('#basic-log', `o-capture → ${e.detail.file.name} (${e.detail.file.size} bytes)`));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="modes">
+    <h2>Modes</h2>
+    <p><code>mode="face"</code> overlays an oval guide and auto-captures once a face (via the Shape Detection
+      <code>FaceDetector</code> API where supported, otherwise a brightness/steadiness heuristic) is centered,
+      appropriately sized and held still. <code>mode="document"</code> hides the photo stage entirely and mounts an
+      internal <code>&lt;o-doc-scanner&gt;</code>, whose <code>o-scan</code> event bubbles up through it.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-camera mode="face" auto-start="false"></o-camera>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="html">
+&lt;o-camera mode="photo"&gt;&lt;/o-camera&gt;      &lt;!-- default --&gt;
+&lt;o-camera mode="face"&gt;&lt;/o-camera&gt;       &lt;!-- oval guide, auto-capture --&gt;
+&lt;o-camera mode="document"&gt;&lt;/o-camera&gt;   &lt;!-- delegates to &lt;o-doc-scanner&gt; --&gt;
+</pre>
+  </section>
+
+  <section id="options">
+    <h2>Countdown, mirror, grid &amp; aspect</h2>
+    <p><code>countdown</code> (seconds) announces and displays a large on-screen count before the shutter fires.
+      <code>mirror</code> (default on) flips the front camera's preview and capture horizontally — most people
+      expect to see themselves as in a mirror. <code>grid</code> overlays a rule-of-thirds grid. <code>aspect</code>
+      (e.g. <code>"1/1"</code>) crops the captured frame to a fixed ratio regardless of the camera's native ratio.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-camera aspect="1/1" countdown="0" auto-start="false" review="false"></o-camera>
+      </template>
+    </div>
+  </section>
+
+  <section id="hardware">
+    <h2>Device switch, torch &amp; zoom</h2>
+    <p>A device <code>&lt;select&gt;</code> and switch button appear once <code>enumerateDevices()</code> reports 2+
+      cameras (labels only populate after a permission grant, a browser privacy rule). <code>torch-toggle</code> and
+      <code>zoom-control</code> (both default on) show their buttons only once the active
+      <code>MediaStreamTrack</code>'s capabilities report support — most laptop webcams support neither.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-camera auto-start="false" device-id=""></o-camera>
+      </template>
+    </div>
+  </section>
+
+  <section id="source">
+    <h2>No camera at all: the <code>source</code> property</h2>
+    <p>Set <code>source</code> to a <code>MediaStream</code>-like object (a real stream, or a fixture from
+      <code>canvas.captureStream()</code>) or directly to a <code>&lt;video&gt;</code>/<code>&lt;canvas&gt;</code>/
+      <code>ImageBitmap</code>/<code>ImageData</code>/image URL, and <code>start()</code> pulls frames from it
+      instead of calling <code>getUserMedia</code> — mirror, grid, countdown and <code>capture()</code>/review all
+      behave exactly the same. This demo feeds in a plain <code>&lt;canvas&gt;</code> redrawn every second.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-stack" style="align-items:center;--o-gap:.75rem;max-width:26rem">
+          <o-camera id="src-cam" review="false" mirror="false"></o-camera>
+          <div class="docs-log" id="src-log"></div>
+        </div>
+        <script>
+          const srcCanvas = document.createElement('canvas');
+          srcCanvas.width = 320; srcCanvas.height = 240;
+          const srcCtx = srcCanvas.getContext('2d');
+          let srcHue = 0;
+          function paintFixtureFrame() {
+            srcHue = (srcHue + 24) % 360;
+            srcCtx.fillStyle = `hsl(${srcHue}, 70%, 55%)`;
+            srcCtx.fillRect(0, 0, 320, 240);
+            srcCtx.fillStyle = '#fff'; srcCtx.font = '20px sans-serif'; srcCtx.textAlign = 'center';
+            srcCtx.fillText('fixture frame', 160, 124);
+          }
+          paintFixtureFrame();
+          const srcInterval = setInterval(paintFixtureFrame, 1000);
+          const srcCam = document.getElementById('src-cam');
+          srcCam.addEventListener('o-capture', e => docs.log('#src-log', `o-capture → ${e.detail.file.name} (${e.detail.file.size} bytes)`));
+          // Deferred a tick: this <script> runs before <o-camera>'s own setup() during the same template
+          // insertion (see docs/components/scanner.html#source for the general timing note).
+          setTimeout(() => { srcCam.source = srcCanvas; srcCam.start(); }, 0);
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="js">
+    <h2>JavaScript API</h2>
+    <p><code>Orion.camera.capture()</code> opens a modal with a live camera and resolves with the captured
+      <code>File</code> (or <code>null</code> if cancelled) — a one-line way to grab a photo without hand-rolling a
+      dialog.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-primary" id="modal-btn">Orion.camera.capture()</button>
+        <div class="docs-log" id="modal-log"></div>
+        <script>
+          document.getElementById('modal-btn').addEventListener('click', async () => {
+            const file = await Orion.camera.capture({ mode: 'photo', countdown: 3 });
+            docs.log('#modal-log', file ? `${file.name} (${file.size} bytes)` : 'cancelled');
+          });
+        </script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+Orion.camera.capture({ facing, mode, countdown, aspect, format, quality, title, size }) -&gt; Promise&lt;File | null&gt;
+Orion.camera.devices() -&gt; Promise&lt;{ deviceId, label }[]&gt;
+Orion.camera.supported() -&gt; boolean
+</pre>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>facing</td><td><code>"user" | "environment"</code></td><td>Default <code>"user"</code>; reflected.</td></tr>
+        <tr><td>resolution</td><td>string</td><td><code>"1280x720"</code>, or a preset: <code>sd hd fhd 4k</code>.</td></tr>
+        <tr><td>mirror</td><td>boolean</td><td>Flip the front camera's preview/capture horizontally. Default on.</td></tr>
+        <tr><td>aspect</td><td>string</td><td>Crop captures to a ratio, e.g. <code>"4/3"</code>.</td></tr>
+        <tr><td>format / quality</td><td>string / number</td><td>Capture image type (default <code>image/jpeg</code>) and quality (default <code>0.92</code>).</td></tr>
+        <tr><td>countdown</td><td>number</td><td>Seconds counted down before each shutter fire. Default <code>0</code>.</td></tr>
+        <tr><td>grid</td><td>boolean</td><td>Rule-of-thirds overlay (photo/face modes).</td></tr>
+        <tr><td>torch-toggle / zoom-control</td><td>boolean</td><td>Show the hardware button/slider when the active track supports it. Both default on.</td></tr>
+        <tr><td>mode</td><td><code>"photo" | "face" | "document"</code></td><td>Default <code>"photo"</code>; reflected.</td></tr>
+        <tr><td>device-id</td><td>string</td><td>Pin a specific camera (from <code>Orion.camera.devices()</code>).</td></tr>
+        <tr><td>auto-start</td><td>boolean</td><td>Start automatically on connect. Default on.</td></tr>
+        <tr><td>review</td><td>boolean</td><td>Show the retake/use-photo screen after a capture. Default on.</td></tr>
+        <tr><td>source</td><td>property only</td><td>Test/fixture path — see <a href="#source">above</a>.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-ready</td><td><code>{ stream }</code></td><td>The camera/source started and the preview is live.</td></tr>
+        <tr><td>o-capture</td><td><code>{ file, blob, dataURL }</code></td><td>A photo was captured (and confirmed, if <code>review</code> is on).</td></tr>
+        <tr><td>o-error</td><td><code>{ reason, message }</code></td><td><code>denied</code>, <code>nodevice</code>, <code>insecure</code>, <code>unsupported</code> or <code>hardware</code>.</td></tr>
+        <tr><td>o-state</td><td><code>{ state }</code></td><td>Fires on every internal state change (<code>idle starting live review</code> + the error states).</td></tr>
+        <tr><td>o-scan</td><td><code>{ page, pages, index }</code></td><td>Document mode only — bubbles up naturally from the internal <code>&lt;o-doc-scanner&gt;</code> (a light-DOM child, no re-dispatch).</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>start() / stop()</td><td>Start (camera or <code>source</code>) / stop the preview and release the camera.</td></tr>
+        <tr><td>capture(opts)</td><td>Capture the current frame; resolves the <code>File</code> once confirmed (or immediately when <code>review</code> is off).</td></tr>
+        <tr><td>switchCamera()</td><td>Next camera in the device list, or flips <code>facing</code> on a single-camera device.</td></tr>
+        <tr><td>retake() / confirmCapture()</td><td>From the review screen: discard and return to live, or confirm the pending capture.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Tab</td><td>Moves through the shutter, device select, switch/torch buttons and zoom slider — plain, independently-focusable native controls.</td></tr>
+        <tr><td>Enter / Space</td><td>Activates the focused button.</td></tr>
+        <tr><td>← / → (zoom slider)</td><td>Adjust zoom (native range-input behaviour) when supported.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="a11y">
+    <h2>Accessibility</h2>
+    <p>The live <code>&lt;video&gt;</code> carries an <code>aria-label</code> and the countdown announces each
+      second via <code>announce()</code>; a successful capture announces "Photo captured". Icon-only buttons
+      (switch camera, torch, retake, use photo) all have <code>aria-label</code>s. Permission/hardware states are
+      shown as readable text with a retry button, not just an icon.</p>
+  </section>
+
+  <section id="limitations">
+    <h2>Limitations</h2>
+    <ul>
+      <li>Camera access requires a secure context (HTTPS or localhost); the <code>insecure</code> state explains
+        this instead of silently failing.</li>
+      <li>Face-mode auto-capture cannot truly confirm "this is a face" without <code>FaceDetector</code> support —
+        the brightness/steadiness fallback just means "a bright, steady, roughly centered frame".</li>
+      <li><code>torch-toggle</code>/<code>zoom-control</code> and device switching depend entirely on what the
+        active <code>MediaStreamTrack</code> reports; a <code>source</code> fixture reports none of these.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

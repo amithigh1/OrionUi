@@ -1,0 +1,22 @@
+{
+  "_comment": "Component sets for build/build.mjs --preset=<name>. 'full' = every component (the default dist/orion.js).",
+  "lite": [
+    "basics", "icons", "frameworks",
+    "modal", "dialogs", "toast", "tooltip", "popover", "dropdown", "contextmenu", "drawer",
+    "layout", "sidebar", "navbar", "breadcrumb", "scroll", "tabs", "accordion",
+    "select", "autocomplete", "datepicker", "timepicker", "daterange",
+    "validation", "mask", "password", "numberinput", "counter", "otp", "tags", "range", "rating", "colorpicker",
+    "pagination", "datatable", "chart", "sparkline", "stat",
+    "upload", "http", "storage", "clipboard", "share", "print", "fullscreen", "shortcuts", "device", "permissions"
+  ],
+  "forms": [
+    "basics", "icons", "validation", "formbuilder", "conditional", "repeater", "stepper", "wizard", "autosave", "captcha", "survey",
+    "select", "autocomplete", "datepicker", "timepicker", "daterange",
+    "mask", "password", "phone", "numberinput", "counter", "otp", "tags", "range", "rating", "colorpicker",
+    "upload", "modal", "dialogs", "toast", "tooltip", "dropdown"
+  ],
+  "data": [
+    "basics", "icons", "pagination", "datatable", "pivot", "csv", "zip", "xlsx", "pdf", "exporter", "importer", "printpreview",
+    "chart", "sparkline", "select", "datepicker", "daterange", "modal", "dialogs", "toast", "tooltip", "dropdown", "contextmenu", "http"
+  ]
+}

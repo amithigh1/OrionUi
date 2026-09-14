@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" width="1200" height="1200">
+  <title>Alpine lake</title>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0ea5e9"/><stop offset=".6" stop-color="#bae6fd"/><stop offset="1" stop-color="#e0f2fe"/></linearGradient>
+    <linearGradient id="m1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#64748b"/><stop offset="1" stop-color="#334155"/></linearGradient>
+    <linearGradient id="m2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#15803d"/><stop offset="1" stop-color="#14532d"/></linearGradient>
+    <linearGradient id="lake" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0369a1"/><stop offset="1" stop-color="#082f49"/></linearGradient>
+    <g id="land">
+      <path d="M0 560 L160 360 L240 420 L380 220 L520 440 L610 360 L760 520 L900 300 L1030 460 L1200 380 V640 H0Z" fill="url(#m1)"/>
+      <path d="M380 220 L430 290 L400 282 L392 310 L360 270 L350 250Z M900 300 L950 370 L922 362 L912 392 L880 350 L870 330Z M160 360 L196 406 L176 400 L170 420 L148 392Z" fill="#f8fafc"/>
+      <path d="M0 640 C120 560 260 580 380 600 S640 540 780 590 S1060 560 1200 600 V640 Z" fill="url(#m2)"/>
+    </g>
+  </defs>
+  <rect width="1200" height="640" fill="url(#sky)"/>
+  <g fill="#fff" opacity=".85"><ellipse cx="260" cy="160" rx="110" ry="26"/><ellipse cx="320" cy="140" rx="70" ry="30"/><ellipse cx="880" cy="120" rx="130" ry="24"/></g>
+  <use href="#land"/>
+  <rect y="640" width="1200" height="560" fill="url(#lake)"/>
+  <g transform="translate(0 1280) scale(1 -1)" opacity=".42"><use href="#land"/></g>
+  <rect y="640" width="1200" height="560" fill="url(#lake)" opacity=".35"/>
+  <g stroke="#e0f2fe" stroke-opacity=".35" stroke-width="3" stroke-linecap="round"><path d="M100 700 h160 M420 730 h120 M760 700 h220 M220 820 h140 M620 860 h200 M140 960 h180 M820 980 h160 M420 1060 h240"/></g>
+  <path d="M560 900 h140 l-24 26 h-92z" fill="#b91c1c"/><path d="M628 900 v-70 l40 64z" fill="#fef2f2"/><path d="M548 932 h164" stroke="#082f49" stroke-width="4" opacity=".4"/>
+</svg>

@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Date Range — Orion Admin</title>
+<meta name="docs:section" content="Pickers &amp; Selects">
+<meta name="docs:order" content="50">
+<meta name="docs:desc" content="Start/end date range picker with presets, hover preview, length limits, times and apply/cancel">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .demo-grid { display: grid; gap: 1rem 1.5rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); width: 100%; }
+  .demo-grid > div { min-width: 0; }
+  .demo-out { margin: 1rem 0 0; padding: .75rem 1rem; font: .75rem/1.6 var(--o-font-mono); background: var(--o-surface-2); border: 1px dashed var(--o-border-strong); border-radius: var(--o-radius); white-space: pre-wrap; color: var(--o-text-muted); }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Date Range</h1>
+    <p class="docs-lead"><code>&lt;o-daterange&gt;</code> picks a start and an end date: two months side by side (one on phones), a live hover preview, quick presets, minimum / maximum length, an apply / cancel footer (or <code>instant</code>), optional times and typed start / end inputs. It submits <code>start/end</code> or two named fields.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic with presets</h2>
+    <p>Click a start day, then an end day — the band previews the range while you hover (or move with the keyboard) and the footer shows the length. Nothing changes until <em>Apply</em>; <em>Cancel</em>, Esc or clicking outside restore the previous value. The built-in presets are Today, Yesterday, Last 7 / 30 / 90 days, This / Last month and This year.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="demo-grid">
+          <div><label class="o-label" for="dr-basic">Report period</label><o-daterange id="dr-basic" name="period"></o-daterange></div>
+          <div><label class="o-label" for="dr-val">With a value</label><o-daterange id="dr-val" value='{"start":"2026-09-07","end":"2026-09-18"}'></o-daterange></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="instant">
+    <h2>Instant mode &amp; custom presets</h2>
+    <p><code>instant</code> commits as soon as the range is complete (and when a preset is clicked). <code>presets</code> takes built-in keys (<code>today yesterday last7 last30 last90 thisWeek thisMonth lastMonth thisYear</code>) and/or objects <code>{ label, value: [start, end] | () =&gt; [start, end] }</code>; <code>presets="false"</code> hides the list.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="demo-grid">
+          <div><label class="o-label" for="dr-instant">Dashboard range</label><o-daterange id="dr-instant" instant presets='["last7","last30","thisMonth","lastMonth"]'></o-daterange></div>
+          <div><label class="o-label" for="dr-custom">Fiscal quarter</label><o-daterange id="dr-custom" instant></o-daterange></div>
+        </div>
+        <div class="docs-log" id="dr-instant-log"></div>
+        <script>{
+          const D = Orion.date, y = D.today().getFullYear();
+          const el = document.getElementById('dr-custom');
+          el.presets = [
+            { label: 'Q1 ' + y, value: [y + '-01-01', y + '-03-31'] }, { label: 'Q2 ' + y, value: [y + '-04-01', y + '-06-30'] },
+            { label: 'Q3 ' + y, value: [y + '-07-01', y + '-09-30'] }, { label: 'Q4 ' + y, value: [y + '-10-01', y + '-12-31'] },
+            { label: 'Next 14 days', value: () => [D.today(), D.add(D.today(), 13)] },
+          ];
+          for (const id of ['dr-instant', 'dr-custom']) {
+            const r = document.getElementById(id);
+            r.addEventListener('o-change', e => docs.log('#dr-instant-log', `${id} o-change ${JSON.stringify(e.detail.value)}`));
+            r.addEventListener('o-preset', e => docs.log('#dr-instant-log', `${id} o-preset "${e.detail.preset.label}"`));
+          }
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="booking">
+    <h2>Booking rules: min / max length &amp; unavailable dates</h2>
+    <p><code>min-days</code> / <code>max-days</code> count days inclusively; while choosing the end, days that would break the rule are disabled. <code>min</code>, <code>max</code> and <code>disabled-dates</code> work like in <a href="datepicker.html">Date Picker</a>, and <code>highlighted</code> marks special days.</p>
+    <div class="docs-demo">
+      <template>
+        <label class="o-label" for="dr-book">Stay (3–14 days, from today, fully booked days disabled)</label>
+        <div style="max-width:26rem"><o-daterange id="dr-book" name="stay" min-days="3" max-days="14" presets="false" placeholder-start="Check-in" placeholder-end="Check-out"></o-daterange></div>
+        <script>{
+          const D = Orion.date, t0 = D.today(), el = document.getElementById('dr-book');
+          const booked = [5, 6, 19, 20, 21].map(n => D.toISODate(D.add(t0, n)));
+          el.min = D.toISODate(t0);
+          el.max = D.toISODate(D.add(t0, 180));
+          el.disabledDates = booked;
+          el.highlighted = [9, 10, 11].map(n => ({ date: D.toISODate(D.add(t0, n)), color: 'success', label: 'Special rate' }));
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="time">
+    <h2>With times</h2>
+    <p><code>time</code> adds start / end time pickers under the calendar (defaults 00:00 → 23:59); values become <code>YYYY-MM-DDTHH:mm</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <div style="max-width:30rem"><label class="o-label" for="dr-time">Maintenance window</label><o-daterange id="dr-time" name="window" time step="30" presets="false" value='{"start":"2026-09-19T22:00","end":"2026-09-20T06:00"}'></o-daterange></div>
+      </template>
+    </div>
+  </section>
+
+  <section id="forms">
+    <h2>Forms</h2>
+    <p>With <code>name</code> the value is submitted as <code>start/end</code>; with <code>name-start</code> and <code>name-end</code> as two fields. <code>required</code> needs both ends; typed dates are validated (format, order, limits).</p>
+    <div class="docs-demo">
+      <template>
+        <form id="dr-form" class="o-stack" style="--o-gap:.75rem">
+          <div class="demo-grid">
+            <div><label class="o-label is-required" for="drf-a">Campaign (one field)</label><o-daterange id="drf-a" name="campaign" required></o-daterange></div>
+            <div><label class="o-label" for="drf-b">Filter (two fields)</label><o-daterange id="drf-b" name-start="from" name-end="to" instant value="2026-09-01/2026-09-30"></o-daterange></div>
+          </div>
+          <div class="o-cluster"><button class="o-btn o-btn-primary">Submit</button><button class="o-btn" type="reset">Reset</button></div>
+          <pre class="demo-out" id="dr-form-out">Submit to see FormData</pre>
+        </form>
+        <script>{
+          document.getElementById('dr-form').addEventListener('submit', e => { e.preventDefault(); document.getElementById('dr-form-out').textContent = JSON.stringify([...new FormData(e.target)]); });
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="states">
+    <h2>Sizes, one month &amp; states</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="demo-grid">
+          <o-daterange size="sm" months="1" presets="false"></o-daterange>
+          <o-daterange size="lg" value="2026-09-10/2026-09-12"></o-daterange>
+          <o-daterange disabled value="2026-09-10/2026-09-12"></o-daterange>
+          <o-daterange readonly value="2026-09-10/2026-09-12"></o-daterange>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="events">
+    <h2>Events &amp; methods</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster" style="--o-gap:.5rem">
+          <div style="flex:1 1 20rem"><o-daterange id="dr-ev"></o-daterange></div>
+          <button class="o-btn o-btn-sm" type="button" id="dr-ev-set">setRange(last week)</button>
+          <button class="o-btn o-btn-sm" type="button" id="dr-ev-open">open()</button>
+        </div>
+        <div class="docs-log" id="dr-ev-log"></div>
+        <script>{
+          const D = Orion.date, el = document.getElementById('dr-ev');
+          ['o-change', 'o-select', 'o-preset', 'o-open', 'o-close', 'o-cancel'].forEach(n => el.addEventListener(n, e => {
+            const d = e.detail || {};
+            docs.log('#dr-ev-log', n + ' ' + (d.value ? JSON.stringify(d.value) : d.start ? D.toISODate(d.start) + ' → ' + (d.end ? D.toISODate(d.end) : '…') : d.reason || ''));
+          }));
+          document.getElementById('dr-ev-set').onclick = () => { const s = D.startOf(D.add(D.today(), -7), 'w'); el.setRange(s, D.add(s, 6)); };
+          document.getElementById('dr-ev-open').onclick = () => setTimeout(() => el.open());
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>↓ / F4 (input)</td><td>Open and focus the calendar (editing that end).</td></tr>
+        <tr><td>Enter (input)</td><td>Parse the typed dates; with the panel open, apply.</td></tr>
+        <tr><td>Arrows · Home / End · PageUp / PageDown (Shift: year)</td><td>Move in the calendar; the range previews to the focused day.</td></tr>
+        <tr><td>Enter / Space</td><td>Set the start, then the end.</td></tr>
+        <tr><td>Tab</td><td>Start input → end input; inside the panel cycles presets, calendar, times and footer.</td></tr>
+        <tr><td>Esc</td><td>Cancel (restore the previous range) and close.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Property (attribute)</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>value</td><td>{ start, end } | "start/end"</td><td>—</td><td>ISO dates (<code>YYYY-MM-DDTHH:mm</code> with <code>time</code>).</td></tr>
+        <tr><td>name · name-start · name-end</td><td>string</td><td>—</td><td>One <code>start/end</code> field, or two fields.</td></tr>
+        <tr><td>required, disabled, readonly</td><td>boolean</td><td>—</td><td>Form-control basics (required needs both ends).</td></tr>
+        <tr><td>presets</td><td>boolean | keys | objects</td><td>true</td><td>Built-in list, a subset of keys, custom <code>{ label, value }</code>, or false.</td></tr>
+        <tr><td>min-days · max-days</td><td>number</td><td>—</td><td>Inclusive range length limits.</td></tr>
+        <tr><td>instant</td><td>boolean</td><td>false</td><td>Commit without Apply / Cancel.</td></tr>
+        <tr><td>months</td><td>number</td><td>2</td><td>Months shown (1 on phones).</td></tr>
+        <tr><td>min · max · disabled-dates · highlighted</td><td>—</td><td>—</td><td>As in Date Picker.</td></tr>
+        <tr><td>week-start · week-numbers · format</td><td>—</td><td>locale</td><td>Calendar and input format.</td></tr>
+        <tr><td>time · hour12 · step</td><td>boolean · auto · number</td><td>false · locale · 15</td><td>Start / end time pickers.</td></tr>
+        <tr><td>placeholder-start · placeholder-end · clearable · size</td><td>—</td><td>clearable: true</td><td>Presentation.</td></tr>
+        <tr><td>texts</td><td>object</td><td>—</td><td><code>start, end, apply, cancel, clear, days, pickStart, pickEnd, minDays, maxDays, today, last7, …</code>.</td></tr>
+        <tr><td>start · end · calendar</td><td>read-only</td><td></td><td>Dates of the committed value; the internal <code>Orion.Calendar</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-change</td><td>{ value, start, end }</td><td>A range was committed (Apply, instant, typing, clear).</td></tr>
+        <tr><td>o-select</td><td>{ start, end }</td><td>The draft changed inside the panel (end is null while choosing).</td></tr>
+        <tr><td>o-preset</td><td>{ preset, start, end }</td><td>A preset was clicked.</td></tr>
+        <tr><td>o-before-open · o-open · o-close { reason } · o-cancel</td><td></td><td>Panel lifecycle.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>open() · close() · toggle()</td><td>Control the panel.</td></tr>
+        <tr><td>apply() · cancel()</td><td>Commit / discard the draft and close.</td></tr>
+        <tr><td>setRange(start, end)</td><td>Set the value programmatically (no events).</td></tr>
+        <tr><td>clear(emit = false) · focus()</td><td>Empty the range · focus the start input.</td></tr>
+      </tbody>
+    </table>
+    <p>CSS: <code>--o-cal-cell</code>, <code>--o-dr-presets-w</code>; range classes <code>.is-range-start</code>, <code>.is-in-range</code>, <code>.is-range-end</code>, <code>.is-preview*</code>.</p>
+  </section>
+</main>
+</body>
+</html>

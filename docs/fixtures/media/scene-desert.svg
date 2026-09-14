@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1067" width="1600" height="1067">
+  <title>Desert dunes</title>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#38bdf8"/><stop offset=".55" stop-color="#bae6fd"/><stop offset="1" stop-color="#fef3c7"/></linearGradient>
+    <linearGradient id="d1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fcd34d"/><stop offset="1" stop-color="#f59e0b"/></linearGradient>
+    <linearGradient id="d2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fbbf24"/><stop offset="1" stop-color="#d97706"/></linearGradient>
+    <linearGradient id="d3" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f59e0b"/><stop offset="1" stop-color="#b45309"/></linearGradient>
+    <linearGradient id="shade" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#78350f" stop-opacity=".45"/><stop offset="1" stop-color="#78350f" stop-opacity="0"/></linearGradient>
+  </defs>
+  <rect width="1600" height="1067" fill="url(#sky)"/>
+  <circle cx="300" cy="230" r="70" fill="#fffbeb"/><circle cx="300" cy="230" r="120" fill="#fffbeb" opacity=".25"/>
+  <g fill="#fff" opacity=".8"><ellipse cx="1100" cy="190" rx="150" ry="34"/><ellipse cx="1190" cy="170" rx="90" ry="40"/><ellipse cx="1020" cy="200" rx="80" ry="24"/></g>
+  <path d="M0 640 C220 560 420 600 620 580 S1040 520 1240 560 S1480 600 1600 580 V1067 H0Z" fill="#fde68a"/>
+  <path d="M0 720 C260 600 520 640 760 700 C960 750 1180 640 1600 660 V1067 H0Z" fill="url(#d1)"/>
+  <path d="M760 700 C960 750 1180 640 1600 660 V760 C1300 720 1000 780 760 700Z" fill="url(#shade)"/>
+  <path d="M0 850 C300 760 560 780 820 860 C1060 930 1300 820 1600 800 V1067 H0Z" fill="url(#d2)"/>
+  <path d="M820 860 C1060 930 1300 820 1600 800 V900 C1300 900 1060 960 820 860Z" fill="url(#shade)"/>
+  <path d="M0 980 C360 900 700 930 1000 990 C1200 1030 1420 990 1600 960 V1067 H0Z" fill="url(#d3)"/>
+  <g stroke="#92400e" stroke-opacity=".25" stroke-width="3" fill="none" stroke-linecap="round">
+    <path d="M100 900 q60 -14 120 0 M260 930 q50 -10 100 0 M1180 1010 q70 -16 140 0 M1360 1030 q40 -8 80 0"/>
+  </g>
+  <g fill="#166534"><rect x="1265" y="650" width="22" height="120" rx="11"/><rect x="1236" y="680" width="16" height="50" rx="8"/><rect x="1236" y="716" width="40" height="14" rx="7"/><rect x="1300" y="668" width="16" height="44" rx="8"/><rect x="1276" y="700" width="40" height="14" rx="7"/></g>
+  <g fill="#78350f"><circle cx="520" cy="706" r="5"/><rect x="516" y="706" width="8" height="18" rx="3"/><circle cx="548" cy="712" r="5"/><rect x="544" y="712" width="8" height="18" rx="3"/></g>
+</svg>

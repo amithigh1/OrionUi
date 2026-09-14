@@ -1,0 +1,86 @@
+/* ============================================================================
+ * <o-tree> — hierarchical tree / file-explorer view.
+ *   o-tree > o-tree-toolbar? + o-tree-scroll(relative, scrolls) > o-tree-phantom(sizer) + o-tree-rows(translated window)
+ *   Rows are always windowed (virtual scrolling); for small trees the window simply covers every row.
+ * ========================================================================== */
+
+o-tree:not(:defined) { display: block; min-height: 12rem; visibility: hidden; }
+
+.o-tree {
+  --o-tree-indent: 1.25rem; --o-tree-row-h: 28px;
+  display: flex; flex-direction: column; min-width: 0; height: 100%; gap: .5rem; font-size: var(--o-fs-sm);
+}
+
+/* ── toolbar (filterable) ─────────────────────────────────────────────── */
+.o-tree-toolbar { display: flex; align-items: center; gap: .625rem; }
+.o-tree-search { flex: 1 1 16rem; max-width: 20rem; }
+.o-tree-summary { font-size: var(--o-fs-xs); color: var(--o-text-muted); white-space: nowrap; }
+
+/* ── scroll / virtualization ──────────────────────────────────────────── */
+.o-tree-scroll {
+  position: relative; flex: 1 1 auto; min-height: 0; overflow: auto; contain: strict;
+  background: var(--o-surface); border: 1px solid var(--o-border); border-radius: var(--o-radius-lg);
+}
+.o-tree-phantom { position: relative; width: 1px; }
+.o-tree-rows { position: absolute; inset-inline: 0; top: 0; will-change: transform; }
+
+/* ── row ──────────────────────────────────────────────────────────────── */
+.o-tree-row {
+  position: relative; display: flex; align-items: center; gap: .3125rem; height: var(--o-tree-row-h);
+  padding-inline-end: .625rem; white-space: nowrap; cursor: pointer; user-select: none; -webkit-user-select: none;
+  border-radius: var(--o-radius-sm); color: var(--o-text);
+}
+.o-tree-row:hover { background: var(--o-surface-3); }
+.o-tree-row.is-selected { background: var(--o-primary-subtle); color: var(--o-primary-text); }
+.o-tree-row.is-current:focus-visible, .o-tree-row.is-current { outline: none; }
+.o-tree-row:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--o-focus); }
+.o-tree-row.is-disabled { color: var(--o-text-subtle); cursor: not-allowed; }
+.o-tree-row.o-sortable-drag, .o-tree-row.is-dragged { opacity: .5; }
+
+.o-tree-toggle {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 1.25rem; height: 1.25rem;
+  padding: 0; color: var(--o-text-muted); background: transparent; border: 0; border-radius: var(--o-radius-xs); cursor: pointer;
+  transition: transform var(--o-dur-fast) var(--o-ease), background-color var(--o-dur-fast);
+}
+.o-tree-toggle:hover { background: var(--o-surface-2); color: var(--o-text); }
+.o-tree-toggle.is-leaf { visibility: hidden; cursor: default; pointer-events: none; }
+.o-tree-toggle.is-expanded { transform: rotate(90deg); }
+[dir="rtl"] .o-tree-toggle:not(.is-expanded) { transform: scaleX(-1); }
+[dir="rtl"] .o-tree-toggle.is-expanded { transform: rotate(90deg) scaleX(-1); }
+
+.o-tree-check { flex-shrink: 0; margin: 0; }
+.o-tree-icon { display: inline-flex; flex-shrink: 0; width: 1rem; height: 1rem; color: var(--o-text-muted); }
+.o-tree-icon > .o-icon { width: 100%; height: 100%; }
+.o-tree-icon > .o-icon-folder, .o-tree-icon > .o-icon-folder-open { color: var(--o-warning-text); }
+.o-tree-row.is-selected .o-tree-icon { color: inherit; }
+
+.o-tree-label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.o-tree-label > mark { background: color-mix(in srgb, var(--o-warning) 45%, transparent); }
+.o-tree-rename { height: calc(var(--o-tree-row-h) - 6px); padding-block: 0; }
+.o-tree-badge { flex-shrink: 0; }
+
+/* placeholder rows: loading / error / empty */
+.o-tree-row-placeholder { color: var(--o-text-subtle); cursor: default; gap: .5rem; }
+.o-tree-row-placeholder .o-spinner { color: var(--o-text-muted); }
+.o-tree-row-placeholder .o-icon { width: .875rem; height: .875rem; color: var(--o-danger-text); }
+.o-tree-empty-label { font-style: italic; }
+
+/* ── drag & drop ──────────────────────────────────────────────────────── */
+.o-tree.is-ghost { position: fixed; pointer-events: none; }
+.o-tree.is-ghost .o-tree-row-ghost { background: var(--o-elevated); box-shadow: var(--o-shadow-lg); border: 1px solid var(--o-border); padding-inline: .5rem; }
+.o-tree-row.drop-before::before, .o-tree-row.drop-after::after {
+  content: ""; position: absolute; inset-inline: .25rem; height: 2px; background: var(--o-primary); border-radius: 1px;
+}
+.o-tree-row.drop-before::before { top: -1px; }
+.o-tree-row.drop-after::after { bottom: -1px; }
+.o-tree-row.drop-inside { background: var(--o-primary-subtle); outline: 2px solid var(--o-primary-border); outline-offset: -2px; }
+.o-tree-row.is-drop-denied { background: var(--o-danger-subtle); cursor: not-allowed; }
+
+/* ── responsive ───────────────────────────────────────────────────────── */
+@media (max-width: 480px) { .o-tree-toolbar { flex-wrap: wrap; } .o-tree-search { max-width: none; } }
+
+/* ── reduced motion ───────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) { .o-tree-toggle { transition: none; } }
+
+/* ── print ────────────────────────────────────────────────────────────── */
+@media print { .o-tree-toolbar { display: none; } .o-tree-scroll { overflow: visible; max-height: none; } }

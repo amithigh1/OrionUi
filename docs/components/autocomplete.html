@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Autocomplete — Orion Admin</title>
+<meta name="docs:section" content="Pickers &amp; Selects">
+<meta name="docs:order" content="20">
+<meta name="docs:desc" content="Typeahead input with local or async suggestions, inline completion and recent searches">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .demo-grid { display: grid; gap: 1rem 1.5rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); width: 100%; }
+  .demo-grid > div { min-width: 0; }
+  .demo-out { margin: 1rem 0 0; padding: .75rem 1rem; font: .75rem/1.6 var(--o-font-mono); background: var(--o-surface-2); border: 1px dashed var(--o-border-strong); border-radius: var(--o-radius); white-space: pre-wrap; color: var(--o-text-muted); }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Autocomplete</h1>
+    <p class="docs-lead"><code>&lt;o-autocomplete&gt;</code> is a text input with suggestions: local items or an async source, highlighted matches, groups and templates, inline (ghost) completion, recent searches, and either free text or a <code>strict</code> “must pick” mode. Use <a href="select.html">Select</a> when the value must come from a list and the text itself does not matter.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic</h2>
+    <p>Pass strings or objects to <code>items</code>. Matching is fuzzy (every word must match, substring matches rank first) and the matched characters are highlighted. By default the value is the typed text.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="demo-grid">
+          <div>
+            <label class="o-label" for="ac-city">City</label>
+            <o-autocomplete id="ac-city" name="city" placeholder="Start typing a city" icon="search"
+              items='["Amsterdam","Athens","Auckland","Bangkok","Barcelona","Berlin","Bengaluru","Cairo","Dubai","Jakarta","Kuala Lumpur","Lisbon","London","Madrid","Melbourne","Nairobi","New York","Paris","Penang","Perth","Porto","Prague","São Paulo","Seoul","Singapore","Sydney","Tokyo","Toronto","Vienna","Warsaw"]'></o-autocomplete>
+          </div>
+          <div>
+            <label class="o-label" for="ac-country">Country (objects with descriptions)</label>
+            <o-autocomplete id="ac-country" name="country" placeholder="Country or capital" min-chars="0" open-on-focus></o-autocomplete>
+          </div>
+        </div>
+        <script>{
+          document.getElementById('ac-country').items = docs.countries.map(c => ({ value: c.code, label: c.name, description: c.city }));
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="inline">
+    <h2>Inline completion &amp; recent searches</h2>
+    <p><code>inline</code> shows the rest of the best prefix match as ghost text — press <kbd class="o-kbd">Tab</kbd> or <kbd class="o-kbd">→</kbd> to accept it. <code>recent</code> remembers the last searches in <code>localStorage</code> (key <code>orion:autocomplete:&lt;recent-key | id | name&gt;</code>) and shows them when the field is focused while empty; they can be cleared from the panel.</p>
+    <div class="docs-demo">
+      <template>
+        <label class="o-label" for="ac-inline">Search the docs</label>
+        <o-autocomplete id="ac-inline" inline recent recent-key="docs-demo" icon="search" placeholder="Try “da” then Tab"
+          items='["Dashboard","Data table","Date picker","Date range","Dialog","Drawer","Dropdown","Editor","Empty state","File upload","Form builder","Kanban","Map","Modal","Pagination","Select","Sidebar","Sparkline","Stepper","Tabs","Time picker","Toast","Tooltip","Tree"]'></o-autocomplete>
+        <p class="o-text-sm o-text-muted o-mt-2">Pick a few entries (Enter commits the typed text too), then focus the empty field again.</p>
+      </template>
+    </div>
+  </section>
+
+  <section id="async">
+    <h2>Async source, groups &amp; strict mode</h2>
+    <p><code>source(query, { signal })</code> returns items (or a Promise of them); requests are debounced, aborted when superseded and show a spinner. With <code>strict</code> the value is the picked item's <code>value</code> and unmatched text is reverted on blur; the control reports <code>badInput</code> while the text does not match an item. Items with <code>group</code> are listed under headers.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="demo-grid">
+          <div>
+            <label class="o-label" for="ac-user">Assignee (strict, remote)</label>
+            <o-autocomplete id="ac-user" name="assignee" strict placeholder="Search 500 people" min-chars="1"></o-autocomplete>
+          </div>
+          <div>
+            <label class="o-label" for="ac-cmd">Command (grouped)</label>
+            <o-autocomplete id="ac-cmd" placeholder="Type a command" min-chars="0" open-on-focus limit="20" items='[
+              {"label":"New invoice","icon":"file","group":"Create"},{"label":"New customer","icon":"user","group":"Create"},{"label":"New project","icon":"plus","group":"Create"},
+              {"label":"Open settings","icon":"settings","group":"Navigate"},{"label":"Open inbox","icon":"inbox","group":"Navigate"},{"label":"Open reports","icon":"columns","group":"Navigate"},
+              {"label":"Toggle dark mode","icon":"moon","group":"Preferences"},{"label":"Change language","icon":"link","group":"Preferences"}]'></o-autocomplete>
+          </div>
+        </div>
+        <div class="docs-log" id="ac-log"></div>
+        <script>{
+          const people = docs.people(500, 21), server = docs.fakeServer(people, { latency: 350 });
+          const u = document.getElementById('ac-user');
+          u.source = async query => {
+            const { rows } = await server({ pageSize: 12, search: query, sort: [{ key: 'name', dir: 'asc' }] });
+            return rows.map(p => ({ value: p.id, label: p.name, description: p.email, avatar: p.name, group: p.department }));
+          };
+          ['o-select', 'o-change'].forEach(n => u.addEventListener(n, e => docs.log('#ac-log', `${n} value=${JSON.stringify(e.detail.value)}`)));
+          document.getElementById('ac-cmd').addEventListener('o-select', e => docs.log('#ac-log', 'command: ' + e.detail.item.label));
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="templates">
+    <h2>Custom templates</h2>
+    <p><code>renderItem(item, { query })</code> returns HTML (escape your data) or a Node. The built-in highlighter is available as <code>Orion.util.highlight(text, query)</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <label class="o-label" for="ac-tpl">Product</label>
+        <o-autocomplete id="ac-tpl" placeholder="Search products" min-chars="1"></o-autocomplete>
+        <script>{
+          const { html, raw, highlight } = Orion.util;
+          const el = document.getElementById('ac-tpl');
+          const r = docs.rand(4), cats = ['Laptop', 'Monitor', 'Keyboard', 'Mouse', 'Headset', 'Dock'];
+          el.items = Array.from({ length: 60 }, (_, i) => ({ value: 'P' + (1000 + i), label: cats[i % 6] + ' ' + ['Pro', 'Air', 'Max', 'Mini', 'Plus'][i % 5] + ' ' + (i + 1), price: 49 + Math.round(r() * 1900), stock: Math.round(r() * 40) }));
+          el.renderItem = (item, { query }) => html`<span class="o-listbox-text"><span class="o-listbox-label">${raw(highlight(item.label, query))}</span>
+            <span class="o-listbox-desc">${item.value} · ${item.stock ? item.stock + ' in stock' : 'Out of stock'}</span></span>
+            <strong class="o-tabular-nums">${Orion.format.currency(item.price)}</strong>`;
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="forms">
+    <h2>Forms</h2>
+    <p>The value is submitted under <code>name</code>. Free mode submits the text; strict mode submits the picked item's value (or nothing).</p>
+    <div class="docs-demo">
+      <template>
+        <form id="ac-form" class="o-stack" style="--o-gap:.75rem">
+          <div class="demo-grid">
+            <div>
+              <label class="o-label is-required" for="acf-city">City (free text)</label>
+              <o-autocomplete id="acf-city" name="city" required items='["Kuala Lumpur","Kuching","Kota Kinabalu","Kuantan","Klang"]' placeholder="Any city"></o-autocomplete>
+            </div>
+            <div>
+              <label class="o-label is-required" for="acf-cur">Currency (strict)</label>
+              <o-autocomplete id="acf-cur" name="currency" strict required min-chars="0" open-on-focus placeholder="Pick a currency"
+                items='[{"value":"MYR","label":"Malaysian ringgit"},{"value":"SGD","label":"Singapore dollar"},{"value":"USD","label":"US dollar"},{"value":"EUR","label":"Euro"},{"value":"JPY","label":"Japanese yen"}]'></o-autocomplete>
+            </div>
+          </div>
+          <div class="o-cluster"><button class="o-btn o-btn-primary">Submit</button><button class="o-btn" type="reset">Reset</button></div>
+          <pre class="demo-out" id="ac-form-out">Submit to see FormData</pre>
+        </form>
+        <script>{
+          document.getElementById('ac-form').addEventListener('submit', e => { e.preventDefault(); document.getElementById('ac-form-out').textContent = JSON.stringify([...new FormData(e.target)]); });
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="states">
+    <h2>Sizes &amp; states</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="demo-grid">
+          <o-autocomplete size="sm" placeholder="Small" items='["One","Two"]'></o-autocomplete>
+          <o-autocomplete placeholder="Default" items='["One","Two"]'></o-autocomplete>
+          <o-autocomplete size="lg" placeholder="Large" icon="search" items='["One","Two"]'></o-autocomplete>
+          <o-autocomplete disabled value="Disabled"></o-autocomplete>
+          <o-autocomplete readonly value="Read only"></o-autocomplete>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Typing</td><td>Filter suggestions (after <code>min-chars</code>).</td></tr>
+        <tr><td>↓ / ↑ · PageDown / PageUp</td><td>Open / move the active suggestion.</td></tr>
+        <tr><td>Enter</td><td>Pick the active suggestion, or commit the typed text (free mode).</td></tr>
+        <tr><td>Tab · → · End</td><td>Accept the inline completion (with <code>inline</code>); otherwise Tab moves on.</td></tr>
+        <tr><td>Esc</td><td>Close the suggestions; when closed, clear the text.</td></tr>
+        <tr><td>Home / End</td><td>Move the caret in the input.</td></tr>
+      </tbody>
+    </table>
+    <p>ARIA: the input is a <code>combobox</code> with <code>aria-autocomplete="list"</code> (<code>"both"</code> with <code>inline</code>), <code>aria-expanded</code>, <code>aria-controls</code> and <code>aria-activedescendant</code>; the completion hint is exposed through <code>aria-describedby</code> and result counts are announced.</p>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Property (attribute)</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>value</td><td>string</td><td>''</td><td>Typed text (free) or the picked item's <code>value</code> (<code>item.value ?? label</code>).</td></tr>
+        <tr><td>name, required, disabled, readonly</td><td>—</td><td>—</td><td>Form-control basics.</td></tr>
+        <tr><td>items</td><td>Array</td><td>[]</td><td>Strings or <code>{ value, label, description, icon, avatar, group, disabled }</code>.</td></tr>
+        <tr><td>source</td><td>(query, { signal, page }) =&gt; items</td><td>—</td><td>Async suggestions (debounced, abortable).</td></tr>
+        <tr><td>url · fields</td><td>string · object</td><td>—</td><td>JSON endpoint with <code>{q}</code>; map keys like Select.</td></tr>
+        <tr><td>min-chars · debounce · limit</td><td>number</td><td>1 · 200 · 10</td><td>When to search, request delay, max local results.</td></tr>
+        <tr><td>strict</td><td>boolean</td><td>false</td><td>Only picked items are accepted.</td></tr>
+        <tr><td>inline</td><td>boolean</td><td>false</td><td>Ghost-text completion of the best prefix match.</td></tr>
+        <tr><td>recent · recent-key · recent-max</td><td>boolean · string · number</td><td>false · — · 5</td><td>Remember and offer recent searches.</td></tr>
+        <tr><td>open-on-focus</td><td>boolean</td><td>false</td><td>Show suggestions on focus (with <code>min-chars="0"</code>: the first items).</td></tr>
+        <tr><td>placeholder · icon · clearable · size</td><td>—</td><td>clearable: true</td><td>Presentation.</td></tr>
+        <tr><td>render-item</td><td>(item, { query }) =&gt; html | Node</td><td>—</td><td>Custom suggestion rows.</td></tr>
+        <tr><td>texts</td><td>object</td><td>—</td><td><code>noResults, loading, error, retry, recent, clearRecent, clear, results, completion</code>.</td></tr>
+        <tr><td>item · query</td><td>read-only</td><td></td><td>The picked item (original object) and the current text.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-input</td><td>{ query }</td><td>The text changed (typing).</td></tr>
+        <tr><td>o-select</td><td>{ item, value }</td><td>A suggestion (or recent search) was picked.</td></tr>
+        <tr><td>o-change</td><td>{ value, item }</td><td>The value was committed (pick, Enter or blur); also native <code>change</code>.</td></tr>
+        <tr><td>o-open / o-close</td><td>— / { reason }</td><td>Suggestions shown / hidden.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>open() / close()</td><td>Show / hide the suggestions panel.</td></tr>
+        <tr><td>search(query)</td><td>Set the text and search immediately.</td></tr>
+        <tr><td>clear(emit = false)</td><td>Empty the field.</td></tr>
+        <tr><td>clearRecent()</td><td>Forget the stored recent searches.</td></tr>
+        <tr><td>focus()</td><td>Focus the input.</td></tr>
+      </tbody>
+    </table>
+    <p>CSS: <code>--o-ac-max-h</code> (list height). The suggestion rows share the <code>.o-listbox-*</code> classes with Select.</p>
+  </section>
+</main>
+</body>
+</html>

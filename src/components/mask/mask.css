@@ -1,0 +1,7 @@
+/* Input mask: the guide ("(12_) ___-____") is a visual overlay; the input value never contains guide chars. */
+.o-mask-guide {
+  position: fixed; display: flex; align-items: center; margin: 0; overflow: hidden; box-sizing: border-box;
+  white-space: pre; pointer-events: none; color: var(--o-text-subtle); background: transparent;
+}
+.o-mask-guide-fill { visibility: hidden; }
+.o-mask-guiding::placeholder { color: transparent; }

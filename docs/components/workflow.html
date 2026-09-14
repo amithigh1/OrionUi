@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workflow designer — Orion Admin</title>
+<meta name="docs:section" content="Boards & Diagrams">
+<meta name="docs:order" content="41">
+<meta name="docs:title" content="Workflow Designer">
+<meta name="docs:desc" content="Approval-process designer built on the diagram engine: typed nodes, structural validation, simulate">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Workflow Designer</h1>
+    <p class="docs-lead"><code>&lt;o-workflow&gt;</code> extends <a href="diagram.html"><code>&lt;o-diagram&gt;</code></a> with a typed node palette (Start, Task, Approval, Condition, Parallel split/join, Delay, Email, Webhook, Script, End), a schema-driven configuration panel per node type, structural validation with error badges, a vertical auto layout, and a token "simulate" mode. Everything <code>&lt;o-diagram&gt;</code> can do — pan/zoom, undo/redo, export, keyboard control — works the same way here.</p>
+  </header>
+
+  <section id="builder">
+    <h2>Approval workflow</h2>
+    <p>Drag a node type from the palette onto the canvas, connect ports the same way as <code>&lt;o-diagram&gt;</code>, and select a node to edit its fields in the properties panel. This is a complete, valid leave-request approval flow.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-workflow id="wf" label="Leave request approval" style="--o-dg-height: 40rem; border: 0; border-radius: 0"></o-workflow>
+        <div class="docs-log" id="wf-log"></div>
+        <script>
+          {
+            const el = document.getElementById('wf');
+            el.value = {
+              nodes: [
+                { id: 'start', type: 'wf-start', x: 260, y: 20 },
+                { id: 'req', type: 'wf-task', x: 240, y: 120, label: 'Submit request', data: { description: 'Employee submits dates and reason.' } },
+                { id: 'appr', type: 'wf-approval', x: 240, y: 240, label: 'Manager approval', data: { approver: 'Direct manager' } },
+                { id: 'cond', type: 'wf-condition', x: 227, y: 360, label: 'Over 5 days?', data: { expression: 'days > 5' } },
+                { id: 'hr', type: 'wf-approval', x: 460, y: 480, label: 'HR approval', data: { approver: 'HR business partner' } },
+                { id: 'mail', type: 'wf-email', x: 220, y: 600, label: 'Notify employee', data: { to: '{employee.email}', subject: 'Leave request update' } },
+                { id: 'end', type: 'wf-end', x: 260, y: 720 },
+              ],
+              edges: [
+                { from: 'start', to: 'req' }, { from: 'req', to: 'appr' }, { from: 'appr', to: 'cond' },
+                { from: 'cond', to: 'hr', fromPort: 'yes' }, { from: 'cond', to: 'mail', fromPort: 'no' },
+                { from: 'hr', to: 'mail' }, { from: 'mail', to: 'end' },
+              ],
+            };
+            el.addEventListener('o-validate', e => docs.log('#wf-log', `o-validate → ${e.detail.valid ? 'valid' : Object.keys(e.detail.errors).length + ' node(s) with problems'}`));
+            el.addEventListener('o-change', e => docs.log('#wf-log', `o-change (${e.detail.action})`));
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="types">
+    <h2>Node types &amp; ports</h2>
+    <p>Every built-in type has fixed named ports (used for routing and for <code>fromPort</code>/<code>toPort</code> on edges) instead of the four generic sides a plain <code>&lt;o-diagram&gt;</code> shape uses. <code>wf-condition</code> and <code>wf-split</code> each expose two labelled outputs; <code>wf-join</code> exposes two labelled inputs.</p>
+    <table class="docs-api">
+      <thead><tr><th>Type</th><th>Ports</th><th>Config fields</th></tr></thead>
+      <tbody>
+        <tr><td><code>wf-start</code></td><td><code>out</code></td><td>—</td></tr>
+        <tr><td><code>wf-task</code></td><td><code>in</code>, <code>out</code></td><td>Description</td></tr>
+        <tr><td><code>wf-approval</code></td><td><code>in</code>, <code>out</code></td><td>Approver, Description</td></tr>
+        <tr><td><code>wf-condition</code></td><td><code>in</code>, <code>yes</code> (max 1 edge), <code>no</code> (max 1 edge)</td><td>Condition (expression)</td></tr>
+        <tr><td><code>wf-split</code></td><td><code>in</code>, <code>out1</code> "A", <code>out2</code> "B"</td><td>—</td></tr>
+        <tr><td><code>wf-join</code></td><td><code>in1</code>, <code>in2</code>, <code>out</code></td><td>Wait for (All branches / Any branch)</td></tr>
+        <tr><td><code>wf-delay</code></td><td><code>in</code>, <code>out</code></td><td>Duration, Unit</td></tr>
+        <tr><td><code>wf-email</code></td><td><code>in</code>, <code>out</code></td><td>To, Subject</td></tr>
+        <tr><td><code>wf-webhook</code></td><td><code>in</code>, <code>out</code></td><td>URL, Method</td></tr>
+        <tr><td><code>wf-script</code></td><td><code>in</code>, <code>out</code></td><td>Script (monospace)</td></tr>
+        <tr><td><code>wf-end</code></td><td><code>in</code></td><td>—</td></tr>
+      </tbody>
+    </table>
+    <p>Dropping a node from the palette or calling <code>addNode({ type: 'wf-condition', ... })</code> fills in its named ports automatically (<code>Orion.workflow.ports</code>) unless the node already specifies its own <code>ports</code>. Field values live under <code>node.data</code> and round-trip through <code>getNode(id).data</code> / <code>updateNode(id, patch)</code> like any other diagram node data.</p>
+  </section>
+
+  <section id="validation">
+    <h2>Structural validation</h2>
+    <p><code>validate()</code> runs automatically after load and after every committed change, and fires <code>o-validate</code>. It flags, per node: <strong>more than one Start</strong> node, an <strong>End unreachable</strong> from Start, and any <strong>port with nothing wired to it</strong> (both inputs and outputs — a Condition's unused "No" branch is flagged just like a task with no outgoing edge). A node with problems gets a small warning badge; select it to see the messages listed above its fields in the properties panel.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-sm o-btn-danger" id="v-break">Disconnect an edge</button>
+          <button class="o-btn o-btn-sm" id="v-cycle">Add a cycle</button>
+          <button class="o-btn o-btn-sm o-btn-ghost" id="v-reset">Reset (valid)</button>
+        </div>
+        <o-workflow id="vwf" properties style="--o-dg-height: 24rem"></o-workflow>
+        <div class="docs-log" id="v-log"></div>
+        <script>
+          {
+            const el = document.getElementById('vwf');
+            const good = () => ({
+              nodes: [
+                { id: 's', type: 'wf-start', x: 40, y: 20 },
+                { id: 't', type: 'wf-task', x: 20, y: 120, label: 'Do the work' },
+                { id: 'e', type: 'wf-end', x: 40, y: 240 },
+              ],
+              edges: [{ id: 'e1', from: 's', to: 't' }, { id: 'e2', from: 't', to: 'e' }],
+            });
+            el.value = good();
+            el.addEventListener('o-validate', e => {
+              const d = e.detail;
+              docs.log('#v-log', d.valid ? 'valid' : Object.entries(d.errors).map(([id, msgs]) => `${id}: ${msgs.join('; ')}`).join(' | '));
+            });
+            document.getElementById('v-break').onclick = () => { const v = el.getValue(); v.edges = v.edges.filter(x => x.id !== 'e2'); el.import(v); };
+            document.getElementById('v-cycle').onclick = () => { const v = el.getValue(); v.edges.push({ from: 'e', to: 't' }); el.import(v); };
+            document.getElementById('v-reset').onclick = () => el.import(good());
+          }
+        </script>
+      </template>
+    </div>
+    <p class="o-text-muted o-text-sm">A cycle back into the flow does not on its own fail validation (only unreachable-End, multi-Start and dangling ports do) — <code>&lt;o-workflow&gt;</code> is a diagram, not an execution engine, so a loop is valid structure; <code>simulate()</code> below will just keep circling until you stop it.</p>
+  </section>
+
+  <section id="simulate">
+    <h2>Simulate</h2>
+    <p><code>simulate()</code> samples one path from Start to End (first untried outgoing edge at each fork) and animates a token along it, highlighting the active edge; <code>stopSimulate()</code> stops it (also called automatically on disconnect). The toolbar's play/stop button calls <code>toggleSimulate()</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <o-workflow id="sim" toolbar style="--o-dg-height: 22rem"></o-workflow>
+        <div class="docs-log" id="sim-log"></div>
+        <script>
+          {
+            const el = document.getElementById('sim');
+            el.value = {
+              nodes: [
+                { id: 's', type: 'wf-start', x: 260, y: 20 }, { id: 'a', type: 'wf-task', x: 240, y: 120, label: 'Review' },
+                { id: 'c', type: 'wf-condition', x: 227, y: 240, label: 'Approved?' }, { id: 'd', type: 'wf-delay', x: 440, y: 360, label: 'Wait', data: { duration: 1, unit: 'hours' } },
+                { id: 'e', type: 'wf-end', x: 260, y: 480 },
+              ],
+              edges: [{ from: 's', to: 'a' }, { from: 'a', to: 'c' }, { from: 'c', to: 'e', fromPort: 'yes' }, { from: 'c', to: 'd', fromPort: 'no' }, { from: 'd', to: 'e' }],
+            };
+            el.addEventListener('o-simulate', e => docs.log('#sim-log', `o-simulate running=${e.detail.running}`));
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard &amp; accessibility</h2>
+    <p><code>&lt;o-workflow&gt;</code> inherits every keyboard shortcut and accessibility behaviour of <a href="diagram.html#keyboard"><code>&lt;o-diagram&gt;</code></a> unchanged (Tab between nodes, arrows to nudge, Enter/F2 to edit a label, Delete, Ctrl/⌘+Z/Y, Shift+F10 for the action menu, +/−/0/1 to zoom). Simulate has no dedicated shortcut; toggle it from the toolbar button or call <code>toggleSimulate()</code>.</p>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <p>Everything from <a href="diagram.html#api"><code>&lt;o-diagram&gt;</code>'s API</a> applies unchanged. Additions:</p>
+    <table class="docs-api">
+      <thead><tr><th>Name</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>palette</td><td>—</td><td>the 11 workflow types</td><td>Overridden default — the typed node palette instead of generic shapes.</td></tr>
+        <tr><td>toolbar / properties</td><td>boolean</td><td><code>true</code></td><td>Both default on (generic <code>&lt;o-diagram&gt;</code> defaults them off).</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>validate()</td><td>Re-runs structural validation; returns <code>boolean</code>. Runs automatically after load and every change.</td></tr>
+        <tr><td>autoLayout(opts?)</td><td><code>layout('layered', { direction: 'TB', ...opts })</code>.</td></tr>
+        <tr><td>simulate() · stopSimulate() · toggleSimulate()</td><td>Token animation along a sampled Start→End path.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-validate</td><td>{ valid, errors }</td><td><code>errors</code> is <code>{ [nodeId]: string[] }</code>. Fired after load and after every committed change.</td></tr>
+        <tr><td>o-simulate</td><td>{ running, path? }</td><td>Does not bubble.</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS variables</h3>
+    <p>All of <code>&lt;o-diagram&gt;</code>'s <code>--o-dg-*</code> variables apply (node cards are drawn on top of the same canvas). Node card tone colors come from the semantic tokens (<code>--o-primary</code>, <code>--o-success</code>, <code>--o-warning</code>, <code>--o-info</code>, <code>--o-danger</code>, <code>--o-secondary</code>, <code>--o-dark</code>) per type, not a separate <code>--o-wf-*</code> palette.</p>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cards — Orion Admin</title>
+<meta name="docs:section" content="Foundation">
+<meta name="docs:order" content="24">
+<meta name="docs:desc" content="Card containers with header, body, footer, images, accents and states">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Cards</h1>
+    <p class="docs-lead">The main building block of admin screens: a surface with optional header (title, subtitle, actions), body, footer, image, accent and interactive states.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Anatomy</h2>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-grid o-grid-cols-1 o-grid-cols-md-2 o-gap-4">
+          <div class="o-card">
+            <div class="o-card-header">
+              <div><h3 class="o-card-title">Team members</h3><p class="o-card-subtitle">12 people · 3 pending invites</p></div>
+              <div class="o-card-actions">
+                <button class="o-btn o-btn-ghost o-btn-icon o-btn-sm" aria-label="Refresh"><o-icon name="refresh"></o-icon></button>
+                <button class="o-btn o-btn-ghost o-btn-icon o-btn-sm" aria-label="More"><o-icon name="more-horizontal"></o-icon></button>
+              </div>
+            </div>
+            <div class="o-card-body">
+              <div class="o-avatar-group o-mb-3"><o-avatar name="Aisha Rahman"></o-avatar><o-avatar name="Ben Tan"></o-avatar><o-avatar name="Chen Wei"></o-avatar><o-avatar name="Diego Silva"></o-avatar><span class="o-avatar o-avatar-more">+8</span></div>
+              <p class="o-text-muted">Manage who can access this workspace and what they can do.</p>
+            </div>
+            <div class="o-card-footer"><span class="o-text-sm o-text-muted">Updated 2 min ago</span><span class="o-spacer"></span><button class="o-btn o-btn-sm">Manage</button><button class="o-btn o-btn-sm o-btn-primary">Invite</button></div>
+          </div>
+          <div class="o-card">
+            <img class="o-card-img-top" alt="" style="height:140px" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 140'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%234f46e5'/%3E%3Cstop offset='1' stop-color='%230e7490'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='400' height='140' fill='url(%23g)'/%3E%3Ccircle cx='330' cy='20' r='70' fill='%23fff' opacity='.12'/%3E%3Ccircle cx='60' cy='150' r='80' fill='%23fff' opacity='.08'/%3E%3C/svg%3E">
+            <div class="o-card-body">
+              <span class="o-badge o-badge-soft-success o-badge-dot o-mb-2">Active</span>
+              <h3 class="o-card-title o-mb-2">Q3 Marketing campaign</h3>
+              <p class="o-text-muted o-mb-4">Launch the new onboarding flow across web and mobile.</p>
+              <div class="o-progress-labeled"><div class="o-progress"><div class="o-progress-bar" style="--o-value:68%"></div></div><span class="o-progress-value">68%</span></div>
+            </div>
+          </div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="variants">
+    <h2>Variants</h2>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-grid o-grid-cols-1 o-grid-cols-sm-2 o-grid-cols-lg-4 o-gap-4">
+          <div class="o-card o-card-accent o-c-success"><div class="o-card-body"><b>.o-card-accent</b><p class="o-text-muted o-text-sm o-mb-0">Top accent with .o-c-success</p></div></div>
+          <a class="o-card o-card-hover o-card-link" href="#variants"><div class="o-card-body"><b>.o-card-hover</b><p class="o-text-muted o-text-sm o-mb-0">Clickable card that lifts</p></div></a>
+          <div class="o-card o-card-flat"><div class="o-card-body"><b>.o-card-flat</b><p class="o-text-muted o-text-sm o-mb-0">No shadow</p></div></div>
+          <div class="o-card is-selected"><div class="o-card-body"><b>.is-selected</b><p class="o-text-muted o-text-sm o-mb-0">Selected state</p></div></div>
+          <div class="o-card o-card-compact"><div class="o-card-header"><h3 class="o-card-title">.o-card-compact</h3></div><div class="o-card-body o-text-sm">Tighter paddings.</div></div>
+          <div class="o-card" style="position:relative;overflow:hidden"><span class="o-ribbon">New</span><div class="o-card-body"><b>Ribbon</b><p class="o-text-muted o-text-sm o-mb-0">.o-ribbon</p></div></div>
+          <div class="o-card o-card-flush"><div class="o-card-body"><b>.o-card-flush</b><p class="o-text-muted o-text-sm o-mb-0">No border, transparent</p></div></div>
+          <div class="o-card" id="card-loading"><div class="o-card-body"><b>Loading overlay</b><p class="o-text-muted o-text-sm o-mb-0">Orion.loading(card, true)</p></div></div>
+          <script>Orion.loading(document.getElementById('card-loading'), true, 'Loading…');</script>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="with-table">
+    <h2>Card with table</h2>
+    <p>A <code>.o-table-wrap</code> or <code>.o-list</code> as a direct child of a card loses its own border so it sits flush.</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-card">
+          <div class="o-card-header"><h3 class="o-card-title">Recent orders</h3><a class="o-btn o-btn-link o-btn-sm o-ms-auto" href="#with-table">View all</a></div>
+          <div class="o-table-wrap">
+            <table class="o-table o-table-hover">
+              <thead><tr><th>Order</th><th>Customer</th><th>Status</th><th class="o-num">Total</th></tr></thead>
+              <tbody>
+                <tr><td>#10231</td><td>Aisha Rahman</td><td><span class="o-badge o-badge-soft-success">Paid</span></td><td class="o-num">RM 1,240.00</td></tr>
+                <tr><td>#10230</td><td>Ben Tan</td><td><span class="o-badge o-badge-soft-warning">Pending</span></td><td class="o-num">RM 89.90</td></tr>
+                <tr><td>#10229</td><td>Chen Wei</td><td><span class="o-badge o-badge-soft-danger">Refunded</span></td><td class="o-num">RM 310.50</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>Classes</h2>
+    <table class="docs-api">
+      <thead><tr><th>Class</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.o-card</td><td>Container.</td></tr>
+        <tr><td>.o-card-header / -title / -subtitle / -actions</td><td>Header row with title block and right-aligned actions.</td></tr>
+        <tr><td>.o-card-body / .o-card-footer</td><td>Content and footer.</td></tr>
+        <tr><td>.o-card-img-top / .o-card-img</td><td>Images.</td></tr>
+        <tr><td>.o-card-accent (+ .o-c-*)</td><td>Colored top border.</td></tr>
+        <tr><td>.o-card-hover / .o-card-link</td><td>Interactive card.</td></tr>
+        <tr><td>.o-card-flat / .o-card-flush / .o-card-compact</td><td>Variants.</td></tr>
+        <tr><td>.is-selected</td><td>Selected state.</td></tr>
+        <tr><td>.o-ribbon</td><td>Corner ribbon label.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

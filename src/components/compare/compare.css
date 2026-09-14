@@ -1,0 +1,28 @@
+/* ── <o-compare-tray> ────────────────────────────────────────────────── */
+.o-compare-tray[hidden] { display: none; }
+.o-compare-tray-list { display: flex; flex-wrap: nowrap; gap: .5rem; overflow-x: auto; scrollbar-width: thin; padding-block: .125rem; }
+.o-compare-tray-item { flex-shrink: 0; }
+.o-compare-tray-thumb { width: 1.25rem; height: 1.25rem; border-radius: var(--o-radius-xs); object-fit: cover; margin-inline-start: -.375rem; }
+.o-compare-tray-label { max-width: 10rem; overflow: hidden; text-overflow: ellipsis; }
+.o-compare-tray-actions { display: flex; align-items: center; gap: .625rem; flex-shrink: 0; margin-inline-start: .5rem; }
+.o-compare-tray-count { font-size: var(--o-fs-sm); color: var(--o-text-muted); white-space: nowrap; }
+.o-compare-tray.is-full .o-compare-tray-count { color: var(--o-warning-text); font-weight: 600; }
+
+/* ── <o-compare-table> ───────────────────────────────────────────────── */
+.o-compare-table { display: block; }
+.o-compare-table-toolbar { display: flex; flex-wrap: wrap; gap: 1.25rem; margin-block-end: .875rem; }
+.o-compare-table-wrap { max-width: 100%; }
+.o-compare-table-el { min-width: max-content; }
+.o-compare-table-el .o-compare-table-attr {
+  position: sticky; inset-inline-start: 0; z-index: 1; background: var(--o-surface-2); min-width: 9rem; max-width: 14rem;
+}
+.o-compare-table-el thead .o-compare-table-attr { z-index: 2; }
+.o-compare-table-el .o-compare-table-col { min-width: 12rem; }
+.o-compare-table-head { display: flex; flex-direction: column; align-items: center; gap: .375rem; text-align: center; }
+.o-compare-table-img { width: 3rem; height: 3rem; object-fit: contain; border-radius: var(--o-radius-sm); background: var(--o-surface-2); }
+.o-compare-table-title { font-weight: 650; color: var(--o-text); text-transform: none; letter-spacing: normal; white-space: normal; }
+.o-compare-table-remove { margin-block-start: -.25rem; }
+.o-compare-table-cell { text-align: center; }
+.o-compare-table.show-diff .o-compare-table-el tr.is-diff > * { background: var(--o-warning-subtle); }
+.o-compare-table-cell.is-best { background: var(--o-success-subtle); color: var(--o-success-text); font-weight: 650; }
+.o-compare-table-best-icon { color: var(--o-success); margin-inline-end: .25rem; vertical-align: -2px; }

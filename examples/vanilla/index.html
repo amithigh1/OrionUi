@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Users — Orion Admin (plain HTML)</title>
+<!-- One file: JS + CSS + icons. From a CDN in production:
+     <script src="https://cdn.jsdelivr.net/npm/orion-admin/dist/orion.min.js"></script> -->
+<script src="../../dist/orion.js" data-currency="USD"></script>
+</head>
+<body class="o-container o-py-6">
+
+  <div class="o-page-header">
+    <div>
+      <nav aria-label="Breadcrumb"><ol class="o-breadcrumb"><li class="o-breadcrumb-item"><a href="#">Dashboard</a></li><li class="o-breadcrumb-item is-active">Users</li></ol></nav>
+      <h1 class="o-page-title">Users</h1>
+    </div>
+    <div class="o-page-header-actions">
+      <button class="o-btn" data-o-action="theme" data-o-value="toggle" aria-label="Toggle theme"><o-icon name="moon"></o-icon></button>
+      <button class="o-btn o-btn-primary" id="add"><o-icon name="plus"></o-icon> New user</button>
+    </div>
+  </div>
+
+  <div class="o-grid o-grid-cols-1 o-grid-cols-md-4 o-gap-4 o-mb-6">
+    <div class="o-card o-card-body"><div class="o-stat"><span class="o-stat-label">Total users</span><span class="o-stat-value" id="kpi-total">—</span></div></div>
+    <div class="o-card o-card-body"><div class="o-stat"><span class="o-stat-label">Active</span><span class="o-stat-value o-text-success" id="kpi-active">—</span></div></div>
+    <div class="o-card o-card-body"><div class="o-stat"><span class="o-stat-label">Pending</span><span class="o-stat-value o-text-warning" id="kpi-pending">—</span></div></div>
+    <div class="o-card o-card-body"><div class="o-stat"><span class="o-stat-label">Departments</span><span class="o-stat-value" id="kpi-depts">—</span></div></div>
+  </div>
+
+  <div class="o-card">
+    <div class="o-card-header"><h2 class="o-card-title">All users</h2></div>
+    <o-datatable id="table" row-key="id"></o-datatable>
+  </div>
+
+  <script>
+    // Demo data (replace with your API: rows = await Orion.http.get('/api/users'))
+    const FIRST = ['Aisha', 'Ben', 'Chen', 'Diego', 'Elena', 'Farid', 'Grace', 'Hiro', 'Isabel', 'Jamal', 'Nurul', 'Omar'];
+    const LAST = ['Rahman', 'Tan', 'Garcia', 'Smith', 'Nguyen', 'Okafor', 'Silva', 'Lim', 'Patel', 'Kim'];
+    const ROLES = ['Admin', 'Editor', 'Viewer', 'Manager'];
+    const DEPTS = ['Engineering', 'Sales', 'Marketing', 'Finance', 'Design'];
+    const STATUS = ['Active', 'Active', 'Pending', 'Inactive'];
+    const rows = Array.from({ length: 120 }, (_, i) => ({
+      id: i + 1,
+      name: `${FIRST[i % FIRST.length]} ${LAST[i % LAST.length]}`,
+      email: `user${i + 1}@example.com`,
+      role: ROLES[i % ROLES.length],
+      department: DEPTS[i % DEPTS.length],
+      status: STATUS[i % STATUS.length],
+      salary: 40000 + (i % 20) * 3500,
+      joined: new Date(2024, i % 12, (i % 27) + 1),
+    }));
+
+    const table = document.getElementById('table');
+    table.columns = [
+      { key: 'name', title: 'Name', type: 'avatar' },
+      { key: 'email', title: 'Email' },
+      { key: 'role', title: 'Role', type: 'badge', filter: 'select' },
+      { key: 'department', title: 'Department', filter: 'select' },
+      { key: 'status', title: 'Status', type: 'badge', filter: 'select' },
+      { key: 'salary', title: 'Salary', type: 'currency', align: 'end' },
+      { key: 'joined', title: 'Joined', type: 'date' },
+    ];
+    table.rows = rows;
+
+    // KPIs
+    document.getElementById('kpi-total').textContent = Orion.format.number(rows.length);
+    document.getElementById('kpi-active').textContent = rows.filter(r => r.status === 'Active').length;
+    document.getElementById('kpi-pending').textContent = rows.filter(r => r.status === 'Pending').length;
+    document.getElementById('kpi-depts').textContent = new Set(rows.map(r => r.department)).size;
+
+    // Create user in a modal with validation
+    document.getElementById('add').addEventListener('click', async () => {
+      const handle = Orion.modal({
+        title: 'New user',
+        content: `<form id="user-form" class="o-form-grid" data-o-validate>
+            <div class="o-field"><label class="o-label is-required" for="f-name">Name</label><input class="o-input" id="f-name" name="name" data-o-rules="required|minlength:3"></div>
+            <div class="o-field"><label class="o-label is-required" for="f-email">Email</label><input class="o-input" id="f-email" name="email" type="email" data-o-rules="required|email"></div>
+            <div class="o-field"><label class="o-label" for="f-role">Role</label><o-select id="f-role" name="role" options='["Admin","Editor","Viewer","Manager"]' value="Viewer"></o-select></div>
+            <div class="o-field"><label class="o-label" for="f-joined">Joined</label><o-datepicker id="f-joined" name="joined"></o-datepicker></div>
+          </form>`,
+        buttons: [
+          { text: 'Cancel', close: true },
+          // close: false — the handler closes the modal itself once the form is valid (a bare `return` would otherwise close it)
+          { text: 'Create', variant: 'primary', close: false, onClick: async () => {
+              const form = document.getElementById('user-form');
+              if (Orion.validate && !(await Orion.validate(form).validate())) return;   // keep the modal open
+              const data = Object.fromEntries(new FormData(form));
+              table.addRow ? table.addRow({ id: rows.length + 1, status: 'Pending', salary: 50000, ...data })
+                           : (table.rows = [...table.rows, { id: rows.length + 1, status: 'Pending', salary: 50000, ...data }]);
+              Orion.toast.success(`${data.name} was added`);
+              handle.close();
+            } },
+        ],
+      });
+    });
+
+    table.addEventListener('o-row-click', e => Orion.toast(`Clicked ${e.detail.row.name}`));
+  </script>
+</body>
+</html>

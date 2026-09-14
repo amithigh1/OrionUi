@@ -1,0 +1,30 @@
+/* <o-preferences> panel + the Orion.preferences.open() drawer fallback. Tokens only. */
+o-preferences, .o-preferences { display: block; }
+.o-prefs-root { display: flex; flex-direction: column; gap: 1.25rem; }
+.o-prefs-section { padding: 1.125rem 1.25rem; background: var(--o-surface); border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); }
+.o-prefs-title { margin: 0 0 .875rem; font-size: var(--o-fs-sm); font-weight: 700; color: var(--o-text); text-transform: uppercase; letter-spacing: .04em; }
+.o-prefs-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .75rem 0; border-bottom: 1px solid var(--o-border); flex-wrap: wrap; }
+.o-prefs-row:last-child { border-bottom: 0; padding-bottom: 0; }
+.o-prefs-row:first-child { padding-top: 0; }
+.o-prefs-row-text { display: flex; flex-direction: column; gap: .125rem; min-width: 12rem; flex: 1 1 auto; }
+.o-prefs-row-label { font-size: var(--o-fs-sm); font-weight: 500; color: var(--o-text); }
+.o-prefs-row-desc { font-size: var(--o-fs-xs); color: var(--o-text-muted); }
+.o-prefs-segmented { flex-shrink: 0; }
+.o-prefs-fontsize { display: flex; align-items: center; gap: .625rem; }
+.o-prefs-fontsize > .o-range { width: 8rem; }
+.o-prefs-preview { margin-top: .875rem; padding: .75rem .875rem; font-size: var(--o-fs-sm); color: var(--o-text-muted); background: var(--o-surface-2); border-radius: var(--o-radius); display: flex; flex-direction: column; gap: .25rem; }
+.o-prefs-preview b { color: var(--o-text); font-weight: 600; }
+
+/* Orion.preferences.open() fallback drawer (used when the `overlays` package is absent) */
+.o-prefs-drawer {
+  position: fixed; top: 0; bottom: 0; inset-inline-end: 0; z-index: calc(var(--o-z-drawer) + 1);
+  display: flex; flex-direction: column; width: min(24rem, 100vw); outline: none; border-radius: 0;
+}
+.o-prefs-drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-bottom: 1px solid var(--o-border); }
+.o-prefs-drawer-head h2 { margin: 0; font-size: var(--o-fs-lg); font-weight: 700; }
+.o-prefs-drawer-body { flex: 1 1 auto; overflow-y: auto; padding: 1.25rem; }
+
+/* reduced-motion override (see 10-preferences.js applyMotion()) */
+html.o-motion-reduce, html.o-motion-reduce * {
+  animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important;
+}

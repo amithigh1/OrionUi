@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360" width="480" height="360">
+  <title>Sample document fixture — a page photographed at a slight angle on a dark desk, for &lt;o-doc-scanner&gt; auto-detect/perspective-crop demos and tests (no real camera needed).</title>
+  <rect width="480" height="360" fill="#202020"/>
+  <g transform="translate(240 180) rotate(-4)">
+    <polygon points="-170,-100 170,-100 170,100 -170,100" fill="#fafaf5"/>
+    <rect x="-140" y="-70" width="220" height="8" fill="#333"/>
+    <rect x="-140" y="-42" width="190" height="8" fill="#333"/>
+    <rect x="-140" y="-14" width="220" height="8" fill="#333"/>
+    <rect x="-140" y="14" width="150" height="8" fill="#333"/>
+    <rect x="-140" y="42" width="220" height="8" fill="#333"/>
+  </g>
+</svg>

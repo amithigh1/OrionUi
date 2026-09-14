@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Global Search — Orion Admin</title>
+<meta name="docs:section" content="Search &amp; Commands">
+<meta name="docs:order" content="20">
+<meta name="docs:desc" content="A header search box with grouped, async, cross-category results">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Global Search</h1>
+    <p class="docs-lead"><code>&lt;o-global-search&gt;</code> is the search box that usually lives in an app header:
+    it expands into a floating panel of results grouped by category, coming from one or more async
+    <code>providers</code>. It remembers your search history and shows recent items, favorites and
+    suggested queries when the box is empty, and turns full-screen on phones.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Providers</h2>
+    <p>Focus the box below (or press <kbd class="o-kbd">/</kbd> anywhere on the page) and type. Each provider
+    is <code>{ id, title, icon, limit, search(query, { signal }) }</code>; results are
+    <code>{ id, title, subtitle, url, icon, avatar, meta, badge }</code>. A category with more matches than its
+    <code>limit</code> gets a <em>See all</em> row.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-global-search id="gs-demo" placeholder="Search users, orders, pages…" shortcut="/"></o-global-search>
+        <div class="docs-log o-mt-3" id="gs-log"></div>
+        <script>{
+          const gs = document.getElementById('gs-demo');
+          const people = docs.people(300);
+          const pages = ['Dashboard', 'Billing', 'Team members', 'API keys', 'Webhooks', 'Notifications', 'Security', 'Integrations'];
+          const orders = Array.from({ length: 120 }, (_, i) => ({ id: 5000 + i, customer: docs.people(1, i + 900)[0].name, total: Math.round(20 + Math.random() * 900) }));
+
+          gs.trending = ['overdue invoices', 'admin users', 'API keys'];
+          gs.providers = [
+            {
+              id: 'users', title: 'Users', icon: 'user', limit: 4,
+              search: async (q, { signal }) => {
+                await new Promise(r => setTimeout(r, 260));
+                if (signal.aborted) throw new DOMException('aborted', 'AbortError');
+                return Orion.util.fuzzySearch(people, q, p => p.name + ' ' + p.email, 20)
+                  .map(p => ({ id: 'u' + p.id, title: p.name, subtitle: p.email, icon: 'user', meta: p.role, url: '#user-' + p.id }));
+              },
+            },
+            {
+              id: 'orders', title: 'Orders', icon: 'columns', limit: 3,
+              search: async (q, { signal }) => {
+                await new Promise(r => setTimeout(r, 380));
+                if (signal.aborted) throw new DOMException('aborted', 'AbortError');
+                return Orion.util.fuzzySearch(orders, q, o => '#' + o.id + ' ' + o.customer, 20)
+                  .map(o => ({ id: 'o' + o.id, title: '#' + o.id + ' — ' + o.customer, meta: '$' + o.total, icon: 'columns', url: '#order-' + o.id }));
+              },
+            },
+            {
+              id: 'pages', title: 'Pages', icon: 'file', limit: 5,
+              search: async (q) => pages.filter(p => Orion.util.fuzzy(q, p)).map(p => ({ id: 'p-' + p, title: p, icon: 'file', url: '#page-' + p, onSelect: () => docs.log('#gs-log', 'navigate: ' + p) })),
+            },
+          ];
+          gs.addEventListener('o-select', e => docs.log('#gs-log', 'select: ' + e.detail.item.title + (e.detail.provider ? ' (' + (typeof e.detail.provider.title === 'function' ? e.detail.provider.title() : e.detail.provider.title) + ')' : '')));
+          gs.addEventListener('o-search', e => docs.log('#gs-log', 'search: "' + e.detail.query + '"' + (e.detail.submitted ? ' (submitted)' : '')));
+          gs.addEventListener('o-see-all', e => docs.log('#gs-log', 'see all: ' + (typeof e.detail.provider.title === 'function' ? e.detail.provider.title() : e.detail.provider.title)));
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="empty">
+    <h2>Empty state: history, recent, favorites &amp; trending</h2>
+    <p>With an empty query the panel shows, in order: recent searches (removable, with a <em>Clear history</em>
+    link), favorites and recent items from <code>Orion.favorites</code>/<code>Orion.recent</code> when that
+    package is loaded (a built-in <code>localStorage</code> fallback is used otherwise), and any
+    <code>trending</code> suggested queries you configure. Try searching for something above, close the panel,
+    then re-open it — your search is remembered.</p>
+  </section>
+
+  <section id="api">
+    <h2>Properties</h2>
+    <table class="docs-api">
+      <thead><tr><th>Prop</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>placeholder</code></td><td>string</td><td>–</td><td></td></tr>
+        <tr><td><code>shortcut</code></td><td>string</td><td><code>'/'</code></td><td>Focuses the box from anywhere (skipped while typing elsewhere); uses <code>Orion.shortcuts</code> when loaded.</td></tr>
+        <tr><td><code>providers</code></td><td><code>Provider[]</code></td><td><code>[]</code></td><td>See below. Usually set as a property.</td></tr>
+        <tr><td><code>trending</code></td><td><code>(string | { label })[]</code></td><td><code>[]</code></td><td>Suggested queries shown on an empty search.</td></tr>
+        <tr><td><code>minChars</code></td><td>number</td><td><code>1</code></td><td></td></tr>
+        <tr><td><code>debounce</code></td><td>number</td><td><code>200</code></td><td>Per-provider debounce (ms) before <code>search()</code> runs.</td></tr>
+        <tr><td><code>scope</code></td><td>string</td><td><code>'default'</code></td><td>History/recent storage key, so multiple search boxes keep separate histories. Favorites are always shared across every search box (a favorite is a per-user fact, not a per-box one).</td></tr>
+      </tbody>
+    </table>
+    <h3>Provider &amp; result shapes</h3>
+    <pre class="docs-code-block" data-lang="js">
+      interface Provider {
+        id: string; title: string | (() => string); icon?: string; limit?: number /* 5 */;
+        search(query: string, ctx: { signal: AbortSignal }): Promise&lt;Result[]&gt;;
+        seeAllHref?: string | ((query: string) => string);
+        onSeeAll?(query: string): void;
+      }
+      interface Result {
+        id: string; title: string; subtitle?: string; url?: string; icon?: string; avatar?: string;
+        meta?: string; badge?: string | number; onSelect?(item: Result): void;   // called instead of navigating to `url`
+      }
+    </pre>
+    <h2>Methods</h2>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th></th></tr></thead>
+      <tbody>
+        <tr><td><code>open()</code> / <code>close()</code> / <code>toggle()</code></td><td></td></tr>
+        <tr><td><code>focus(opts?)</code></td><td>Focuses the input and opens the panel.</td></tr>
+        <tr><td><code>setQuery(q)</code></td><td>Sets the input value and (re)runs the search programmatically.</td></tr>
+      </tbody>
+    </table>
+    <h2>Events</h2>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Cancelable</th><th><code>detail</code></th></tr></thead>
+      <tbody>
+        <tr><td><code>o-search</code></td><td></td><td><code>{ query, submitted? }</code> — <code>submitted</code> is set on Enter with no active row.</td></tr>
+        <tr><td><code>o-select</code></td><td></td><td><code>{ item, provider }</code></td></tr>
+        <tr><td><code>o-see-all</code></td><td></td><td><code>{ provider, query }</code></td></tr>
+        <tr><td><code>o-before-open</code></td><td>✓</td><td><code>{}</code></td></tr>
+        <tr><td><code>o-open</code> / <code>o-close</code></td><td></td><td><code>{}</code> / <code>{ reason }</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td><kbd class="o-kbd">/</kbd></td><td>Focus the box from anywhere (configurable via <code>shortcut</code>).</td></tr>
+        <tr><td><kbd class="o-kbd">↑</kbd> / <kbd class="o-kbd">↓</kbd></td><td>Move across every category's results as one flat list.</td></tr>
+        <tr><td><kbd class="o-kbd">Enter</kbd></td><td>Opens the active result (or the "see all" row); with nothing active, submits the query to history.</td></tr>
+        <tr><td><kbd class="o-kbd">Esc</kbd></td><td>Clears the query first, then closes the panel.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Presence &amp; Activity — Orion Admin</title>
+<meta name="docs:section" content="Communication">
+<meta name="docs:order" content="30">
+<meta name="docs:desc" content="Online/away/busy/dnd/offline presence indicators, a who's-online roster, and an activity feed">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Presence &amp; Activity</h1>
+    <p class="docs-lead"><code>Orion.presence</code> is a tiny shared status store; <code>&lt;o-presence&gt;</code> shows one dot + label, <code>&lt;o-presence-list&gt;</code> a grouped roster. <code>&lt;o-activity-feed&gt;</code> renders an "actor did something" timeline with day grouping, filtering and infinite loading. Statuses (<code>online | away | busy | dnd | offline</code>) match <code>&lt;o-avatar status&gt;</code> exactly.</p>
+  </header>
+
+  <section id="presence-basic">
+    <h2>&lt;o-presence&gt;</h2>
+    <p>Drive it by hand with <code>status</code>/<code>label</code>, or point it at a user id (<code>user-id</code>) to track <code>Orion.presence</code> live.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-stack" style="--o-gap:.75rem">
+          <o-presence status="online" label="Aisha Rahman" pulse></o-presence>
+          <o-presence status="away" label="Ben Tan"></o-presence>
+          <o-presence status="busy" label="Chen Wei"></o-presence>
+          <o-presence status="dnd" label="Diego Silva"></o-presence>
+          <o-presence status="offline" label="Elena Ivanova"></o-presence>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="presence-store">
+    <h2>Orion.presence: set() / subscribe()</h2>
+    <p>Feed the store from your realtime layer; every <code>&lt;o-presence user-id&gt;</code> tracking that id updates automatically. Idle auto-away (<code>autoAway()</code>) needs <a href="idle.html"><code>Orion.idle</code></a> — see the note below.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <span class="o-text-muted">Aisha Rahman —</span>
+          <div class="o-segmented" id="pa-set"><button data-v="online">online</button><button data-v="away">away</button><button data-v="busy">busy</button><button data-v="dnd">dnd</button><button data-v="offline">offline</button></div>
+        </div>
+        <o-presence user-id="pa-1" label="Aisha Rahman"></o-presence>
+        <div class="docs-log o-mt-3" id="log-presence"></div>
+        <script>
+          {
+            Orion.presence.set('pa-1', 'online', { name: 'Aisha Rahman' });
+            Orion.presence.subscribe(e => { if (e.userId === 'pa-1') docs.log('#log-presence', `set('${e.userId}', '${e.status}')`); });
+            document.getElementById('pa-set').addEventListener('click', e => {
+              const b = e.target.closest('button'); if (!b) return;
+              [...b.parentElement.children].forEach(x => x.classList.toggle('is-active', x === b));
+              Orion.presence.set('pa-1', b.dataset.v);
+            });
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="presence-list">
+    <h2>&lt;o-presence-list&gt;</h2>
+    <p><code>group-by="status"</code> (default) buckets by presence priority; <code>"group"</code> buckets by each item's own <code>group</code> field (e.g. a team); <code>"none"</code> is a flat, presence-sorted list. Rows with a live <code>Orion.presence</code> entry override their own <code>status</code> field.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-grid-auto" style="--o-min:14rem;--o-gap:1.5rem">
+          <div>
+            <h4 class="o-h6">group-by="status"</h4>
+            <o-presence-list id="list-status" group-by="status" class="o-card o-p-3" style="max-height:18rem;overflow-y:auto"></o-presence-list>
+          </div>
+          <div>
+            <h4 class="o-h6">group-by="group" (by team)</h4>
+            <o-presence-list id="list-team" group-by="group" class="o-card o-p-3" style="max-height:18rem;overflow-y:auto"></o-presence-list>
+          </div>
+        </div>
+        <script>
+          {
+            const roster = [
+              { id: 'u1', name: 'Aisha Rahman', status: 'online', role: 'Admin', group: 'Engineering' },
+              { id: 'u2', name: 'Ben Tan', status: 'busy', role: 'Engineer', group: 'Engineering' },
+              { id: 'u3', name: 'Chen Wei', status: 'dnd', role: 'Designer', group: 'Design' },
+              { id: 'u4', name: 'Diego Silva', status: 'away', role: 'PM', group: 'Product' },
+              { id: 'u5', name: 'Elena Ivanova', status: 'online', role: 'Designer', group: 'Design' },
+              { id: 'u6', name: 'Farid Haddad', status: 'offline', role: 'Support', group: 'Support' },
+            ];
+            document.getElementById('list-status').items = roster;
+            document.getElementById('list-team').items = roster;
+            document.querySelectorAll('#list-status, #list-team').forEach(el => el.addEventListener('o-select', e => Orion.toast?.(e.detail.item.name)));
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="activity-basic">
+    <h2>&lt;o-activity-feed&gt;</h2>
+    <p>Each item is <code>{ id, actor: { name, avatar? }, verb, target?: { label }, type?, icon?, color?, createdAt }</code> — rendered as actor avatar (<code>&lt;o-avatar name&gt;</code>) · "actor verb target" · a colored icon · relative time. <code>compact</code> tightens it for a dashboard card (this is exactly what <code>templates/dashboard.html</code> uses).</p>
+    <div class="docs-demo">
+      <template>
+        <o-activity-feed id="feed-basic" compact class="o-card o-p-3"></o-activity-feed>
+        <script>
+          {
+            const now = Date.now();
+            document.getElementById('feed-basic').items = [
+              { id: 1, actor: { name: 'Ben Tan' }, verb: 'shipped order', target: { label: '#10236' }, type: 'status', icon: 'truck', color: 'info', createdAt: now - 6e5 },
+              { id: 2, actor: { name: 'Aisha Rahman' }, verb: 'refunded', target: { label: '#10232' }, type: 'status', icon: 'rotate-ccw', color: 'danger', createdAt: now - 36e5 },
+              { id: 3, actor: { name: 'Chen Wei' }, verb: 'added product', target: { label: 'Aurora desk lamp' }, type: 'upload', icon: 'package', color: 'success', createdAt: now - 9e6 },
+              { id: 4, actor: { name: 'Grace Kim' }, verb: 'commented on', target: { label: 'Q3 report' }, type: 'comment', icon: 'message-square', color: 'primary', createdAt: now - 864e5 },
+            ];
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="activity-filter">
+    <h2>Day grouping &amp; type filter</h2>
+    <p>Without <code>compact</code>, day dividers are easier to see. The filter chip row shows automatically once more than one <code>type</code> is present (or force it with <code>show-filter</code>); pass explicit <code>filters</code> for custom labels.</p>
+    <div class="docs-demo">
+      <template>
+        <o-activity-feed id="feed-filter" filters='[{"value":"status","label":"Orders"},{"value":"upload","label":"Products"},{"value":"comment","label":"Comments"}]' class="o-card o-p-3"></o-activity-feed>
+        <script>
+          {
+            const now = Date.now();
+            document.getElementById('feed-filter').items = [
+              { id: 1, actor: { name: 'Ben Tan' }, verb: 'shipped order', target: { label: '#10236' }, type: 'status', icon: 'truck', color: 'info', createdAt: now - 3e5 },
+              { id: 2, actor: { name: 'Grace Kim' }, verb: 'commented on', target: { label: 'Q3 report' }, type: 'comment', icon: 'message-square', color: 'primary', createdAt: now - 9e5 },
+              { id: 3, actor: { name: 'Chen Wei' }, verb: 'added product', target: { label: 'Aurora desk lamp' }, type: 'upload', icon: 'package', color: 'success', createdAt: now - 864e5 },
+              { id: 4, actor: { name: 'Aisha Rahman' }, verb: 'refunded', target: { label: '#10232' }, type: 'status', icon: 'rotate-ccw', color: 'danger', createdAt: now - 2 * 864e5 },
+              { id: 5, actor: { name: 'Diego Silva' }, verb: 'commented on', target: { label: 'Launch checklist' }, type: 'comment', icon: 'message-square', color: 'primary', createdAt: now - 3 * 864e5 },
+            ];
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="activity-infinite">
+    <h2>Paged / infinite loading</h2>
+    <p><code>source(page, {pageSize})</code> returns a page (or <code>{items, hasMore}</code>); <code>load()</code> pulls one page, <code>auto-load</code> pulls automatically as the sentinel scrolls into view.</p>
+    <div class="docs-demo">
+      <template>
+        <o-activity-feed id="feed-infinite" auto-load page-size="8" class="o-card o-p-3" style="max-height:20rem;overflow-y:auto"></o-activity-feed>
+        <script>
+          {
+            const actors = ['Aisha Rahman', 'Ben Tan', 'Chen Wei', 'Diego Silva', 'Elena Ivanova'];
+            const verbs = [['status', 'truck', 'info', 'shipped order'], ['upload', 'package', 'success', 'added product'], ['comment', 'message-square', 'primary', 'commented on']];
+            const all = Array.from({ length: 42 }, (_, i) => {
+              const [type, icon, color, verb] = verbs[i % verbs.length];
+              return { id: i + 1, actor: { name: actors[i % actors.length] }, verb, target: { label: '#' + (10500 - i) }, type, icon, color, createdAt: Date.now() - i * 21e5 };
+            });
+            const feed = document.getElementById('feed-infinite');
+            feed.source = async (page, { pageSize }) => {
+              await new Promise(r => setTimeout(r, 300));
+              const start = (page - 1) * pageSize;
+              return { items: all.slice(start, start + pageSize), hasMore: start + pageSize < all.length };
+            };
+            // auto-load watches the trailing sentinel and calls load() itself once it's visible
+            // (which it is here, right away, since the feed starts empty) — no manual load(1) needed.
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Orion.presence</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>set(userId, status, meta?)</td><td><code>online | away | busy | dnd | offline</code>; unknown values store as <code>offline</code>.</td></tr>
+        <tr><td>get(userId) / entry(userId) / has(userId)</td><td></td></tr>
+        <tr><td>all() / entries() / onlineCount()</td><td></td></tr>
+        <tr><td>remove(userId)</td><td></td></tr>
+        <tr><td>subscribe(fn) → off()</td><td><code>fn({ userId, status, prev, entry, removed? })</code>.</td></tr>
+        <tr><td>autoAway(userId, {timeout,crossTab}) → stop()</td><td>Needs <code>Orion.idle</code> (no-op otherwise).</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-presence&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>status</td><td>string</td><td>Ignored while <code>user-id</code> is set.</td></tr>
+        <tr><td>user-id</td><td>string</td><td>Tracks <code>Orion.presence</code> live.</td></tr>
+        <tr><td>label / show-label / pulse</td><td>string / boolean / boolean</td><td></td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-presence-list&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>items</td><td>array</td><td><code>{id,name,avatar?,status?,role?,group?}</code>.</td></tr>
+        <tr><td>group-by</td><td><code>status|group|none</code></td><td>Default <code>status</code>.</td></tr>
+        <tr><td>hide-offline / live</td><td>boolean</td><td><code>live</code> default true.</td></tr>
+      </tbody>
+    </table>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th></tr></thead>
+      <tbody><tr><td>o-select</td><td><code>{ item }</code></td></tr></tbody>
+    </table>
+    <h3>&lt;o-activity-feed&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>items</td><td>array</td><td><code>{id,actor:{name,avatar?},verb,target?:{label},type?,icon?,color?,createdAt}</code>.</td></tr>
+        <tr><td>compact</td><td>boolean</td><td></td></tr>
+        <tr><td>group-by-day</td><td>boolean</td><td>Default true.</td></tr>
+        <tr><td>filter / filters / show-filter</td><td>string / array / boolean</td><td></td></tr>
+        <tr><td>source / page-size / auto-load</td><td>function / number / boolean</td><td></td></tr>
+      </tbody>
+    </table>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>setItems(list) / clear() / refresh()</td><td></td></tr>
+        <tr><td>load(page?) → Promise&lt;newItems[]&gt;</td><td></td></tr>
+        <tr><td>o-select / o-load / o-error</td><td>Events.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard &amp; a11y</h2>
+    <p><code>&lt;o-presence&gt;</code> is <code>role="status"</code> (announces changes without moving focus). <code>&lt;o-presence-list&gt;</code> and <code>&lt;o-activity-feed&gt;</code> rows are <code>tabindex="0"</code> and activate with <kbd class="o-kbd">Enter</kbd> / <kbd class="o-kbd">Space</kbd>. Status/type is never color-only — every indicator carries text.</p>
+  </section>
+</main>
+</body>
+</html>

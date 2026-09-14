@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Animation &amp; transitions — Orion Admin</title>
+<meta name="docs:section" content="Foundation">
+<meta name="docs:order" content="90">
+<meta name="docs:title" content="Animation &amp; Transitions">
+<meta name="docs:desc" content="Web Animations presets, height collapse, enter/leave transitions, reduced motion">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Animation &amp; Transitions</h1>
+    <p class="docs-lead">A small promise-based animation API on top of the Web Animations API. Every animation is automatically disabled when the user prefers reduced motion.</p>
+  </header>
+
+  <section id="presets">
+    <h2>Presets</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-4" id="anim-buttons"></div>
+        <div class="o-center o-p-8 o-border o-rounded-lg o-bg-surface-2"><div id="anim-target" class="o-card o-card-body o-text-center" style="width:11rem"><o-icon name="sparkles" size="28"></o-icon><div class="o-mt-2 o-fw-semibold">Animate me</div></div></div>
+        <script>
+          const target = document.getElementById('anim-target');
+          ['fadeIn', 'zoomIn', 'popIn', 'slideInUp', 'slideInDown', 'slideInStart', 'slideInEnd', 'shake', 'pulse', 'bounce', 'flash', 'highlight'].forEach(name => {
+            const b = Orion.h('button', { class: 'o-btn o-btn-sm', onClick: () => Orion.animate(target, name, { duration: name === 'highlight' ? 1200 : 450 }) }, name);
+            document.getElementById('anim-buttons').append(b);
+          });
+        </script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+      await Orion.animate(el, 'zoomIn', { duration: 200, easing: 'ease-out', delay: 0 });
+      await Orion.animate(el, [{ opacity: 0 }, { opacity: 1 }], { duration: 300 });   // custom keyframes
+      Orion.anim.presets.myEffect = [{ transform: 'rotate(0)' }, { transform: 'rotate(360deg)' }];
+      Orion.anim.reducedMotion();   // true when the user prefers reduced motion
+    </pre>
+  </section>
+
+  <section id="collapse">
+    <h2>Collapse (height)</h2>
+    <div class="docs-demo">
+      <template>
+        <button class="o-btn o-mb-3" id="col-btn" aria-expanded="true" aria-controls="col-panel">Toggle panel</button>
+        <div id="col-panel" class="o-card o-card-body">Animated height from/to <code>auto</code>. Toggles the <code>hidden</code> attribute when done, so hidden content is removed from the accessibility tree.</div>
+        <script>
+          document.getElementById('col-btn').addEventListener('click', async e => {
+            const shown = await Orion.collapse(document.getElementById('col-panel'));
+            e.target.setAttribute('aria-expanded', shown);
+          });
+        </script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+      await Orion.collapse(el);          // toggle
+      await Orion.collapse(el, true);    // show
+      await Orion.collapse(el, false);   // hide
+    </pre>
+  </section>
+
+  <section id="transition">
+    <h2>CSS enter/leave transitions</h2>
+    <p><code>Orion.transition(el, 'enter'|'leave', { name })</code> toggles <code>{name}-{phase}-from</code>, <code>-active</code> and <code>-to</code> classes (Vue-style). <code>o-fade</code> is built in.</p>
+    <pre class="docs-code-block" data-lang="css">
+      .my-slide-enter-active, .my-slide-leave-active { transition: transform .25s, opacity .25s; }
+      .my-slide-enter-from, .my-slide-leave-to { transform: translateY(10px); opacity: 0; }
+    </pre>
+  </section>
+
+  <section id="css">
+    <h2>CSS animation classes</h2>
+    <p><code>.o-animate-spin</code>, <code>-pulse</code>, <code>-ping</code>, <code>-bounce</code>, <code>-shake</code>, <code>-fade-in</code>, <code>-slide-up</code>, <code>-zoom-in</code>, <code>.o-hover-lift</code>, <code>.o-transition</code>. Keyframes are available as <code>o-spin</code>, <code>o-pulse</code>, <code>o-shimmer</code> and others for your own CSS.</p>
+  </section>
+</main>
+</body>
+</html>

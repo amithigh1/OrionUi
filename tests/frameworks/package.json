@@ -1,0 +1,23 @@
+{
+  "name": "orion-admin-framework-tests",
+  "private": true,
+  "description": "Integration tests: Orion Admin inside React 18, React 19, Vue 3 and Angular (run from this folder: npm install && npm test)",
+  "scripts": {
+    "test": "node build.mjs && cd ../.. && node build/check.mjs tests/frameworks/out/react19.html tests/frameworks/out/react18.html tests/frameworks/out/vue.html tests/frameworks/out/angular.html --warn --wait=1500 --eval=window.runTest()"
+  },
+  "devDependencies": {
+    "@angular/common": "^21.0.0",
+    "@angular/compiler": "^21.0.0",
+    "@angular/core": "^21.0.0",
+    "@angular/forms": "^21.0.0",
+    "@angular/platform-browser": "^21.0.0",
+    "esbuild": "^0.28.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react18": "npm:react@^18.3.1",
+    "react-dom18": "npm:react-dom@^18.3.1",
+    "rxjs": "^7.8.0",
+    "vue": "^3.5.0",
+    "zone.js": "^0.15.0"
+  }
+}

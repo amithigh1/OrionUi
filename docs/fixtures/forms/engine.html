@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forms engine tests</title>
+<script src="../../../dist/orion.js"></script>
+<script src="../../../tests/harness.js"></script>
+<style>body { padding: 1.5rem; max-width: 56rem; } #out { display: grid; gap: .25rem; margin-top: 1rem; }</style>
+</head>
+<body>
+<form id="f1" novalidate>
+  <div class="o-field"><label class="o-label" for="email">Email</label><input class="o-input" id="email" name="email" type="email" required><div class="o-help">Work email</div></div>
+  <div class="o-field"><label class="o-label" for="pw">Password</label><input class="o-input" id="pw" name="password" type="password" data-o-rules="required|minlength:8"></div>
+  <div class="o-field"><label class="o-label" for="pw2">Confirm</label><input class="o-input" id="pw2" name="password_confirmation" type="password" data-o-rules="required|same:password"></div>
+  <div class="o-field"><label class="o-label" for="age">Age</label><input class="o-input" id="age" name="age" type="number" data-o-rules="required|integer|between:18,99"></div>
+  <div class="o-field"><label class="o-label" for="user">Username</label><input class="o-input" id="user" name="user[name]" data-o-rules="required|alphanum|remote:checkUser"></div>
+  <fieldset class="o-field"><legend class="o-label">Interests</legend>
+    <label class="o-check"><input type="checkbox" name="tags[]" value="a" data-o-rules="min:2"> A</label>
+    <label class="o-check"><input type="checkbox" name="tags[]" value="b"> B</label>
+    <label class="o-check"><input type="checkbox" name="tags[]" value="c"> C</label>
+  </fieldset>
+  <div class="o-field"><label class="o-label" for="country">Country</label>
+    <select class="o-select" id="country" name="country" required><option value="">Choose</option><option>MY</option><option>SG</option><option>US</option></select></div>
+  <div id="stateBox" class="o-field" data-o-show-if="country in:MY,SG"><label class="o-label" for="state">State</label><input class="o-input" id="state" name="state" required></div>
+  <div class="o-field" data-o-require-if="country=US"><label class="o-label" for="zip">ZIP</label><input class="o-input" id="zip" name="zip"></div>
+  <label class="o-check"><input type="checkbox" name="agree" required> I agree</label>
+  <o-repeater name="jobs" min="1" max="3" sortable>
+    <template><div class="o-field"><label class="o-label" for="co">Company</label><input class="o-input" id="co" name="company" required></div>
+      <div class="o-field"><label class="o-label" for="yr">Years</label><input class="o-input" id="yr" name="years" type="number" min="0"></div></template>
+  </o-repeater>
+  <button class="o-btn o-btn-primary" type="submit">Submit</button>
+</form>
+<div id="out"></div>
+<script>
+  window.checkUser = async v => { await new Promise(r => setTimeout(r, 50)); return v === 'taken' ? 'Username taken' : true; };
+  const O = Orion, sleep = ms => new Promise(r => setTimeout(r, ms));
+  let submitted = null;
+  const v = O.validate('#f1', { summary: true, onSubmit: async data => { submitted = data; } });
+  const f = document.getElementById('f1');
+  const set = (sel, val) => { const el = f.querySelector(sel); el.value = val; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); };
+  test('parse rules', () => {
+    const r = O.validate.parse('required|min:3|between:1,5|pattern:/^(a|b)$/i|remote:/api/x?a=1');
+    assert(r.length === 5 && r[2][1][1] === '5' && r[3][1][0] === '/^(a|b)$/i' && r[4][1][0] === '/api/x?a=1', JSON.stringify(r));
+  });
+  test('submit invalid shows errors + summary + aria', async () => {
+    f.requestSubmit();
+    await sleep(400);
+    const email = f.querySelector('#email');
+    assert(email.getAttribute('aria-invalid') === 'true', 'aria-invalid');
+    const err = document.getElementById(email.getAttribute('aria-describedby').split(' ').pop());
+    assert(err && err.textContent === 'This field is required', 'err text ' + (err && err.textContent));
+    assert(email.getAttribute('aria-describedby').split(' ').length === 2, 'help + error linked');
+    const sum = f.querySelector('.o-validation-summary');
+    assert(sum && !sum.hidden && sum.querySelectorAll('li').length >= 6, 'summary ' + (sum && sum.textContent));
+    assert(document.activeElement === email, 'focus first invalid: ' + document.activeElement.id);
+    assert(submitted === null);
+    assert(f.querySelector('#stateBox').hidden, 'state hidden initially');
+  });
+  test('live revalidation + rules', async () => {
+    set('#email', 'bad'); await sleep(250);
+    assert(v.errors.email === 'Enter a valid email address', v.errors.email);
+    set('#email', 'a@b.co'); await sleep(250);
+    assert(!v.errors.email, 'email ok');
+    set('#pw', 'short'); await sleep(250);
+    assert(/at least 8/.test(v.errors.password), v.errors.password);
+    set('#pw', 'longenough1'); set('#pw2', 'nope'); await sleep(250);
+    assert(/Must match Password/.test(v.errors.password_confirmation), v.errors.password_confirmation);
+    set('#pw2', 'longenough1'); await sleep(250);
+    assert(!v.errors.password_confirmation);
+    set('#age', '12'); await sleep(250);
+    assert(v.errors.age === 'Must be between 18 and 99', v.errors.age);
+  });
+  test('remote rule', async () => {
+    set('#user', 'taken'); await sleep(800);
+    assert(v.errors['user[name]'] === 'Username taken', JSON.stringify(v.errors));
+    set('#user', 'free1'); await sleep(800);
+    assert(!v.errors['user[name]']);
+  });
+  test('conditional show + require-if', async () => {
+    set('#country', 'MY'); await sleep(350);
+    assert(!f.querySelector('#stateBox').hidden && !f.querySelector('#state').disabled, 'state shown');
+    set('#country', 'US'); await sleep(350);
+    assert(f.querySelector('#stateBox').hidden && f.querySelector('#state').disabled, 'state hidden+disabled');
+    assert(f.querySelector('#zip').required, 'zip required');
+    set('#country', 'SG'); await sleep(350);
+    assert(!f.querySelector('#zip').required, 'zip not required');
+  });
+  test('repeater add / names / remove', async () => {
+    const rep = f.querySelector('o-repeater');
+    assert(rep.count === 1, 'one row');
+    rep.add({ company: 'Acme', years: 3 });
+    rep.add({ company: 'Globex', years: 2 });
+    assert(rep.count === 3 && f.querySelector('[name="jobs[2][company]"]').value === 'Globex', 'names');
+    assert(rep.add() === null, 'max');
+    rep.move(2, 0);
+    assert(rep.getValue()[0].company === 'Globex', JSON.stringify(rep.getValue()));
+    await rep.remove(1);
+    await sleep(50);
+    assert(rep.count === 2 && f.querySelector('[name="jobs[1][company]"]').value === 'Acme', 'reindexed ' + JSON.stringify(rep.getValue()));
+  });
+  test('serialize + submit valid', async () => {
+    set('#state', 'Selangor'); set('#country', 'MY'); await sleep(100); set('#state', 'Selangor');
+    f.querySelectorAll('[name="tags[]"]')[0].checked = true; f.querySelectorAll('[name="tags[]"]')[2].checked = true;
+    f.querySelector('[name=agree]').checked = true;
+    set('[name="jobs[0][company]"]', 'Globex'); set('#age', '30');
+    f.requestSubmit();
+    await sleep(500);
+    assert(submitted, 'submitted: ' + JSON.stringify(v.errors));
+    assert(submitted.user.name === 'free1' && submitted.tags.join() === 'a,c' && submitted.agree === true && submitted.age === 30, JSON.stringify(submitted));
+    assert(Array.isArray(submitted.jobs) && submitted.jobs[1].company === 'Acme' && submitted.jobs[1].years === 3, JSON.stringify(submitted.jobs));
+  });
+  test('server errors mapped back', async () => {
+    v.setErrors({ 'jobs.1.company': 'Company not found', email: ['Already registered'] });
+    assert(v.errors['jobs[1][company]'] === 'Company not found' && v.errors.email === 'Already registered', JSON.stringify(v.errors));
+    set('#email', 'x@y.io'); await sleep(250);
+    assert(!v.errors.email, 'server error clears on edit');
+  });
+  run();
+</script>
+</body>
+</html>

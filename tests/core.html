@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Core tests — Orion Admin</title>
+<script src="../dist/orion.js"></script>
+<script src="harness.js"></script>
+</head>
+<body class="o-container o-py-6">
+<h1>Core tests</h1>
+<div id="out" class="o-stack"></div>
+
+<form id="f">
+  <o-test-input name="nick" required></o-test-input>
+  <input data-o-test-bh="hello">
+</form>
+<button id="tog" data-o-toggle="test-action" data-o-target="#out">toggle</button>
+<div id="anchor" style="position:absolute;top:200px;left:300px;width:80px;height:30px"></div>
+
+<script>
+/* a tiny component used by the tests */
+const { OElement, FormElement, define, behavior, action } = Orion.core;
+class TestInput extends FormElement {
+  static props = { ...FormElement.props, value: { type: String, default: '' }, count: { type: Number, default: 1, reflect: true }, items: { type: Array, default: () => [] } };
+  setup() { this.input = Orion.h('input', { class: 'o-input' }); this.input.addEventListener('input', () => this.setValue(this.input.value)); this.append(this.input); this.focusTarget = this.input; this.renders = 0; }
+  update(changed) { this.renders++; this.lastChanged = [...changed]; if (changed.has('value') && this.input.value !== this.value) this.input.value = this.value; }
+}
+define('o-test-input', TestInput);
+let bhCount = 0, bhCleaned = 0;
+behavior('data-o-test-bh', (el, v) => { bhCount++; el.dataset.seen = v; return () => bhCleaned++; });
+let actionHits = 0, actionTarget = null;
+action('test-action', (el, e, target) => { actionHits++; actionTarget = target; });
+
+test('version + global', () => { assert(Orion.version && window.Orion === Orion, 'global'); });
+test('CSS injected first in head', () => {
+  const s = document.getElementById('orion-css');
+  assert(s && s.sheet && s.sheet.cssRules.length > 100, 'style present');
+  assert(getComputedStyle(document.body).fontFamily.length > 0);
+});
+test('OElement props, reflect, batching', async () => {
+  const el = document.querySelector('o-test-input');
+  assert(el.renders === 1, 'initial render once, got ' + el.renders);
+  assert(el.lastChanged.includes('init'), 'init flag');
+  el.count = 5; el.count = 6;
+  await Orion.util.nextFrame();
+  assert(el.renders === 2, 'batched update, got ' + el.renders);
+  assert(el.getAttribute('count') === '6', 'reflected');
+  el.setAttribute('count', '9');
+  assert(el.count === 9, 'attr -> prop number');
+  el.setAttribute('items', '["a","b"]');
+  assert(Array.isArray(el.items) && el.items[1] === 'b', 'attr -> array');
+});
+test('pre-upgrade property is kept', async () => {
+  const el = document.createElement('o-late-el');
+  el.label = 'from-framework';
+  document.body.append(el);
+  class Late extends OElement { static props = { label: String }; render() { this.textContent = this.label; } }
+  define('o-late-el', Late);
+  await Orion.util.nextFrame();
+  assert(el.textContent === 'from-framework', 'got ' + el.textContent);
+  el.remove();
+});
+test('FormElement: FormData, required, reset, events', async () => {
+  const f = document.getElementById('f'), el = f.querySelector('o-test-input');
+  assert(el.checkValidity() === false, 'required -> invalid');
+  let changes = 0, native = 0;
+  el.addEventListener('o-change', () => changes++);
+  el.addEventListener('change', e => { if (e.target === el) native++; });
+  el.input.value = 'ada'; el.input.dispatchEvent(new Event('input', { bubbles: true }));
+  el.input.dispatchEvent(new Event('change', { bubbles: true }));
+  assert(el.value === 'ada', 'value set');
+  assert(new FormData(f).get('nick') === 'ada', 'FormData');
+  assert(el.checkValidity() === true, 'valid now');
+  assert(changes === 1 && native === 1, 'events: o-change ' + changes + ' native ' + native);
+  f.reset();
+  await Orion.util.nextFrame();
+  assert(el.value === '' || el.value === null, 'reset -> ' + el.value);
+});
+test('behaviors init + cleanup (MutationObserver)', async () => {
+  assert(bhCount === 1 && document.querySelector('[data-o-test-bh]').dataset.seen === 'hello', 'initial scan');
+  const x = document.createElement('div'); x.setAttribute('data-o-test-bh', 'x'); document.body.append(x);
+  await Orion.util.sleep(20);
+  assert(bhCount === 2, 'dynamic init ' + bhCount);
+  x.remove();
+  await Orion.util.sleep(20);
+  assert(bhCleaned === 1, 'cleanup ' + bhCleaned);
+});
+test('actions (delegated click)', () => {
+  document.getElementById('tog').click();
+  assert(actionHits === 1 && actionTarget === document.getElementById('out'), 'action with target');
+});
+test('i18n + plural + format', () => {
+  assert(Orion.t('common.cancel') === 'Cancel');
+  assert(Orion.t('common.items', { count: 1 }) === '1 item' && Orion.t('common.items', { count: 3 }) === '3 items', 'plural');
+  Orion.i18n.add('xx', { common: { cancel: 'Batal' } });
+  assert(Orion.t('common.cancel', null, 'xx') === 'Batal');
+  assert(Orion.t('common.ok', null, 'xx') === 'OK', 'fallback');
+  assert(Orion.format.number(1234.5, 1).includes('1,234.5'));
+  assert(Orion.format.parseNumber('1.234,5', 'de') === 1234.5, 'parseNumber de');
+  assert(/ago|now/.test(Orion.format.relative(Date.now() - 3 * 60000)), 'relative');
+  Orion.i18n.set('ar', { persist: false });
+  assert(document.documentElement.dir === 'rtl', 'rtl');
+  Orion.i18n.set('en', { persist: false });
+  assert(document.documentElement.dir === 'ltr', 'ltr');
+});
+test('date utils', () => {
+  const D = Orion.date;
+  const d = D.parse('2024-02-10');
+  assert(d.getFullYear() === 2024 && d.getMonth() === 1 && d.getDate() === 10 && d.getHours() === 0, 'local parse');
+  assert(D.format(d, 'DD/MM/YYYY') === '10/02/2024');
+  assert(D.toISODate(D.add('2024-01-31', 1, 'M')) === '2024-02-29', 'month clamp');
+  assert(D.diff('2024-03-01', '2024-02-01', 'd') === 29, 'diff days');
+  assert(D.parseFormat('25/12/2024 14:30', 'DD/MM/YYYY HH:mm').getHours() === 14, 'parseFormat');
+  assert(D.parseFormat('31/02/2024', 'DD/MM/YYYY') === null, 'reject invalid');
+  assert(D.matrix(2024, 1, 1).length === 42 && D.matrix(2024, 1, 1)[0].getDay() === 1, 'matrix monday');
+  assert(D.weekNumber('2024-12-30') === 1, 'iso week');
+  assert(D.isBetween('2024-05-05', '2024-05-10', '2024-05-01'), 'between reversed');
+});
+test('theme', () => {
+  Orion.theme.setMode('dark', { persist: false });
+  assert(document.documentElement.getAttribute('data-theme') === 'dark');
+  const bg = getComputedStyle(document.body).backgroundColor;
+  assert(bg === 'rgb(11, 16, 32)', 'dark bg ' + bg);
+  Orion.theme.setMode('light', { persist: false });
+  Orion.theme.set({ primary: '#e11d48' });
+  assert(Orion.theme.get('primary') === '#e11d48');
+  assert(Orion.theme.get('--o-on-primary') === '#ffffff');
+  Orion.theme.reset();
+  assert(Orion.color.contrast('#fff', '#000') === 21);
+  assert(Object.keys(Orion.color.palette('#4f46e5')).length === 11);
+});
+test('position flip + shift', () => {
+  const a = document.getElementById('anchor');
+  const f = Orion.h('div', { style: 'width:200px;height:120px;background:red' });
+  document.body.append(f);
+  const p = Orion.position.place(f, a, { placement: 'bottom-start' });
+  assert(p.side === 'bottom' && p.x === 300, 'bottom-start ' + JSON.stringify(p));
+  a.style.top = (innerHeight - 40) + 'px';
+  const p2 = Orion.position.place(f, a, { placement: 'bottom' });
+  assert(p2.side === 'top', 'flipped ' + p2.side);
+  f.remove();
+});
+test('overlay stack: escape closes top only, children close with parent', () => {
+  const a = Orion.h('div'), b = Orion.h('div');
+  document.body.append(a); a.append(b);
+  let closed = [];
+  const ha = Orion.overlays.open({ el: a, onClose: r => closed.push('a:' + r) });
+  const hb = Orion.overlays.open({ el: Orion.h('div'), owner: b, onClose: r => closed.push('b:' + r) });
+  document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  assert(closed.join() === 'b:escape', 'escape top ' + closed);
+  Orion.overlays.open({ el: Orion.h('div'), owner: b, onClose: r => closed.push('c:' + r) });
+  ha.close();
+  assert(closed.join() === 'b:escape,c:parent,a:api', 'parent closes child ' + closed);
+  assert(Orion.overlays.stack.length === 0);
+  a.remove();
+});
+test('sanitize', () => {
+  const s = Orion.sanitize('<img src=x onerror=alert(1)><a href="java\tscript:alert(1)">x</a><script>bad()<\/script><b>ok</b>');
+  assert(!/onerror|script|javascript/i.test(s) && s.includes('<b>ok</b>'), s);
+});
+test('fuzzy + highlight', () => {
+  const r = Orion.util.fuzzySearch(['Users list', 'Settings', 'User roles'], 'usr');
+  assert(r[0].startsWith('User'), JSON.stringify(r));
+  assert(Orion.util.highlight('Hello <b>', 'hel') === '<mark class="o-mark">Hel</mark>lo &lt;b&gt;');
+});
+test('html template escaping', () => {
+  const { html, raw } = Orion.util;
+  assert(String(html`<p>${'<x>'}${raw('<i>')}</p>`) === '<p>&lt;x&gt;<i></p>');
+});
+test('chainable $', () => {
+  const q = Orion.$('<div class="a"><span>1</span><span>2</span></div>').addClass('b');
+  document.body.append(q[0]);
+  assert(Orion.$('.a.b span').length === 2 && Orion.$('.a span').text() === '12');
+  Orion.$('.a').remove();
+});
+test('icons', () => {
+  assert(String(Orion.icon('check')).includes('<svg') && Orion.icons.has('x'));
+});
+run();
+</script>
+</body>
+</html>

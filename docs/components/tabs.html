@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tabs — Orion Admin</title>
+<meta name="docs:section" content="Layout &amp; Navigation">
+<meta name="docs:order" content="60">
+<meta name="docs:desc" content="Accessible tabs: line, pills, boxed, enclosed, vertical, closable, reorderable, lazy, deep-linked">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Tabs</h1>
+    <p class="docs-lead"><code>&lt;o-tabs&gt;</code> builds a WAI-ARIA tab list from <code>&lt;o-tab-panel&gt;</code> children (or enhances your own markup) with an animated indicator, overflow scrolling or a "more" menu, closable / addable / drag-reorderable tabs, lazy panels, URL deep links and persisted selection.</p>
+  </header>
+
+  <section id="settings">
+    <h2>Settings page (badges &amp; deep linking)</h2>
+    <p>Each <code>&lt;o-tab-panel&gt;</code> becomes a tab. <code>hash="settings"</code> writes the selection to the URL (<code>#settings=security</code>) so the page can be bookmarked or shared; reload and the same tab opens. Use <code>query="tab"</code> for <code>?tab=…</code> instead.</p>
+    <div class="docs-demo">
+      <template>
+        <o-tabs id="settings-tabs" hash="settings" label="Account settings">
+          <o-tab-panel id="profile" label="Profile" icon="user">
+            <div class="o-form-grid" style="max-width:40rem">
+              <div class="o-field"><label class="o-label" for="st-name">Full name</label><input class="o-input" id="st-name" value="Aisha Rahman"></div>
+              <div class="o-field"><label class="o-label" for="st-mail">Email</label><input class="o-input" id="st-mail" value="aisha@example.com"></div>
+            </div>
+            <p class="o-muted o-mb-0">Type something, switch tabs and come back — panels keep their state.</p>
+          </o-tab-panel>
+          <o-tab-panel id="notifications" label="Notifications" icon="bell" badge="3">
+            <label class="o-switch"><input type="checkbox" checked> <span>Email me about new comments</span></label>
+            <label class="o-switch"><input type="checkbox"> <span>Weekly digest</span></label>
+            <label class="o-switch"><input type="checkbox" checked> <span>Security alerts</span></label>
+          </o-tab-panel>
+          <o-tab-panel id="security" label="Security" icon="lock">
+            <p>Two-factor authentication is <strong>on</strong>. Last password change 42 days ago.</p>
+            <button class="o-btn o-btn-sm">Change password</button>
+          </o-tab-panel>
+          <o-tab-panel id="billing" label="Billing" icon="file" badge="New"><p>Plan: <strong>Pro</strong>, renews on 1 October.</p></o-tab-panel>
+          <o-tab-panel id="danger" label="Danger zone" disabled><p>Disabled tabs are skipped by the keyboard.</p></o-tab-panel>
+        </o-tabs>
+        <div class="docs-log" id="log-settings"></div>
+        <script>
+          document.getElementById('settings-tabs').addEventListener('o-change', e => docs.log('#log-settings', `o-change → ${e.detail.id} (index ${e.detail.index}, previous ${e.detail.previous})`));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="variants">
+    <h2>Variants</h2>
+    <p><code>variant="line"</code> (default), <code>pills</code>, <code>boxed</code> and <code>enclosed</code> reuse the <code>.o-nav</code> visuals; the active indicator slides between tabs (disabled under reduced motion). Add <code>fill</code> to stretch tabs across the width.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-stack" style="--o-gap:1.75rem">
+          <o-tabs variant="pills">
+            <o-tab-panel label="Overview">Pills — the active background glides to the selected tab.</o-tab-panel>
+            <o-tab-panel label="Activity" badge="12">Recent activity…</o-tab-panel>
+            <o-tab-panel label="Members">Team members…</o-tab-panel>
+          </o-tabs>
+          <o-tabs variant="boxed" fill>
+            <o-tab-panel label="Day">Boxed + fill — a segmented control look.</o-tab-panel>
+            <o-tab-panel label="Week">Week view</o-tab-panel>
+            <o-tab-panel label="Month">Month view</o-tab-panel>
+            <o-tab-panel label="Year">Year view</o-tab-panel>
+          </o-tabs>
+          <o-tabs variant="enclosed">
+            <o-tab-panel label="index.html" icon="file">Enclosed — folder tabs joined to a bordered panel.</o-tab-panel>
+            <o-tab-panel label="styles.css" icon="file">body { margin: 0 }</o-tab-panel>
+            <o-tab-panel label="app.js" icon="file">console.log('hi')</o-tab-panel>
+          </o-tabs>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="vertical">
+    <h2>Vertical tabs</h2>
+    <p><code>orientation="vertical"</code> places the list beside the panels and switches the keys to <kbd class="o-kbd">↑</kbd> <kbd class="o-kbd">↓</kbd>. Below 520px of available width it automatically stacks into a horizontal, scrollable bar.</p>
+    <div class="docs-demo">
+      <template>
+        <o-tabs orientation="vertical" label="Project settings" style="--o-tabs-vertical-w:12rem">
+          <o-tab-panel label="General" icon="settings"><h4>General</h4><p>Project name, description and visibility.</p></o-tab-panel>
+          <o-tab-panel label="Members" icon="user" badge="8"><h4>Members</h4><p>Invite people and manage roles.</p></o-tab-panel>
+          <o-tab-panel label="Integrations" icon="link"><h4>Integrations</h4><p>Connect Slack, GitHub and webhooks.</p></o-tab-panel>
+          <o-tab-panel label="Notifications" icon="bell"><h4>Notifications</h4><p>Choose what you hear about.</p></o-tab-panel>
+          <o-tab-panel label="Archive" icon="inbox"><h4>Archive</h4><p>Archived projects are read-only.</p></o-tab-panel>
+        </o-tabs>
+        <o-tabs orientation="vertical" variant="pills" class="o-mt-6">
+          <o-tab-panel label="Inbox" icon="inbox" badge="24">24 unread conversations.</o-tab-panel>
+          <o-tab-panel label="Starred" icon="star">Starred items.</o-tab-panel>
+          <o-tab-panel label="Sent" icon="send">Sent items.</o-tab-panel>
+        </o-tabs>
+      </template>
+    </div>
+  </section>
+
+  <section id="editable">
+    <h2>Closable, addable &amp; reorderable</h2>
+    <p><code>closable</code> adds close buttons (also <kbd class="o-kbd">Delete</kbd> and middle-click), <code>addable</code> shows a <em>+</em> button that fires <code>o-tab-add</code>, and <code>reorderable</code> enables drag reordering (long-press on touch) and <kbd class="o-kbd">Alt</kbd>+<kbd class="o-kbd">←</kbd>/<kbd class="o-kbd">→</kbd>. <code>o-close</code> is cancelable.</p>
+    <div class="docs-demo">
+      <template>
+        <o-tabs id="edit-tabs" closable addable reorderable variant="line">
+          <o-tab-panel id="q1" label="Q1 report">Revenue up 12% quarter over quarter.</o-tab-panel>
+          <o-tab-panel id="q2" label="Q2 report">Churn fell to 1.8%.</o-tab-panel>
+          <o-tab-panel id="q3" label="Q3 report">Pipeline doubled.</o-tab-panel>
+          <o-tab-panel id="summary" label="Summary" icon="star" closable="false">closable="false" keeps this tab open; closing Q1 is vetoed by the o-close handler.</o-tab-panel>
+        </o-tabs>
+        <div class="docs-log" id="log-edit"></div>
+        <script>
+          const et = document.getElementById('edit-tabs');
+          let n = 4;
+          et.addEventListener('o-tab-add', () => et.add({ label: `Q${n++} draft`, content: 'A brand new draft.' }));
+          et.addEventListener('o-close', e => { if (e.detail.id === 'q1') { e.preventDefault(); docs.log('#log-edit', 'o-close vetoed for Q1 report'); } else docs.log('#log-edit', `o-close ${e.detail.id}`); });
+          et.addEventListener('o-reorder', e => docs.log('#log-edit', `o-reorder ${e.detail.id}: ${e.detail.from} → ${e.detail.to}  [${e.detail.order.join(', ')}]`));
+          et.addEventListener('o-change', e => docs.log('#log-edit', `o-change → ${e.detail.id}`));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="overflow">
+    <h2>Overflow</h2>
+    <p>When tabs do not fit, <code>overflow="scroll"</code> (default) shows scroll buttons; <code>overflow="menu"</code> shows a <em>more</em> button listing the hidden tabs. Arrow keys always scroll the focused tab into view.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-stack" style="--o-gap:1.5rem;max-width:34rem">
+          <o-tabs id="ov-scroll"></o-tabs>
+          <o-tabs id="ov-menu" overflow="menu" variant="pills"></o-tabs>
+        </div>
+        <script>
+          const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+          ['ov-scroll', 'ov-menu'].forEach(id => { const t = document.getElementById(id); months.forEach(m => t.add({ label: m, content: `Report for ${m}.`, select: false })); t.select(0); });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="lazy">
+    <h2>Lazy panels &amp; keep-alive</h2>
+    <p>Content inside a <code>&lt;template&gt;</code> (or a <code>renderer</code> function) is rendered on first show and fires <code>o-render</code>. With <code>lazy</code> alone, lazily rendered content is discarded when hidden and rebuilt next time; add <code>keep-alive</code> to keep it.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-grid" style="--o-cols:1;--o-gap:1.5rem">
+          <div><h4 class="o-h6">lazy</h4>
+            <o-tabs id="lazy-a" lazy variant="boxed">
+              <o-tab-panel label="Summary">Always in the DOM.</o-tab-panel>
+              <o-tab-panel label="Report"><template><p>Rendered at <b class="stamp"></b> — switch away and back: it re-renders.</p></template></o-tab-panel>
+            </o-tabs></div>
+          <div><h4 class="o-h6">lazy keep-alive</h4>
+            <o-tabs id="lazy-b" lazy keep-alive variant="boxed">
+              <o-tab-panel label="Summary">Always in the DOM.</o-tab-panel>
+              <o-tab-panel label="Report"><template><p>Rendered at <b class="stamp"></b> — kept alive after the first show.</p></template></o-tab-panel>
+            </o-tabs></div>
+        </div>
+        <div class="docs-log" id="log-lazy"></div>
+        <script>
+          ['lazy-a', 'lazy-b'].forEach(id => document.getElementById(id).addEventListener('o-render', e => {
+            const s = e.detail.panel.querySelector('.stamp'); if (s) s.textContent = new Date().toLocaleTimeString();
+            docs.log('#log-lazy', `${id}: o-render ${e.detail.id}`);
+          }));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="manual">
+    <h2>Manual activation &amp; persistence</h2>
+    <p>With <code>activation="manual"</code> arrow keys only move focus; <kbd class="o-kbd">Enter</kbd> / <kbd class="o-kbd">Space</kbd> selects. <code>persist="key"</code> remembers the tab in <code>localStorage</code> (<code>orion:tabs:key</code>).</p>
+    <div class="docs-demo">
+      <template>
+        <o-tabs activation="manual" persist="docs-manual" variant="pills">
+          <o-tab-panel label="Charts">Heavy charts that should not render on every arrow key press.</o-tab-panel>
+          <o-tab-panel label="Table">Large table.</o-tab-panel>
+          <o-tab-panel label="Map">Interactive map.</o-tab-panel>
+        </o-tabs>
+      </template>
+    </div>
+  </section>
+
+  <section id="markup">
+    <h2>Explicit markup</h2>
+    <p>Wrap your own <code>.o-nav</code> and panels in <code>&lt;o-tabs&gt;</code> to get roles, keyboard support, the indicator, deep links and persistence without generated markup. Tabs reference panels with <code>aria-controls</code>, <code>data-o-target</code> or <code>href="#id"</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <o-tabs variant="line">
+          <nav class="o-nav o-nav-tabs" aria-label="Report sections">
+            <a class="o-nav-link" href="#mk-sales">Sales</a>
+            <a class="o-nav-link" href="#mk-costs">Costs</a>
+            <a class="o-nav-link" href="#mk-profit">Profit</a>
+          </nav>
+          <div id="mk-sales">Sales grew 18% year over year.</div>
+          <div id="mk-costs">Costs were flat.</div>
+          <div id="mk-profit">Margin improved by 4 points.</div>
+        </o-tabs>
+      </template>
+    </div>
+    <h3>Plain HTML (no custom element)</h3>
+    <p>Bootstrap-style triggers: <code>data-o-toggle="tab" data-o-target="#pane"</code>. Roles, roving tabindex and arrow keys are added automatically; the trigger fires <code>o-show</code> (cancelable) and <code>o-shown</code>. Script it with <code>Orion.tabShow(trigger)</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-nav o-nav-boxed" aria-label="Plan">
+          <button class="o-nav-link is-active" data-o-toggle="tab" data-o-target="#pl-monthly">Monthly</button>
+          <button class="o-nav-link" data-o-toggle="tab" data-o-target="#pl-yearly">Yearly</button>
+        </div>
+        <div id="pl-monthly" class="o-pt-3">$12 / month</div>
+        <div id="pl-yearly" class="o-pt-3">$120 / year — two months free</div>
+      </template>
+    </div>
+  </section>
+
+  <section id="js">
+    <h2>JavaScript API</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-sm" id="api-add">add()</button>
+          <button class="o-btn o-btn-sm" id="api-prev">prev()</button>
+          <button class="o-btn o-btn-sm" id="api-next">next()</button>
+          <button class="o-btn o-btn-sm" id="api-sel">select('api-2')</button>
+          <button class="o-btn o-btn-sm" id="api-rm">remove(selected)</button>
+        </div>
+        <o-tabs id="api-tabs" variant="pills" closable>
+          <o-tab-panel id="api-1" label="One">Panel one</o-tab-panel>
+          <o-tab-panel id="api-2" label="Two">Panel two</o-tab-panel>
+        </o-tabs>
+        <script>
+          const at = document.getElementById('api-tabs'); let k = 3;
+          document.getElementById('api-add').onclick = () => at.add({ id: 'api-' + k, label: 'Tab ' + k, render: panel => { const p = document.createElement('p'); p.textContent = 'Rendered by render() for ' + panel.id; return p; } }) && k++;
+          document.getElementById('api-prev').onclick = () => at.prev();
+          document.getElementById('api-next').onclick = () => at.next();
+          document.getElementById('api-sel').onclick = () => at.select('api-2');
+          document.getElementById('api-rm').onclick = () => at.remove(at.selectedId);
+        </script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+      const tabs = document.querySelector('o-tabs');
+      const id = tabs.add({ label: 'Invoices', icon: 'file', badge: 2, closable: true, render: panel => buildInvoices() });
+      tabs.select(id);                     // or tabs.select(0)
+      tabs.addEventListener('o-before-change', e => { if (formIsDirty) e.preventDefault(); });
+      tabs.addEventListener('o-change', e => console.log(e.detail.id, e.detail.previous));
+    </pre>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>&lt;o-tabs&gt; attributes / properties</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>variant</td><td><code>line | pills | boxed | enclosed</code></td><td>Visual style (default <code>line</code>).</td></tr>
+        <tr><td>orientation</td><td><code>horizontal | vertical</code></td><td>Vertical tabs stack horizontally below 520px.</td></tr>
+        <tr><td>selected</td><td><code>string | number</code></td><td>Initial / programmatic selection by panel id or index (setting the property does not fire events).</td></tr>
+        <tr><td>label</td><td><code>string</code></td><td><code>aria-label</code> of the tab list.</td></tr>
+        <tr><td>activation</td><td><code>auto | manual</code></td><td>Automatic selection on arrow keys, or on Enter/Space only.</td></tr>
+        <tr><td>lazy</td><td><code>boolean</code></td><td>Template / renderer content is created on first show and discarded when hidden (unless <code>keep-alive</code>).</td></tr>
+        <tr><td>keep-alive</td><td><code>boolean</code></td><td>Keep lazily rendered content after hiding.</td></tr>
+        <tr><td>hash / query</td><td><code>string</code></td><td>Deep-link parameter name: <code>#name=id</code> or <code>?name=id</code>.</td></tr>
+        <tr><td>persist</td><td><code>string</code></td><td>Remember the selection in localStorage (<code>orion:tabs:&lt;key&gt;</code>).</td></tr>
+        <tr><td>closable / addable / reorderable</td><td><code>boolean</code></td><td>Close buttons (all tabs), add button, drag &amp; keyboard reordering.</td></tr>
+        <tr><td>overflow</td><td><code>scroll | menu</code></td><td>Overflow handling for long tab lists.</td></tr>
+        <tr><td>fill</td><td><code>boolean</code></td><td>Tabs share the full width.</td></tr>
+        <tr><td>texts</td><td><code>object</code></td><td>Per-instance strings (<code>scrollPrev, scrollNext, more, add, closeTab, closed, moved, newTab</code>).</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-tab-panel&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>id</td><td><code>string</code></td><td>Tab id used by <code>select()</code>, deep links and events (generated when missing).</td></tr>
+        <tr><td>label / icon / badge</td><td><code>string</code></td><td>Tab text, icon name and badge.</td></tr>
+        <tr><td>disabled / closable</td><td><code>boolean</code></td><td>Per-tab state.</td></tr>
+        <tr><td>renderer</td><td><code>(panel) =&gt; Node | string</code></td><td>Lazy content (property, or a global function name).</td></tr>
+        <tr><td>&lt;template&gt; child</td><td>—</td><td>Lazy content cloned on first show.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-before-change</td><td><code>{ id, index, previous, previousIndex }</code></td><td>Cancelable, before the selection changes.</td></tr>
+        <tr><td>o-change</td><td><code>{ id, index, previous, previousIndex }</code></td><td>After the selection changed (user action or <code>select()</code>).</td></tr>
+        <tr><td>o-close</td><td><code>{ id, index, label }</code></td><td>Cancelable, a tab is about to close.</td></tr>
+        <tr><td>o-tab-add</td><td><code>{}</code></td><td>The add button was pressed — call <code>add()</code>.</td></tr>
+        <tr><td>o-reorder</td><td><code>{ id, from, to, order }</code></td><td>A tab was moved.</td></tr>
+        <tr><td>o-render</td><td><code>{ id, panel }</code></td><td>Lazy content was rendered (mount framework components into <code>panel</code> here).</td></tr>
+        <tr><td>o-show / o-shown</td><td><code>{ target, previous }</code></td><td>Plain <code>data-o-toggle="tab"</code> triggers.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods &amp; properties</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>select(idOrIndex, { focus })</td><td>Select a tab; returns <code>false</code> when vetoed, disabled or unknown.</td></tr>
+        <tr><td>add(options) → id</td><td><code>{ id, label, icon, badge, content, html, render, closable, disabled, index, select }</code>. <code>html</code> is trusted markup.</td></tr>
+        <tr><td>close(id) / remove(id)</td><td>Close with the cancelable <code>o-close</code> event / remove silently.</td></tr>
+        <tr><td>next() / prev()</td><td>Select the next / previous enabled tab (wraps).</td></tr>
+        <tr><td>getTabs()</td><td><code>[{ id, label, index, disabled, closable }]</code> in visual order.</td></tr>
+        <tr><td>selectedId / selectedIndex</td><td>Current selection.</td></tr>
+        <tr><td>refresh()</td><td>Re-read children (normally automatic).</td></tr>
+        <tr><td>Orion.tabShow(trigger)</td><td>Activate a plain-markup tab trigger.</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS custom properties</h3>
+    <p><code>--o-tabs-accent</code> (indicator color), <code>--o-tabs-vertical-w</code> (vertical tab column width), <code>--o-tabs-vertical-max-h</code>.</p>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Tab</td><td>Moves focus into the tab list (to the selected tab), then into the panel.</td></tr>
+        <tr><td>← / → (↑ / ↓ vertical)</td><td>Previous / next tab, wrapping; mirrored in RTL. Selects it unless <code>activation="manual"</code>.</td></tr>
+        <tr><td>Home / End</td><td>First / last tab.</td></tr>
+        <tr><td>Enter / Space</td><td>Select the focused tab (manual activation).</td></tr>
+        <tr><td>Delete</td><td>Close the focused tab when closable.</td></tr>
+        <tr><td>Alt + ← / →</td><td>Move the focused tab (reorderable).</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="frameworks">
+    <h2>Frameworks</h2>
+    <p>Render <code>&lt;o-tab-panel&gt;</code> elements as children from React, Vue or Angular; tabs update automatically when panels are added, removed or relabelled. The component never moves your panels, so framework reconciliation stays intact. To veto closing, call <code>preventDefault()</code> in <code>o-close</code> and remove the panel from your own state; for lazy framework content, mount into <code>e.detail.panel</code> in <code>o-render</code>.</p>
+  </section>
+</main>
+</body>
+</html>

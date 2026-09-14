@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Document Viewer — Orion Admin</title>
+<meta name="docs:section" content="Media">
+<meta name="docs:order" content="60">
+<meta name="docs:desc" content="Preview PDF, Word, CSV, JSON, Markdown, code, image, video and audio files with one component">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  o-docviewer { height: 26rem; }
+  o-docviewer.is-tall { height: 34rem; }
+  .dv-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr)); }
+  .dv-grid o-docviewer { height: 16rem; }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Document viewer</h1>
+    <p class="docs-lead"><code>&lt;o-docviewer&gt;</code> previews whatever a user uploads with one component: PDF (the browser's own viewer), Word documents (converted to HTML by a built-in, dependency-free reader), CSV, JSON, Markdown, source code, images, video and audio — with a toolbar for zoom, download, print and fullscreen. <code>Orion.preview(fileOrUrl, opts)</code> opens the same viewer in a fullscreen dialog, ready for an upload package to call after a file is picked.</p>
+  </header>
+
+  <section id="docx">
+    <h2>Word documents (.docx)</h2>
+    <p>Paragraphs, heading styles, bold/italic/underline/strike, colors, highlights, superscript, hyperlinks, nested bullet &amp; numbered lists, tables with merged cells and shading, and inline images are converted to HTML and rendered in a paper-like page with <code>.o-prose</code>. This is a converter for common Word output, not the full OOXML spec — headers/footers, footnotes, text boxes and SmartArt are out of scope.</p>
+    <div class="docs-demo">
+      <template>
+        <o-docviewer class="is-tall" src="../fixtures/media/sample.docx" filename="Project brief.docx" label="Project brief"></o-docviewer>
+      </template>
+    </div>
+  </section>
+
+  <section id="pdf">
+    <h2>PDF</h2>
+    <p>Rendered with the browser's own PDF viewer inside an <code>&lt;iframe&gt;</code> — full fidelity, zero code, but no page-thumbnail rail or text search from us. When <code>navigator.pdfViewerEnabled</code> is false (some mobile browsers), a fallback card offers Download / Open in new tab instead. Building a pdf.js-style renderer is explicitly out of scope for this package.</p>
+    <div class="docs-demo">
+      <template>
+        <o-docviewer src="../fixtures/media/sample.pdf" filename="Q3 report.pdf" label="Q3 report"></o-docviewer>
+      </template>
+    </div>
+  </section>
+
+  <section id="data-formats">
+    <h2>CSV, JSON &amp; Markdown</h2>
+    <p>CSV renders as a sortable-looking striped table; JSON as a collapsible tree (native <code>&lt;details&gt;</code>, so it needs no extra script); Markdown through a small, safe renderer — <strong>escapes everything first</strong>, so any raw HTML in the source (even a stray <code>&lt;script&gt;</code> tag, see the bottom of the readme) is shown as inert text, never executed.</p>
+    <div class="dv-grid">
+      <o-docviewer src="../fixtures/media/sales.csv" filename="sales.csv" label="Sales CSV"></o-docviewer>
+      <o-docviewer src="../fixtures/media/order.json" filename="order.json" label="Order JSON"></o-docviewer>
+      <o-docviewer src="../fixtures/media/readme.md" filename="readme.md" label="Readme"></o-docviewer>
+    </div>
+  </section>
+
+  <section id="code-text">
+    <h2>Code &amp; plain text</h2>
+    <div class="dv-grid">
+      <o-docviewer src="../fixtures/media/sample.js" filename="search-box.js" label="Source code"></o-docviewer>
+      <o-docviewer src="../fixtures/media/notes.txt" filename="notes.txt" label="Release notes"></o-docviewer>
+    </div>
+  </section>
+
+  <section id="media">
+    <h2>Image, video &amp; audio</h2>
+    <p>Reuses <code>&lt;o-zoom&gt;</code> for images and <code>&lt;o-video&gt;</code> / <code>&lt;o-audio&gt;</code> for playback when the gallery / player packages are loaded (native elements otherwise).</p>
+    <div class="dv-grid">
+      <o-docviewer src="../fixtures/media/scene-lake.svg" filename="scene-lake.svg" label="Lake illustration"></o-docviewer>
+      <o-docviewer src="../fixtures/media/clip.webm" filename="clip.webm" label="Video clip"></o-docviewer>
+      <o-docviewer src="../fixtures/media/chime.wav" filename="chime.wav" label="Audio clip"></o-docviewer>
+    </div>
+  </section>
+
+  <section id="preview-helper">
+    <h2><code>Orion.preview(fileOrUrl, opts)</code></h2>
+    <p>Opens <code>&lt;o-docviewer&gt;</code> in a fullscreen dialog — the helper an upload package calls after a file is picked or a row's "Preview" action is clicked. Uses <code>Orion.modal</code> when it is loaded in the same bundle, otherwise a minimal dialog on the core overlay stack (as on this page).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-cluster">
+          <button class="o-btn o-btn-primary o-btn-sm" id="pv-docx">Preview .docx</button>
+          <button class="o-btn o-btn-sm" id="pv-pdf">Preview .pdf</button>
+          <button class="o-btn o-btn-sm" id="pv-csv">Preview .csv</button>
+          <button class="o-btn o-btn-sm" id="pv-img">Preview image</button>
+        </div>
+        <script>
+          const M = '../fixtures/media/';
+          document.getElementById('pv-docx').onclick = () => Orion.preview(M + 'sample.docx', { filename: 'Project brief.docx' });
+          document.getElementById('pv-pdf').onclick = () => Orion.preview(M + 'sample.pdf', { filename: 'Q3 report.pdf' });
+          document.getElementById('pv-csv').onclick = () => Orion.preview(M + 'sales.csv', { filename: 'sales.csv' });
+          document.getElementById('pv-img').onclick = () => Orion.preview(M + 'photo-lake.jpg', { filename: 'Alpine lake.jpg' });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3><code>&lt;o-docviewer&gt;</code></h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute / property</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>src</td><td>url \| File \| Blob</td><td>File to preview (URL string, or a File/Blob set as a property).</td></tr>
+        <tr><td>type</td><td>string</td><td>Override auto-detection: <code>pdf, docx, csv, json, markdown, text, code, image, video, audio</code>.</td></tr>
+        <tr><td>filename</td><td>string</td><td>Shown in the toolbar and used to detect the type / file icon (falls back to the URL or <code>File.name</code>).</td></tr>
+        <tr><td>label</td><td>string</td><td>Accessible name for the toolbar and dialog role.</td></tr>
+      </tbody>
+    </table>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>refresh()</td><td>Re-render (also triggered automatically when <code>src</code> changes).</td></tr>
+        <tr><td>download() / openInNewTab() / print()</td><td>Same actions as the toolbar buttons; <code>print()</code> renders the content into a hidden iframe so only the document prints, not the surrounding page.</td></tr>
+        <tr><td>zoomIn() / zoomOut() / resetZoom()</td><td>Text-based formats only (docx, markdown, csv, json, code, text); images use <code>&lt;o-zoom&gt;</code>'s own controls.</td></tr>
+        <tr><td>toggleFullscreen()</td><td></td></tr>
+        <tr><td>kind</td><td>Getter — the detected/overridden type.</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Events:</strong> <code>o-load { type, filename }</code>, <code>o-error { error }</code>.</p>
+
+    <h3><code>Orion.preview(fileOrUrl, opts) → handle</code></h3>
+    <p>Options: <code>filename, type, title, size ('lg'), fullscreen ('sm'), trigger</code> (origin element for focus return), <code>onClose(reason)</code>, <code>closable</code>. Returns the same handle shape as <code>Orion.modal()</code>: <code>{ el, close(reason), result }</code> (a Promise that resolves when the dialog closes).</p>
+
+    <h3>Also exposed</h3>
+    <table class="docs-api">
+      <thead><tr><th>API</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Orion.docx.toHTML(src) → Promise&lt;SafeHTML&gt;</td><td>The DOCX → HTML converter used internally; call it directly to embed a document's content in your own page.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="limitations">
+    <h2>Coverage &amp; limitations</h2>
+    <ul>
+      <li><strong>PDF</strong> — delegated entirely to the browser's built-in viewer. No page thumbnails, text search or annotation from this package, and older/locked-down mobile browsers may not support inline PDFs at all (a download card is shown instead).</li>
+      <li><strong>DOCX</strong> — covers what most generated or hand-written documents use: paragraph and heading styles, run formatting, bullet/numbered lists (including nesting), tables (column/row spans, shading, alignment) and inline images. Not covered: headers/footers, footnotes/endnotes, comments, text boxes, SmartArt, embedded charts/objects, and tracked changes.</li>
+      <li><strong>Markdown</strong> is a small, safe subset (headings, emphasis, links/images, lists with checkboxes, blockquotes, tables, fenced code) — not full CommonMark (no footnotes, definition lists or raw HTML passthrough).</li>
+      <li><strong>Code</strong> preview shows line numbers but does not syntax-highlight (kept dependency-free); pair it with your own highlighter via <code>Orion.docx</code>/renderer internals if needed.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

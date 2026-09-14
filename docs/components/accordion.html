@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Accordion — Orion Admin</title>
+<meta name="docs:section" content="Layout &amp; Navigation">
+<meta name="docs:order" content="70">
+<meta name="docs:desc" content="Accordion, collapse panels and a searchable FAQ with categories">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Accordion &amp; collapse</h1>
+    <p class="docs-lead"><code>&lt;o-accordion&gt;</code> implements the WAI-ARIA accordion pattern with animated height, single or multiple open items, nesting and four looks. Any markup can collapse with <code>data-o-toggle="collapse"</code>, and <code>&lt;o-faq&gt;</code> adds search, highlighting, category chips and FAQPage structured data.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic</h2>
+    <p>Only one item is open at a time. Headers are real buttons with <code>aria-expanded</code> / <code>aria-controls</code>; panels are labelled regions.</p>
+    <div class="docs-demo">
+      <template>
+        <o-accordion id="acc-basic">
+          <o-accordion-item heading="What is included in the Pro plan?" open>
+            <p>Unlimited projects, 50 GB of storage, priority support and SSO.</p>
+          </o-accordion-item>
+          <o-accordion-item heading="Can I change plans later?">
+            <p>Yes — upgrades apply immediately and downgrades at the end of the billing period.</p>
+          </o-accordion-item>
+          <o-accordion-item heading="Do you offer discounts for non-profits?">
+            <p>We offer 50% off for registered non-profits and education.</p>
+          </o-accordion-item>
+          <o-accordion-item heading="Enterprise invoicing (contact sales)" disabled><p>Disabled.</p></o-accordion-item>
+        </o-accordion>
+        <div class="docs-log" id="log-acc"></div>
+        <script>
+          const ab = document.getElementById('acc-basic');
+          ab.addEventListener('o-change', e => docs.log('#log-acc', `o-change ${e.detail.id} expanded=${e.detail.expanded} open=[${e.detail.open.join(', ')}]`));
+          ab.addEventListener('o-shown', e => docs.log('#log-acc', `o-shown ${e.detail.id}`));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="multiple">
+    <h2>Multiple, icons &amp; subtitles</h2>
+    <p><code>multiple</code> lets several items stay open. Items accept <code>icon</code> and <code>subtitle</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <o-accordion multiple>
+          <o-accordion-item heading="Account" subtitle="Name, email and avatar" icon="user" open><p>Update your personal details.</p></o-accordion-item>
+          <o-accordion-item heading="Security" subtitle="Password and two-factor authentication" icon="lock" open><p>Two-factor authentication is enabled.</p></o-accordion-item>
+          <o-accordion-item heading="Notifications" subtitle="Email, push and in-app" icon="bell"><p>Choose how we contact you.</p></o-accordion-item>
+        </o-accordion>
+      </template>
+    </div>
+  </section>
+
+  <section id="variants">
+    <h2>Variants</h2>
+    <p><code>variant="separated"</code> renders each item as a card, <code>plain</code> removes the chrome, <code>flush</code> drops the outer border for use inside cards, and <code>icon-position="start"</code> moves the chevron before the title.</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-grid" style="--o-cols:1;--o-gap:1.75rem;max-width:44rem">
+          <o-accordion variant="separated" icon-position="start">
+            <o-accordion-item heading="Separated with the icon at the start" open><p>Each item is its own card.</p></o-accordion-item>
+            <o-accordion-item heading="Second item"><p>Content.</p></o-accordion-item>
+          </o-accordion>
+          <o-accordion variant="plain" icon-position="start" multiple>
+            <o-accordion-item heading="Plain — great for sidebars and filters" open><p>No borders or backgrounds.</p></o-accordion-item>
+            <o-accordion-item heading="Price range"><p>$0 – $500</p></o-accordion-item>
+          </o-accordion>
+          <div class="o-card">
+            <div class="o-card-header"><h3 class="o-card-title">Flush inside a card</h3></div>
+            <o-accordion flush>
+              <o-accordion-item heading="Order #1042" subtitle="Shipped"><p>Tracking: 1Z999AA10123456784</p></o-accordion-item>
+              <o-accordion-item heading="Order #1041" subtitle="Delivered"><p>Delivered on Monday.</p></o-accordion-item>
+            </o-accordion>
+          </div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="nested">
+    <h2>Nested accordions</h2>
+    <p>Accordions can be nested; keyboard navigation and single-open rules apply per level.</p>
+    <div class="docs-demo">
+      <template>
+        <o-accordion>
+          <o-accordion-item heading="Engineering" open>
+            <o-accordion multiple variant="plain">
+              <o-accordion-item heading="Frontend" open><p>Aisha, Ben, Chen</p></o-accordion-item>
+              <o-accordion-item heading="Platform"><p>Diego, Elena</p></o-accordion-item>
+            </o-accordion>
+          </o-accordion-item>
+          <o-accordion-item heading="Design"><p>Farid, Grace</p></o-accordion-item>
+        </o-accordion>
+      </template>
+    </div>
+  </section>
+
+  <section id="collapse">
+    <h2>Collapse panels (any markup)</h2>
+    <p>Add <code>data-o-toggle="collapse"</code> and <code>data-o-target</code> (or <code>href="#id"</code>) to any trigger. Targets use the <code>hidden</code> attribute for their collapsed state. All triggers pointing at a target keep <code>aria-expanded</code> in sync; the target fires <code>o-show</code> / <code>o-shown</code> / <code>o-hide</code> / <code>o-hidden</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-primary" data-o-toggle="collapse" data-o-target="#c-filters">Toggle filters</button>
+          <a class="o-btn" href="#c-filters" data-o-toggle="collapse">Same target (link)</a>
+          <button class="o-btn o-btn-soft-primary" data-o-toggle="collapse" data-o-target=".c-multi">Toggle both notes</button>
+        </div>
+        <div id="c-filters" hidden>
+          <div class="o-card o-card-compact"><div class="o-card-body">Status, owner and date filters live here.</div></div>
+        </div>
+        <div class="o-grid o-mt-3" style="--o-cols:2">
+          <div class="c-multi o-callout" hidden>Note A</div>
+          <div class="c-multi o-callout" hidden>Note B</div>
+        </div>
+        <div class="docs-log" id="log-col"></div>
+        <script>
+          const cf = document.getElementById('c-filters');
+          ['o-show', 'o-shown', 'o-hide', 'o-hidden'].forEach(t => cf.addEventListener(t, () => docs.log('#log-col', t)));
+        </script>
+      </template>
+    </div>
+    <h3>Accordion group from plain markup</h3>
+    <p><code>data-o-parent="#group"</code> on the targets (or triggers) closes the others in the group — handy for Bootstrap-style markup.</p>
+    <div class="docs-demo">
+      <template>
+        <div id="grp" class="o-list">
+          <button class="o-list-item" data-o-toggle="collapse" data-o-target="#g1">Step 1 · Account</button>
+          <div id="g1" class="o-p-4" data-o-parent="#grp">Create your account.</div>
+          <button class="o-list-item" data-o-toggle="collapse" data-o-target="#g2">Step 2 · Workspace</button>
+          <div id="g2" class="o-p-4" data-o-parent="#grp" hidden>Name your workspace.</div>
+          <button class="o-list-item" data-o-toggle="collapse" data-o-target="#g3">Step 3 · Invite</button>
+          <div id="g3" class="o-p-4" data-o-parent="#grp" hidden>Invite your team.</div>
+        </div>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+      await Orion.collapseToggle('#c-filters');        // toggle
+      await Orion.collapseToggle('#c-filters', true);  // show
+      document.querySelector('o-accordion').toggle(0);  // accordion item by index or id
+    </pre>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <p><code>&lt;o-faq searchable json-ld&gt;</code> filters questions as you type (all words must match the question or answer), highlights matches, opens items whose answer matched, shows category chips when items have a <code>category</code>, and offers <em>Expand all</em>. <code>json-ld</code> emits <a href="https://schema.org/FAQPage">FAQPage</a> structured data.</p>
+    <div class="docs-demo">
+      <template>
+        <o-faq id="faq-demo" searchable json-ld>
+          <o-accordion-item heading="How do I reset my password?" category="Account"><p>Use <b>Forgot password</b> on the sign-in page; we email a link that is valid for 30 minutes.</p></o-accordion-item>
+          <o-accordion-item heading="Can I enable two-factor authentication?" category="Account"><p>Yes. Open Settings → Security and scan the QR code with an authenticator app.</p></o-accordion-item>
+          <o-accordion-item heading="When will I be charged?" category="Billing"><p>Subscriptions renew on the same day each month. Annual plans renew yearly.</p></o-accordion-item>
+          <o-accordion-item heading="How do refunds work?" category="Billing"><p>Refunds are available within 14 days of purchase. The money returns to the original card in 5–10 business days.</p></o-accordion-item>
+          <o-accordion-item heading="Which browsers are supported?" category="Technical"><p>The latest two versions of Chrome, Edge, Firefox and Safari.</p></o-accordion-item>
+          <o-accordion-item heading="Is there an API?" category="Technical"><p>A REST API with OAuth 2 tokens is included in every plan.</p></o-accordion-item>
+          <o-accordion-item heading="Where is my data stored?" category="Security"><p>In ISO 27001 certified data centres in Frankfurt and Singapore, encrypted at rest.</p></o-accordion-item>
+        </o-faq>
+        <div class="docs-log" id="log-faq"></div>
+        <script>
+          document.getElementById('faq-demo').addEventListener('o-search', e => docs.log('#log-faq', `o-search "${e.detail.query}" category=${e.detail.category || 'all'} → ${e.detail.count}`));
+        </script>
+      </template>
+    </div>
+    <h3>From data</h3>
+    <p>Set <code>questions</code> to an array (answers are text; use <code>html</code> for sanitized rich answers).</p>
+    <div class="docs-demo">
+      <template>
+        <o-faq id="faq-data" variant="default" searchable placeholder="Search shipping questions…"></o-faq>
+        <script>
+          document.getElementById('faq-data').questions = [
+            { q: 'How long does shipping take?', a: 'Standard shipping takes 3–5 business days.', category: 'Shipping' },
+            { q: 'Do you ship internationally?', html: 'Yes, to <b>40+ countries</b>. Duties are calculated at checkout.', category: 'Shipping' },
+            { q: 'Can I return an item?', a: 'Returns are free within 30 days.', category: 'Returns' },
+          ];
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>&lt;o-accordion&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>multiple</td><td><code>boolean</code></td><td>Allow several open items (default: one at a time).</td></tr>
+        <tr><td>variant</td><td><code>default | separated | plain</code></td><td>Look.</td></tr>
+        <tr><td>flush</td><td><code>boolean</code></td><td>No outer border / radius (inside cards).</td></tr>
+        <tr><td>icon-position</td><td><code>start | end</code></td><td>Chevron position (default <code>end</code>).</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-accordion-item&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>heading / subtitle</td><td><code>string</code></td><td>Header text.</td></tr>
+        <tr><td>icon</td><td><code>string</code></td><td>Icon name shown before the title.</td></tr>
+        <tr><td>open</td><td><code>boolean</code></td><td>Expanded state (reflected; setting it animates without events).</td></tr>
+        <tr><td>disabled</td><td><code>boolean</code></td><td>Header cannot be toggled.</td></tr>
+        <tr><td>heading-level</td><td><code>1–6</code></td><td><code>aria-level</code> of the header (default 3).</td></tr>
+        <tr><td>category</td><td><code>string</code></td><td>FAQ category.</td></tr>
+        <tr><td>[data-o-panel] child</td><td>—</td><td>Use this element as the collapsible region (framework-safe, never moved).</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-faq&gt;</h3>
+    <p>Everything from <code>&lt;o-accordion&gt;</code> (defaults: <code>multiple</code>, <code>variant="separated"</code>) plus:</p>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>searchable</td><td><code>boolean</code></td><td>Show the search box.</td></tr>
+        <tr><td>placeholder</td><td><code>string</code></td><td>Search placeholder.</td></tr>
+        <tr><td>query / category</td><td><code>string</code></td><td>Initial search and category filter.</td></tr>
+        <tr><td>json-ld</td><td><code>boolean</code></td><td>Emit FAQPage JSON-LD.</td></tr>
+        <tr><td>questions</td><td><code>{ id, q, a, html, category, open }[]</code></td><td>Render items from data (property or JSON attribute).</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Target · detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-show / o-hide</td><td>item or collapse target · <code>{ id, item }</code> / <code>{ trigger }</code></td><td>Cancelable, before expanding / collapsing.</td></tr>
+        <tr><td>o-shown / o-hidden</td><td>same</td><td>After the animation finished.</td></tr>
+        <tr><td>o-change</td><td>accordion · <code>{ id, expanded, open }</code></td><td>An item was toggled; <code>open</code> lists open item ids.</td></tr>
+        <tr><td>o-search</td><td>faq · <code>{ query, category, count }</code></td><td>Filter changed.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>item.show() / hide() / toggle(force?)</td><td>Promise&lt;boolean&gt;; emits the cancelable events.</td></tr>
+        <tr><td>item.expanded</td><td>Current state.</td></tr>
+        <tr><td>accordion.toggle(idOrIndex, force?)</td><td>Toggle an item.</td></tr>
+        <tr><td>accordion.expandAll() / collapseAll()</td><td>Expand (multiple mode) / collapse every item.</td></tr>
+        <tr><td>accordion.items / openIds</td><td>Direct items / ids of open items.</td></tr>
+        <tr><td>faq.search(q) / faq.setCategory(c)</td><td>Filter programmatically.</td></tr>
+        <tr><td>Orion.collapseToggle(el, show?, { trigger })</td><td>Animated collapse for any element; Promise&lt;boolean&gt;.</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS custom properties</h3>
+    <p><code>--o-accordion-px</code> and <code>--o-accordion-py</code> set the header / panel padding.</p>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Enter / Space</td><td>Toggle the focused header.</td></tr>
+        <tr><td>↓ / ↑</td><td>Next / previous header of the same accordion (wraps).</td></tr>
+        <tr><td>Home / End</td><td>First / last header.</td></tr>
+        <tr><td>Escape (FAQ search)</td><td>Clear the search.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="frameworks">
+    <h2>Frameworks</h2>
+    <p>Items without a <code>[data-o-panel]</code> child get their children wrapped once. When React, Vue or Angular render the content, wrap it in <code>&lt;div data-o-panel&gt;</code> so the framework keeps ownership of its nodes. Bind <code>open</code> as a property and listen to <code>o-change</code>. Reduced motion disables the height animation.</p>
+  </section>
+</main>
+</body>
+</html>

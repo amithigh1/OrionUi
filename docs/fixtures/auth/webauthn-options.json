@@ -1,0 +1,18 @@
+{
+  "creation": {
+    "rp": { "name": "Orion Admin", "id": "localhost" },
+    "user": { "id": "MQ", "name": "ada@example.com", "displayName": "Ada Lovelace" },
+    "challenge": "Y2hhbGxlbmdlLTEyMzQ1Njc4OTA",
+    "pubKeyCredParams": [{ "type": "public-key", "alg": -7 }, { "type": "public-key", "alg": -257 }],
+    "timeout": 60000,
+    "authenticatorSelection": { "residentKey": "preferred", "userVerification": "preferred" },
+    "attestation": "none"
+  },
+  "request": {
+    "rpId": "localhost",
+    "challenge": "cmVxdWVzdC1jaGFsbGVuZ2UtOTg3NjU0MzIx",
+    "timeout": 60000,
+    "userVerification": "preferred",
+    "allowCredentials": []
+  }
+}

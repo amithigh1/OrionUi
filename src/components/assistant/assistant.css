@@ -1,0 +1,124 @@
+/* ============================================================================
+ * <o-chatbot> and <o-assistant>
+ * ========================================================================== */
+o-chatbot:not(:defined), o-assistant:not(:defined) { visibility: hidden; }
+
+/* ── chatbot launcher + window ───────────────────────────────────────── */
+.o-chatbot { position: fixed; z-index: var(--o-z-popover); inset-block-end: 1.25rem; inset-inline-end: 1.25rem; }
+.o-chatbot-bottom-start { inset-inline-end: auto; inset-inline-start: 1.25rem; }
+.o-chatbot-top-end { inset-block-end: auto; inset-block-start: 1.25rem; }
+.o-chatbot-top-start { inset-block-end: auto; inset-block-start: 1.25rem; inset-inline-end: auto; inset-inline-start: 1.25rem; }
+
+.o-chatbot-launcher {
+  display: inline-grid; place-items: center; width: 3.5rem; height: 3.5rem; padding: 0; border: 0; border-radius: 50%;
+  color: var(--o-on-primary); background: var(--o-primary); box-shadow: var(--o-shadow-lg); cursor: pointer;
+  transition: transform var(--o-dur-fast) var(--o-ease), background-color var(--o-dur-fast);
+}
+.o-chatbot-launcher:hover { background: var(--o-primary-hover); transform: translateY(-1px); }
+.o-chatbot-launcher:focus-visible { outline: none; box-shadow: 0 0 0 var(--o-ring-width) color-mix(in srgb, var(--o-focus) var(--o-ring-alpha), transparent); }
+.o-chatbot-launcher .o-icon { width: 1.5rem; height: 1.5rem; }
+.o-chatbot.is-open .o-chatbot-launcher { display: none; }
+.o-chatbot-inline .o-chatbot-launcher { display: none; }
+
+.o-chatbot-window {
+  position: absolute; inset-block-end: calc(100% + .75rem); inset-inline-end: 0; display: flex; flex-direction: column;
+  width: min(24rem, calc(100vw - 2.5rem)); height: min(34rem, calc(100vh - 7rem)); overflow: hidden;
+  background: var(--o-surface); border-radius: var(--o-radius-lg); box-shadow: var(--o-shadow-xl);
+}
+.o-chatbot-bottom-start .o-chatbot-window { inset-inline-end: auto; inset-inline-start: 0; }
+.o-chatbot-top-end .o-chatbot-window, .o-chatbot-top-start .o-chatbot-window { inset-block-end: auto; inset-block-start: calc(100% + .75rem); }
+.o-chatbot-inline .o-chatbot-window { position: static; width: 100%; height: 100%; min-height: 26rem; box-shadow: var(--o-shadow-sm); border: 1px solid var(--o-border); }
+.o-chatbot-inline { position: relative; inset: auto; display: block; width: 100%; height: 100%; }
+
+.o-chatbot-header { display: flex; align-items: center; gap: .625rem; padding: .75rem 1rem; border-bottom: 1px solid var(--o-border); flex-shrink: 0; }
+.o-chatbot-avatar { --o-avatar-size: 2rem; }
+.o-chatbot-title { flex: 1 1 auto; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.o-chatbot-header-actions { display: flex; align-items: center; gap: .125rem; flex-shrink: 0; }
+
+.o-chatbot-log { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: .875rem; scroll-behavior: smooth; }
+.o-chat-msg { display: flex; align-items: flex-start; gap: .5rem; max-width: 100%; }
+.o-chat-msg.is-user { flex-direction: row-reverse; }
+.o-chat-avatar { --o-avatar-size: 1.75rem; flex-shrink: 0; }
+.o-chatbot-bubble { min-width: 0; max-width: 88%; display: flex; flex-direction: column; gap: .25rem; }
+.o-chat-msg.is-user .o-chatbot-bubble { align-items: flex-end; }
+.o-chat-content { padding: .5rem .75rem; font-size: var(--o-fs-sm); line-height: 1.55; background: var(--o-surface-2); border-radius: var(--o-radius-lg); border-end-start-radius: var(--o-radius-xs); word-break: break-word; }
+.o-chat-msg.is-user .o-chat-content { background: var(--o-primary); color: var(--o-on-primary); border-end-start-radius: var(--o-radius-lg); border-end-end-radius: var(--o-radius-xs); }
+.o-chat-msg.is-user .o-chat-content :where(a) { color: inherit; }
+.o-chat-content.is-typing { display: flex; align-items: center; padding-block: .625rem; }
+.o-chat-content :where(.o-md-code) { max-width: 100%; }
+.o-chat-content.is-streaming::after {
+  content: ""; display: inline-block; width: .5em; height: 1em; margin-inline-start: .1em; vertical-align: text-bottom;
+  background: currentColor; animation: o-chat-caret 1s step-end infinite;
+}
+@keyframes o-chat-caret { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .o-chat-content.is-streaming::after { animation: none; opacity: .6; } }
+.o-chat-msg.is-aborted .o-chat-content::after { content: none; }
+.o-chat-error { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; color: var(--o-danger-text); }
+.o-chat-error .o-icon { flex-shrink: 0; }
+.o-chat-msg.is-error .o-chat-content, .o-chat-msg .o-chat-content:has(.o-chat-error) { background: var(--o-danger-subtle); }
+.o-chatbot-actions { display: flex; gap: .125rem; opacity: 0; transition: opacity var(--o-dur-fast); }
+.o-chat-msg:hover .o-chatbot-actions, .o-chatbot-actions:focus-within { opacity: 1; }
+.o-chatbot-actions .o-btn { color: var(--o-text-subtle); }
+.o-chatbot-actions .o-btn.is-active { color: var(--o-primary-text); }
+
+.o-chatbot-jump {
+  align-self: center; margin: -.5rem auto .375rem; display: inline-flex; align-items: center; gap: .375rem; padding: .3rem .75rem;
+  font-size: var(--o-fs-xs); font-weight: 500; color: var(--o-text); background: var(--o-elevated); border: 1px solid var(--o-border);
+  border-radius: var(--o-radius-pill); box-shadow: var(--o-shadow-sm); cursor: pointer;
+}
+.o-chatbot-suggestions { display: flex; flex-wrap: wrap; gap: .375rem; padding: 0 1rem .625rem; flex-shrink: 0; }
+.o-chatbot-suggestions[hidden] { display: none; }
+.o-chatbot-chip { cursor: pointer; background: var(--o-surface-2); }
+.o-chatbot-chip:hover { background: var(--o-surface-3); }
+
+.o-chatbot-attachments { display: flex; flex-wrap: wrap; gap: .375rem; padding: 0 .75rem; }
+.o-chatbot-attachments:empty { display: none; }
+.o-chatbot-composer { flex-shrink: 0; border-top: 1px solid var(--o-border); padding: .625rem .75rem; }
+.o-chatbot-inputrow { display: flex; align-items: flex-end; gap: .375rem; }
+.o-chatbot-input {
+  flex: 1 1 auto; min-height: 2.25rem; max-height: 10rem; padding: .5rem .625rem; font: inherit; font-size: var(--o-fs-sm); line-height: 1.4;
+  color: var(--o-text); background: var(--o-surface-2); border: 1px solid var(--o-border); border-radius: var(--o-radius); resize: none;
+}
+.o-chatbot-input:focus { outline: none; border-color: var(--o-primary); background: var(--o-surface); box-shadow: 0 0 0 var(--o-ring-width) color-mix(in srgb, var(--o-focus) var(--o-ring-alpha), transparent); }
+.o-chatbot-attach, .o-chatbot-send, .o-chatbot-stop { flex-shrink: 0; }
+
+/* mobile: fullscreen chat */
+@media (max-width: 640px) {
+  .o-chatbot-window { position: fixed; inset: 0; width: 100%; height: 100%; border-radius: 0; }
+  .o-chatbot { inset-block-end: 1rem; inset-inline-end: 1rem; }
+}
+
+/* ── assistant side panel ────────────────────────────────────────────── */
+.o-assistant {
+  --o-assistant-w: 22rem; position: fixed; inset-block: 0; inset-inline-end: 0; z-index: var(--o-z-fixed); display: flex;
+  width: var(--o-assistant-w); max-width: calc(100vw - 2rem); transform: translateX(100%); transition: transform var(--o-dur) var(--o-ease);
+  background: var(--o-surface); border-inline-start: 1px solid var(--o-border); box-shadow: var(--o-shadow-xl);
+}
+.o-assistant[dir="rtl"], [dir="rtl"] .o-assistant { transform: translateX(-100%); }
+.o-assistant.is-open { transform: translateX(0); }
+.o-assistant-start { inset-inline-end: auto; inset-inline-start: 0; border-inline-start: 0; border-inline-end: 1px solid var(--o-border); transform: translateX(-100%); }
+.o-assistant-start.is-open, [dir="rtl"] .o-assistant-start.is-open { transform: translateX(0); }
+.o-assistant-panel { display: flex; flex-direction: column; width: 100%; min-width: 0; }
+.o-assistant-handle { position: absolute; inset-block: 0; inset-inline-start: -3px; width: 6px; cursor: col-resize; touch-action: none; }
+.o-assistant-start .o-assistant-handle { inset-inline-start: auto; inset-inline-end: -3px; }
+.o-assistant-handle:hover, .o-assistant-handle.is-active { background: color-mix(in srgb, var(--o-primary) 40%, transparent); }
+
+.o-assistant-header { display: flex; align-items: center; gap: .5rem; padding: .875rem 1rem; border-bottom: 1px solid var(--o-border); flex-shrink: 0; }
+.o-assistant-header h2 { margin: 0; font-size: var(--o-fs-md); font-weight: 600; flex: 1 1 auto; }
+.o-assistant-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 1rem; }
+.o-assistant-context { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.o-assistant-context select { max-width: 12rem; }
+.o-assistant-actions { display: flex; flex-wrap: wrap; gap: .375rem; }
+.o-assistant-actions .o-btn { font-size: var(--o-fs-xs); }
+.o-assistant-composer { display: flex; flex-direction: column; gap: .5rem; }
+.o-assistant-textarea { min-height: 4.5rem; resize: vertical; }
+.o-assistant-result { border: 1px solid var(--o-border); border-radius: var(--o-radius); padding: .75rem .875rem; background: var(--o-surface-2); min-height: 3rem; font-size: var(--o-fs-sm); }
+.o-assistant-result.is-streaming::after { content: ""; display: inline-block; width: .5em; height: 1em; margin-inline-start: .1em; vertical-align: text-bottom; background: currentColor; animation: o-chat-caret 1s step-end infinite; }
+@media (prefers-reduced-motion: reduce) { .o-assistant-result.is-streaming::after { animation: none; opacity: .6; } }
+.o-assistant-result-actions { display: flex; flex-wrap: wrap; gap: .375rem; margin-top: .625rem; }
+.o-assistant-empty { color: var(--o-text-muted); font-size: var(--o-fs-sm); }
+.o-assistant-history { display: flex; flex-direction: column; gap: .25rem; }
+.o-assistant-history-item { display: block; width: 100%; padding: .5rem .625rem; text-align: start; font-size: var(--o-fs-sm); color: var(--o-text); background: transparent; border: 0; border-radius: var(--o-radius-sm); cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.o-assistant-history-item:hover { background: var(--o-surface-2); }
+
+@media (max-width: 640px) { .o-assistant { width: 100%; max-width: 100%; } .o-assistant-handle { display: none; } }

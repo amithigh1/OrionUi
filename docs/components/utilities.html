@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Utilities — Orion Admin</title>
+<meta name="docs:section" content="Foundation">
+<meta name="docs:order" content="50">
+<meta name="docs:desc" content="Spacing, display, flex, sizing, text, color, border, shadow, position and print utilities">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>.u-box { padding: .5rem .75rem; background: var(--o-primary-subtle); color: var(--o-primary-text); border-radius: var(--o-radius-sm); font-size: .8125rem; }</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Utilities</h1>
+    <p class="docs-lead">Single-purpose classes for spacing, layout, typography, color and more. Utilities always win over component styles, and layout-related ones have responsive variants (<code>.o-{prop}-{bp}-{value}</code>).</p>
+  </header>
+
+  <section id="spacing">
+    <h2>Spacing</h2>
+    <p><code>.o-{m|p}{t|b|s|e|x|y}-{size}</code>, where <b>s</b>/<b>e</b> are the logical start/end sides (they flip in RTL). Scale: <code>0 1 2 3 4 5 6 8 10 12 16</code> = <code>0 .25 .5 .75 1 1.25 1.5 2 2.5 3 4rem</code>. Margins also accept <code>auto</code>, and all have responsive variants: <code>.o-mt-md-4</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster">
+          <div class="u-box o-p-1">.o-p-1</div><div class="u-box o-p-3">.o-p-3</div><div class="u-box o-px-6 o-py-2">.o-px-6 .o-py-2</div><div class="u-box o-ms-auto">.o-ms-auto</div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="display-flex">
+    <h2>Display &amp; flex</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-d-flex o-flex-column o-flex-md-row o-gap-2 o-justify-between o-items-center o-p-3 o-border o-rounded">
+          <div class="u-box">.o-d-flex</div><div class="u-box">.o-flex-column → .o-flex-md-row</div><div class="u-box o-d-none o-d-lg-block">.o-d-none .o-d-lg-block (visible ≥ lg)</div>
+        </div>
+      </template>
+    </div>
+    <p><code>.o-d-{none|inline|inline-block|block|flex|inline-flex|grid|inline-grid|contents|table|table-cell}</code>, <code>.o-flex-{row|column|wrap|nowrap|1|auto|none|grow-0|shrink-0}</code>, <code>.o-justify-{start|end|center|between|around|evenly}</code>, <code>.o-items-*</code>, <code>.o-self-*</code>, <code>.o-content-*</code>, <code>.o-order-{first|last|0-5}</code>, <code>.o-gap-*</code>, <code>.o-gap-x-*</code>, <code>.o-gap-y-*</code>, <code>.o-place-center</code>. Most are responsive.</p>
+  </section>
+
+  <section id="sizing">
+    <h2>Sizing</h2>
+    <p><code>.o-w-{25|50|75|100|auto|fit|min|max|screen}</code> (responsive), <code>.o-h-*</code>, <code>.o-mw-{100|xs|sm|md|lg|xl|2xl|3xl|4xl|5xl|prose}</code>, <code>.o-mh-*</code>, <code>.o-min-w-0</code>, <code>.o-vh-100</code>, <code>.o-min-vh-100</code>, <code>.o-size-{4-16}</code> (square).</p>
+  </section>
+
+  <section id="text">
+    <h2>Text</h2>
+    <div class="docs-demo">
+      <template>
+        <p class="o-text-lg o-fw-semibold">.o-text-lg .o-fw-semibold</p>
+        <p class="o-text-uppercase o-ls-wide o-text-xs o-text-muted">.o-text-uppercase .o-ls-wide .o-text-xs</p>
+        <p class="o-text-center o-text-md-end">.o-text-center → .o-text-md-end</p>
+        <p class="o-line-clamp-2" style="max-width:24rem">.o-line-clamp-2 limits text to two lines. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+        <p class="o-font-mono o-tabular-nums">.o-font-mono .o-tabular-nums 1,234.56</p>
+      </template>
+    </div>
+  </section>
+
+  <section id="colors">
+    <h2>Colors</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <span class="o-text-primary">.o-text-primary</span><span class="o-text-success">success</span><span class="o-text-danger">danger</span><span class="o-text-warning">warning</span><span class="o-text-info">info</span><span class="o-text-muted">muted</span><span class="o-text-subtle">subtle</span>
+        </div>
+        <div class="o-cluster">
+          <span class="o-p-2 o-rounded o-bg-primary-subtle">.o-bg-primary-subtle</span>
+          <span class="o-p-2 o-rounded o-text-bg-success">.o-text-bg-success</span>
+          <span class="o-p-2 o-rounded o-text-bg-warning">.o-text-bg-warning</span>
+          <span class="o-p-2 o-rounded o-bg-surface-3">.o-bg-surface-3</span>
+          <span class="o-p-2 o-rounded o-bg-gradient o-text-white">.o-bg-gradient</span>
+        </div>
+      </template>
+    </div>
+    <p><code>.o-text-{color|body|muted|subtle|white}</code>, <code>.o-bg-{color}</code>, <code>.o-bg-{color}-subtle</code>, <code>.o-text-bg-{color}</code> (background plus readable text), <code>.o-bg-{body|surface|surface-2|surface-3|elevated|transparent}</code>, <code>.o-border-{color}</code>, <code>.o-link-{color}</code>, and <code>.o-c-{color}</code> (color context for components).</p>
+  </section>
+
+  <section id="borders-effects">
+    <h2>Borders, radius, shadows</h2>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-p-4 o-border">.o-border</div>
+        <div class="o-p-4 o-border o-border-dashed o-border-primary o-rounded-lg">.o-border-dashed</div>
+        <div class="o-p-4 o-rounded-pill o-bg-surface-3">.o-rounded-pill</div>
+        <div class="o-p-4 o-shadow-sm o-rounded o-bg-surface">.o-shadow-sm</div>
+        <div class="o-p-4 o-shadow-lg o-rounded o-bg-surface">.o-shadow-lg</div>
+        <div class="o-p-4 o-rounded o-bg-surface o-border o-hover-lift">.o-hover-lift</div>
+      </template>
+    </div>
+  </section>
+
+  <section id="position">
+    <h2>Position &amp; misc</h2>
+    <p><code>.o-relative .o-absolute .o-fixed .o-sticky</code>, <code>.o-inset-0</code>, <code>.o-top-0/50/100</code>, <code>.o-start-*</code>, <code>.o-end-*</code>, <code>.o-translate-middle</code>, <code>.o-sticky-top</code>, <code>.o-fixed-top/bottom</code>, <code>.o-z-*</code>, <code>.o-overflow-*</code>, <code>.o-opacity-*</code>, <code>.o-cursor-*</code>, <code>.o-select-none</code>, <code>.o-pe-none</code>, <code>.o-object-cover</code>, <code>.o-aspect-16x9</code>, <code>.o-visible/.o-invisible</code>, <code>.o-blur</code>, <code>.o-scroll</code> (themed thin scrollbar), <code>.o-no-scrollbar</code>, <code>.o-transition</code>.</p>
+  </section>
+
+  <section id="print">
+    <h2>Print &amp; screen readers</h2>
+    <p><code>.o-print-hide</code> (or <code>.o-no-print</code>) hides elements when printing, and <code>.o-print-only</code> shows them only when printing. <code>.o-d-print-*</code> sets the print display type. <code>.o-sr-only</code> hides content visually but keeps it for screen readers, and <code>.o-sr-only-focusable</code> reveals it on focus (skip links).</p>
+  </section>
+
+  <section id="animation">
+    <h2>Animation helpers</h2>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <span class="o-badge o-badge-soft-primary o-animate-pulse">.o-animate-pulse</span>
+        <span class="o-status o-status-online o-status-pulse"></span> live
+        <o-icon name="loader" class="o-animate-spin"></o-icon>
+        <button class="o-btn" onclick="Orion.animate(this, 'shake')">Orion.animate(el, 'shake')</button>
+        <button class="o-btn" onclick="Orion.animate(this, 'pulse', { duration: 400 })">pulse</button>
+      </template>
+    </div>
+    <p>See <a href="animation.html">Animation</a> for the JavaScript animation API.</p>
+  </section>
+</main>
+</body>
+</html>

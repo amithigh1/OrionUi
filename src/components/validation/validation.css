@@ -1,0 +1,22 @@
+/* Validation: error summary, async "checking…" state, success state */
+.o-validation-summary { align-items: flex-start; }
+.o-validation-summary:focus { outline: none; box-shadow: 0 0 0 var(--o-ring-width) color-mix(in srgb, var(--o-danger) var(--o-ring-alpha), transparent); }
+.o-validation-summary .o-alert-title { margin-bottom: .375rem; }
+.o-validation-list { margin: 0; padding-inline-start: 1.125rem; font-size: var(--o-fs-sm); }
+.o-validation-list > li + li { margin-top: .125rem; }
+.o-validation-summary .o-validation-list a { font-weight: 500; }
+
+.o-error.is-visible { display: block; }
+.o-error.is-pending { display: flex; align-items: center; gap: .375rem; color: var(--o-text-muted); }
+.o-error.is-pending::before {
+  content: ""; flex-shrink: 0; width: .75rem; height: .75rem; border: 2px solid currentColor; border-inline-end-color: transparent;
+  border-radius: 50%; animation: o-spin .7s linear infinite;
+}
+.o-field.is-validating .o-error, .o-field.is-validating .o-valid-msg { display: flex; }
+.o-field.is-valid .o-label { color: inherit; }
+
+/* checkbox / radio groups inside an invalid field */
+.o-field.is-invalid .o-check > input, fieldset.is-invalid .o-check > input,
+.o-check > input.is-invalid, .o-switch > input.is-invalid { border-color: var(--o-danger); }
+fieldset.is-invalid > legend { color: var(--o-danger-text); }
+fieldset.is-invalid .o-error { display: block; }

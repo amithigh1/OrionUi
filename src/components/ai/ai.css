@@ -1,0 +1,29 @@
+/* ============================================================================
+ * Orion.ai.markdown() output — code blocks, task-list checkboxes.
+ * Wrap rendered markdown in class="o-prose" to also get heading/table/blockquote/link styling
+ * for free from 20-typography.css.
+ * ========================================================================== */
+.o-md-code { margin: 0 0 1.1em; border: 1px solid var(--o-border); border-radius: var(--o-radius); overflow: hidden; background: var(--o-surface-2); }
+.o-md-code-bar { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .375rem .625rem; background: var(--o-surface-3); border-bottom: 1px solid var(--o-border); }
+.o-md-lang { font-size: var(--o-fs-xs); font-weight: 600; color: var(--o-text-muted); text-transform: uppercase; letter-spacing: .04em; }
+.o-md-copy {
+  display: inline-flex; align-items: center; gap: .3rem; height: 1.5rem; padding: 0 .5rem; font-size: var(--o-fs-xs); font-weight: 500;
+  color: var(--o-text-muted); background: transparent; border: 1px solid transparent; border-radius: var(--o-radius-sm); cursor: pointer;
+}
+.o-md-copy:hover { background: var(--o-surface); color: var(--o-text); border-color: var(--o-border); }
+.o-md-copy:focus-visible { outline: none; box-shadow: 0 0 0 var(--o-ring-width) color-mix(in srgb, var(--o-focus) var(--o-ring-alpha), transparent); }
+.o-md-copy.is-copied { color: var(--o-success-text); }
+.o-md-copy .o-icon { width: .875rem; height: .875rem; }
+:where(.o-md-code) .o-md-pre, .o-md-pre { margin: 0; border: 0; border-radius: 0; background: transparent; }
+
+.o-md-task { list-style: none; margin-inline-start: -1.25rem; }
+.o-md-checkbox {
+  display: inline-flex; align-items: center; justify-content: center; width: .9rem; height: .9rem; margin-inline-end: .4rem;
+  vertical-align: -.1rem; border: 1px solid var(--o-border-strong); border-radius: 3px; background: var(--o-surface);
+}
+.o-md-checkbox.is-done { background: var(--o-primary); border-color: var(--o-primary); }
+.o-md-checkbox.is-done::after {
+  content: ""; width: .5rem; height: .5rem; background: var(--o-on-primary);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / contain no-repeat;
+}

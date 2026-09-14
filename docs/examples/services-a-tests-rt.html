@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Services A tests: realtime &amp; PWA — Orion Admin</title>
+<script src="../../dist/orion.js"></script>
+</head>
+<body class="o-container o-py-5">
+<h1 class="o-h3">Services A — realtime, SignalR, SSE, polling &amp; PWA tests</h1>
+<p class="o-muted">Mock-based tests always run. Real-server tests run with <code>runAll({ rt: 'http://127.0.0.1:PORT' })</code> against <code>.tmp/services-a/rt-server.mjs</code>.</p>
+<p><button class="o-btn o-btn-primary" id="run" type="button">Run tests</button> <span id="sum" class="o-badge"></span> <o-live-indicator id="ind" pill></o-live-indicator></p>
+<div id="out" class="o-stack" style="--o-gap:.25rem"></div>
+<div id="sandbox" hidden><div id="live1"></div><div id="live2"></div><o-live-indicator id="ind2" for="t-ws"></o-live-indicator><o-install-prompt id="ip" app-name="Test App"></o-install-prompt></div>
+
+<script>
+const T = [];
+const test = (name, fn) => T.push({ name, fn });
+const assert = (c, m) => { if (!c) throw new Error(m || 'assertion failed'); };
+const eq = (a, b, m) => assert(JSON.stringify(a) === JSON.stringify(b), `${m || 'eq'}: expected ${JSON.stringify(b)} got ${JSON.stringify(a)}`);
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const until = async (fn, ms = 4000, msg = 'condition') => { const t0 = Date.now(); while (!(await fn())) { if (Date.now() - t0 > ms) throw new Error('timeout waiting for ' + msg); await wait(15); } };
+const rejects = async (p, check) => { try { await p; } catch (e) { if (check) check(e); return e; } throw new Error('expected rejection'); };
+let OPTS = {};
+async function runAll(opts = {}) {
+  OPTS = opts;
+  const out = document.getElementById('out'); out.innerHTML = '';
+  let pass = 0, skipped = 0; const failures = [];
+  for (const t of T) {
+    if (t.name.startsWith('[rt]') && !opts.rt) { skipped++; continue; }
+    if (opts.only && !t.name.includes(opts.only)) { skipped++; continue; }
+    try { await Promise.race([t.fn(), wait(20000).then(() => { throw new Error('test timeout'); })]); pass++; out.insertAdjacentHTML('beforeend', `<div class="o-alert o-alert-success" style="margin:0;padding:.25rem .75rem">✔ ${t.name}</div>`); }
+    catch (e) { failures.push(t.name + ': ' + e.message); console.error('✖ ' + t.name + ': ' + (e && e.stack || e)); out.insertAdjacentHTML('beforeend', `<div class="o-alert o-alert-danger" style="margin:0;padding:.25rem .75rem">✖ ${t.name}: ${String(e.message).replace(/</g, '&lt;')}</div>`); }
+  }
+  document.getElementById('sum').textContent = `${pass}/${T.length - skipped}`;
+  return { pass, fail: failures.length, skipped, total: T.length, failures };
+}
+document.getElementById('run').onclick = () => runAll();
+const RT = Orion.realtime, P = Orion.signalr.protocol, RS = '\x1e';
+
+/* ── protocol unit tests ── */
+test('signalr protocol: write / parse / split / incomplete', () => {
+  const s = P.write({ type: 1, target: 'A', arguments: [1] }) + P.write({ type: 6 });
+  eq(P.parse(s), [{ type: 1, target: 'A', arguments: [1] }, { type: 6 }]);
+  assert(/incomplete/.test((() => { try { P.parse('{"type":6}'); } catch (e) { return e.message; } })()), 'incomplete throws');
+  eq(P.split('{"type":6}' + RS + '{"ty'), { messages: [{ type: 6 }], rest: '{"ty' });
+  eq(P.handshake(), '{"protocol":"json","version":1}' + RS);
+});
+
+/* ── WebSocket client against the in-browser mock server ── */
+test('ws: open, JSON echo, typed events, send queue while connecting, close', async () => {
+  const srv = RT.mockServer('wss://t.local/echo', s => { s.send({ type: 'hello' }); s.on('message', d => s.send(d)); });
+  const ws = Orion.ws('wss://t.local/echo', { id: 't-ws' });
+  const statuses = []; ws.on('status', s => statuses.push(s));
+  const msgs = []; ws.on('message', m => msgs.push(m));
+  let hello = null; ws.on('hello', m => { hello = m; });
+  assert(ws.send({ type: 'q', n: 1 }), 'queued'); eq(ws.queued, 1);
+  await until(() => msgs.length >= 2, 2000, 'echo of queued msg');
+  eq(hello, { type: 'hello' }); eq(msgs[1], { type: 'q', n: 1 }); eq(ws.status, 'open');
+  assert(document.getElementById('ind2').dataset.status === 'open', 'indicator bound by id');
+  ws.close(); eq(ws.status, 'closed'); assert(!ws.send('x'), 'no send after close');
+  eq(statuses, ['open', 'closed']); ws.destroy(); srv.close();
+});
+test('ws: drop -> reconnecting (backoff) -> reconnected; refuse + maxRetries -> giveup', async () => {
+  const srv = RT.mockServer('wss://t.local/drop', () => {});
+  const ws = Orion.ws('wss://t.local/drop', { reconnect: { min: 20, max: 60, jitter: 0 } });
+  await until(() => ws.status === 'open');
+  let reconnected = 0, attempts = []; ws.on('reconnected', () => reconnected++); ws.on('reconnecting', e => attempts.push(e.attempt));
+  srv.drop();
+  await until(() => reconnected === 1, 3000, 'reconnected'); eq(attempts, [1]); eq(ws.retries, 0);
+  srv.refuse(true); ws.opts.reconnect.maxRetries = 2;
+  let gaveUp = false; ws.on('giveup', () => { gaveUp = true; });
+  srv.drop();
+  await until(() => gaveUp, 3000, 'giveup'); eq(ws.status, 'closed');
+  ws.destroy(); srv.close();
+});
+test('ws: heartbeat timeout forces a reconnect; pong keeps it alive', async () => {
+  let pong = true;
+  const srv = RT.mockServer('wss://t.local/hb', s => s.on('message', d => { if (pong && JSON.parse(d).type === 'ping') s.send({ type: 'pong' }); }));
+  const ws = Orion.ws('wss://t.local/hb', { heartbeat: { interval: 60, timeout: 80 }, reconnect: { min: 10, jitter: 0 } });
+  let pongs = 0, timeouts = 0; ws.on('pong', () => pongs++); ws.on('timeout', () => timeouts++);
+  await until(() => pongs >= 2, 2000, 'pongs'); eq(timeouts, 0);
+  pong = false;
+  await until(() => timeouts >= 1 && ws.status === 'open', 3000, 'timeout + reconnect');
+  ws.destroy(); srv.close();
+});
+test('ws: injectable WebSocket constructor + binary passthrough', async () => {
+  const sent = [];
+  class FakeWS { constructor(url) { this.url = url; this.readyState = 0; setTimeout(() => { this.readyState = 1; this.onopen?.({}); }, 5); } send(d) { sent.push(d); } close() { this.readyState = 3; this.onclose?.({ code: 1000 }); } }
+  const ws = Orion.ws('wss://nowhere.invalid/x', { WebSocket: FakeWS, reconnect: false });
+  await until(() => ws.isOpen);
+  const buf = new Uint8Array([1, 2]).buffer; ws.send(buf); ws.send({ a: 1 }); ws.send('raw');
+  assert(sent[0] === buf && sent[1] === '{"a":1}' && sent[2] === 'raw', 'payloads');
+  ws.destroy();
+});
+test('ws: offline simulation pauses and resumes the connection', async () => {
+  const srv = RT.mockServer('wss://t.local/off', () => {});
+  const ws = Orion.ws('wss://t.local/off', { reconnect: { min: 10, jitter: 0 } });
+  await until(() => ws.status === 'open');
+  Orion.offline.simulate(true);
+  await until(() => ws.status === 'reconnecting', 1000, 'reconnecting while offline'); assert(!ws.isOpen);
+  eq(document.getElementById('ind').dataset.status, 'offline');
+  await wait(80); eq(ws.status, 'reconnecting', 'no attempts while offline');
+  Orion.offline.simulate(false);
+  await until(() => ws.status === 'open', 2000, 'back open');
+  Orion.offline.simulate(null); ws.destroy(); srv.close();
+});
+
+/* ── SignalR against the in-browser mock hub ── */
+test('signalr mockHub: start, invoke, send/on, stream, errors, reconnect, stop', async () => {
+  const hub = Orion.signalr.mockHub('/t-hubs/chat', { methods: {
+    SendMessage(u, m) { this.clients.all.send('ReceiveMessage', u, m); },
+    Add(a, b) { return a + b; },
+    Fail() { throw new Error('nope'); },
+    *Counter(n) { for (let i = 0; i < n; i++) yield i; },
+    async *Slow(n) { for (let i = 0; i < n; i++) { await new Promise(r => setTimeout(r, 30)); yield i; } },
+  } });
+  const c = Orion.signalr('/t-hubs/chat', { reconnect: [0, 50, 100] });
+  const got = []; c.on('receivemessage', (u, m) => got.push(u + ':' + m));
+  await c.start(); eq(c.state, 'Connected'); assert(c.connectionId, 'connectionId');
+  eq(await c.invoke('Add', 2, 3), 5);
+  await c.send('SendMessage', 'ada', 'hi'); await until(() => got.length === 1); eq(got, ['ada:hi']);
+  const items = []; await new Promise((res, rej) => c.stream('Counter', 4).subscribe({ next: v => items.push(v), error: rej, complete: res })); eq(items, [0, 1, 2, 3]);
+  const it = []; for await (const v of c.stream('Counter', 3)) it.push(v); eq(it, [0, 1, 2]);
+  const sub = c.stream('Slow', 50).subscribe({ next: () => {} }); await wait(70); sub.dispose(); await wait(60);
+  const e = await rejects(c.invoke('Fail')); assert(e.name === 'HubError' && /nope/.test(e.message), e.message);
+  const e2 = await rejects(c.invoke('Missing')); assert(/does not exist/.test(e2.message));
+  const evs = []; c.onreconnecting(() => evs.push('reconnecting')); c.onreconnected(id => evs.push('reconnected'));
+  hub.drop(); await until(() => evs.includes('reconnected'), 3000, 'reconnected'); eq(c.state, 'Connected'); eq(await c.invoke('Add', 1, 1), 2);
+  let closed = 'no'; c.onclose(err => { closed = err === undefined ? 'clean' : err.message; });
+  await c.stop(); eq(c.state, 'Disconnected'); eq(closed, 'clean');
+  await rejects(c.invoke('Add', 1, 2));
+  assert(hub.negotiations >= 2, 'negotiated again on reconnect'); hub.close(); c.destroy();
+});
+test('signalr: handshake+message in one frame, split frames, client results, Close message', async () => {
+  const log = [];
+  class Srv {
+    constructor(url) { this.url = url; this.readyState = 0; log.push(url); setTimeout(() => { this.readyState = 1; this.onopen?.({}); }, 5); }
+    push(s) { setTimeout(() => this.onmessage?.({ data: s }), 5); }
+    send(d) {
+      for (const m of d.split(RS).filter(Boolean).map(x => JSON.parse(x))) {
+        if (m.protocol) { this.push('{}' + RS + JSON.stringify({ type: 1, target: 'Hello', arguments: ['x'] }) + RS + '{"type":1,"tar'); this.push('get":"Hello","arguments":["y"]}' + RS); }
+        else if (m.type === 1 && m.target === 'Ask') this.push(JSON.stringify({ type: 1, invocationId: 'srv1', target: 'Question', arguments: [20] }) + RS);
+        else if (m.type === 3 && m.invocationId === 'srv1') { log.push('client-result:' + m.result); this.push(JSON.stringify({ type: 7, error: 'server shutting down', allowReconnect: false }) + RS); }
+      }
+    }
+    close() { this.readyState = 3; }
+  }
+  const c = Orion.signalr('https://t.local/hub', { skipNegotiation: true, WebSocket: Srv, accessTokenFactory: () => 'abc' });
+  const hello = []; c.on('Hello', v => hello.push(v)); c.on('Question', n => n + 1);
+  let closeErr = null; c.onclose(e => { closeErr = e; });
+  await c.start();
+  await until(() => hello.length === 2); eq(hello, ['x', 'y']);
+  assert(log[0] === 'wss://t.local/hub?access_token=abc', log[0]);
+  await c.send('Ask');
+  await until(() => closeErr, 2000, 'close'); assert(log.includes('client-result:21'), 'client result sent');
+  assert(/server shutting down/.test(closeErr.message)); eq(c.state, 'Disconnected');
+});
+test('signalr: server timeout + negotiate redirect with accessToken (injected fetch)', async () => {
+  const urls = []; let calls = 0;
+  const fakeFetch = async (url, init) => {
+    calls++; urls.push([url, init.headers.Authorization]);
+    const body = calls === 1 ? { url: 'https://other.local/client/?hub=chat', accessToken: 'redir-token' } : { negotiateVersion: 1, connectionId: 'c1', connectionToken: 'tk1', availableTransports: [{ transport: 'WebSockets', transferFormats: ['Text'] }] };
+    return new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } });
+  };
+  const opened = [];
+  class Silent { constructor(u) { opened.push(u); this.readyState = 0; setTimeout(() => { this.readyState = 1; this.onopen?.({}); }, 5); } send(d) { if (d.includes('"protocol"')) setTimeout(() => this.onmessage?.({ data: '{}' + RS }), 5); } close() { this.readyState = 3; } }
+  const c = Orion.signalr('https://t.local/hubs/x?tenant=1', { fetch: fakeFetch, WebSocket: Silent, accessTokenFactory: () => 'orig', serverTimeout: 120, reconnect: false });
+  let err = null; c.onclose(e => { err = e; });
+  await c.start();
+  eq(urls[0], ['https://t.local/hubs/x/negotiate?tenant=1&negotiateVersion=1', 'Bearer orig']);
+  eq(urls[1], ['https://other.local/client/negotiate?hub=chat&negotiateVersion=1', 'Bearer redir-token']);
+  eq(opened[0], 'wss://other.local/client/?hub=chat&id=tk1&access_token=redir-token');
+  await until(() => err, 2000, 'server timeout'); assert(/Server timeout/.test(err.message), err.message);
+});
+
+/* ── SSE ── */
+test('sse mock: typed events, JSON, reconnect with lastEventId', async () => {
+  let conns = 0;
+  const feed = Orion.sse.mock('/t-sse', (conn, { query }) => {
+    conns++;
+    if (conns === 1) { conn.send({ n: 1 }, { event: 'tick', id: '1' }); conn.send('plain'); setTimeout(() => conn.error(), 40); }
+    else conn.send({ n: 2, resumed: query.lastEventId }, { event: 'tick', id: '2' });
+  });
+  const es = Orion.sse('/t-sse', { reconnect: { min: 20, jitter: 0 } });
+  const ticks = [], plain = [];
+  es.on('tick', d => ticks.push(d)); es.on('message', d => plain.push(d));
+  await until(() => ticks.length === 2, 3000, 'ticks');
+  eq(ticks, [{ n: 1 }, { n: 2, resumed: '1' }]); eq(plain, ['plain']); eq(es.lastEventId, '2'); eq(es.status, 'open');
+  es.destroy(); feed.close();
+});
+
+/* ── polling & live ── */
+test('poll: no overlap, refresh, backoff on error, stop, offline pause', async () => {
+  let n = 0, fail = false;
+  const p = Orion.poll(async () => { n++; await wait(10); if (fail) throw new Error('x'); return n; }, { interval: 40, maxInterval: 400 });
+  await until(() => n >= 3, 2000); assert(p.running);
+  eq(await p.refresh(), n);
+  fail = true; const before = n; await wait(200); assert(p.errors >= 1, 'errors'); assert(n - before <= 3, 'backoff slows down: ' + (n - before));
+  fail = false; await p.refresh(); eq(p.errors, 0);
+  Orion.offline.simulate(true); const frozen = n; await wait(150); eq(n, frozen, 'paused offline'); Orion.offline.simulate(null);
+  await until(() => n > frozen, 1000, 'resumed');
+  p.stop(); const stopped = n; await wait(120); eq(n, stopped); assert(!p.running);
+});
+test('live: url + render, sanitized HTML strings, push source', async () => {
+  const el = document.getElementById('live1');
+  const lv = Orion.live(el, { url: '../fixtures/services-a/stats.json', interval: 60000, render: d => `<b class="rev">${d.revenue}</b>` });
+  await until(() => el.querySelector('.rev')); eq(el.querySelector('.rev').textContent, '128430'); assert(el.hasAttribute('data-o-live-updated'));
+  lv.destroy();
+  const el2 = document.getElementById('live2');
+  const lv2 = Orion.live(el2, { source: async () => '<i>ok</i><b onclick="window.__xss=1">x</b><script>window.__xss=1<\/script>', interval: 60000 });
+  await until(() => el2.querySelector('i')); assert(!el2.querySelector('[onclick]') && !el2.querySelector('script'), 'sanitized'); lv2.destroy();
+  const em = new Orion.Emitter(); const lv3 = Orion.live(el2, { source: em, event: 'stats', render: d => `n=${d.n}` });
+  em.emit('stats', { n: 7 }); eq(el2.textContent, 'n=7'); lv3.destroy(); em.emit('stats', { n: 8 }); eq(el2.textContent, 'n=7', 'unsubscribed');
+});
+test('live indicator + registry aggregate', async () => {
+  const ind = document.getElementById('ind2');
+  ind.client = { status: 'reconnecting' }; await Orion.util.nextFrame();
+  eq(ind.dataset.status, 'reconnecting'); assert(/Reconnecting/.test(ind.textContent));
+  ind.client = null; eq(RT.status([{ status: 'open' }, { status: 'connecting' }]), 'connecting'); eq(RT.status([{ status: 'open' }, { status: 'closed' }]), 'open');
+});
+
+/* ── real server (node .tmp/services-a/rt-server.mjs) ── */
+const wsBase = () => OPTS.rt.replace(/^http/, 'ws');
+test('[rt] ws: real echo server (text, JSON, binary, server close -> reconnect, pong)', async () => {
+  const ws = Orion.ws(wsBase() + '/echo?hello=1', { reconnect: { min: 50, jitter: 0 }, heartbeat: { interval: 100, timeout: 300 }, binaryType: 'arraybuffer' });
+  const msgs = []; ws.on('message', m => msgs.push(m)); let pongs = 0; ws.on('pong', () => pongs++);
+  await until(() => msgs.some(m => m.type === 'hello'), 3000, 'hello');
+  ws.send({ type: 'burst', x: 1 }); await until(() => msgs.filter(m => m.type === 'tick').length === 3, 3000, 'burst');
+  ws.send(new Uint8Array([7, 8, 9]).buffer); await until(() => msgs.some(m => m instanceof ArrayBuffer), 3000, 'binary');
+  eq([...new Uint8Array(msgs.find(m => m instanceof ArrayBuffer))], [7, 8, 9]);
+  await until(() => pongs >= 1, 3000, 'pong');
+  let rc = 0; ws.on('reconnected', () => rc++);
+  ws.send({ type: 'close-me' }); await until(() => rc === 1, 4000, 'reconnect after server close');
+  ws.send({ type: 'kill-me' }); await until(() => rc === 2, 4000, 'reconnect after abrupt drop');
+  ws.destroy();
+});
+test('[rt] signalr: real negotiate + JSON hub protocol end-to-end', async () => {
+  const c = Orion.signalr(OPTS.rt + '/hub?ping=150', { accessTokenFactory: () => 'secret-1', serverTimeout: 700, reconnect: [0, 100, 300] });
+  const welcome = [], recv = [];
+  c.on('Welcome', v => welcome.push(v)); c.on('Receive', (...a) => recv.push(a)); c.on('GetClientValue', n => n * 2);
+  await c.start(); await until(() => welcome.length === 1); eq(welcome, ['with-token']);
+  eq(await c.invoke('Echo', { a: [1, 'x'] }), { a: [1, 'x'] }); eq(await c.invoke('Add', 1, 2, 3), 6); eq(await c.invoke('GetToken'), 'secret-1');
+  eq(await c.invoke('Burst'), 'ok'); await until(() => recv.length === 3); eq(recv.map(r => r[1]), [0, 1, 2]);
+  eq(await c.invoke('Split'), 'split-ok'); eq(await c.invoke('AskClient', 21), 42);
+  const e = await rejects(c.invoke('Fail')); assert(/nope/.test(e.message));
+  const items = []; await new Promise((res, rej) => c.stream('Counter', 5, 10).subscribe({ next: v => items.push(v), error: rej, complete: res })); eq(items, [0, 1, 2, 3, 4]);
+  await wait(1000); eq(c.state, 'Connected', 'server pings keep the connection alive (serverTimeout 700ms)');
+  const evs = []; c.onreconnecting(() => evs.push('ing')); c.onreconnected(() => evs.push('ed'));
+  await c.invoke('KillMe'); await until(() => evs.includes('ed'), 5000, 'reconnected'); eq(await c.invoke('Add', 2, 2), 4);
+  let closeErr = null; c.onclose(err => { closeErr = err || 'clean'; });
+  await c.send('CloseMe', false); await until(() => closeErr, 3000, 'close msg'); assert(/bye/.test(closeErr.message), String(closeErr)); eq(c.state, 'Disconnected');
+  c.destroy();
+});
+test('[rt] signalr: negotiate redirect to another hub url with accessToken', async () => {
+  const c = Orion.signalr(OPTS.rt + '/redirect', { reconnect: false });
+  await c.start(); eq(await c.invoke('GetToken'), 'redirected-token'); await c.stop(); c.destroy();
+});
+test('[rt] sse: real stream, typed + plain events, reconnect resumes from lastEventId', async () => {
+  const es = Orion.sse(OPTS.rt + '/sse?failAfter=3', { events: ['tick'], reconnect: { min: 50, jitter: 0 } });
+  const ticks = [], plain = []; es.on('tick', d => ticks.push(d.n)); es.on('message', d => plain.push(d));
+  await until(() => ticks.length >= 6, 5000, 'ticks'); es.destroy();
+  eq(ticks.slice(0, 3), [1, 2, 3]); assert(ticks[3] === 4, 'resumed after 3: ' + ticks.join()); assert(plain.includes('plain-2'));
+  const st = await (await fetch(OPTS.rt + '/stats')).json(); assert(st.lastEventIds.includes('3'), JSON.stringify(st.lastEventIds));
+});
+
+/* ── PWA / notifications / install ── */
+test('pwa: register orion.js as service worker, precache, messages, SW replay queue, unregister', async () => {
+  assert(Orion.pwa.supported, 'secure context');
+  const reg = await Orion.pwa.register({ scope: './services-a-tests-rt.html', precache: ['../fixtures/services-a/stats.json'], offlinePage: '../fixtures/services-a/offline.html', toast: false,
+    routes: [{ match: '/docs/fixtures/', strategy: 'stale-while-revalidate' }, { regex: '^http://127\\.0\\.0\\.1:9/', methods: ['POST'], queue: true }] });
+  assert(reg && /orion-sw=/.test((reg.installing || reg.waiting || reg.active).scriptURL), 'script url');
+  await until(() => navigator.serviceWorker.controller, 8000, 'controller (clients.claim)');
+  const info = await Orion.pwa.message({ type: 'GET_VERSION' });
+  assert(info.version && info.precache.some(u => u.endsWith('/docs/fixtures/services-a/stats.json')), JSON.stringify(info.precache));
+  assert(info.caches.some(n => n.startsWith('orion-sw-precache-')), 'precache cache'); eq(info.routes.length, 2);
+  const pre = await caches.open(info.caches.find(n => n.startsWith('orion-sw-precache-')));
+  assert(await pre.match(new URL('../fixtures/services-a/offline.html', location.href).href), 'offline page precached');
+  const r = await fetch('http://127.0.0.1:9/api/save', { method: 'POST', body: JSON.stringify({ a: 1 }), headers: { 'content-type': 'application/json' } });
+  eq(r.status, 202); eq(r.headers.get('x-orion-queued'), '1');
+  eq(await Orion.pwa.queueSize(), 1);
+  const rep = await Orion.pwa.sync(); eq(rep.remaining, 1, 'still unreachable -> kept');
+  eq((await Orion.pwa.message({ type: 'CLEAR_QUEUE' })).size, 0);
+  const u = await fetch('../fixtures/services-a/users.json'); assert(u.ok);
+  assert(!Orion.pwa.applyUpdate(), 'nothing waiting'); await Orion.pwa.update();
+  assert((await Orion.pwa.clearCaches()).cleared >= 1);
+  assert(await Orion.pwa.unregister(), 'unregistered');
+});
+test('notify: permission flow falls back to the in-app toast', async () => {
+  assert(['default', 'denied', 'granted', 'unsupported'].includes(Orion.notify.permission));
+  const r = await Orion.notify('Build finished', { body: 'All checks passed', request: false, fallback: 'toast', serviceWorker: false });
+  if (Orion.notify.permission !== 'granted') { eq(r.via, 'toast'); if (!Orion.toast) assert(document.querySelector('.o-pwa-snack'), 'snackbar'); }
+  r.close(); const none = await Orion.notify('x', { request: false, fallback: false }); assert(['none', 'native', 'sw'].includes(none.via));
+});
+test('install prompt element + install() + manifest()', async () => {
+  const ip = document.getElementById('ip'); ip.reset(); ip.force = true; await Orion.util.nextFrame();
+  document.getElementById('sandbox').hidden = false;
+  assert(!ip.hidden && /Install Test App/.test(ip.textContent), 'shown');
+  ip.dismiss(); assert(ip.hidden && Orion.store.namespace('orion:pwa').get('install-dismissed') > 0, 'dismiss persisted');
+  ip.force = false; ip.mode = 'ios'; await Orion.util.nextFrame(); assert(ip.hidden, 'respects dismissal'); ip.reset(); await Orion.util.nextFrame();
+  assert(!ip.hidden && /Add to Home Screen/.test(ip.textContent), 'ios instructions');
+  document.getElementById('sandbox').hidden = true;
+  eq((await Orion.pwa.install()).outcome, Orion.pwa.isIOS ? 'ios' : 'unavailable');
+  const m = Orion.pwa.manifest({ name: 'Test App', start_url: './services-a-dashboard.html' });
+  assert(m.link.href.startsWith('blob:')); const json = await (await fetch(m.link.href)).json();
+  assert(json.start_url.endsWith('/docs/examples/services-a-dashboard.html') && json.icons[0].src.startsWith('data:image/svg+xml') && json.display === 'standalone', JSON.stringify(json));
+  eq(document.querySelector('meta[name="theme-color"]').content, json.theme_color);
+});
+</script>
+</body>
+</html>

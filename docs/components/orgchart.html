@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Org chart — Orion Admin</title>
+<meta name="docs:section" content="Boards & Diagrams">
+<meta name="docs:order" content="42">
+<meta name="docs:title" content="Organization Chart">
+<meta name="docs:desc" content="Tidy-tree org chart from a flat people list: collapse, search, drag to reassign, export">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Organization Chart</h1>
+    <p class="docs-lead"><code>&lt;o-orgchart&gt;</code> lays out a flat list of people (<code>{ id, parentId, name, title, ... }</code>) as a tidy tree. It handles collapse/expand, fuzzy search with highlighting, keyboard tree navigation, optional drag-to-reassign, and SVG/PNG export. No dependencies beyond the shared <a href="diagram.html">diagram</a> viewport/layout/export kit.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Team directory</h2>
+    <p>A four-level company tree (CEO → VPs → managers → individual contributors), searchable and collapsible. Click a card to select it; click the +/− toggle (or press Space on a focused card) to collapse a branch.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-orgchart id="org" search collapsible toolbar label="Acme company" style="--o-org-height: 34rem; border: 0; border-radius: 0"></o-orgchart>
+        <div class="docs-log" id="org-log"></div>
+        <script>
+          {
+            const people = docs.people(26, 12);
+            const DEPTS = ['Engineering', 'Sales', 'Marketing'];
+            const nodes = people.map((p, i) => {
+              let parentId = null, title, department = '';
+              if (i === 0) { title = 'Chief Executive Officer'; }
+              else if (i <= 3) { parentId = 0; department = DEPTS[i - 1]; title = 'VP ' + department; }
+              else if (i <= 9) { const vp = 1 + ((i - 4) % 3); parentId = vp; department = DEPTS[vp - 1]; title = department + ' Manager'; }
+              else { const mgr = 4 + ((i - 10) % 6); parentId = mgr; department = DEPTS[(mgr - 1) % 3]; title = ['Engineer', 'Designer', 'Account Exec', 'Analyst'][i % 4]; }
+              return { id: i, parentId, name: p.name, title, department, email: p.email, badge: i === 0 ? 'CEO' : '' };
+            });
+            const el = document.getElementById('org');
+            el.nodes = nodes;
+            el.addEventListener('o-node-click', e => docs.log('#org-log', `o-node-click → ${e.detail.node.name} (${e.detail.node.title})`));
+            el.addEventListener('o-toggle', e => docs.log('#org-log', `o-toggle ${e.detail.id} → ${e.detail.expanded ? 'expanded' : 'collapsed'}`));
+            el.addEventListener('o-search', e => docs.log('#org-log', `o-search "${e.detail.query}" → ${e.detail.matches.length} match(es)`));
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="layout">
+    <h2>Direction &amp; compact</h2>
+    <p><code>direction</code> is <code>'TB' | 'BT' | 'LR' | 'RL'</code>; <code>compact</code> shrinks the cards to name + department only. Both re-layout instantly (animated).</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-sm" data-dir="TB">Top → Bottom</button>
+          <button class="o-btn o-btn-sm" data-dir="LR">Left → Right</button>
+          <label class="o-switch o-switch-sm"><input type="checkbox" id="dir-compact"><span>Compact</span></label>
+        </div>
+        <o-orgchart id="org2" style="--o-org-height: 22rem"></o-orgchart>
+        <script>
+          {
+            const el = document.getElementById('org2');
+            el.nodes = [
+              { id: 1, parentId: null, name: 'Maria Chen', title: 'CEO' },
+              { id: 2, parentId: 1, name: 'Diego Alvarez', title: 'CTO' },
+              { id: 3, parentId: 1, name: 'Priya Nair', title: 'CFO' },
+              { id: 4, parentId: 2, name: 'Sam Okafor', title: 'Eng Manager' },
+              { id: 5, parentId: 2, name: 'Lena Kowalski', title: 'Eng Manager' },
+              { id: 6, parentId: 3, name: 'Tomas Silva', title: 'Controller' },
+            ];
+            document.querySelectorAll('[data-dir]').forEach(b => b.onclick = () => el.direction = b.dataset.dir);
+            document.getElementById('dir-compact').onchange = e => el.compact = e.target.checked;
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="reassign">
+    <h2>Drag to reassign</h2>
+    <p>With <code>draggable</code>, dragging a card onto another opens a reassignment: the cancelable <code>o-reassign</code> event fires before the move is applied (return <code>false</code> / call <code>preventDefault()</code> to veto it — dropping a card onto its own descendant is always rejected). Try dragging "Noor Haddad" onto "Sales".</p>
+    <div class="docs-demo">
+      <template>
+        <o-orgchart id="org3" draggable compact style="--o-org-height: 16rem"></o-orgchart>
+        <div class="docs-log" id="org3-log"></div>
+        <script>
+          {
+            const el = document.getElementById('org3');
+            el.nodes = [
+              { id: 'ceo', parentId: null, name: 'Alex Rivera', title: 'CEO' },
+              { id: 'sales', parentId: 'ceo', name: 'Sales', title: 'VP Sales' },
+              { id: 'mkt', parentId: 'ceo', name: 'Marketing', title: 'VP Marketing' },
+              { id: 'noor', parentId: 'mkt', name: 'Noor Haddad', title: 'Growth Lead' },
+            ];
+            el.addEventListener('o-reassign', e => docs.log('#org3-log', `o-reassign ${e.detail.node.name} → ${e.detail.to}`));
+            el.addEventListener('o-change', () => docs.log('#org3-log', 'o-change (reassigned)'));
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="custom">
+    <h2>Custom cards &amp; export</h2>
+    <p><code>renderNode(node)</code> replaces the default card body (an <code>Element</code>, or an HTML string that is sanitized). <code>exportSVG()</code> / <code>exportPNG({scale})</code> / <code>download(format)</code> work the same as <code>&lt;o-diagram&gt;</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-sm" id="org4-svg">download('svg')</button>
+          <button class="o-btn o-btn-sm" id="org4-png">download('png')</button>
+        </div>
+        <o-orgchart id="org4" style="--o-org-height: 16rem"></o-orgchart>
+        <script>
+          {
+            const el = document.getElementById('org4');
+            el.renderNode = n => `<div style="display:flex;align-items:center;gap:.5rem;width:100%"><span class="o-avatar o-avatar-sm o-c-${n.data?.tone || 'primary'}">${Orion.util.esc(n.name[0])}</span><div style="min-width:0"><strong style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Orion.util.esc(n.name)}</strong><span style="font-size:.75rem;color:var(--o-text-muted)">${Orion.util.esc(n.title)}</span></div></div>`;
+            el.nodes = [
+              { id: 1, parentId: null, name: 'Hana Sato', title: 'Founder', data: { tone: 'primary' } },
+              { id: 2, parentId: 1, name: 'Omar Khalil', title: 'Head of Product', data: { tone: 'success' } },
+              { id: 3, parentId: 1, name: 'Ines Dubois', title: 'Head of Design', data: { tone: 'info' } },
+            ];
+            document.getElementById('org4-svg').onclick = () => el.download('svg', 'org-chart');
+            document.getElementById('org4-png').onclick = () => el.download('png', 'org-chart');
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard &amp; accessibility</h2>
+    <p>Cards are a <code>role="tree"</code>/<code>treeitem"</code> structure with roving <code>tabindex</code>, <code>aria-expanded</code> and <code>aria-selected</code>, and a live <code>aria-label</code> summary on the canvas region.</p>
+    <table class="docs-api">
+      <thead><tr><th>Keys</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Arrow toward the root (Up in TB, Left in LR)</td><td>Move focus to the manager.</td></tr>
+        <tr><td>Arrow away from the root (Down in TB, Right in LR)</td><td>Move focus to the first direct report (if expanded).</td></tr>
+        <tr><td>Arrow along siblings</td><td>Move focus to the previous / next sibling.</td></tr>
+        <tr><td>Space</td><td>Collapse / expand the focused card's branch.</td></tr>
+        <tr><td>Enter</td><td>Fire <code>o-node-click</code> for the focused card.</td></tr>
+        <tr><td>Ctrl/⌘+F</td><td>Focus the search box (when <code>search</code>).</td></tr>
+        <tr><td>Enter (in search)</td><td>Jump to and select the first match.</td></tr>
+        <tr><td>Esc (in search)</td><td>Clear the search.</td></tr>
+        <tr><td>+ · − · 0 · 1</td><td>Zoom in · zoom out · 100% · zoom to fit.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Input</h3>
+    <pre class="docs-code-block" data-lang="js">el.nodes = [{ id, parentId, name, title, department, avatar, email, badge, color, data }]</pre>
+    <h3>Attributes &amp; properties</h3>
+    <table class="docs-api">
+      <thead><tr><th>Name</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>nodes</td><td>array (property only)</td><td>[]</td><td>The flat people list.</td></tr>
+        <tr><td>direction</td><td>string</td><td>TB</td><td><code>TB | BT | LR | RL</code>.</td></tr>
+        <tr><td>compact</td><td>boolean</td><td>false</td><td>Smaller cards (name + department only).</td></tr>
+        <tr><td>collapsible</td><td>boolean</td><td>true</td><td>Shows the +/− toggle on cards with reports.</td></tr>
+        <tr><td>search <span class="o-text-muted">(property: <code>searchable</code>)</span></td><td>boolean</td><td>false</td><td>Shows the search box. The JS property is <code>searchable</code>, not <code>search</code> — <code>search(query)</code> is a method (see below); the HTML attribute is still <code>search</code>.</td></tr>
+        <tr><td>draggable</td><td>boolean</td><td>false</td><td>Drag a card onto another to reassign it.</td></tr>
+        <tr><td>toolbar</td><td>boolean</td><td>true</td><td>Search box + export/expand-all/collapse-all menu.</td></tr>
+        <tr><td>min-zoom / max-zoom</td><td>number</td><td>0.1 / 3</td><td>Zoom limits.</td></tr>
+        <tr><td>auto-fit</td><td>boolean</td><td>true</td><td>Fit the content when <code>nodes</code> loads.</td></tr>
+        <tr><td>renderNode</td><td>function (property only)</td><td>—</td><td><code>(node) → html | Element</code> — full card body override.</td></tr>
+        <tr><td>label</td><td>string</td><td>—</td><td>Accessible name; also the export title and file name.</td></tr>
+        <tr><td>texts</td><td>object (property only)</td><td>—</td><td>Per-instance string overrides (<code>orgchart.*</code> keys).</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>expand(id) · collapse(id) · toggle(id) · isExpanded(id)</td><td>Per-node collapse state.</td></tr>
+        <tr><td>expandAll() · collapseAll()</td><td>Bulk collapse state.</td></tr>
+        <tr><td>select(id | null) · getSelection()</td><td>Selection (single).</td></tr>
+        <tr><td>search(query)</td><td>Fuzzy search; highlights and dims cards; returns the matches. Also fires <code>o-search</code>.</td></tr>
+        <tr><td>focusPerson(id, opts?)</td><td>Expands ancestors as needed, centers and selects.</td></tr>
+        <tr><td>reassign(id, newParentId)</td><td>Programmatic re-parent (validated). Fires cancelable <code>o-reassign</code>.</td></tr>
+        <tr><td>getValue() · getNodes()</td><td>Deep copy of the current flat list.</td></tr>
+        <tr><td>getNode(id) · getChildren(id) · getAncestors(id)</td><td>Read helpers.</td></tr>
+        <tr><td>fit(opts) · zoomTo(k | 'fit') · zoom</td><td>View control.</td></tr>
+        <tr><td>exportSVG(opts) · exportPNG(opts) · download(format, name)</td><td>Export (<code>'svg' | 'png'</code>).</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-node-click</td><td>{ node, originalEvent }</td><td></td></tr>
+        <tr><td>o-select</td><td>{ node }</td><td></td></tr>
+        <tr><td>o-toggle</td><td>{ id, expanded }</td><td></td></tr>
+        <tr><td>o-search</td><td>{ query, matches }</td><td></td></tr>
+        <tr><td>o-reassign</td><td>{ id, from, to, node }</td><td>Cancelable, before a reassignment is applied.</td></tr>
+        <tr><td>o-change</td><td>{ nodes }</td><td>After a reassignment is committed.</td></tr>
+        <tr><td>o-viewport</td><td>{ x, y, zoom }</td><td>Does not bubble.</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS variables</h3>
+    <p><code>--o-org-height</code>, <code>--o-org-bg</code>, <code>--o-org-card-bg</code>, <code>--o-org-card-border</code>, <code>--o-org-link</code>, <code>--o-org-select</code>. Per-node <code>color</code> (or the department color ramp) sets <code>--o-org-accent</code> on that card.</p>
+    <h3>Frameworks</h3>
+    <p>Set <code>nodes</code> and <code>renderNode</code> as properties (React 19, Vue <code>:nodes</code>, Angular <code>[nodes]</code>); React 18 may pass <code>nodes</code> as a JSON string.</p>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Google Maps Integration — Orion Admin</title>
+<meta name="docs:section" content="Maps">
+<meta name="docs:order" content="15">
+<meta name="docs:desc" content="Optional adapter: render <o-map> with the real Google Maps JS API, lazy-loaded only when you supply a key">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Google Maps Integration</h1>
+    <p class="docs-lead">The built-in <a href="maps.html">&lt;o-map&gt;</a> needs no external service. If you would rather render an actual Google Map (satellite/street imagery, Google's own geocoding, Street View), set <code>provider="google"</code> and supply your own API key — <code>&lt;o-map&gt;</code> keeps its element API (<code>setView</code>, markers, popups, <code>fitBounds</code>, <code>o-*</code> events), just backed by the real Google Maps JavaScript API instead of the built-in slippy map.</p>
+    <p class="o-callout o-callout-warning">The Google Maps JS API script is only ever requested when <em>you</em> call <code>Orion.maps.google.load({ key })</code> or set <code>api-key</code> on a <code>provider="google"</code> element — never on page load, and never with a key baked into Orion. This documentation page ships no key and makes no request to Google; the demo below only runs if you paste in your own.</p>
+  </header>
+
+  <section id="setup">
+    <h2>Getting a key</h2>
+    <p>Create a project in the <a href="https://console.cloud.google.com/google/maps-apis" target="_blank" rel="noopener">Google Cloud Console</a>, enable the <b>Maps JavaScript API</b> (and <b>Places API</b> if you also want <code>&lt;o-address-input provider="google"&gt;</code>), enable billing, and restrict the key to your domain(s). Google Maps is a paid, metered service beyond a monthly credit — review their pricing before going live.</p>
+  </section>
+
+  <section id="element">
+    <h2>&lt;o-map provider="google"&gt;</h2>
+    <p>Add <code>provider="google"</code> and <code>api-key</code>. Everything else — <code>lat/lng/zoom</code>, <code>markers</code>, <code>addMarker/updateMarker/removeMarker</code>, popups (via Google's InfoWindow), <code>o-click</code>/<code>o-move</code>/<code>o-zoom</code>/<code>o-marker-click</code>/<code>o-marker-drag-end</code> — works the same as the built-in map, so a component built against <code>&lt;o-map&gt;</code> does not need to know which provider is active. <code>map-id</code> enables Google's newer Advanced Markers and cloud-based styling.</p>
+    <pre class="docs-code-block" data-lang="html">
+      &lt;o-map
+        provider="google"
+        api-key="YOUR_KEY"
+        lat="1.2840" lng="103.8512" zoom="14"
+        markers='[{"id":"hq","lat":1.2840,
+                   "lng":103.8512,"title":"HQ"}]'&gt;
+      &lt;/o-map&gt;
+    </pre>
+    <p>The script loads once (cached) the first time a <code>provider="google"</code> element connects, or earlier if you call <code>Orion.maps.google.load()</code> yourself (recommended — it lets you show your own loading state and catch the promise's rejection).</p>
+    <div class="docs-demo" data-code="none">
+      <template>
+        <div class="o-stack" style="--o-gap:.75rem;max-width:32rem">
+          <div class="o-field">
+            <label class="o-label" for="gm-key">Your Google Maps API key (kept in memory only, never sent anywhere but Google)</label>
+            <input class="o-input" id="gm-key" type="password" autocomplete="off" placeholder="AIza…">
+          </div>
+          <button class="o-btn o-btn-primary o-btn-sm" id="gm-load" type="button" style="align-self:flex-start">Load a real Google Map with this key</button>
+          <div id="gm-mount"></div>
+          <div class="docs-log" id="gm-log">Paste a key and click "Load" to try it — nothing is requested from Google until you do.</div>
+        </div>
+        <script>
+          document.getElementById('gm-load').addEventListener('click', async () => {
+            const key = document.getElementById('gm-key').value.trim();
+            const mount = document.getElementById('gm-mount');
+            if (!key) { docs.log('#gm-log', 'Enter a key first.'); return; }
+            mount.innerHTML = '';
+            const map = document.createElement('o-map');
+            map.setAttribute('provider', 'google');
+            map.apiKey = key;
+            map.lat = 1.2840; map.lng = 103.8512; map.zoom = 14;
+            map.style.height = '20rem';
+            map.markers = [{ id: 'hq', lat: 1.2840, lng: 103.8512, title: 'Orion HQ', popup: 'Orion HQ' }];
+            mount.append(map);
+            docs.log('#gm-log', 'Requesting the Google Maps JS API…');
+            map.addEventListener('o-marker-click', () => docs.log('#gm-log', 'marker-click'));
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="service">
+    <h2>Orion.maps.google (loader service)</h2>
+    <p>Load the API yourself — for example to also use <code>google.maps.places</code> for <code>&lt;o-address-input provider="google"&gt;</code>, before mounting any map:</p>
+    <pre class="docs-code-block" data-lang="js">
+      await Orion.maps.google.load({
+        key: 'YOUR_KEY',
+        libraries: ['places', 'marker'],
+      });
+      // Orion.maps.google.loaded is now true — every
+      // &lt;o-map provider="google"&gt; (and address input)
+      // on the page can render synchronously from here on.
+    </pre>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>load({ key, libraries, language, region, version }) → Promise&lt;google.maps&gt;</td><td>Injects the official loader script once (subsequent calls return the same cached promise, even with different options). <code>libraries</code> defaults to <code>['places', 'marker']</code>.</td></tr>
+        <tr><td>loaded</td><td><code>true</code> once <code>window.google.maps</code> is available.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="places">
+    <h2>Address search with Google Places</h2>
+    <p>After loading the <code>places</code> library, <code>&lt;o-address-input provider="google"&gt;</code> (see <a href="address-autocomplete.html">Address Autocomplete</a>) uses <code>AutocompleteService</code> for suggestions and <code>PlacesService</code> to resolve the picked prediction into a full address.</p>
+    <pre class="docs-code-block" data-lang="html">
+      &lt;script&gt;
+        await Orion.maps.google.load({
+          key: 'YOUR_KEY', libraries: ['places'],
+        });
+      &lt;/script&gt;
+      &lt;o-address-input provider="google"&gt;
+      &lt;/o-address-input&gt;
+    </pre>
+  </section>
+
+  <section id="notes">
+    <h2>Notes &amp; limitations</h2>
+    <ul>
+      <li>Vector layers (<code>addLayer</code>/<code>addGeoJSON</code>) and the marker-list accessibility view are specific to the built-in provider and are not (yet) mirrored onto the Google adapter — use Google's own <code>Polyline</code>/<code>Polygon</code>/<code>Data</code> APIs via <code>map._g</code> (the underlying <code>google.maps.Map</code> instance) if you need them with <code>provider="google"</code>.</li>
+      <li><code>scroll-zoom</code>, <code>tiles</code>, <code>tile-filter</code> and clustering are specific to the built-in renderer and have no effect with <code>provider="google"</code> (Google's own gesture handling and marker rendering apply instead).</li>
+      <li>Switching <code>provider</code> back and forth on a live element is supported but not recommended — prefer choosing one provider per element.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

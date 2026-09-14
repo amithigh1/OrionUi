@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Speech — Orion Admin</title>
+<meta name="docs:section" content="Devices &amp; Capture">
+<meta name="docs:order" content="67">
+<meta name="docs:desc" content="Speech-to-text dictation and text-to-speech with word highlighting, both testable with a fake engine">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Speech</h1>
+    <p class="docs-lead"><code>Orion.speech</code> wraps the Web Speech API: <code>listen()</code> for
+      speech-to-text and <code>speak()</code> for text-to-speech, plus a <code>data-o-voice</code> dictation
+      behavior and an <code>&lt;o-tts&gt;</code> read-aloud element with word-by-word highlighting. Both engines are
+      optional browser APIs — every entry point has a graceful "unsupported" state, and both can be swapped for a
+      fake implementation so this whole page (and its tests) work with no microphone or audio output.</p>
+  </header>
+
+  <section id="dictation">
+    <h2><code>data-o-voice</code> dictation</h2>
+    <p>Adds a mic button to a text field. If your browser supports <code>SpeechRecognition</code>, click it and
+      speak — interim words show greyed in a small bubble and commit at the caret when final.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-stack" style="max-width:26rem">
+          <input class="o-input" data-o-voice placeholder="Click the mic and speak…">
+          <textarea class="o-input" data-o-voice rows="3" placeholder="Works on textareas too…"></textarea>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="tts">
+    <h2><code>&lt;o-tts&gt;</code> — read aloud with highlight-as-spoken</h2>
+    <p>Reads its text via <code>Orion.speech.speak()</code>; the word currently being spoken is highlighted from
+      the utterance's <code>onboundary</code> events. If your browser has no voices installed, Play will still run
+      through start/end with no highlight.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-tts text="Orion Admin ships as a single dependency-free file, yet every widget is a real custom element." style="max-width:30rem;display:block"></o-tts>
+      </template>
+    </div>
+  </section>
+
+  <section id="testing">
+    <h2>Testing with no microphone or audio output: fake engines</h2>
+    <p><code>Orion.speech.recognition.use(fakeCtor)</code> and <code>Orion.speech.synthesis.use(fakeSynth)</code>
+      swap in a fake implementation — this is exactly what <code>tests/evals/capture-speech.js</code> uses, and
+      it's wired up live on this page so the demos below work identically with no browser speech support and no
+      hardware at all.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-stack" style="max-width:26rem">
+          <div class="o-cluster">
+            <button class="o-btn o-btn-primary o-btn-sm" id="fake-install">Install fake engines</button>
+            <button class="o-btn o-btn-ghost o-btn-sm" id="fake-restore">Restore native engines</button>
+          </div>
+          <input class="o-input" id="fake-input" data-o-voice placeholder="Click the mic — the fake engine 'hears' a canned phrase">
+          <o-tts id="fake-tts" text="This sentence is read by a completely fake speech synthesizer." style="display:block"></o-tts>
+          <div class="docs-log" id="fake-log"></div>
+        </div>
+        <script>
+          class FakeRecognition {
+            start() {
+              this._t = setTimeout(() => {
+                const result = [{ transcript: 'hello from the fake recognizer', confidence: 0.95 }];
+                result.isFinal = true;
+                this.onresult?.({ resultIndex: 0, results: [result] });
+                this._end = setTimeout(() => this.onend?.(), 30);
+              }, 30);
+            }
+            stop() { clearTimeout(this._t); clearTimeout(this._end); this.onend?.(); }
+            abort() { clearTimeout(this._t); clearTimeout(this._end); this.onend?.(); }
+          }
+          const fakeSynth = {
+            _voices: [{ name: 'Fake Voice', voiceURI: 'fake', lang: 'en-US' }],
+            getVoices() { return this._voices; },
+            speak(u) {
+              this._u = u;
+              setTimeout(() => {
+                u.onstart?.();
+                const words = String(u.text ?? '').split(/\s+/).filter(Boolean);
+                // Precompute each word's start offset up front, so each deferred callback reads its own fixed
+                // value instead of a shared counter that has already advanced by the time any of them fire.
+                let offset = 0;
+                const starts = words.map(w => { const s = offset; offset += w.length + 1; return s; });
+                words.forEach((w, i) => setTimeout(() => u.onboundary?.({ name: 'word', charIndex: starts[i] }), i * 120));
+                setTimeout(() => u.onend?.(), words.length * 120 + 80);
+              }, 0);
+            },
+            cancel() { this._u = null; }, pause() {}, resume() {},
+          };
+          document.getElementById('fake-input').addEventListener('input', () => {}); // demo target only
+          const fakeTts = document.getElementById('fake-tts');
+          document.getElementById('fake-install').addEventListener('click', () => {
+            Orion.speech.recognition.use(FakeRecognition);
+            Orion.speech.synthesis.use(fakeSynth);
+            fakeTts._syncSupport();
+            docs.log('#fake-log', `installed — supported=${Orion.speech.supported} synthSupported=${Orion.speech.synthSupported}`);
+          });
+          document.getElementById('fake-restore').addEventListener('click', () => {
+            Orion.speech.recognition.use();
+            Orion.speech.synthesis.use();
+            fakeTts._syncSupport();
+            docs.log('#fake-log', `restored — supported=${Orion.speech.supported} synthSupported=${Orion.speech.synthSupported}`);
+          });
+          document.getElementById('fake-tts').addEventListener('o-boundary', e => docs.log('#fake-log', `o-boundary → charIndex ${e.detail.charIndex}`));
+          document.getElementById('fake-tts').addEventListener('o-end', () => docs.log('#fake-log', 'o-end'));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="js">
+    <h2>JavaScript API</h2>
+    <pre class="docs-code-block" data-lang="js">
+Orion.speech.listen({ lang, interim, continuous, onResult, onStart, onEnd }) -&gt; { stop(), abort() }
+Orion.speech.speak(text, { lang, voice, rate, pitch, volume, onBoundary, onStart, onEnd, onError }) -&gt; { cancel(), pause(), resume(), utterance }
+Orion.speech.voices() -&gt; SpeechSynthesisVoice[]
+Orion.speech.voicesReady() -&gt; Promise&lt;SpeechSynthesisVoice[]&gt;
+Orion.speech.supported / Orion.speech.synthSupported     // live getters
+Orion.speech.recognition.use(fakeCtor)  Orion.speech.synthesis.use(fakeSynth)   // no argument restores the native engine
+</pre>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3><code>data-o-voice</code></h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>data-o-voice-lang</td><td>BCP-47 language tag; defaults to the current locale.</td></tr>
+        <tr><td>data-o-voice-continuous</td><td><code>"false"</code> stops after the first final result.</td></tr>
+        <tr><td>data-o-voice-silence</td><td>Auto-stop after this many idle ms (default <code>4000</code>).</td></tr>
+      </tbody>
+    </table>
+    <h3><code>&lt;o-tts&gt;</code></h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>text</td><td>string</td><td>Falls back to light-DOM text content when empty.</td></tr>
+        <tr><td>lang / voice</td><td>string</td><td>Forwarded to <code>speak()</code>.</td></tr>
+        <tr><td>rate / pitch / volume</td><td>number</td><td>All default <code>1</code>.</td></tr>
+        <tr><td>highlight</td><td>boolean</td><td>Wrap words for the current-word style. Default on.</td></tr>
+      </tbody>
+    </table>
+    <p>Events: <code>o-start</code> · <code>o-boundary { charIndex }</code> · <code>o-end</code> ·
+      <code>o-error { error }</code>. Methods: <code>play()</code> <code>pause()</code> <code>resume()</code>
+      <code>stop()</code>.</p>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Tab</td><td>Reaches the mic button (part of the field's own tab stop) and, on <code>&lt;o-tts&gt;</code>, its Play/Stop buttons.</td></tr>
+        <tr><td>Enter / Space</td><td>Activates the focused button.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="a11y">
+    <h2>Accessibility</h2>
+    <p>The mic button has an <code>aria-label</code>/<code>title</code> and <code>aria-pressed</code> reflecting
+      listening state; <code>announce()</code> reports "Listening…" and errors. <code>&lt;o-tts&gt;</code>'s status
+      text is a <code>role="status"</code> region.</p>
+  </section>
+
+  <section id="limitations">
+    <h2>Limitations</h2>
+    <ul>
+      <li><code>SpeechRecognition</code> has no Firefox support as of this writing; voice lists and
+        <code>onboundary</code> granularity vary by browser/OS/voice — some engines only report sentence
+        boundaries, so <code>&lt;o-tts&gt;</code>'s word highlight may not advance even though playback works.</li>
+      <li><code>listen()</code> reports failures through <code>onEnd({ error })</code> rather than the same
+        permission-state taxonomy as camera/recorder — <code>SpeechRecognition</code> does not expose stable
+        <code>DOMException</code> names for "denied" vs. "no microphone".</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

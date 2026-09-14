@@ -1,0 +1,73 @@
+{
+  "name": "orion-admin",
+  "version": "0.1.0",
+  "description": "Zero-dependency, single-file admin UI library: layout, forms, data tables, charts, calendars, editors, uploads and 300+ components for plain HTML, React, Vue and Angular. One <script> tag.",
+  "keywords": [
+    "admin",
+    "dashboard",
+    "ui",
+    "components",
+    "web-components",
+    "custom-elements",
+    "datatable",
+    "charts",
+    "datepicker",
+    "calendar",
+    "kanban",
+    "react",
+    "vue",
+    "angular",
+    "zero-dependency",
+    "single-file"
+  ],
+  "license": "MIT",
+  "author": "",
+  "homepage": "",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "main": "dist/orion.js",
+  "module": "dist/orion.esm.js",
+  "types": "dist/orion.d.ts",
+  "unpkg": "dist/orion.min.js",
+  "jsdelivr": "dist/orion.min.js",
+  "exports": {
+    ".": {
+      "types": "./dist/orion.d.ts",
+      "import": "./dist/orion.esm.js",
+      "require": "./dist/orion.js"
+    },
+    "./min": "./dist/orion.min.js",
+    "./lite": {
+      "types": "./dist/orion.d.ts",
+      "import": "./dist/orion.lite.esm.js",
+      "require": "./dist/orion.lite.js"
+    },
+    "./lite/min": "./dist/orion.lite.min.js",
+    "./locales/*": "./dist/locales/*",
+    "./css": "./dist/orion.css",
+    "./dist/*": "./dist/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": true,
+  "scripts": {
+    "build": "node build/gen-types.mjs && node build/build.mjs",
+    "types": "node build/gen-types.mjs",
+    "audit": "node build/audit.mjs",
+    "watch": "node build/build.mjs --watch",
+    "serve": "node build/serve.mjs",
+    "test": "node build/check.mjs --all",
+    "test:evals": "node tests/evals/run.mjs",
+    "test:unit": "node tests/gen-types.test.mjs && node tests/gantt-dst.test.cjs && node tests/legacy-rrule.test.cjs",
+    "test:i18n": "node tests/i18n-parity.test.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
+}

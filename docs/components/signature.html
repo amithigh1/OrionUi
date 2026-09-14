@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Signature — Orion Admin</title>
+<meta name="docs:section" content="Devices &amp; Capture">
+<meta name="docs:order" content="65">
+<meta name="docs:desc" content="Form-associated signature pad: pressure/velocity ink, undo, typed fallback, PNG/SVG/JSON export">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Signature</h1>
+    <p class="docs-lead"><code>&lt;o-signature&gt;</code> is a form-associated signature pad: smooth
+      pressure/velocity-aware ink on a resize-safe canvas, stroke-level undo, a typed-signature fallback for
+      keyboard-only users, and PNG/JPEG/SVG/points export. <code>value</code> is a trimmed PNG data URL (or
+      <code>null</code> when empty) that participates in native form submission like any other form control.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic</h2>
+    <p>Draw with a mouse, stylus or finger. Pen width follows pointer pressure (stylus) or speed (mouse/touch) by
+      default; <code>undo()</code> removes the last stroke, <code>clear()</code> empties the pad.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-stack" style="max-width:26rem">
+          <o-signature id="basic-sig" name="signature"></o-signature>
+          <div class="docs-log" id="basic-log"></div>
+        </div>
+        <script>
+          const basicSig = document.getElementById('basic-sig');
+          basicSig.addEventListener('o-change', e => docs.log('#basic-log', e.detail.value ? 'o-change → signed' : 'o-change → cleared'));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="typed">
+    <h2>Typed fallback (keyboard-accessible)</h2>
+    <p>Canvas drawing is inherently pointer-driven. Add <code>typed</code> for a Draw/Type tab pair — the Type tab
+      renders the name in a handwriting-style font as a fully keyboard-operable alternative.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-signature typed style="max-width:26rem"></o-signature>
+      </template>
+    </div>
+  </section>
+
+  <section id="required">
+    <h2>Required, in a form</h2>
+    <p><code>required</code> blocks submission until signed, using the same native constraint-validation flow as
+      every other Orion form control (<code>:user-invalid</code> styling, <code>reportValidity()</code> on submit).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <form class="o-stack" id="req-form" style="max-width:26rem" novalidate>
+          <o-signature name="agreement" required style="max-width:100%"></o-signature>
+          <button class="o-btn o-btn-primary" type="submit">Submit</button>
+          <div class="docs-log" id="req-log"></div>
+        </form>
+        <script>
+          document.getElementById('req-form').addEventListener('submit', e => {
+            e.preventDefault();
+            const form = e.target;
+            if (!form.reportValidity()) { docs.log('#req-log', 'blocked: signature is required'); return; }
+            docs.log('#req-log', 'submitted: ' + new FormData(form).get('agreement').slice(0, 24) + '…');
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="export">
+    <h2>Export formats</h2>
+    <p><code>toPNG()</code>/<code>toJPEG()</code>/<code>toBlob()</code>/<code>toFile()</code> for raster output,
+      <code>toSVG()</code> for a vector approximation of the strokes, and <code>toPoints()</code>/<code>fromPoints()</code>
+      to round-trip the raw stroke data (fractions of the pad size, so it survives any resize).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-stack" style="max-width:26rem">
+          <o-signature id="export-sig"></o-signature>
+          <div class="o-cluster">
+            <button class="o-btn o-btn-ghost o-btn-sm" id="export-png">toPNG()</button>
+            <button class="o-btn o-btn-ghost o-btn-sm" id="export-svg">toSVG()</button>
+            <button class="o-btn o-btn-ghost o-btn-sm" id="export-points">toPoints()</button>
+          </div>
+          <div class="docs-log" id="export-log"></div>
+        </div>
+        <script>
+          const exportSig = document.getElementById('export-sig');
+          document.getElementById('export-png').addEventListener('click', () => docs.log('#export-log', exportSig.isEmpty() ? '(empty)' : exportSig.toPNG().slice(0, 48) + '…'));
+          document.getElementById('export-svg').addEventListener('click', () => docs.log('#export-log', exportSig.toSVG().slice(0, 80) + '…'));
+          document.getElementById('export-points').addEventListener('click', () => docs.log('#export-log', JSON.stringify(exportSig.toPoints()).slice(0, 80) + '…'));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>pen-color</td><td>string</td><td>Ink color, also a toolbar color swatch. Default <code>#1e293b</code>.</td></tr>
+        <tr><td>pen-width</td><td>number</td><td>Constant width used when <code>velocity-filter</code> is off.</td></tr>
+        <tr><td>min-width / max-width</td><td>number</td><td>Stroke width range driven by pressure/speed. Default <code>0.6</code> / <code>2.6</code>.</td></tr>
+        <tr><td>velocity-filter</td><td>boolean</td><td>Disable for a constant-width pen. Default on.</td></tr>
+        <tr><td>background</td><td>string</td><td>CSS color painted into the exported bitmap. Default transparent.</td></tr>
+        <tr><td>typed</td><td>boolean</td><td>Adds the Draw/Type tab pair.</td></tr>
+        <tr><td>readonly / disabled / required / name / value</td><td>—</td><td>Standard form semantics.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-begin</td><td>—</td><td>A stroke started.</td></tr>
+        <tr><td>o-end</td><td>—</td><td>A stroke finished.</td></tr>
+        <tr><td>o-change</td><td><code>{ value }</code></td><td>Also fires native <code>input</code>/<code>change</code> on the host.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>clear() / undo()</td><td>Empty the pad, or remove the last stroke (draw mode only).</td></tr>
+        <tr><td>toDataURL(type, quality) / toPNG() / toJPEG(quality)</td><td>Trimmed raster data URL.</td></tr>
+        <tr><td>toBlob(type, quality) / toFile(name, type, quality)</td><td>Trimmed raster as a <code>Blob</code>/<code>File</code>.</td></tr>
+        <tr><td>toSVG()</td><td>Vector approximation of the current strokes (or typed text).</td></tr>
+        <tr><td>toPoints() / fromPoints(strokes)</td><td>Round-trip the raw stroke data.</td></tr>
+        <tr><td>fromDataURL(url)</td><td>Load an existing signature image (replaces strokes; not scriptable back to points).</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Tab</td><td>Moves through the toolbar (Draw/Type tabs, color, width, undo, clear) and into the pad/typed input.</td></tr>
+        <tr><td>Backspace / Delete (pad focused, draw mode)</td><td>Same as <code>undo()</code>.</td></tr>
+        <tr><td>Type tab</td><td>A real text input — full keyboard editing, no pointer needed to produce a valid signature.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="testing">
+    <h2>Testing without real pointer hardware</h2>
+    <p>The pad listens for standard <code>pointerdown</code>/<code>pointermove</code>/<code>pointerup</code> events,
+      so a headless test drives it by dispatching real <code>PointerEvent</code>s at page coordinates over the
+      canvas. One gotcha: Chrome reports no <code>getCoalescedEvents()</code> for synthetic pointer events, so a
+      test needs to patch that method to return itself first — see
+      <code>src/components/signature/README.md#testing-no-real-pointer-hardware-needed</code> and
+      <code>tests/evals/capture-signature.js</code>.</p>
+  </section>
+
+  <section id="limitations">
+    <h2>Limitations</h2>
+    <ul>
+      <li>Canvas drawing is inherently pointer-driven; use <code>typed</code> when keyboard-only signing must be
+        supported.</li>
+      <li><code>toSVG()</code> is an approximation (quadratic-curve smoothing through the recorded points), not a
+        pixel-identical vector trace of the canvas ink.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

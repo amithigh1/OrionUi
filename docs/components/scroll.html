@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scroll — Orion Admin</title>
+<meta name="docs:section" content="Layout &amp; Navigation">
+<meta name="docs:order" content="50">
+<meta name="docs:desc" content="Back-to-top, scroll progress, scroll-spy and sticky action bars">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .scroll-box { position: relative; height: 16rem; overflow: auto; border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); }
+  .scroll-box section { padding: 1.5rem; min-height: 12rem; border-bottom: 1px dashed var(--o-border); }
+  .scroll-box section:last-child { border-bottom: 0; }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Scroll</h1>
+    <p class="docs-lead">Small scroll-driven helpers: a <code>&lt;o-back-to-top&gt;</code> button, a
+      <code>&lt;o-scroll-progress&gt;</code> bar, a <code>data-o-spy</code> scroll-spy behavior for in-page navigation, and a
+      <code>data-o-sticky-actions</code> behavior that adds a shadow to a sticky action bar once it is actually pinned.</p>
+  </header>
+
+  <section id="back-to-top">
+    <h2>Back to top</h2>
+    <p><code>target</code> points it at a specific scroll container instead of the window; <code>progress</code> draws a ring
+      showing how far through the target the user has scrolled.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="scroll-box" id="btt-box">
+          <section><h3>Section one</h3><p class="o-text-muted">Scroll down inside this box.</p></section>
+          <section><h3>Section two</h3></section>
+          <section><h3>Section three</h3><p class="o-text-muted">The button in the corner appears after ~80px and fills its ring as you approach the bottom.</p></section>
+        </div>
+        <o-back-to-top target="#btt-box" threshold="80" progress style="position:absolute"></o-back-to-top>
+        <script>
+          document.querySelector('#btt-box').parentElement.style.position = 'relative';
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="progress">
+    <h2>Scroll progress</h2>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div style="position:relative">
+          <o-scroll-progress target="#sp-box" style="position:absolute"></o-scroll-progress>
+          <div class="scroll-box" id="sp-box" style="margin-top:3px">
+            <section><h3>Long content</h3><p class="o-text-muted">The bar above fills as you scroll this box.</p></section>
+            <section><h3>Keep going</h3></section>
+            <section><h3>Almost there</h3></section>
+            <section><h3>The end</h3></section>
+          </div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="spy">
+    <h2>Scroll-spy</h2>
+    <p><code>data-o-spy="#selector"</code> on the scrolling element highlights the nav link whose target heading is in view and
+      smooth-scrolls to a section when its link is clicked, accounting for <code>data-o-spy-offset</code> (useful with a sticky
+      in-box header).</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-hstack" style="align-items:flex-start;gap:1.5rem">
+          <nav class="o-nav o-nav-vertical" id="spy-nav" style="flex:0 0 9rem">
+            <a class="o-nav-link" href="#spy-intro">Intro</a>
+            <a class="o-nav-link" href="#spy-usage">Usage</a>
+            <a class="o-nav-link" href="#spy-api">API</a>
+          </nav>
+          <div class="scroll-box" id="spy-box" data-o-spy="#spy-nav" style="flex:1 1 auto">
+            <section id="spy-intro"><h3>Intro</h3><p class="o-text-muted">Scroll this box — the link on the left updates.</p></section>
+            <section id="spy-usage"><h3>Usage</h3></section>
+            <section id="spy-api"><h3>API</h3></section>
+          </div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="sticky">
+    <h2>Sticky action bar</h2>
+    <p><code>data-o-sticky-actions</code> adds <code>.is-stuck</code> (a shadow) to a <code>position: sticky</code> bar once it
+      is actually pinned — scroll the box below.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="scroll-box" style="height:12rem">
+          <section style="min-height:20rem"><h3>Form content</h3><p class="o-text-muted">Scroll down; the action bar sticks to the bottom and gains a shadow.</p></section>
+          <div class="o-sticky-bar" data-o-sticky-actions>
+            <button class="o-btn">Cancel</button>
+            <button class="o-btn o-btn-primary">Save changes</button>
+          </div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>&lt;o-back-to-top&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>threshold</td><td>Number</td><td>Scroll distance (px) before the button appears. Default 300.</td></tr>
+        <tr><td>target</td><td>selector</td><td>Scroll container; defaults to the window.</td></tr>
+        <tr><td>progress</td><td>Boolean</td><td>Draw a completion ring around the button.</td></tr>
+        <tr><td>label</td><td>String</td><td><code>aria-label</code> override.</td></tr>
+      </tbody>
+    </table>
+    <p>Method: <code>scrollToTop()</code>. Event: <code>o-click</code>.</p>
+    <h3>&lt;o-scroll-progress&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>target</td><td>selector</td><td>Scroll container; defaults to the window.</td></tr>
+        <tr><td>position</td><td><code>top｜bottom</code></td><td>Default <code>top</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>Behaviors</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>data-o-spy="#nav" [data-o-spy-offset="80"]</td><td>Scroll-spy on the element carrying the attribute (its nearest scrollable box, or the window for <code>&lt;body&gt;</code>). Supports nested <code>&lt;ul&gt;</code> lists (ancestor <code>&lt;li&gt;</code> get <code>.has-active</code>).</td></tr>
+        <tr><td>data-o-sticky-actions</td><td>Adds/removes <code>.is-stuck</code> on a <code>position: sticky</code> element while it is pinned.</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS variables</h3>
+    <p><code>--o-progress</code> (0–1, back-to-top ring), <code>--o-bottom-nav-space</code> (used to offset the back-to-top
+      button above a bottom nav on small screens).</p>
+  </section>
+</main>
+</body>
+</html>

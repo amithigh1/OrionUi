@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pivot Table — Orion Admin</title>
+<meta name="docs:section" content="Data">
+<meta name="docs:order" content="75">
+<meta name="docs:desc" content="Drag & drop pivot table with subtotals, filters, heatmap and export">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<script>
+  /* demo data: sales records (deterministic) */
+  window.salesData = function (n = 4000, seed = 9) {
+    const r = docs.rand(seed), pick = a => a[Math.floor(r() * a.length)];
+    const geo = { Americas: ['United States', 'Canada', 'Brazil', 'Mexico'], Europe: ['Germany', 'United Kingdom', 'France', 'Spain'], 'Asia Pacific': ['Japan', 'India', 'Singapore', 'Australia', 'Malaysia'], 'Middle East & Africa': ['UAE', 'South Africa', 'Saudi Arabia'] };
+    const regions = ['Americas', 'Americas', 'Europe', 'Europe', 'Asia Pacific', 'Asia Pacific', 'Asia Pacific', 'Middle East & Africa'];
+    const products = [['Laptops', 'Hardware', 1150], ['Phones', 'Hardware', 780], ['Tablets', 'Hardware', 520], ['Cloud', 'Services', 240], ['Support', 'Services', 180], ['Licenses', 'Software', 420]];
+    const reps = ['Aisha Rahman', 'Ben Tan', 'Chen Wong', 'Diego Silva', 'Elena Rossi', 'Farid Haddad', 'Grace Lee', 'Hiro Sato', 'Priya Patel', 'Liam Brown'];
+    return Array.from({ length: n }, (_, i) => {
+      const region = pick(regions), country = pick(geo[region]), [product, category, price] = pick(products);
+      const date = new Date(2022 + Math.floor(r() * 4), Math.floor(r() * 12), 1 + Math.floor(r() * 28));
+      const units = 1 + Math.floor(r() * 20), revenue = Math.round(units * price * (0.8 + r() * 0.4) * (1 + (date.getFullYear() - 2022) * 0.12));
+      return { id: i + 1, date, year: date.getFullYear(), quarter: 'Q' + (Math.floor(date.getMonth() / 3) + 1), region, country, product, category, channel: pick(['Online', 'Retail', 'Partner']), rep: pick(reps), units, revenue, cost: Math.round(revenue * (0.55 + r() * 0.2)) };
+    });
+  };
+</script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Pivot Table</h1>
+    <p class="docs-lead"><code>&lt;o-pivot&gt;</code> summarises records by any combination of row and column fields: drag fields between Rows, Columns, Values and Filters (or use the keyboard), pick the aggregation, filter values, expand and collapse groups, sort by label or value, see subtotals, grand totals and a heatmap, and export the result to CSV or Excel. 100,000 records aggregate in a few dozen milliseconds.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Sales by region × year</h2>
+    <p>Drag a field from the list into a zone, or press <kbd class="o-kbd">Enter</kbd> on it to choose where it goes. Click a value header to sort rows by that column; click the row field in the corner to sort labels.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-pivot id="pv1" style="--o-pivot-h: 32rem; border: 0; border-radius: 0"></o-pivot>
+        <script>
+          (() => {
+            const pv = document.getElementById('pv1');
+            pv.data = salesData(4000);
+            pv.config = {
+              rows: ['region', 'country'], columns: ['year'],
+              values: [{ field: 'revenue', agg: 'sum', format: 'currency' }],
+              heatmap: true, collapsed: { rows: [['Middle East & Africa']] },
+            };
+            pv.addEventListener('o-change', e => docs.log('#pv1-log', 'o-change ' + JSON.stringify({ rows: e.detail.config.rows, columns: e.detail.config.columns, values: e.detail.config.values.map(v => v.agg + ':' + v.field) })));
+            pv.addEventListener('o-cell-click', e => docs.log('#pv1-log', `o-cell-click ${e.detail.row.join(' / ') || 'Total'} × ${e.detail.column.join(' / ') || 'Total'} = ${Math.round(e.detail.value)} (${e.detail.records.length} records)`));
+          })();
+        </script>
+        <div class="o-p-3"><div class="docs-log" id="pv1-log" style="margin-top: 0"></div></div>
+      </template>
+    </div>
+  </section>
+
+  <section id="subtotals">
+    <h2>Several levels, subtotals &amp; filters</h2>
+    <p>Row and column fields nest to any depth. Group rows show subtotals (turn them off with <code>showSubtotals: false</code>), column groups get a total column, and <code>showTotals</code> adds the grand totals. Date fields also offer derived <em>Year</em>, <em>Quarter</em> and <em>Month</em> fields (<code>'date:year'</code>).</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-pivot id="pv2" style="--o-pivot-h: 30rem; border: 0; border-radius: 0"></o-pivot>
+        <script>
+          (() => {
+            const pv = document.getElementById('pv2');
+            pv.data = salesData(4000, 3);
+            pv.config = {
+              rows: ['category', 'product'], columns: ['date:year', 'quarter'],
+              values: [{ field: 'revenue', agg: 'sum', format: 'compact' }, { field: 'units', agg: 'sum', format: 'integer' }],
+              filters: { channel: ['Online', 'Partner'] },
+              collapsed: { columns: [['2022'], ['2023'], ['2024']] },
+            };
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="aggregations">
+    <h2>Aggregations &amp; custom measures</h2>
+    <p><code>agg</code> is <code>sum</code>, <code>count</code>, <code>avg</code>, <code>min</code>, <code>max</code>, <code>distinct</code> or a function <code>(values, records) → number</code> — for example a margin that is computed from the underlying records instead of averaged. <code>format</code> accepts <code>number</code>, <code>integer</code>, <code>currency</code>, a currency code, <code>percent</code>, <code>compact</code>, Intl options or a function.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-pivot id="pv3" field-list="false" style="--o-pivot-h: 22rem; border: 0; border-radius: 0"></o-pivot>
+        <script>
+          (() => {
+            const pv = document.getElementById('pv3');
+            pv.data = salesData(4000, 5);
+            pv.config = {
+              rows: ['rep'],
+              values: [
+                { field: 'id', agg: 'count', label: 'Orders' },
+                { field: 'revenue', agg: 'avg', format: 'currency', label: 'Average order' },
+                { field: 'revenue', agg: 'max', format: 'currency', label: 'Largest order' },
+                { field: 'country', agg: 'distinct', label: 'Countries' },
+                { field: 'revenue', label: 'Margin', format: 'percent', agg: (values, records) => { const rev = records.reduce((s, x) => s + x.revenue, 0); return rev ? (rev - records.reduce((s, x) => s + x.cost, 0)) / rev : null; } },
+              ],
+              sort: { rows: { by: 'value', value: 0, dir: 'desc' } }, heatmap: true,
+            };
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="performance">
+    <h2>Performance &amp; export</h2>
+    <p>The engine stores accumulators per row × column group in flat typed arrays, so 100,000 records with two row levels and one column level aggregate in a few dozen milliseconds. <code>O.pivot.compute(data, config)</code> runs without the UI (e.g. in a worker). <code>pivot.export('csv' | 'xlsx')</code> writes what is on screen — Excel files get merged, frozen, bold header rows.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-primary" id="perf-run">Aggregate 100,000 records</button>
+          <button class="o-btn" id="pv-csv"><o-icon name="download"></o-icon> First pivot → CSV</button>
+          <button class="o-btn" id="pv-xlsx"><o-icon name="download"></o-icon> First pivot → Excel</button>
+        </div>
+        <div class="docs-log" id="perf-log"></div>
+        <script>
+          (() => {
+            let big = null;
+            document.getElementById('perf-run').onclick = () => {
+              big = big || salesData(100000, 21);
+              const t0 = performance.now();
+              const res = Orion.pivot.compute(big, { rows: ['region', 'country'], columns: ['year'], values: [{ field: 'revenue', agg: 'sum' }, { field: 'units', agg: 'avg' }] });
+              const ms = performance.now() - t0;
+              docs.log('#perf-log', `${res.count.toLocaleString()} records → ${res.rowRoot.children.size} regions × ${res.colRoot.children.size} years in ${ms.toFixed(1)} ms`);
+            };
+            document.getElementById('pv-csv').onclick = () => document.getElementById('pv1').export('csv', { filename: 'sales-pivot' });
+            document.getElementById('pv-xlsx').onclick = () => document.getElementById('pv1').export('xlsx', { filename: 'sales-pivot' });
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Properties &amp; attributes</h3>
+    <table class="docs-api">
+      <thead><tr><th>Property</th><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>data</td><td>data (JSON)</td><td>Array</td><td>Records (plain objects).</td></tr>
+        <tr><td>config</td><td>config (JSON)</td><td>Object</td><td>Layout, see below. Assign a new object to change it.</td></tr>
+        <tr><td>fields</td><td>fields (JSON)</td><td>Array</td><td>Optional field definitions <code>[{ key, label, type, get(record), format(value) }]</code>; by default fields are detected from the data.</td></tr>
+        <tr><td>fieldList</td><td>field-list</td><td>Boolean</td><td>Show the field list panel (default true; <code>field-list="false"</code> hides it).</td></tr>
+        <tr><td>editable</td><td>editable</td><td>Boolean</td><td>Allow layout changes from the UI (default true).</td></tr>
+        <tr><td>view</td><td>view</td><td>'table' | 'chart'</td><td>Chart view appears when <code>Orion.chart</code> is available.</td></tr>
+        <tr><td>maxRows</td><td>max-rows</td><td>Number</td><td>Rendered row cap (2000); collapse or filter to see more.</td></tr>
+        <tr><td>texts</td><td>—</td><td>Object</td><td>Per-instance strings (<code>{ total: 'Σ' }</code>).</td></tr>
+      </tbody>
+    </table>
+    <h3>config</h3>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>rows, columns</td><td>Arrays of field keys (dot paths and derived <code>'date:year' | 'date:quarter' | 'date:month'</code> work).</td></tr>
+        <tr><td>values</td><td><code>[{ field, agg, format, label }]</code>; a string means <code>{ field, agg: 'sum' }</code>.</td></tr>
+        <tr><td>filters</td><td><code>{ field: [allowed values] }</code>; <code>null</code> keeps a field in the Filters zone without restricting it. <code>filter(record)</code> adds a custom predicate.</td></tr>
+        <tr><td>sort</td><td><code>{ rows: { by: 'label' | 'value', dir: 'asc' | 'desc', value: index, col: [path], level }, columns: { dir } }</code>.</td></tr>
+        <tr><td>showTotals, showSubtotals</td><td>Grand totals and group subtotals (default true).</td></tr>
+        <tr><td>heatmap</td><td>Colour detail cells with the sequential palette (<code>--o-seq-100 … 700</code>).</td></tr>
+        <tr><td>collapsed</td><td><code>{ rows: [path…], columns: [path…] }</code> — collapsed groups (kept in <code>getConfig()</code>).</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>setData(data), setConfig(config)</td><td>Replace data or layout.</td></tr>
+        <tr><td>getConfig()</td><td>Normalized copy of the current layout.</td></tr>
+        <tr><td>getResult()</td><td><code>{ rows: [{ path, labels, depth, type }], columns: [{ path, labels, type, value }], values: number[][], count }</code>.</td></tr>
+        <tr><td>export(format, opts)</td><td><code>'csv' | 'xlsx' | 'json' | 'html' | 'pdf'</code> → <code>Promise&lt;Blob&gt;</code> (<code>filename</code>, <code>download</code>).</td></tr>
+        <tr><td>expandAll(), collapseAll(), refresh(), toggleFieldList(force)</td><td>Layout helpers.</td></tr>
+        <tr><td>O.pivot.compute(data, config, fields)</td><td>Headless engine: <code>{ rowRoot, colRoot, value(rowNode, colNode, valueIndex), count }</code>.</td></tr>
+        <tr><td>O.pivot.layout(result)</td><td>Flattens a <code>compute()</code> result into visible <code>{ rows, cols }</code> (respects <code>collapsed</code>, sorting and totals) — what <code>&lt;o-pivot&gt;</code> renders from; usable standalone to build a custom table/chart.</td></tr>
+        <tr><td>O.pivot.fields(data, fields)</td><td>The field-detection routine (types, derived <code>:year</code>/<code>:quarter</code>/<code>:month</code> fields) → <code>Map&lt;string, FieldDef&gt;</code>.</td></tr>
+        <tr><td>O.pivot.normalize(config)</td><td>Fills in every optional <code>config</code> key with its default shape.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>When</th></tr></thead>
+      <tbody>
+        <tr><td>o-change</td><td><code>{ config }</code></td><td>The user changed fields, aggregation, filters, sorting or collapsed groups.</td></tr>
+        <tr><td>o-cell-click</td><td><code>{ row, column, value, valueField, records }</code></td><td>A value cell was clicked (drill-down).</td></tr>
+      </tbody>
+    </table>
+    <h3>Keyboard</h3>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Enter / Space on a field</td><td>Open the field menu: move to Rows, Columns, Values or Filters, move up/down, filter, remove.</td></tr>
+        <tr><td>Alt + ↑ / ↓</td><td>Reorder the focused field inside its zone.</td></tr>
+        <tr><td>Delete / Backspace</td><td>Remove the focused field from its zone.</td></tr>
+        <tr><td>↑ ↓ Home End (menus)</td><td>Move through menu items; Enter selects, Esc closes.</td></tr>
+        <tr><td>Tab</td><td>Reach group toggles and sortable headers (buttons) in the table.</td></tr>
+        <tr><td>Esc while dragging</td><td>Cancel the drag.</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS variables</h3>
+    <p><code>--o-pivot-h</code> sets the height of the table area (34rem). Heatmap colours come from <code>--o-seq-100 … --o-seq-700</code>.</p>
+    <h3>Frameworks</h3>
+    <p>Set <code>data</code> and <code>config</code> as properties (React 19, Vue <code>:data</code>, Angular <code>[data]</code>); React 18 can pass JSON strings. Listen to <code>o-change</code> to persist the layout.</p>
+  </section>
+</main>
+</body>
+</html>

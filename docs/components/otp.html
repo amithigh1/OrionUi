@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OTP input — Orion Admin</title>
+<meta name="docs:section" content="Forms">
+<meta name="docs:order" content="50">
+<meta name="docs:desc" content="One-time code input with paste distribution, WebOTP and a resend countdown">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>OTP input</h1>
+    <p class="docs-lead"><code>&lt;o-otp&gt;</code> renders one box per character for verification codes. Typing
+      auto-advances, pasting distributes the code across the boxes, the first box has
+      <code>autocomplete="one-time-code"</code> for iOS/Android SMS autofill, and the WebOTP API is used automatically
+      when the browser supports it.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic</h2>
+    <div class="docs-demo">
+      <template>
+        <o-otp name="code" length="6" autofocus></o-otp>
+      </template>
+    </div>
+  </section>
+
+  <section id="separator">
+    <h2>Separator &amp; length</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-stack" style="gap:1.25rem">
+          <o-otp length="6" separator="3"></o-otp>
+          <o-otp length="8" separator="4"></o-otp>
+          <o-otp length="4"></o-otp>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="type-mask">
+    <h2>Character type &amp; masking</h2>
+    <p><code>type</code> restricts input to <code>numeric</code> (default), <code>alpha</code> or <code>alphanumeric</code>
+      (auto-uppercased); <code>mask</code> hides characters like a password field.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-stack" style="gap:1.25rem">
+          <o-otp length="6" type="alphanumeric"></o-otp>
+          <o-otp length="6" mask></o-otp>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="resend">
+    <h2>Resend countdown</h2>
+    <p><code>resend-seconds</code> shows a live countdown, then a "Resend code" button. Listen for the cancelable
+      <code>o-resend</code> event to trigger your API call before the countdown restarts.</p>
+    <div class="docs-demo">
+      <template>
+        <o-otp id="otp-resend" length="6" resend-seconds="20"></o-otp>
+        <div class="o-help o-mt-2" id="otp-resend-log"></div>
+        <script>
+          document.getElementById('otp-resend').addEventListener('o-resend', () => docs.log('#otp-resend-log', 'Resending code…'));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="validation">
+    <h2>Verify &amp; show an error</h2>
+    <p>Call <code>setError()</code> when the server rejects the code — the boxes turn red, shake, and the message shows
+      until the next edit.</p>
+    <div class="docs-demo">
+      <template>
+        <o-otp id="otp-verify" length="6"></o-otp>
+        <button class="o-btn o-btn-sm o-mt-2" id="otp-verify-btn" type="button">Simulate wrong code</button>
+        <script>
+          document.getElementById('otp-verify-btn').addEventListener('click', () => document.getElementById('otp-verify').setError());
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="sizes">
+    <h2>Sizes &amp; RTL</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-stack" style="gap:1.25rem">
+          <o-otp length="6" size="sm"></o-otp>
+          <o-otp length="6" size="lg"></o-otp>
+          <div dir="rtl"><o-otp length="6"></o-otp></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>Props / attributes</h2>
+    <table class="docs-api">
+      <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>value</td><td>String</td><td>The entered code.</td></tr>
+        <tr><td>length</td><td>Number</td><td>Number of boxes (default 6).</td></tr>
+        <tr><td>type</td><td>String</td><td><code>numeric</code> (default) | <code>alpha</code> | <code>alphanumeric</code>.</td></tr>
+        <tr><td>mask</td><td>Boolean</td><td>Hide entered characters.</td></tr>
+        <tr><td>separator</td><td>Number | String</td><td>A group size (<code>3</code> → every 3 boxes) or explicit positions (<code>"3,6"</code>).</td></tr>
+        <tr><td>autofocus</td><td>Boolean</td><td>Focus the first empty box on connect.</td></tr>
+        <tr><td>resend-seconds</td><td>Number</td><td>Countdown length; 0/omitted hides the resend row.</td></tr>
+        <tr><td>webotp</td><td>Boolean</td><td>Use the WebOTP API when available (default <code>true</code>).</td></tr>
+        <tr><td>invalid</td><td>Boolean</td><td>Reflects the error state (set via <code>setError()</code>).</td></tr>
+        <tr><td>size, name, required, disabled, readonly, texts</td><td>—</td><td>Standard.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.focus()</td><td>Focus the first empty box (or the last one when full).</td></tr>
+        <tr><td>.clear()</td><td>Empty all boxes.</td></tr>
+        <tr><td>.shake()</td><td>Play the shake animation.</td></tr>
+        <tr><td>.setError(msg?)</td><td>Mark invalid, shake, and show a message (default: "The code is incorrect").</td></tr>
+        <tr><td>.restartTimer(seconds?)</td><td>(Re)start the resend countdown.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>input, change</td><td>Native, mirrored from the boxes.</td></tr>
+        <tr><td>o-change</td><td><code>{ value }</code></td></tr>
+        <tr><td>o-complete</td><td><code>{ value }</code> — every box is filled.</td></tr>
+        <tr><td>o-resend</td><td>Cancelable; call <code>preventDefault()</code> to stop the countdown from restarting (e.g. while an API call is in flight).</td></tr>
+      </tbody>
+    </table>
+    <h3>Keyboard</h3>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Type a character</td><td>Fill the box, auto-advance to the next.</td></tr>
+        <tr><td>Backspace</td><td>Clear the current box, or the previous one and move back if already empty.</td></tr>
+        <tr><td>Delete</td><td>Remove the current character and shift the rest left.</td></tr>
+        <tr><td>← / →</td><td>Move between boxes (RTL-aware).</td></tr>
+        <tr><td>Home / End</td><td>Jump to the first / last box.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

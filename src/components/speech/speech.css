@@ -1,0 +1,28 @@
+/* Speech: `data-o-voice` mic button + interim bubble/inline span, and the <o-tts> reader. */
+o-tts { display: block; }
+o-tts:not(:defined) { visibility: hidden; }
+
+/* ── data-o-voice (mic button lives in the shared .o-input-wrap/.o-input-action) ── */
+.o-voice-btn.is-listening { color: var(--o-on-danger); background: var(--o-danger); }
+.o-voice-btn.is-listening:hover { background: var(--o-danger-hover); }
+.o-voice-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.o-voice-bubble {
+  position: absolute; z-index: 1; inset-inline: 0; top: calc(100% + .25rem); padding: .375rem .625rem;
+  font-size: var(--o-fs-sm); color: var(--o-text-muted); background: var(--o-surface); border: 1px solid var(--o-border);
+  border-radius: var(--o-radius); box-shadow: var(--o-shadow-sm); pointer-events: none;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.o-voice-interim { color: var(--o-text-subtle); font-style: italic; }
+
+/* ── <o-tts> ── */
+.o-tts-toolbar { display: flex; align-items: center; gap: .375rem; margin-bottom: .375rem; }
+.o-tts-status { font-size: var(--o-fs-sm); color: var(--o-text-muted); }
+o-tts.is-unsupported .o-tts-status { color: var(--o-danger-text); }
+.o-tts-text { line-height: 1.7; color: var(--o-text); }
+.o-tts-word { border-radius: var(--o-radius-xs); transition: background-color var(--o-dur-fast) var(--o-ease), color var(--o-dur-fast) var(--o-ease); }
+.o-tts-word.is-current { background: var(--o-primary-subtle); color: var(--o-primary-text); }
+
+@media (prefers-reduced-motion: reduce) {
+  .o-tts-word { transition: none; }
+}

@@ -1,0 +1,21 @@
+/* Lazy loading: shimmer while waiting, blur-up placeholders, fade-in, error state */
+.o-lazy { transition: filter .5s var(--o-ease); }
+img.o-lazy.is-lazy, iframe.o-lazy[data-src], video.o-lazy[data-src], .o-lazy-bg:not(.is-loaded):not([style*="background-image"]) {
+  background-color: var(--o-surface-3);
+  background-image: linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--o-surface) 60%, transparent) 50%, transparent 70%);
+  background-size: 250% 100%; background-repeat: no-repeat;
+  animation: o-lazy-shimmer 1.5s linear infinite;
+}
+@keyframes o-lazy-shimmer { from { background-position: 120% 0; } to { background-position: -20% 0; } }
+[dir="rtl"] img.o-lazy.is-lazy { animation-direction: reverse; }
+img.o-lazy.is-placeholder { filter: blur(16px); clip-path: inset(0 round var(--o-lazy-radius, 0px)); }
+img.o-lazy.is-fade { animation: o-lazy-fade .5s var(--o-ease) both; }
+@keyframes o-lazy-fade { from { opacity: 0; } }
+img.o-lazy.is-error {
+  object-position: -99999px 0; background-color: var(--o-surface-3); background-repeat: no-repeat; background-position: center; background-size: 2.25rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 2l20 20M10.4 5H19a2 2 0 0 1 2 2v8.6M21 21H5a2 2 0 0 1-2-2V5M13.5 13.5 11 11l-6 6M17 17l-2-2'/%3E%3C/svg%3E");
+}
+.o-lazy-bg { background-size: cover; background-position: center; background-repeat: no-repeat; }
+.o-lazy-bg.is-loaded { animation: o-lazy-bg-in .5s var(--o-ease); }
+@keyframes o-lazy-bg-in { from { background-color: var(--o-surface-3); } }
+.o-lazy-render:not([data-o-visible]) { min-height: var(--o-lazy-min-h, 0); }

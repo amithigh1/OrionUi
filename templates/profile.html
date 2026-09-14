@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Profile — Orion Admin</title>
+<script src="../dist/orion.js"></script>
+<link rel="stylesheet" href="assets/shell.css">
+<style>
+  .pf-cover { height: 8.5rem; border-radius: var(--o-radius-lg) var(--o-radius-lg) 0 0;
+    background: linear-gradient(120deg, var(--o-primary), color-mix(in srgb, var(--o-primary) 40%, var(--o-info))); }
+  .pf-head { padding: 0 clamp(1rem, 3vw, 1.75rem) 1.25rem; }
+  /* The avatar straddles the cover edge; everything else starts just below it so text never sits on the gradient. */
+  .pf-id { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start; margin-top: -2.75rem; }
+  .pf-id > o-avatar { --o-avatar-size: 5.5rem; font-size: 1.75rem; border: 4px solid var(--o-bg-elevated); flex: none; }
+  .pf-id-text { flex: 1 1 12rem; min-width: 0; padding-top: 3rem; }
+  .pf-id > .o-cluster { padding-top: .25rem; }
+  @media (min-width: 768px) { .pf-id > .o-cluster { padding-top: 3rem; } }
+  .pf-layout { display: grid; gap: 1.25rem; grid-template-columns: 1fr; align-items: start; }
+  @media (min-width: 1024px) { .pf-layout { grid-template-columns: 1fr 20rem; } }
+  .pf-todo { list-style: none; margin: 0; padding: 0; display: grid; gap: .375rem; font-size: var(--o-fs-sm); }
+  .pf-todo li { display: flex; gap: .5rem; align-items: center; }
+  .pf-todo li.is-done { color: var(--o-text-muted); text-decoration: line-through; }
+  .pf-notif td:not(:first-child) { text-align: center; }
+</style>
+<script>
+  window.PAGE = {
+    id: 'profile', title: 'My profile', subtitle: 'Personal details, security and activity',
+    breadcrumbs: [{ label: 'Home', href: 'dashboard.html' }, { label: 'Account' }, { label: 'Profile' }],
+    actions: '<button class="o-btn" id="pf-view"><o-icon name="eye"></o-icon>View public profile</button>',
+  };
+</script>
+<script src="assets/shell.js" defer></script>
+</head>
+<body>
+<div id="app-content">
+  <div class="o-card o-mb-4">
+    <div class="pf-cover"></div>
+    <div class="pf-head">
+      <div class="pf-id">
+        <o-avatar id="pf-av" name="Amira Rahman" size="xl" status="online"></o-avatar>
+        <div class="pf-id-text">
+          <h2 class="o-h4 o-mb-0" id="pf-name">Amira Rahman</h2>
+          <div class="o-text-muted">Head of Operations · Kuala Lumpur, MY</div>
+          <div class="o-cluster o-mt-2">
+            <span class="o-badge o-badge-soft-primary">Administrator</span>
+            <span class="o-badge o-badge-soft-success"><o-icon name="shield-check"></o-icon>2FA enabled</span>
+            <span class="o-text-muted o-text-xs">Joined March 2024</span>
+          </div>
+        </div>
+        <div class="o-cluster">
+          <input type="file" id="pf-photo-file" accept="image/*" hidden>
+          <button class="o-btn" id="pf-photo" type="button"><o-icon name="camera"></o-icon>Change photo</button>
+          <button class="o-btn o-btn-primary" id="pf-save-top" type="button"><o-icon name="check"></o-icon>Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <o-tabs variant="line" hash="tab">
+    <!-- ---------------- Details ---------------- -->
+    <o-tab-panel label="Details" icon="user" id="details">
+      <div class="pf-layout">
+        <div class="o-card">
+          <div class="o-card-header"><b>Personal information</b></div>
+          <div class="o-card-body">
+            <form id="pf-form" class="o-form-grid" novalidate>
+              <div class="o-field"><label class="o-label is-required" for="d-first">First name</label>
+                <input class="o-input" id="d-first" name="first" value="Amira" data-o-rules="required"><div class="o-error"></div></div>
+              <div class="o-field"><label class="o-label is-required" for="d-last">Last name</label>
+                <input class="o-input" id="d-last" name="last" value="Rahman" data-o-rules="required"><div class="o-error"></div></div>
+              <div class="o-field o-span-full"><label class="o-label is-required" for="d-email">Email</label>
+                <input class="o-input" id="d-email" name="email" type="email" value="amira.rahman@orionlabs.example" data-o-rules="required|email"><div class="o-error"></div></div>
+              <div class="o-field"><label class="o-label" for="d-phone">Phone</label>
+                <o-phone id="d-phone" name="phone" country="MY" value="+60123456789"></o-phone></div>
+              <div class="o-field"><label class="o-label" for="d-role">Job title</label>
+                <input class="o-input" id="d-role" name="title" value="Head of Operations"></div>
+              <div class="o-field"><label class="o-label" for="d-tz">Time zone</label>
+                <o-select id="d-tz" name="timezone" value="Asia/Kuala_Lumpur" searchable
+                  options='["Asia/Kuala_Lumpur","Asia/Singapore","Asia/Tokyo","Europe/London","America/New_York"]'></o-select></div>
+              <div class="o-field"><label class="o-label" for="d-lang">Language</label>
+                <o-select id="d-lang" name="locale" value="en"
+                  options='[{"value":"en","label":"English"},{"value":"ms","label":"Bahasa Melayu"},{"value":"zh","label":"中文"},{"value":"ar","label":"العربية"}]'></o-select></div>
+              <div class="o-field o-span-full"><label class="o-label" for="d-bio">Bio</label>
+                <textarea class="o-textarea" id="d-bio" name="bio" rows="3" maxlength="280" data-o-autosize data-o-counter>Operations lead focused on fulfilment reliability and support quality.</textarea></div>
+              <div class="o-field o-span-full"><label class="o-label" for="d-skills">Skills</label>
+                <o-tags id="d-skills" name="skills" value='["Operations","Logistics","SQL","Forecasting"]'></o-tags></div>
+            </form>
+          </div>
+          <div class="o-card-footer o-between">
+            <span class="o-text-muted o-text-sm" id="pf-dirty"></span>
+            <div class="o-cluster"><button class="o-btn" id="pf-reset" type="button">Discard</button>
+              <button class="o-btn o-btn-primary" id="pf-save" type="button">Save changes</button></div>
+          </div>
+        </div>
+
+        <div class="o-stack">
+          <div class="o-card">
+            <div class="o-card-header"><b>Profile completeness</b></div>
+            <div class="o-card-body">
+              <div class="o-progress-labeled o-mb-3"><div class="o-progress"><div class="o-progress-bar" id="pf-pct-bar" style="--o-value:0%"></div></div><span class="o-progress-value" id="pf-pct">0%</span></div>
+              <ul class="pf-todo" id="pf-todo"></ul>
+            </div>
+          </div>
+          <div class="o-card">
+            <div class="o-card-header"><b>At a glance</b></div>
+            <div class="o-card-body o-stack o-gap-2">
+              <div class="o-between"><span class="o-text-muted">Tickets resolved</span><b>1,284</b></div>
+              <div class="o-between"><span class="o-text-muted">Avg. response</span><b>2h 14m</b></div>
+              <div class="o-between"><span class="o-text-muted">Team</span><b>Operations</b></div>
+              <div class="o-between"><span class="o-text-muted">Manager</span><b>Daniel Okafor</b></div>
+              <div class="o-between"><span class="o-text-muted">Last active</span><b id="pf-seen">—</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </o-tab-panel>
+
+    <!-- ---------------- Security ---------------- -->
+    <o-tab-panel label="Security" icon="shield" id="security">
+      <div class="pf-layout">
+        <div class="o-stack">
+          <div class="o-card">
+            <div class="o-card-header"><b>Change password</b></div>
+            <div class="o-card-body">
+              <form id="pw-form" class="o-stack" novalidate>
+                <div class="o-field"><label class="o-label is-required" for="pw-cur">Current password</label>
+                  <input class="o-input" id="pw-cur" name="current" type="password" autocomplete="current-password" data-o-password-toggle data-o-rules="required"><div class="o-error"></div></div>
+                <div class="o-field"><label class="o-label is-required" for="pw-new">New password</label>
+                  <input class="o-input" id="pw-new" name="next" type="password" autocomplete="new-password" data-o-password-toggle data-o-strength data-o-rules="required|minlength:10"><div class="o-error"></div></div>
+                <div class="o-field"><label class="o-label is-required" for="pw-conf">Confirm new password</label>
+                  <input class="o-input" id="pw-conf" name="confirm" type="password" autocomplete="new-password" data-o-rules="required|same:next"><div class="o-error"></div></div>
+                <button class="o-btn o-btn-primary o-self-start" id="pw-save" type="button">Update password</button>
+              </form>
+            </div>
+          </div>
+
+          <div class="o-card">
+            <div class="o-card-header"><b>Active sessions</b></div>
+            <div class="o-list o-list-flush" id="pf-sessions"></div>
+            <div class="o-card-footer"><button class="o-btn o-btn-soft-danger o-btn-sm" id="pf-revoke-all" type="button">Sign out everywhere else</button></div>
+          </div>
+        </div>
+
+        <div class="o-stack">
+          <div class="o-card">
+            <div class="o-card-header"><b>Two-factor authentication</b></div>
+            <div class="o-card-body">
+              <div class="o-between o-mb-3"><span>Authenticator app</span><span class="o-badge o-badge-soft-success">On</span></div>
+              <label class="o-switch o-mb-3"><input type="checkbox" id="pf-sms"><span>SMS backup</span></label>
+              <button class="o-btn o-btn-block o-btn-sm" id="pf-codes" type="button"><o-icon name="key"></o-icon>View recovery codes</button>
+            </div>
+          </div>
+          <div class="o-card">
+            <div class="o-card-header"><b>Connected accounts</b></div>
+            <div class="o-list o-list-flush">
+              <div class="o-list-item"><o-icon name="brand-google"></o-icon><div class="o-list-content"><div class="o-list-title">Google</div><div class="o-list-meta">amira@gmail.example</div></div><button class="o-btn o-btn-xs" type="button">Disconnect</button></div>
+              <div class="o-list-item"><o-icon name="brand-github"></o-icon><div class="o-list-content"><div class="o-list-title">GitHub</div><div class="o-list-meta">Not connected</div></div><button class="o-btn o-btn-xs o-btn-primary" type="button">Connect</button></div>
+              <div class="o-list-item"><o-icon name="brand-slack"></o-icon><div class="o-list-content"><div class="o-list-title">Slack</div><div class="o-list-meta">orion-labs.slack.com</div></div><button class="o-btn o-btn-xs" type="button">Disconnect</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </o-tab-panel>
+
+    <!-- ---------------- Notifications ---------------- -->
+    <o-tab-panel label="Notifications" icon="bell" id="notifications">
+      <div class="o-card" style="max-width:44rem">
+        <div class="o-card-header"><b>How you want to be reached</b></div>
+        <div class="o-table-wrap">
+          <table class="o-table pf-notif">
+            <thead><tr><th>Event</th><th class="o-text-center">Email</th><th class="o-text-center">Push</th><th class="o-text-center">SMS</th></tr></thead>
+            <tbody id="pf-notif"></tbody>
+          </table>
+        </div>
+        <div class="o-card-footer o-between">
+          <label class="o-switch o-mb-0"><input type="checkbox" id="pf-quiet"><span>Quiet hours 22:00 – 07:00</span></label>
+          <button class="o-btn o-btn-primary o-btn-sm" id="pf-notif-save" type="button">Save preferences</button>
+        </div>
+      </div>
+    </o-tab-panel>
+
+    <!-- ---------------- Activity ---------------- -->
+    <o-tab-panel label="Activity" icon="activity" id="activity">
+      <div class="pf-layout">
+        <div class="o-card"><div class="o-card-header"><b>Recent activity</b></div>
+          <div class="o-card-body"><ol class="o-timeline" id="pf-timeline"></ol></div></div>
+        <div class="o-card"><div class="o-card-header"><b>Login history</b></div>
+          <o-datatable id="pf-logins" page-size="6" searchable="false" responsive="stack"></o-datatable></div>
+      </div>
+    </o-tab-panel>
+  </o-tabs>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const O = Orion, esc = O.util.esc, now = Date.now(), M = 60e3, H = 3600e3, D = 864e5;
+
+  // Details -------------------------------------------------------------
+  const form = document.getElementById('pf-form');
+  const v = O.validate(form, { live: 'blur' });
+  const snapshot = JSON.stringify(O.serialize(form));
+  const dirty = () => JSON.stringify(O.serialize(form)) !== snapshot;
+  const dirtyLabel = document.getElementById('pf-dirty');
+  const syncDirty = () => { dirtyLabel.textContent = dirty() ? 'Unsaved changes' : ''; };
+  form.addEventListener('input', syncDirty);
+  form.addEventListener('o-change', syncDirty);
+
+  const save = async () => {
+    if (!(await v.validate())) { O.toast.error('Please fix the highlighted fields'); return; }
+    const d = O.serialize(form);
+    document.getElementById('pf-name').textContent = `${d.first} ${d.last}`;
+    document.getElementById('pf-av').name = `${d.first} ${d.last}`;
+    O.toast.success('Profile updated');
+    dirtyLabel.textContent = '';
+  };
+  document.getElementById('pf-save').addEventListener('click', save);
+  document.getElementById('pf-save-top').addEventListener('click', save);
+  document.getElementById('pf-reset').addEventListener('click', async () => {
+    if (!dirty() || await O.confirm({ title: 'Discard changes?', text: 'Your edits to this profile will be lost.', confirmText: 'Discard', danger: true })) {
+      form.reset(); v.reset(); syncDirty();
+    }
+  });
+
+  // Avatar: pick a file, crop it square, show it
+  const fileInput = document.getElementById('pf-photo-file');
+  document.getElementById('pf-photo').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files[0]; fileInput.value = '';
+    if (!file) return;
+    const blob = await O.cropImage(file, { aspect: 1, round: true, maxWidth: 512, title: 'Change photo' });
+    if (!blob) return;
+    document.getElementById('pf-av').src = URL.createObjectURL(blob);
+    O.toast.success('Photo updated');
+  });
+  document.getElementById('pf-view').addEventListener('click', () => O.toast('Public profile opens in a new tab in a real app'));
+
+  document.getElementById('pf-seen').textContent = O.format.relative(new Date(now - 12 * M));
+  const TODO = [['Add a profile photo', false], ['Verify your email', true], ['Enable two-factor auth', true], ['Complete your bio', true], ['Add a backup phone', false]];
+  document.getElementById('pf-todo').innerHTML = TODO.map(([label, done]) =>
+    `<li class="${done ? 'is-done' : ''}"><o-icon name="${done ? 'check-circle' : 'circle'}" class="${done ? 'o-text-success' : 'o-text-muted'}"></o-icon>${label}</li>`).join('');
+  const pct = Math.round(TODO.filter(t => t[1]).length / TODO.length * 100);
+  document.getElementById('pf-pct-bar').style.setProperty('--o-value', pct + '%');
+  document.getElementById('pf-pct').textContent = pct + '%';
+
+  // Security ------------------------------------------------------------
+  const pwForm = document.getElementById('pw-form');
+  const pwV = O.validate(pwForm, { live: 'blur' });
+  document.getElementById('pw-save').addEventListener('click', async () => {
+    if (!(await pwV.validate())) return;
+    pwForm.reset(); pwV.reset();
+    O.toast.success('Password updated — other sessions were signed out');
+  });
+
+  const SESSIONS = [
+    { device: 'MacBook Pro · Chrome 141', where: 'Kuala Lumpur, MY', ip: '175.140.22.8', when: now, current: true },
+    { device: 'iPhone 17 · Safari', where: 'Kuala Lumpur, MY', ip: '175.140.22.8', when: now - 3 * H },
+    { device: 'Windows 11 · Edge', where: 'Singapore, SG', ip: '116.88.14.201', when: now - 52 * H },
+  ];
+  const sessionList = document.getElementById('pf-sessions');
+  const paintSessions = () => {
+    sessionList.innerHTML = SESSIONS.map((s, i) => `
+      <div class="o-list-item">
+        <o-icon name="${/iPhone|Android/.test(s.device) ? 'smartphone' : 'monitor'}"></o-icon>
+        <div class="o-list-content"><div class="o-list-title">${esc(s.device)}</div>
+          <div class="o-list-meta">${esc(s.where)} · ${s.ip} · ${O.format.relative(new Date(s.when))}</div></div>
+        ${s.current ? '<span class="o-badge o-badge-soft-success">This device</span>'
+          : `<button class="o-btn o-btn-xs" type="button" data-revoke="${i}">Revoke</button>`}
+      </div>`).join('');
+  };
+  sessionList.addEventListener('click', e => {
+    const btn = e.target.closest('[data-revoke]'); if (!btn) return;
+    SESSIONS.splice(+btn.dataset.revoke, 1); paintSessions(); O.toast('Session revoked');
+  });
+  paintSessions();
+  document.getElementById('pf-revoke-all').addEventListener('click', async () => {
+    if (await O.confirm({ title: 'Sign out everywhere else?', text: 'All sessions except this device will end immediately.', confirmText: 'Sign out', danger: true })) {
+      SESSIONS.splice(1); paintSessions(); O.toast.success('Other sessions signed out');
+    }
+  });
+  document.getElementById('pf-codes').addEventListener('click', () => {
+    const codes = Array.from({ length: 8 }, () => Math.random().toString(36).slice(2, 6) + '-' + Math.random().toString(36).slice(2, 6));
+    O.modal({
+      title: 'Recovery codes', size: 'sm',
+      content: `<p class="o-text-muted">Store these somewhere safe. Each code works once.</p>
+        <pre class="o-code o-mb-3" id="pf-code-list">${codes.join('\n')}</pre>
+        <button class="o-btn o-btn-sm o-btn-block" type="button" data-o-action="copy" data-o-target="#pf-code-list"><o-icon name="copy"></o-icon>Copy all</button>`,
+      buttons: [{ text: 'Done', variant: 'primary' }],
+    });
+  });
+
+  // Notifications -------------------------------------------------------
+  const EVENTS = [['New order placed', 1, 1, 0], ['Order refunded', 1, 1, 1], ['Low stock warning', 1, 0, 0],
+    ['Ticket assigned to me', 1, 1, 0], ['Mentions and replies', 0, 1, 0], ['Weekly summary', 1, 0, 0], ['Security alerts', 1, 1, 1]];
+  document.getElementById('pf-notif').innerHTML = EVENTS.map(([label, ...ch]) =>
+    `<tr><td>${label}</td>${ch.map((on, c) =>
+      `<td><label class="o-check o-check-inline"><input type="checkbox" ${on ? 'checked' : ''} aria-label="${label} via ${['email', 'push', 'SMS'][c]}"><span></span></label></td>`).join('')}</tr>`).join('');
+  document.getElementById('pf-notif-save').addEventListener('click', () => O.toast.success('Notification preferences saved'));
+
+  // Activity ------------------------------------------------------------
+  const ACTIVITY = [
+    { at: now - 40 * M, title: 'Approved refund #RF-1183', body: 'Globex Corporation · $420.00', icon: 'rotate-ccw', color: 'warning' },
+    { at: now - 5 * H, title: 'Updated shipping rules', body: 'Zone APAC — free over $150', icon: 'truck', color: 'primary' },
+    { at: now - 27 * H, title: 'Invited 3 teammates', body: 'Operations workspace', icon: 'user-plus', color: 'success' },
+    { at: now - 3 * D, title: 'Closed 14 tickets', body: 'Support queue cleared', icon: 'check-circle', color: 'success' },
+    { at: now - 6 * D, title: 'Changed password', icon: 'shield', color: 'secondary' },
+  ];
+  document.getElementById('pf-timeline').innerHTML = ACTIVITY.map(a => `
+    <li class="o-timeline-item"><span class="o-timeline-marker is-icon o-c-${a.color}"><o-icon name="${a.icon}"></o-icon></span>
+      <p class="o-timeline-title">${esc(a.title)}</p><span class="o-timeline-time">${O.format.relative(new Date(a.at))}</span>
+      ${a.body ? `<p class="o-timeline-body">${esc(a.body)}</p>` : ''}</li>`).join('');
+
+  const logins = document.getElementById('pf-logins');
+  logins.columns = [
+    { key: 'when', title: 'When', type: 'datetime' },
+    { key: 'device', title: 'Device' },
+    { key: 'where', title: 'Location' },
+    { key: 'result', title: 'Result', type: 'badge', colors: { Success: 'success', Failed: 'danger' } },
+  ];
+  logins.rows = Array.from({ length: 14 }, (_, i) => ({
+    id: i, when: new Date(now - i * 19 * H), device: ['Chrome · macOS', 'Safari · iOS', 'Edge · Windows'][i % 3],
+    where: ['Kuala Lumpur, MY', 'Singapore, SG', 'Penang, MY'][i % 3], result: i === 4 || i === 11 ? 'Failed' : 'Success',
+  }));
+});
+</script>
+</body>
+</html>

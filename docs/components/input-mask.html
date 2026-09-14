@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Input mask — Orion Admin</title>
+<meta name="docs:section" content="Forms">
+<meta name="docs:order" content="30">
+<meta name="docs:desc" content="Pattern masks, presets, character counter and textarea autosize">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Input mask</h1>
+    <p class="docs-lead">Caret-preserving pattern masks for plain <code>&lt;input&gt;</code> elements, built-in presets for
+      dates, cards, IBANs and more, plus a character/word counter and textarea autosize. The native input stays the form
+      field — see <a href="form-controls.html">Form controls</a> for the base input styles.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic pattern</h2>
+    <p>Add <code>data-o-mask</code> with a pattern. Tokens: <code>9</code> digit, <code>a</code> letter,
+      <code>*</code> letter or digit, <code>\</code> escapes the next character, <code>[ ]</code> marks an optional part.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-form-grid">
+          <div class="o-field">
+            <label class="o-label" for="m-phone">US phone</label>
+            <input class="o-input" id="m-phone" data-o-mask="(999) 999-9999" data-o-mask-placeholder="_" inputmode="tel">
+          </div>
+          <div class="o-field">
+            <label class="o-label" for="m-plate">Plate (regex, uppercase)</label>
+            <input class="o-input" id="m-plate" data-o-mask-regex="^[A-Z]{0,3}\d{0,4}$" data-o-mask-case="upper" data-o-mask-complete="^[A-Z]{3}\d{4}$" placeholder="ABC1234">
+          </div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="presets">
+    <h2>Presets</h2>
+    <p>Pass a preset name to <code>data-o-mask</code>: <code>date time datetime phone-us card cvc expiry iban ip mac postcode-us ssn hex-color</code>.
+      Card masks reformat automatically once the card type is detected (Amex, Visa, …) and validate with the Luhn checksum;
+      IBAN validates with the ISO 13616 checksum; date/time honour <code>data-o-mask-format</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-form-grid">
+          <div class="o-field"><label class="o-label" for="m-date">Date</label><input class="o-input" id="m-date" data-o-mask="date" data-o-mask-format="DD/MM/YYYY"></div>
+          <div class="o-field"><label class="o-label" for="m-time">Time</label><input class="o-input" id="m-time" data-o-mask="time" data-o-mask-placeholder="HH:mm"></div>
+          <div class="o-field"><label class="o-label" for="m-card">Card number</label><input class="o-input" id="m-card" data-o-mask="card" inputmode="numeric" autocomplete="cc-number"></div>
+          <div class="o-field"><label class="o-label" for="m-exp">Expiry</label><input class="o-input" id="m-exp" data-o-mask="expiry" placeholder="MM/YY"></div>
+          <div class="o-field"><label class="o-label" for="m-cvc">CVC</label><input class="o-input" id="m-cvc" data-o-mask="cvc" inputmode="numeric" autocomplete="cc-csc"></div>
+          <div class="o-field"><label class="o-label" for="m-iban">IBAN</label><input class="o-input" id="m-iban" data-o-mask="iban"></div>
+          <div class="o-field"><label class="o-label" for="m-ip">IP address</label><input class="o-input" id="m-ip" data-o-mask="ip"></div>
+          <div class="o-field"><label class="o-label" for="m-mac">MAC address</label><input class="o-input" id="m-mac" data-o-mask="mac"></div>
+          <div class="o-field"><label class="o-label" for="m-zip">US ZIP</label><input class="o-input" id="m-zip" data-o-mask="postcode-us"></div>
+          <div class="o-field"><label class="o-label" for="m-ssn">SSN</label><input class="o-input" id="m-ssn" data-o-mask="ssn"></div>
+          <div class="o-field"><label class="o-label" for="m-hex">Hex color</label><input class="o-input" id="m-hex" data-o-mask="hex-color"></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="js-api">
+    <h2>JS API</h2>
+    <p>Configure or read a mask programmatically with <code>Orion.mask(el, pattern | options)</code>. The controller
+      exposes <code>.value</code>, <code>.unmasked</code>, <code>.complete</code>, and fires <code>o-mask-complete</code>
+      on the input once the pattern is fully satisfied (<code>el.dataset.unmasked</code> is always kept in sync).</p>
+    <div class="docs-demo">
+      <template>
+        <input class="o-input" id="m-fn" data-o-mask="99-99-999" style="max-width:16rem">
+        <div class="o-help" id="m-fn-out">unmasked: —</div>
+        <script>
+          const fn = document.getElementById('m-fn');
+          fn.addEventListener('o-mask-complete', e => docs.log('#m-fn-out', 'complete: ' + JSON.stringify(e.detail)));
+          fn.addEventListener('input', () => { document.getElementById('m-fn-out').textContent = 'unmasked: ' + (fn.dataset.unmasked || '—'); });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="counter">
+    <h2>Character counter</h2>
+    <p><code>data-o-counter</code> works on any <code>&lt;input&gt;</code> or <code>&lt;textarea&gt;</code>, reading
+      <code>maxlength</code> automatically or <code>data-o-counter-max</code>. <code>data-o-counter-mode="words"</code>
+      counts words instead of characters; <code>data-o-counter-warn</code> sets when the near-limit color kicks in.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-form-grid">
+          <div class="o-field o-span-full">
+            <label class="o-label" for="m-bio">Bio</label>
+            <textarea class="o-textarea" id="m-bio" maxlength="120" data-o-counter data-o-counter-warn="20" placeholder="Tell us about yourself…"></textarea>
+          </div>
+          <div class="o-field">
+            <label class="o-label" for="m-tweet">Words (max 12)</label>
+            <input class="o-input" id="m-tweet" data-o-counter data-o-counter-mode="words" data-o-counter-max="12">
+          </div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="autosize">
+    <h2>Textarea autosize</h2>
+    <p><code>data-o-autosize="8"</code> grows a textarea from its <code>rows</code> up to 8 rows as the user types (no limit
+      when the value is empty). Combine with <code>data-o-counter</code> freely.</p>
+    <div class="docs-demo">
+      <template>
+        <textarea class="o-textarea" data-o-autosize="8" data-o-counter maxlength="500" rows="2" placeholder="This grows as you type…" style="max-width:26rem"></textarea>
+      </template>
+    </div>
+  </section>
+
+  <section id="signup">
+    <h2>Example: sign-up form</h2>
+    <p>Masks, counter and autosize combined in a realistic form. See also the full <a href="../examples/inputs-signup.html">sign-up example</a>.</p>
+    <div class="docs-demo">
+      <template>
+        <form class="o-form-grid" style="max-width:34rem" onsubmit="event.preventDefault()">
+          <div class="o-field"><label class="o-label" for="su-card">Card number</label><input class="o-input" id="su-card" data-o-mask="card" inputmode="numeric"></div>
+          <div class="o-field"><label class="o-label" for="su-exp">Expiry</label><input class="o-input" id="su-exp" data-o-mask="expiry" placeholder="MM/YY"></div>
+          <div class="o-field o-span-full"><label class="o-label" for="su-notes">Notes <span class="o-label-hint">optional</span></label><textarea class="o-textarea" id="su-notes" rows="2" maxlength="200" data-o-counter data-o-autosize="6"></textarea></div>
+          <div class="o-form-actions o-span-full"><button class="o-btn o-btn-primary" type="submit">Continue</button></div>
+        </form>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>Attributes</h2>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>data-o-mask</code></td><td>Pattern string, preset name, <code>fn:globalFnName</code>, or empty (use <code>data-o-mask-regex</code> as a plain filter).</td></tr>
+        <tr><td><code>data-o-mask-regex</code> / <code>-flags</code></td><td>Free-form filter: only text matching the (anchored) regex is accepted.</td></tr>
+        <tr><td><code>data-o-mask-placeholder</code></td><td>Guide character (single char fills every empty slot) or a full guide string like <code>DD/MM/YYYY</code>.</td></tr>
+        <tr><td><code>data-o-mask-format</code></td><td>Date/time token format for the <code>date</code> / <code>time</code> / <code>datetime</code> presets.</td></tr>
+        <tr><td><code>data-o-mask-case</code></td><td><code>upper</code> or <code>lower</code>.</td></tr>
+        <tr><td><code>data-o-mask-complete</code></td><td>Regex (string) tested against the unmasked value to decide completeness.</td></tr>
+        <tr><td><code>data-o-mask-tokens</code></td><td>JSON map of extra pattern tokens, e.g. <code>{"h":"[0-9a-f]"}</code>.</td></tr>
+        <tr><td><code>data-o-mask-validate="false"</code></td><td>Disable the built-in incomplete/invalid custom validity message.</td></tr>
+        <tr><td><code>data-o-counter</code></td><td>Counter behavior; options: <code>-max</code>, <code>-mode</code> (chars|words|remaining), <code>-warn</code>, <code>-target</code>.</td></tr>
+        <tr><td><code>data-o-autosize="N"</code></td><td>Textarea grows up to <code>N</code> rows.</td></tr>
+      </tbody>
+    </table>
+    <h3>JS API</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>Orion.mask(el, pattern | options)</code></td><td>Create or reconfigure a mask controller.</td></tr>
+        <tr><td>controller.value / .unmasked / .complete</td><td>Current formatted value, raw digits/letters, and whether the pattern is satisfied.</td></tr>
+        <tr><td>controller.set(v) / .update(opts) / .toDate() / .destroy()</td><td>Programmatic set, reconfigure, parse a date preset, remove the mask.</td></tr>
+        <tr><td>Orion.mask.get(el) / .unmask(el)</td><td>Look up an existing controller / read the unmasked value.</td></tr>
+        <tr><td><code>Orion.mask.format(value, pattern|preset|options)</code></td><td>One-shot formatting without attaching to an element.</td></tr>
+        <tr><td>Orion.mask.cardType(n) / .luhn(n) / .iban(v)</td><td>Standalone validators used by the card and IBAN presets.</td></tr>
+        <tr><td>Orion.counter.count(text, 'words'|'chars') / .refresh(el)</td><td>Counting helper / force-refresh a counter.</td></tr>
+        <tr><td><code>Orion.autosize(el)</code></td><td>Force a textarea to refit (after setting <code>.value</code> in code).</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Fires on</th></tr></thead>
+      <tbody>
+        <tr><td><code>o-mask-complete</code></td><td><code>{ value, unmasked, cardType }</code></td><td>The masked input, once the pattern becomes complete.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

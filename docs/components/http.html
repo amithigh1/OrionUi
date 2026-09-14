@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTTP &amp; AJAX — Orion Admin</title>
+<meta name="docs:title" content="HTTP &amp; AJAX">
+<meta name="docs:section" content="Services &amp; Utilities">
+<meta name="docs:order" content="10">
+<meta name="docs:desc" content="Fetch client with retries, timeouts, interceptors, caching, upload/download progress, AJAX forms and HTML fragments">
+<meta name="csrf-token" content="docs-demo-csrf-token">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<script>
+  /* Demo backend: every /api/* request on this page is answered by Orion.http.mock (see "Mock server" below). */
+  window.demoServer = Orion.http.mock([
+    { method: 'GET', url: '/api/users', delay: [150, 400], response: async req => {
+      const users = await (await fetch('../fixtures/services-a/users.json')).json();
+      return req.query.role ? users.filter(u => u.role === req.query.role) : users;
+    } },
+    { method: 'POST', url: '/api/users', status: 201, delay: 400, response: req => ({ id: 100 + demoServer.calls.length, ...req.body, createdAt: new Date().toISOString() }) },
+    { method: 'GET', url: '/api/flaky', fail: 2, status: 503, delay: 250, response: { ok: true, message: 'Third time lucky' } },
+    { method: 'GET', url: '/api/slow', delay: 3000, response: { ok: true } },
+    { method: 'GET', url: '/api/me', delay: 200, reply: req => (req.headers.Authorization === 'Bearer demo-token-2' ? [200, { data: { name: 'Ada Lovelace', role: 'Admin' } }] : [401, { message: 'Token expired' }]) },
+    { method: 'GET', url: '/api/stats', delay: 350, response: () => ({ orders: 1800 + Math.round(Math.random() * 60), at: new Date().toLocaleTimeString() }) },
+    { method: 'POST', url: '/api/upload', delay: 1600, status: 201, response: req => ({ ok: true, fields: [...req.body.keys()] }) },
+    { method: 'POST', url: '/api/profile', delay: 500, reply: req => {
+      const errors = {};
+      if (!req.body.name || req.body.name.trim().length < 3) errors.name = 'Name must have at least 3 characters';
+      if (/taken/i.test(req.body.email || '')) errors.email = ['This email is already registered'];
+      return Object.keys(errors).length ? [422, { message: 'Please fix the errors', errors }] : [200, { ok: true, message: 'Profile saved' }];
+    } },
+    { method: 'GET', url: '/api/time.html', response: () => `<p class="o-m-0"><strong>${new Date().toLocaleTimeString()}</strong> <span class="o-muted">server time, refreshed every 5 s</span></p>` },
+  ]);
+</script>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>HTTP &amp; AJAX</h1>
+    <p class="docs-lead"><code>Orion.http</code> is a small fetch-based client with typed errors, retries with backoff and jitter, timeouts, cancellation, interceptors, request de-duplication, caching, CSRF, upload and download progress, plus attribute behaviors for AJAX forms and HTML fragments.</p>
+  </header>
+
+  <section id="overview">
+    <h2>Overview</h2>
+    <p>Every call resolves with the parsed body (JSON, text or Blob, chosen from <code>Content-Type</code>) or rejects with an <code>Orion.HttpError</code>. Plain objects are sent as JSON. <code>FormData</code>, <code>Blob</code> and <code>URLSearchParams</code> bodies are sent as they are. The demos on this page read JSON fixtures from <code>docs/fixtures/services-a/</code>. Writes, latency and errors come from <a href="#mock">Orion.http.mock</a>, so no backend is needed.</p>
+    <pre class="docs-code-block" data-lang="js">
+      const users = await Orion.http.get('/api/users', { params: { role: 'Admin' }, timeout: 8000, retry: 2 });
+      const saved = await Orion.http.post('/api/users', { name: 'Ada' });          // JSON body + X-CSRF-Token from &lt;meta name="csrf-token"&gt;
+      try { await Orion.http.delete('/api/users/7'); }
+      catch (e) { if (e instanceof Orion.HttpError &amp;&amp; e.status === 409) alert(e.userMessage); }
+    </pre>
+  </section>
+
+  <section id="basic">
+    <h2>Requests</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster">
+          <button class="o-btn o-btn-primary" id="h-get" type="button">GET fixture</button>
+          <button class="o-btn" id="h-filter" type="button">GET /api/users?role=Admin</button>
+          <button class="o-btn" id="h-post" type="button">POST /api/users</button>
+        </div>
+        <div class="o-table-wrap o-mt-3" style="max-height:15rem">
+          <table class="o-table o-table-sm">
+            <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th></tr></thead>
+            <tbody id="h-rows"><tr><td colspan="4" class="o-muted">Loading the fixture…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="docs-log" id="h-log"></div>
+        <script>
+          {
+            const rows = document.getElementById('h-rows'), esc = Orion.util.esc;
+            const render = users => { rows.innerHTML = users.map(u => `<tr><td>${esc(u.id)}</td><td>${esc(u.name)}</td><td>${esc(u.email)}</td><td>${esc(u.role)}</td></tr>`).join(''); };
+            const load = async () => { const users = await Orion.http.get('../fixtures/services-a/users.json', { loader: true }); render(users); docs.log('#h-log', `GET users.json → ${users.length} users`); };
+            document.getElementById('h-get').onclick = load;
+            document.getElementById('h-filter').onclick = async () => {
+              const users = await Orion.http.get('/api/users', { params: { role: 'Admin' }, loader: true });
+              render(users); docs.log('#h-log', `GET /api/users?role=Admin → ${users.length} users`);
+            };
+            document.getElementById('h-post').onclick = async e => {
+              const btn = e.currentTarget;
+              btn.classList.add('is-loading');
+              try { const u = await Orion.http.post('/api/users', { name: 'Grace Hopper', email: 'grace@example.com', role: 'Editor' }); docs.log('#h-log', `201 Created → id ${u.id}`); }
+              finally { btn.classList.remove('is-loading'); }
+            };
+            load();
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="retry">
+    <h2>Retries, timeouts &amp; cancellation</h2>
+    <p><code>retry</code> takes a count or <code>{ count, delay, factor, maxDelay, jitter, on, methods, network, when }</code>. Retries apply to idempotent methods (GET, HEAD, OPTIONS, PUT, DELETE) on 408, 425, 429 and 5xx responses and on network errors. A <code>Retry-After</code> header overrides the backoff. The <code>timeout</code> applies to each attempt. Aborting through a <code>signal</code> never retries.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster">
+          <button class="o-btn o-btn-primary" id="h-flaky" type="button">GET /api/flaky (retry: 3)</button>
+          <button class="o-btn" id="h-timeout" type="button">GET /api/slow (timeout: 1 s)</button>
+          <button class="o-btn" id="h-start" type="button">Start slow request</button>
+          <button class="o-btn o-btn-soft-danger" id="h-cancel" type="button" disabled>Cancel</button>
+        </div>
+        <div class="docs-log" id="h-log2"></div>
+        <script>
+          {
+            const log = m => docs.log('#h-log2', m);
+            Orion.http.on('retry', e => { if (e.config.url.includes('flaky')) log(`attempt ${e.attempt} failed (${e.error.status}), retrying in ${e.delay} ms`); });
+            document.getElementById('h-flaky').onclick = async () => {
+              demoServer.reset();
+              const r = await Orion.http.get('/api/flaky', { retry: { count: 3, delay: 400 } });
+              log('✔ ' + r.message);
+            };
+            document.getElementById('h-timeout').onclick = async () => {
+              try { await Orion.http.get('/api/slow', { timeout: 1000 }); }
+              catch (e) { log(`✖ ${e.name} code=${e.code} isTimeout=${e.isTimeout}: ${e.userMessage}`); }
+            };
+            let ctl = null;
+            const cancelBtn = document.getElementById('h-cancel');
+            document.getElementById('h-start').onclick = async () => {
+              ctl = new AbortController(); cancelBtn.disabled = false; log('slow request started…');
+              try { await Orion.http.get('/api/slow', { signal: ctl.signal }); log('✔ finished'); }
+              catch (e) { log(`✖ isAbort=${e.isAbort}: ${e.userMessage}`); }
+              finally { cancelBtn.disabled = true; }
+            };
+            cancelBtn.onclick = () => ctl?.abort();
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="interceptors">
+    <h2>Instances &amp; interceptors</h2>
+    <p><code>Orion.http.create(defaults)</code> returns an independent client (own interceptors, cache and events) that inherits the defaults you pass. Interceptors run in order. <code>use(fn)</code> returns an <code>eject()</code> function. A request interceptor may change the config or return a new one. A response interceptor receives <code>{ data, status, headers, config, response, cached }</code>. An error interceptor that returns a value resolves the request, which is useful for refreshing a token.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster">
+          <button class="o-btn o-btn-primary" id="h-me" type="button">GET /api/me</button>
+          <button class="o-btn" id="h-expire" type="button">Expire token</button>
+          <span class="o-badge o-badge-soft-secondary" id="h-token">token: demo-token-1</span>
+        </div>
+        <div class="docs-log" id="h-log3"></div>
+        <script>
+          {
+            const log = m => docs.log('#h-log3', m);
+            const badge = document.getElementById('h-token');
+            let token = 'demo-token-1';
+            const api = Orion.http.create({ baseURL: '/api', timeout: 5000, retry: 1 });
+            api.interceptors.request.use(cfg => { cfg.headers.Authorization = 'Bearer ' + token; });
+            api.interceptors.response.use(res => ({ ...res, data: res.data && res.data.data !== undefined ? res.data.data : res.data }));
+            api.interceptors.error.use(async err => {
+              if (err.status !== 401 || err.config._retried) return;           // undefined = keep the error
+              log('401 → refreshing the token, then replaying the request');
+              token = 'demo-token-2'; badge.textContent = 'token: ' + token;
+              return api.request({ ...err.config, _retried: true });
+            });
+            document.getElementById('h-me').onclick = async () => { const me = await api.get('me'); log('✔ ' + JSON.stringify(me)); };
+            document.getElementById('h-expire').onclick = () => { token = 'demo-token-1'; badge.textContent = 'token: ' + token + ' (expired)'; };
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="cache">
+    <h2>De-duplication &amp; caching</h2>
+    <p>Identical GET requests that are in flight at the same time share one network request (<code>dedupe: true</code> by default). Each caller gets its own copy of the data and can still abort on its own. <code>cache: 'memory'</code> keeps the result for the page session and <code>cache: ms</code> keeps it for a time-to-live. POST, PUT, PATCH and DELETE requests clear cached entries for the same resource path.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster">
+          <button class="o-btn o-btn-primary" id="h-dedupe" type="button">3 concurrent GETs</button>
+          <button class="o-btn" id="h-cached" type="button">GET with cache: 10 s</button>
+          <button class="o-btn" id="h-clear" type="button">Clear cache</button>
+        </div>
+        <div class="docs-log" id="h-log4"></div>
+        <script>
+          {
+            const log = m => docs.log('#h-log4', m);
+            const count = () => demoServer.calls.filter(c => c.path === '/api/stats').length;
+            document.getElementById('h-dedupe').onclick = async () => {
+              const before = count();
+              const all = await Promise.all([1, 2, 3].map(() => Orion.http.get('/api/stats')));
+              log(`3 calls → ${count() - before} network request(s), orders=${all.map(x => x.orders).join('/')}`);
+            };
+            document.getElementById('h-cached').onclick = async () => {
+              const res = await Orion.http.get('/api/stats', { cache: 10000, full: true });
+              log(`${res.cached ? 'from cache' : 'from network'}: orders=${res.data.orders} at ${res.data.at}`);
+            };
+            document.getElementById('h-clear').onclick = () => log(`cleared ${Orion.http.cache.clear('/api/stats')} entries`);
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="progress">
+    <h2>Upload &amp; download progress</h2>
+    <p>When you pass <code>onUploadProgress</code>, the request goes through XMLHttpRequest because fetch has no upload progress. <code>onDownloadProgress</code> reads the response stream. Both callbacks receive <code>{ loaded, total, progress (0..1 or null), lengthComputable }</code>. <code>Orion.http.upload()</code> wraps files in <code>FormData</code>. <code>Orion.http.download()</code> saves the file using the <code>Content-Disposition</code> filename and shows a progress toast when the toast package is loaded.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-stack">
+          <div class="o-cluster">
+            <label class="o-sr-only" for="h-file">Files to upload</label>
+            <input class="o-input" id="h-file" type="file" multiple style="max-width:20rem">
+            <button class="o-btn o-btn-primary" id="h-up" type="button">Upload</button>
+            <button class="o-btn" id="h-up-demo" type="button">Upload a generated 5 MB file</button>
+          </div>
+          <div class="o-progress-labeled">
+            <div class="o-progress" role="progressbar" aria-label="Upload progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="h-upbar"><div class="o-progress-bar" style="--o-value:0%"></div></div>
+            <span class="o-progress-value" id="h-upval">0%</span>
+          </div>
+          <div class="o-cluster">
+            <button class="o-btn" id="h-down" type="button">Download report.csv</button>
+            <button class="o-btn o-btn-ghost" id="h-down-mem" type="button">Fetch as Blob (no save)</button>
+          </div>
+          <div class="o-progress-labeled">
+            <div class="o-progress o-c-success" role="progressbar" aria-label="Download progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="h-downbar"><div class="o-progress-bar" style="--o-value:0%"></div></div>
+            <span class="o-progress-value" id="h-downval">0%</span>
+          </div>
+        </div>
+        <div class="docs-log" id="h-log5"></div>
+        <script>
+          {
+            const log = m => docs.log('#h-log5', m);
+            const bar = (id, p) => {
+              const el = document.getElementById(id), pct = Math.round((p.progress ?? 0) * 100);
+              el.firstElementChild.style.setProperty('--o-value', pct + '%'); el.setAttribute('aria-valuenow', pct);
+              document.getElementById(id.replace('bar', 'val')).textContent = pct + '%';
+            };
+            const upload = async files => {
+              const r = await Orion.http.upload('/api/upload', files, { fieldName: 'files', data: { folder: 'reports' }, onProgress: p => bar('h-upbar', p) });
+              log(`uploaded ${Orion.format.bytes([...files].reduce((s, f) => s + f.size, 0))} → fields ${r.fields.join(', ')}`);
+            };
+            document.getElementById('h-up').onclick = () => { const f = document.getElementById('h-file').files; if (f.length) upload(f); else log('choose one or more files first'); };
+            document.getElementById('h-up-demo').onclick = () => upload([new File([new Uint8Array(5 * 1024 * 1024)], 'demo.bin')]);
+            document.getElementById('h-down').onclick = async () => { const blob = await Orion.http.download('../fixtures/services-a/report.csv', { onProgress: p => bar('h-downbar', p) }); log(`saved report.csv (${Orion.format.bytes(blob.size)})`); };
+            document.getElementById('h-down-mem').onclick = async () => { const blob = await Orion.http.download('../fixtures/services-a/report.csv', { save: false, toast: false, onProgress: p => bar('h-downbar', p) }); log(`got a ${blob.type || 'text/csv'} Blob of ${Orion.format.bytes(blob.size)}`); };
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="forms">
+    <h2>AJAX forms</h2>
+    <p>Add <code>data-o-ajax</code> to a <code>&lt;form&gt;</code> to submit it through <code>Orion.http</code>. The form is sent as JSON, or as <code>FormData</code> when it contains files. While the request runs, the submit buttons are disabled and show <code>is-loading</code>. A <code>422</code> response with <code>{ errors: { field: message } }</code> (Laravel, Rails, ASP.NET ProblemDetails and express-validator formats are all supported) marks the matching <code>.o-field</code> as invalid. The error clears as the user types. Try the email <em>ada@taken.com</em>.</p>
+    <div class="docs-demo">
+      <template>
+        <form class="o-form-grid" data-o-ajax action="/api/profile" method="post" data-o-ajax-toast novalidate id="h-form">
+          <div class="o-field"><label class="o-label" for="p-name">Full name</label><input class="o-input" id="p-name" name="name" value="Ad" autocomplete="name"><div class="o-help">At least 3 characters</div></div>
+          <div class="o-field"><label class="o-label" for="p-email">Email</label><input class="o-input" id="p-email" name="email" type="email" value="ada@taken.com" autocomplete="email"></div>
+          <div class="o-field o-span-full"><label class="o-label" for="p-role">Role</label><select class="o-select" id="p-role" name="role"><option>Admin</option><option selected>Editor</option><option>Viewer</option></select></div>
+          <div class="o-span-full" data-o-ajax-message hidden></div>
+          <div class="o-form-actions o-span-full"><button class="o-btn o-btn-primary" type="submit">Save profile</button></div>
+        </form>
+        <div class="docs-log" id="h-flog"></div>
+        <script>
+          {
+            const f = document.getElementById('h-form');
+            f.addEventListener('o-ajax-before', e => docs.log('#h-flog', 'o-ajax-before ' + JSON.stringify(e.detail.config.body)));
+            f.addEventListener('o-ajax-success', e => docs.log('#h-flog', 'o-ajax-success ' + JSON.stringify(e.detail.data)));
+            f.addEventListener('o-ajax-error', e => docs.log('#h-flog', `o-ajax-error ${e.detail.status} ` + JSON.stringify(e.detail.errors)));
+          }
+        </script>
+      </template>
+    </div>
+    <p>Other attributes: <code>data-o-ajax="json|formdata"</code> forces the encoding, and <code>data-o-ajax-reset</code>, <code>data-o-ajax-redirect="/url"</code>, <code>data-o-ajax-target="#el"</code> (HTML responses), <code>data-o-ajax-offline</code> (queue while offline), <code>data-o-ajax-retry="2"</code>, <code>data-o-ajax-timeout="10000"</code> and <code>data-o-ajax-loader</code> are also supported. Cancel <code>o-ajax-before</code> to stop a submit or edit <code>detail.config</code>. Cancel <code>o-ajax-error</code> when a forms package renders errors itself.</p>
+  </section>
+
+  <section id="load">
+    <h2>HTML fragments</h2>
+    <p><code>data-o-load="url"</code> fetches HTML into its element, or into <code>data-o-target</code>. The fragment is sanitized unless you add <code>data-o-trusted</code>. Empty containers show a skeleton while they load. Triggers are <code>load</code>, <code>click</code> (the default for buttons), <code>visible</code>, <code>every 30s</code> or any DOM event, and you can combine them, for example <code>load, every 5s</code>. The activity fixture below contains a <code>&lt;script&gt;</code> and an <code>onclick</code>, and both are removed. The news list is first-party markup with inline SVG icons, so it uses <code>data-o-trusted</code>. Scripts in fragments never run, even when trusted.</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-grid o-grid-cols-1 o-grid-cols-lg-2">
+          <div data-o-load="../fixtures/services-a/fragment.html"></div>
+          <div class="o-stack">
+            <div class="o-card o-card-compact">
+              <div class="o-card-header"><h3 class="o-card-title">News</h3><button class="o-btn o-btn-sm" type="button" data-o-load="../fixtures/services-a/news.html" data-o-target="#h-news" data-o-swap="append" data-o-trigger="load, click" data-o-trusted>Load more</button></div>
+              <div class="o-list o-list-flush" id="h-news"></div>
+            </div>
+            <div class="o-card o-card-body" data-o-load="/api/time.html" data-o-trigger="load, every 5s" data-o-skeleton="1"></div>
+          </div>
+        </div>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+      await Orion.http.load('#panel', '/fragments/orders.html', { select: '.o-card', swap: 'inner', trusted: false });
+    </pre>
+  </section>
+
+  <section id="mock">
+    <h2>Mock server (testing)</h2>
+    <p><code>Orion.http.mock(routes, { delay, passthrough })</code> answers matching requests in memory for every client instance, so demos, prototypes and tests can run without a backend. Unmatched requests go to the network. A route can simulate latency (<code>delay: 300</code> or <code>[min, max]</code>), a status, flaky behaviour (<code>fail: 2</code>), <code>error: 'network' | 'timeout'</code> and upload or download progress. Handlers receive <code>{ method, url, path, query, params, headers, body, attempt }</code>.</p>
+    <pre class="docs-code-block" data-lang="js">
+      const server = Orion.http.mock([
+        { method: 'GET',  url: '/api/users/:id', response: req =&gt; ({ id: +req.params.id }) },
+        { method: 'POST', url: '/api/users', status: 201, delay: [200, 600], response: req =&gt; ({ id: 7, ...req.body }) },
+        { method: 'POST', url: '/api/profile', reply: req =&gt; [422, { errors: { email: 'Taken' } }] },   // [status, body, headers]
+        { url: '/api/flaky', fail: 2, status: 503, response: { ok: true } },                        // 2 failures, then 200
+        { url: '/api/down', error: 'network' },
+      ], { delay: 150 });
+      server.calls;      // [{ method, url, path, body, headers, time }]
+      server.reset();    // clear calls and fail counters
+      server.restore();  // remove the routes
+    </pre>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>http(url, opts) / http.request(url | config, opts)</td><td>Performs a request. Resolves with the data, or with <code>{ data, status, headers, config, response, cached }</code> when <code>full: true</code>.</td></tr>
+        <tr><td>get / head / delete / options(url, opts)</td><td>Shorthands with no body.</td></tr>
+        <tr><td>post / put / patch(url, body, opts)</td><td>Shorthands with a body.</td></tr>
+        <tr><td>create(defaults)</td><td>New instance that inherits these defaults and has its own interceptors, cache and events.</td></tr>
+        <tr><td>interceptors.request | response | error .use(fn)</td><td>Adds an interceptor and returns <code>eject()</code>. Also available: <code>.eject(fn)</code>, <code>.clear()</code>, <code>.size</code>.</td></tr>
+        <tr><td>upload(url, files | FormData, { fieldName, data, method, onProgress })</td><td>Multipart upload with progress.</td></tr>
+        <tr><td>download(url, { filename, onProgress, toast, save })</td><td>Streams a file with progress, saves it (unless <code>save: false</code>) and resolves with the Blob.</td></tr>
+        <tr><td>load(target, url, { select, swap, trusted, skeleton })</td><td>Loads an HTML fragment into an element (programmatic <code>data-o-load</code>).</td></tr>
+        <tr><td>mock(routes, opts)</td><td>In-memory mock server, described above.</td></tr>
+        <tr><td>cache.clear(prefix | RegExp) / cache.size</td><td>Memory cache control.</td></tr>
+        <tr><td>abortAll(reason)</td><td>Aborts every running request, for example when the route changes.</td></tr>
+        <tr><td>on('request' | 'response' | 'error' | 'retry' | 'queued', fn)</td><td>Instance events. Every error is also published on <code>Orion.on('http:error')</code>.</td></tr>
+        <tr><td>params(obj) / formToObject(fd) / extractErrors(data)</td><td>Helpers for query strings, form serialization and validation payloads.</td></tr>
+      </tbody>
+    </table>
+    <h3>Request options</h3>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>method</td><td><code>'GET'</code></td><td>HTTP method.</td></tr>
+        <tr><td>baseURL</td><td><code>''</code></td><td>Prefix for relative URLs.</td></tr>
+        <tr><td>params</td><td>—</td><td>Object or URLSearchParams. Arrays repeat the key, Dates become ISO strings, and null values are skipped.</td></tr>
+        <tr><td>body</td><td>—</td><td>Plain object or array (sent as JSON), string, FormData, Blob, URLSearchParams, ArrayBuffer or ReadableStream.</td></tr>
+        <tr><td>headers</td><td><code>{}</code></td><td>Merged without regard to case. <code>null</code> removes a default header.</td></tr>
+        <tr><td>timeout</td><td><code>0</code></td><td>Milliseconds per attempt. Failure gives <code>HttpError.isTimeout</code>.</td></tr>
+        <tr><td>retry</td><td><code>0</code></td><td>Number, <code>true</code> (3), or <code>{ count, delay: 300, factor: 2, maxDelay: 10000, jitter: 0.25, on: [408, 425, 429, 500, 502, 503, 504], methods, network: true, when(err, attempt) }</code>.</td></tr>
+        <tr><td>signal</td><td>—</td><td>AbortSignal. Aborting gives <code>isAbort</code> and is never retried.</td></tr>
+        <tr><td>responseType</td><td><code>'auto'</code></td><td><code>'json' | 'text' | 'blob' | 'arrayBuffer' | 'response' | 'auto'</code>.</td></tr>
+        <tr><td>onUploadProgress / onDownloadProgress</td><td>—</td><td><code>p =&gt; { loaded, total, progress, lengthComputable }</code>.</td></tr>
+        <tr><td>cache</td><td><code>false</code></td><td><code>'memory'</code> or milliseconds (GET only). Mutations clear related entries unless <code>invalidate: false</code>.</td></tr>
+        <tr><td>dedupe</td><td><code>true</code></td><td>Share concurrent identical GET requests.</td></tr>
+        <tr><td>credentials</td><td><code>'same-origin'</code></td><td>Fetch credentials mode (<code>'include'</code> for cross-site cookies).</td></tr>
+        <tr><td>csrf / csrfHeader / csrfCookie</td><td><code>true</code> / <code>'X-CSRF-Token'</code> / <code>null</code></td><td>Adds the token from <code>&lt;meta name="csrf-token"&gt;</code> (or a cookie) to unsafe same-origin requests.</td></tr>
+        <tr><td>loader</td><td><code>false</code></td><td>Shows the <code>Orion.progress</code> top bar while the request runs.</td></tr>
+        <tr><td>offline</td><td><code>false</code></td><td><code>'queue'</code> stores mutations made while offline and replays them later. See <a href="offline.html">Offline mode</a>.</td></tr>
+        <tr><td>full</td><td><code>false</code></td><td>Resolves with the full response object instead of the data.</td></tr>
+        <tr><td>validateStatus</td><td><code>2xx</code></td><td><code>status =&gt; boolean</code>.</td></tr>
+        <tr><td>paramsSerializer / adapter / meta</td><td>—</td><td>Custom query string, custom transport <code>(req, cfg) =&gt; Response</code>, and free-form data for interceptors.</td></tr>
+      </tbody>
+    </table>
+    <h3>HttpError</h3>
+    <table class="docs-api">
+      <thead><tr><th>Property</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>status / statusText</td><td>HTTP status (0 when no response arrived).</td></tr>
+        <tr><td>code</td><td><code>EHTTP | ETIMEDOUT | EABORT | ENETWORK | EOFFLINE | EPARSE | EINTERCEPTOR</code></td></tr>
+        <tr><td>isTimeout / isAbort / isNetwork / isOffline</td><td>Boolean shortcuts for the failure type.</td></tr>
+        <tr><td>isClientError / isServerError</td><td>4xx / 5xx.</td></tr>
+        <tr><td>data / headers / response / config / attempts</td><td>Parsed error body, response headers, raw Response, final config and number of attempts.</td></tr>
+        <tr><td>userMessage</td><td>Localised message for the user. The server's <code>message</code> or <code>title</code> is used first, then <code>http.status.*</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>Behaviors &amp; events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute / event</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>data-o-ajax</td><td>AJAX form. Value: <code>auto | json | formdata</code>.</td></tr>
+        <tr><td>data-o-ajax-toast / -reset / -redirect / -target / -offline / -retry / -timeout / -loader / -method</td><td>Options for the form, described above.</td></tr>
+        <tr><td>[data-o-ajax-message]</td><td>Element inside the form that shows form-level success and error messages. Without it, messages go to a toast when the toast package is loaded.</td></tr>
+        <tr><td>o-ajax-before</td><td>Cancelable. <code>detail: { config, form, submitter }</code>.</td></tr>
+        <tr><td>o-ajax-success</td><td><code>detail: { data, response, form, queued }</code>.</td></tr>
+        <tr><td>o-ajax-error</td><td>Cancelable (skips the built-in field errors). <code>detail: { error, errors, status, form }</code>.</td></tr>
+        <tr><td>data-o-load / -target / -trigger / -swap / -select / -trusted / -skeleton / -announce</td><td>HTML fragment loading.</td></tr>
+        <tr><td>o-load-before / o-load / o-load-error</td><td>Dispatched on the target. <code>o-load-before</code> is cancelable.</td></tr>
+      </tbody>
+    </table>
+    <h3>Accessibility &amp; frameworks</h3>
+    <p>Busy forms and containers get <code>aria-busy</code>. Field errors are linked with <code>aria-describedby</code> and <code>aria-invalid</code>, the first invalid field receives focus, and results are announced through a live region. In React, Vue or Angular, call <code>Orion.http</code> from effects or services and pass an <code>AbortController</code> signal so requests are cancelled on unmount. The client loads in Node (SSR) without touching <code>window</code>.</p>
+  </section>
+</main>
+</body>
+</html>

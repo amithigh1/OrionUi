@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dropdown &amp; Context Menu — Orion Admin</title>
+<meta name="docs:section" content="Overlays &amp; Feedback">
+<meta name="docs:order" content="50">
+<meta name="docs:desc" content="Menu buttons with submenus, checkbox/radio items and custom right-click menus">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .demo-table { width: 100%; border-collapse: collapse; }
+  .demo-table th, .demo-table td { padding: .5rem .75rem; border-bottom: 1px solid var(--o-border); text-align: start; }
+  .demo-table tbody tr:hover { background: var(--o-surface-2); }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Dropdown &amp; Context Menu</h1>
+    <p class="docs-lead">A WAI-ARIA menu button (<code>data-o-toggle="dropdown"</code>, <code>&lt;o-dropdown&gt;</code>, <code>Orion.menu()</code>) sharing one renderer and keyboard controller with custom right-click menus (<code>Orion.contextMenu()</code>): submenus, checkbox/radio items, headers, dividers, shortcuts and full keyboard support.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic dropdown</h2>
+    <p><code>data-o-toggle="dropdown"</code> opens the next sibling <code>.o-dropdown-menu</code> (or <code>data-o-target</code>).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-dropdown">
+          <button class="o-btn" data-o-toggle="dropdown">Actions <o-icon name="chevron-down"></o-icon></button>
+          <div class="o-dropdown-menu">
+            <div class="o-dropdown-header">Account</div>
+            <button class="o-dropdown-item"><o-icon name="user"></o-icon> Profile <span class="o-dropdown-kbd">⌘P</span></button>
+            <a class="o-dropdown-item" href="#settings"><o-icon name="settings"></o-icon> Settings</a>
+            <div class="o-dropdown-divider"></div>
+            <button class="o-dropdown-item is-danger"><o-icon name="log-out"></o-icon> Sign out</button>
+          </div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="submenus">
+    <h2>Submenus, checkbox &amp; radio items</h2>
+    <p>Hover intent (or <kbd class="o-kbd">→</kbd> / <kbd class="o-kbd">←</kbd>, mirrored in RTL) opens nested <code>.o-dropdown-sub</code> menus. Checkbox/radio items keep the menu open (<code>data-o-keep-open</code>).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-dropdown">
+          <button class="o-btn o-btn-icon" aria-label="View options" data-o-toggle="dropdown"><o-icon name="more-vertical"></o-icon></button>
+          <div class="o-dropdown-menu">
+            <button class="o-dropdown-item" role="menuitemcheckbox" aria-checked="true" data-o-keep-open>Show grid lines</button>
+            <button class="o-dropdown-item" role="menuitemcheckbox" data-o-keep-open>Show gridlines on print</button>
+            <div class="o-dropdown-divider"></div>
+            <div class="o-dropdown-header">Density</div>
+            <button class="o-dropdown-item" role="menuitemradio" aria-checked="false" data-o-group="density" data-o-keep-open>Compact</button>
+            <button class="o-dropdown-item" role="menuitemradio" aria-checked="true" data-o-group="density" data-o-keep-open>Comfortable</button>
+            <button class="o-dropdown-item" role="menuitemradio" aria-checked="false" data-o-group="density" data-o-keep-open>Spacious</button>
+            <div class="o-dropdown-divider"></div>
+            <div class="o-dropdown-sub">
+              <button class="o-dropdown-item"><o-icon name="download"></o-icon> Export</button>
+              <div class="o-dropdown-menu">
+                <button class="o-dropdown-item" data-value="csv">CSV</button>
+                <button class="o-dropdown-item" data-value="xlsx">Excel (.xlsx)</button>
+                <button class="o-dropdown-item" data-value="pdf">PDF</button>
+              </div>
+            </div>
+            <button class="o-dropdown-item" disabled>Sync now <span class="o-dropdown-desc" style="margin-inline-start:auto">Pro only</span></button>
+          </div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="o-dropdown">
+    <h2>&lt;o-dropdown&gt; element</h2>
+    <p>Wrap a trigger and a <code>.o-dropdown-menu</code> in <code>&lt;o-dropdown&gt;</code> for a scriptable open/close API and reflected <code>open</code> state.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-dropdown id="demo-el-dd" placement="bottom-end">
+          <button class="o-btn o-btn-primary">New <o-icon name="chevron-down"></o-icon></button>
+          <div class="o-dropdown-menu">
+            <button class="o-dropdown-item"><o-icon name="file"></o-icon> Document</button>
+            <button class="o-dropdown-item"><o-icon name="image"></o-icon> Image</button>
+            <button class="o-dropdown-item"><o-icon name="columns"></o-icon> Spreadsheet</button>
+          </div>
+        </o-dropdown>
+        <button class="o-btn o-btn-ghost" id="demo-el-dd-toggle">Toggle via API</button>
+        <div class="docs-log" id="demo-el-dd-log" style="width:100%"></div>
+        <script>
+          const dd = document.getElementById('demo-el-dd');
+          document.getElementById('demo-el-dd-toggle').addEventListener('click', () => dd.toggle());
+          dd.addEventListener('o-select', e => docs.log('#demo-el-dd-log', 'selected: ' + (e.detail.item.textContent || '').trim()));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="menu-api">
+    <h2>Orion.menu(anchor, items, options)</h2>
+    <p>Builds a menu from plain objects and returns a promise. <code>anchor</code> may be an element or a viewport point <code>{ x, y }</code>.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn" id="demo-menu-row"><o-icon name="more-horizontal"></o-icon> Row actions</button>
+        <div class="docs-log" id="demo-menu-log" style="width:100%"></div>
+        <script>
+          document.getElementById('demo-menu-row').addEventListener('click', async e => {
+            const item = await Orion.menu(e.currentTarget, [
+              { type: 'header', label: 'Invoice #1042' },
+              { label: 'View', icon: 'external-link', shortcut: 'V' },
+              { label: 'Edit', icon: 'edit', shortcut: 'E' },
+              { label: 'Move to', icon: 'folder', children: [{ label: 'Archive' }, { label: 'Trash', danger: true }] },
+              { type: 'divider' },
+              { label: 'Delete', icon: 'trash', danger: true, description: 'Cannot be undone' },
+            ], { placement: 'bottom-end' });
+            docs.log('#demo-menu-log', item ? 'picked: ' + item.label : 'dismissed');
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="context-menu">
+    <h2>Context menu (right-click)</h2>
+    <p><code>Orion.contextMenu(selector, itemsOrFn, options)</code> registers a delegated right-click (and long-press / <kbd class="o-kbd">Shift+F10</kbd>) menu. Items can be computed per row. <kbd class="o-kbd">Shift</kbd> + right-click keeps the native browser menu.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <table class="demo-table" id="demo-cm-table">
+          <thead><tr><th>File</th><th>Size</th><th>Modified</th></tr></thead>
+          <tbody>
+            <tr tabindex="0" data-name="Q3-report.pdf"><td>Q3-report.pdf</td><td>2.1 MB</td><td>2 days ago</td></tr>
+            <tr tabindex="0" data-name="roadmap.key"><td>roadmap.key</td><td>18.4 MB</td><td>1 week ago</td></tr>
+            <tr tabindex="0" data-name="budget.xlsx"><td>budget.xlsx</td><td>640 KB</td><td>3 weeks ago</td></tr>
+          </tbody>
+        </table>
+        <p class="o-text-muted o-text-sm" style="margin-top:.5rem">Right-click (or long-press, or focus a row and press <kbd class="o-kbd">Shift+F10</kbd>) a row.</p>
+        <div class="docs-log" id="demo-cm-log" style="width:100%"></div>
+        <script>
+          Orion.contextMenu('#demo-cm-table tbody tr', (event, row) => [
+            { type: 'header', label: row.dataset.name },
+            { label: 'Open', icon: 'external-link' },
+            { label: 'Rename', icon: 'edit', shortcut: 'F2' },
+            { label: 'Copy link', icon: 'copy' },
+            { type: 'divider' },
+            { label: 'Delete', icon: 'trash', danger: true },
+          ], {
+            onSelect: (item, row) => docs.log('#demo-cm-log', item.label + ' → ' + row.dataset.name),
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="context-menu-declarative">
+    <h2>Declarative data-o-context-menu</h2>
+    <p>Point <code>data-o-context-menu="#id"</code> at a <code>&lt;template&gt;</code> (cloned per use) or an existing <code>.o-dropdown-menu</code>.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-card" style="width:12rem;padding:1.5rem;text-align:center" tabindex="0" data-o-context-menu="#demo-file-menu">
+          <o-icon name="file" style="width:2rem;height:2rem;color:var(--o-text-muted)"></o-icon>
+          <div style="margin-top:.5rem">report.pdf</div>
+        </div>
+        <template id="demo-file-menu">
+          <button class="o-dropdown-item" data-value="open"><o-icon name="external-link"></o-icon> Open</button>
+          <button class="o-dropdown-item" data-value="rename">Rename <span class="o-dropdown-kbd">F2</span></button>
+          <div class="o-dropdown-divider"></div>
+          <button class="o-dropdown-item is-danger" data-value="delete"><o-icon name="trash"></o-icon> Delete</button>
+        </template>
+        <div class="docs-log" id="demo-cm2-log" style="width:100%"></div>
+        <script>
+          document.addEventListener('o-select', e => { if (e.target.closest('[data-o-context-menu]')) docs.log('#demo-cm2-log', 'value: ' + e.detail.value); });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Triggers</h3>
+    <table class="docs-api">
+      <thead><tr><th>Trigger</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>data-o-toggle="dropdown"</td><td>The menu is the next sibling <code>.o-dropdown-menu</code> or <code>data-o-target="#menu"</code>. <code>data-o-placement</code> sets the placement (default <code>bottom-start</code>).</td></tr>
+        <tr><td>&lt;o-dropdown placement disabled&gt;</td><td>First non-menu child = trigger, <code>.o-dropdown-menu</code> child = menu. <code>open</code> attribute / <code>isOpen</code> property (reflected). Methods <code>open(focus?)</code>, <code>close()</code>, <code>toggle()</code>. <code>focus</code>: <code>'first'｜'last'｜'menu'</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>Menu markup</h3>
+    <table class="docs-api">
+      <thead><tr><th>Class / attribute</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.o-dropdown-menu</td><td>Menu container (<code>role="menu"</code> added automatically). Hidden unless open.</td></tr>
+        <tr><td>.o-dropdown-item</td><td>&lt;button&gt; or &lt;a&gt;; may contain &lt;o-icon&gt;, <code>.o-dropdown-label</code> + <code>.o-dropdown-desc</code>, <code>.o-dropdown-kbd</code>.</td></tr>
+        <tr><td>.is-danger / disabled / aria-disabled="true"</td><td>Destructive style / disabled (skipped by the keyboard).</td></tr>
+        <tr><td>role="menuitemcheckbox"｜"menuitemradio" + aria-checked</td><td>Checkable items; radios are grouped by <code>data-o-group</code> (or per menu).</td></tr>
+        <tr><td>data-value</td><td>Value reported in <code>o-select</code>.</td></tr>
+        <tr><td>data-o-keep-open</td><td>On an item (or the menu): selecting does not close the menu.</td></tr>
+        <tr><td>.o-dropdown-header, .o-dropdown-divider</td><td>Section title, separator.</td></tr>
+        <tr><td>.o-dropdown-sub</td><td>Wraps a trigger <code>.o-dropdown-item</code> and a nested <code>.o-dropdown-menu</code> (submenu).</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Cancelable</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>o-open</td><td>yes</td><td>{ menu }</td></tr>
+        <tr><td>o-close</td><td>no</td><td>{ reason } — select｜escape｜outside｜tab｜toggle｜api…</td></tr>
+        <tr><td>o-select</td><td>yes (keeps the menu open)</td><td>{ item, el, value, checked } — <code>item</code> is the element (markup) or the item object (<code>Orion.menu</code>).</td></tr>
+      </tbody>
+    </table>
+    <h3>Orion.menu(anchor, items, options) → Promise&lt;item | null&gt;</h3>
+    <p>Item fields: <code>{ label, icon, shortcut, description, onClick(item, event), disabled, danger, type: 'item'｜'checkbox'｜'radio'｜'divider'｜'header', checked, group, children, href, target, value, keepOpen, className, hidden }</code>. <code>'-'</code> is a shorthand for a divider.</p>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>placement</td><td>Default <code>bottom-start</code>.</td></tr>
+        <tr><td>onSelect(item, event)</td><td>Selection callback.</td></tr>
+        <tr><td>onClose(reason)</td><td>Callback.</td></tr>
+        <tr><td>className, minWidth</td><td>Menu styling.</td></tr>
+        <tr><td>focus</td><td>'first'｜'last'｜'menu'.</td></tr>
+        <tr><td>owner</td><td>Element used for nesting/focus return.</td></tr>
+        <tr><td>eventTarget</td><td>Element receiving <code>o-select</code>.</td></tr>
+        <tr><td>rtl</td><td>Force a text direction for the menu.</td></tr>
+      </tbody>
+    </table>
+    <h3>Orion.contextMenu(target, items, options) → off()</h3>
+    <table class="docs-api">
+      <thead><tr><th>Argument</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>target</td><td>Element, or a CSS selector (delegated from <code>document</code>, so future elements work). The innermost match wins.</td></tr>
+        <tr><td>items</td><td>Item array (see above) or <code>(event, targetEl) => items</code>. Return <code>null</code>/<code>[]</code> to let the native menu open.</td></tr>
+        <tr><td>options.placement</td><td>Placement relative to the pointer (default <code>bottom-start</code>, RTL aware).</td></tr>
+        <tr><td>options.onSelect(item, targetEl, event)</td><td>Selection callback (item <code>onClick</code> handlers run too).</td></tr>
+        <tr><td>options.onOpen(targetEl), options.onClose(reason, targetEl)</td><td>Callbacks.</td></tr>
+        <tr><td>options.className, options.minWidth</td><td>Menu styling.</td></tr>
+      </tbody>
+    </table>
+    <p><code>data-o-context-menu="#id"</code>: <code>#id</code> is a <code>&lt;template&gt;</code> (cloned each time) or an existing <code>.o-dropdown-menu</code> element. Events (<code>o-open</code> cancelable, <code>o-select</code>, <code>o-close</code>) dispatch on the target element.</p>
+    <h3>Keyboard</h3>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Enter / Space / ↓ on the trigger</td><td>Open and focus the first item (↑: last item).</td></tr>
+        <tr><td>↓ ↑ Home End PageDown PageUp</td><td>Move between items (wraps).</td></tr>
+        <tr><td>Printable characters</td><td>Typeahead.</td></tr>
+        <tr><td>Enter / Space</td><td>Activate the item (toggle checkbox/radio).</td></tr>
+        <tr><td>→ (← in RTL)</td><td>Open a submenu and focus its first item.</td></tr>
+        <tr><td>← (→ in RTL)</td><td>Close the submenu, back to its parent item.</td></tr>
+        <tr><td>Escape</td><td>Close the current (sub)menu, focus returns to its trigger.</td></tr>
+        <tr><td>Tab</td><td>Close all menus and move to the next element after the trigger.</td></tr>
+        <tr><td>ContextMenu key / Shift+F10</td><td>Opens the context menu of the focused element.</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS variables</h3>
+    <p><code>--o-menu-pad</code>, <code>--o-menu-min-w</code>, <code>--o-menu-max-w</code>. Context menus add the <code>.o-context-menu</code> class on top of <code>.o-dropdown-menu</code> (no extra styling needed).</p>
+  </section>
+</main>
+</body>
+</html>

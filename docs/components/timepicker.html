@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Time Picker — Orion Admin</title>
+<meta name="docs:section" content="Pickers &amp; Selects">
+<meta name="docs:order" content="40">
+<meta name="docs:desc" content="Typed time input with a time list or scroll-spinner columns, 12/24 h, steps and limits">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .demo-grid { display: grid; gap: 1rem 1.5rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); width: 100%; }
+  .demo-grid > div { min-width: 0; }
+  .demo-out { margin: 1rem 0 0; padding: .75rem 1rem; font: .75rem/1.6 var(--o-font-mono); background: var(--o-surface-2); border: 1px dashed var(--o-border-strong); border-radius: var(--o-radius); white-space: pre-wrap; color: var(--o-text-muted); }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Time Picker</h1>
+    <p class="docs-lead"><code>&lt;o-timepicker&gt;</code> is a typed time input with either a dropdown list of times or a scroll-spinner columns panel (hours · minutes · seconds · AM/PM). It follows the locale's 12/24-hour clock, understands “2:30 pm”, “1430” or “14.30”, steps the segment under the caret with the arrow keys, and submits <code>HH:mm</code>.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic</h2>
+    <p>Click the field (or press <kbd class="o-kbd">Alt</kbd>+<kbd class="o-kbd">↓</kbd>) for the time list; <code>step</code> sets its interval in minutes (15 by default). The list opens scrolled to the typed or current time.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="demo-grid">
+          <div><label class="o-label" for="tp-basic">Meeting</label><o-timepicker id="tp-basic" name="meeting" value="09:30"></o-timepicker></div>
+          <div><label class="o-label" for="tp-empty">Reminder</label><o-timepicker id="tp-empty" name="reminder" step="30"></o-timepicker></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="clock">
+    <h2>12 / 24-hour clocks &amp; seconds</h2>
+    <p>By default the clock follows <code>Orion.date.uses12h()</code> for the current locale. <code>hour12</code> forces 12-hour, <code>hour12="false"</code> forces 24-hour; <code>seconds</code> adds a seconds segment (<code>HH:mm:ss</code>).</p>
+    <div class="docs-demo">
+      <template>
+        <div class="demo-grid">
+          <div><label class="o-label" for="tp-12">12-hour</label><o-timepicker id="tp-12" hour12 value="18:45"></o-timepicker></div>
+          <div><label class="o-label" for="tp-24">24-hour</label><o-timepicker id="tp-24" hour12="false" value="18:45"></o-timepicker></div>
+          <div><label class="o-label" for="tp-sec">With seconds (columns)</label><o-timepicker id="tp-sec" seconds view="columns" hour12="false" value="07:05:30"></o-timepicker></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="columns">
+    <h2>Scroll-spinner columns</h2>
+    <p><code>view="columns"</code> opens hour / minute (/ second / AM-PM) columns instead of a list. Each column is a listbox: ↑/↓ change it, ←/→ switch columns, digits jump (“3”, “30”), Enter closes. <code>inline</code> renders the columns in the page.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="demo-grid">
+          <div><label class="o-label" for="tp-cols">Alarm</label><o-timepicker id="tp-cols" name="alarm" view="columns" step="5" value="06:30"></o-timepicker></div>
+          <div><span class="o-label" id="tp-inline-lbl">Opening time (inline)</span><br><o-timepicker id="tp-inline" inline aria-labelledby="tp-inline-lbl" name="opens" value="08:00" step="15"></o-timepicker></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="limits">
+    <h2>Business hours (min / max)</h2>
+    <p><code>min</code> and <code>max</code> trim the list and disable out-of-range column values; a typed time outside the range is reported (<code>rangeUnderflow</code> / <code>rangeOverflow</code>).</p>
+    <div class="docs-demo">
+      <template>
+        <div class="demo-grid">
+          <div><label class="o-label" for="tp-biz">Pickup slot (08:00–18:00, 30 min)</label><o-timepicker id="tp-biz" name="pickup" min="08:00" max="18:00" step="30"></o-timepicker></div>
+          <div><label class="o-label" for="tp-biz-cols">Lunch (11:30–14:30, columns)</label><o-timepicker id="tp-biz-cols" view="columns" min="11:30" max="14:30" step="15" value="12:15"></o-timepicker></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="typing">
+    <h2>Typing &amp; keyboard stepping</h2>
+    <p>Type in any common form — <code>930</code>, <code>2p</code>, <code>2:30 pm</code>, <code>14.30</code>, <code>1430</code> — then press Enter or leave the field. With the list closed, ↑/↓ step the segment under the caret (hours, minutes by <code>step</code>, seconds, AM/PM) and keep it selected, like a native time input.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="demo-grid">
+          <div><label class="o-label" for="tp-type">Try typing “745p”</label><o-timepicker id="tp-type" name="typed" step="5"></o-timepicker></div>
+          <div class="o-text-sm o-text-muted" id="tp-type-out" style="align-self:end">value: —</div>
+        </div>
+        <script>{
+          const el = document.getElementById('tp-type');
+          el.addEventListener('o-change', e => { document.getElementById('tp-type-out').textContent = 'value: ' + (e.detail.value || '—'); });
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="forms">
+    <h2>Forms</h2>
+    <div class="docs-demo">
+      <template>
+        <form id="tp-form" class="o-stack" style="--o-gap:.75rem">
+          <div class="demo-grid">
+            <div><label class="o-label is-required" for="tpf-start">Shift starts</label><o-timepicker id="tpf-start" name="start" required min="06:00" max="22:00"></o-timepicker></div>
+            <div><label class="o-label" for="tpf-end">Shift ends</label><o-timepicker id="tpf-end" name="end" value="17:00" view="columns"></o-timepicker></div>
+          </div>
+          <div class="o-cluster"><button class="o-btn o-btn-primary">Submit</button><button class="o-btn" type="reset">Reset</button></div>
+          <pre class="demo-out" id="tp-form-out">Submit to see FormData</pre>
+        </form>
+        <script>{
+          document.getElementById('tp-form').addEventListener('submit', e => { e.preventDefault(); document.getElementById('tp-form-out').textContent = JSON.stringify([...new FormData(e.target)]); });
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="helpers">
+    <h2>Helpers &amp; the columns widget</h2>
+    <p><code>Orion.pickers.time</code> exposes the parser and formatter used by all pickers, and <code>Orion.TimeColumns</code> is the spinner widget (also used by the datetime modes of Date Picker and Date Range).</p>
+    <div class="docs-demo">
+      <template>
+        <div class="demo-grid">
+          <div><div id="tc-host" class="o-tp-inline"></div></div>
+          <pre class="demo-out" id="tc-out" style="margin:0"></pre>
+        </div>
+        <script>{
+          const T = Orion.pickers.time, out = document.getElementById('tc-out');
+          const samples = ['2:30 pm', '1430', '930', '2p', '12am', '14.30.15', 'nonsense'];
+          const tc = new Orion.TimeColumns(document.getElementById('tc-host'), {
+            hour12: true, step: 10,
+            onChange: tm => { out.textContent = 'TimeColumns → ' + T.toISO(tm) + ' (' + T.format(tm, { hour12: true }) + ')\n\n' + list; },
+          });
+          tc.set({ h: 16, m: 20 });
+          const list = samples.map(s => `parse(${JSON.stringify(s)}) → ${JSON.stringify(T.parse(s))}`).join('\n');
+          out.textContent = list;
+          requestAnimationFrame(() => tc.reveal());
+        }</script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">const T = Orion.pickers.time;
+T.parse('2:30 pm');                                  // { h: 14, m: 30, s: 0 }
+T.format({ h: 14, m: 30 }, { hour12: true });        // '2:30 PM'  (locale aware)
+T.toISO({ h: 9, m: 5, s: 7 }, true);                 // '09:05:07'
+const cols = new Orion.TimeColumns(el, { hour12: false, step: 5, min: '08:00', max: '18:00', onChange: tm =&gt; … });
+cols.set({ h: 9, m: 30 }); cols.reveal(); cols.focus('m');</pre>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>↑ / ↓ (input, list closed)</td><td>Increment / decrement the segment under the caret.</td></tr>
+        <tr><td>Alt+↓ · F4 · clock button</td><td>Open the panel (columns: focus the hours column).</td></tr>
+        <tr><td>Enter (input)</td><td>Parse the typed time; close the panel.</td></tr>
+        <tr><td>↑ / ↓ · PageUp / PageDown (list)</td><td>Move the active time; Enter picks it.</td></tr>
+        <tr><td>↑ / ↓ · Home / End · PageUp / PageDown (column)</td><td>Change the column value.</td></tr>
+        <tr><td>← / → (column)</td><td>Previous / next column (mirrored in RTL).</td></tr>
+        <tr><td>Digits · A / P (column)</td><td>Jump to a value · set AM / PM.</td></tr>
+        <tr><td>Esc</td><td>Close and return to the input.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Property (attribute)</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>value</td><td>string</td><td>''</td><td><code>HH:mm</code> (<code>HH:mm:ss</code> with <code>seconds</code>).</td></tr>
+        <tr><td>name, required, disabled, readonly</td><td>—</td><td>—</td><td>Form-control basics.</td></tr>
+        <tr><td>hour12</td><td>boolean | auto</td><td>locale</td><td>12-hour clock (<code>hour12="false"</code> forces 24-hour).</td></tr>
+        <tr><td>step</td><td>number (minutes)</td><td>list 15, columns 1</td><td>List interval, minute column step and ↑/↓ minute step.</td></tr>
+        <tr><td>seconds</td><td>boolean</td><td>false</td><td>Seconds segment / column.</td></tr>
+        <tr><td>min · max</td><td>'HH:mm'</td><td>—</td><td>Allowed range.</td></tr>
+        <tr><td>view</td><td>'list' | 'columns'</td><td>'list'</td><td>Panel type.</td></tr>
+        <tr><td>inline</td><td>boolean</td><td>false</td><td>Render the columns in place (no input).</td></tr>
+        <tr><td>placeholder · clearable · size</td><td>—</td><td>clearable: true</td><td>Presentation.</td></tr>
+        <tr><td>texts</td><td>object</td><td>—</td><td><code>choose, now, clear, done, times, invalid, min, max, hours, minutes, seconds, period</code>.</td></tr>
+        <tr><td>time</td><td>read-only</td><td></td><td><code>{ h, m, s }</code> or null.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events &amp; methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Name</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-change { value, time }</td><td>User changed the time (plus native <code>input</code> / <code>change</code>).</td></tr>
+        <tr><td>o-before-open · o-open · o-close { reason }</td><td>Panel lifecycle.</td></tr>
+        <tr><td>open(focusPanel?) · close() · toggle()</td><td>Control the panel.</td></tr>
+        <tr><td>clear(emit = false) · focus()</td><td>Empty the value · focus the input (inline: the first column).</td></tr>
+        <tr><td>Orion.TimeColumns(el, { hour12, step, secondStep, seconds, min, max, locale, onChange, onEnter })</td><td><code>set(time)</code>, <code>configure(opts)</code>, <code>reveal()</code>, <code>focus(column)</code>, <code>render()</code>.</td></tr>
+        <tr><td>Orion.pickers.time</td><td><code>parse(str)</code>, <code>format(tm, opts)</code>, <code>parts(tm, opts)</code>, <code>toISO(tm, seconds)</code>, <code>fromISO(str)</code>, <code>periods()</code>, <code>secs(tm)</code>.</td></tr>
+      </tbody>
+    </table>
+    <p>CSS: <code>--o-tc-h</code> (column height), <code>--o-tc-row</code> (row height), <code>--o-tc-w</code> (column width).</p>
+  </section>
+</main>
+</body>
+</html>

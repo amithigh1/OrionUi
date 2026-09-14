@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diagram builder &amp; flowchart — Orion Admin</title>
+<meta name="docs:section" content="Boards & Diagrams">
+<meta name="docs:order" content="40">
+<meta name="docs:title" content="Diagram Builder &amp; Flowchart">
+<meta name="docs:desc" content="Infinite-canvas diagram editor: shapes palette, ports, orthogonal routing, auto layout, undo, export">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Diagram Builder &amp; Flowchart</h1>
+    <p class="docs-lead"><code>&lt;o-diagram&gt;</code> is an infinite-canvas diagram editor and viewer: drag shapes from a palette, connect them from their ports, and edges route around boxes with rounded orthogonal lines. It includes snapping, alignment guides, auto layout, undo/redo, copy/paste, groups, a minimap, keyboard control and SVG/PNG/JSON export. No dependencies, everything is hand-written.</p>
+  </header>
+
+  <section id="flowchart">
+    <h2>Flowchart viewer</h2>
+    <p>An order-processing flowchart in read-only mode. The JSON has no coordinates: <code>layout('layered')</code> places it (longest-path ranking, barycenter crossing reduction, quadratic coordinate assignment). Drag to pan, use the wheel or pinch to zoom, and press <kbd class="o-kbd">Tab</kbd> to step through the shapes.</p>
+    <div class="docs-demo">
+      <template>
+        <o-diagram id="flow" readonly minimap label="Order processing" style="--o-dg-height: 34rem"></o-diagram>
+        <div class="docs-log" id="flow-log"></div>
+        <script>
+          {
+            const flow = document.getElementById('flow');
+            fetch('../fixtures/diagrams/order-flow.json').then(r => r.json()).then(v => {
+              flow.value = v;
+              flow.layout('layered', { direction: 'TB' });
+            });
+            flow.addEventListener('o-node-click', e => docs.log('#flow-log', 'o-node-click → ' + e.detail.node.label));
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="builder">
+    <h2>Diagram builder</h2>
+    <p>With <code>palette</code>, <code>properties</code> and <code>toolbar</code> it becomes a full editor. Drag a shape onto the canvas, hover a shape and drag from one of its ports to connect it, double-click to edit a label, drag a label along its connection, and right-click for more actions. Hold <kbd class="o-kbd">Alt</kbd> while dragging to turn off snapping and guides.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-diagram id="builder-el" grid="20" snap minimap palette properties toolbar label="Release process" style="--o-dg-height: 38rem; border: 0; border-radius: 0"></o-diagram>
+        <script>
+          document.getElementById('builder-el').value = {
+            nodes: [
+              { id: 'a', type: 'terminator', x: 240, y: 20, width: 160, height: 52, label: 'Idea', style: { fill: 'var(--o-primary-subtle)', stroke: 'var(--o-primary)', textColor: 'var(--o-primary-text)' } },
+              { id: 'b', type: 'rounded', x: 240, y: 120, width: 160, height: 64, label: 'Write the spec' },
+              { id: 'c', type: 'diamond', x: 230, y: 240, width: 180, height: 100, label: 'Approved by product?' },
+              { id: 'd', type: 'rounded', x: 240, y: 400, width: 160, height: 64, label: 'Build & test' },
+              { id: 'e', type: 'rounded', x: 500, y: 258, width: 150, height: 64, label: 'Revise the spec' },
+              { id: 'f', type: 'terminator', x: 240, y: 520, width: 160, height: 52, label: 'Release', style: { fill: 'var(--o-success-subtle)', stroke: 'var(--o-success)', textColor: 'var(--o-success-text)' } },
+              { id: 'n', type: 'note', x: 500, y: 400, width: 170, height: 84, label: 'Tip: select two shapes and press Ctrl+G to group them.' },
+            ],
+            edges: [
+              { from: 'a', to: 'b' }, { from: 'b', to: 'c' }, { from: 'c', to: 'd', label: 'Yes' },
+              { from: 'c', to: 'e', label: 'No', fromPort: 'r' }, { from: 'e', to: 'b', fromPort: 't', toPort: 'r' }, { from: 'd', to: 'f' },
+            ],
+          };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="shapes">
+    <h2>Shapes</h2>
+    <p>Built-in types: <code>rect rounded terminator ellipse circle diamond parallelogram hexagon cylinder document note text image html</code>. Labels wrap automatically inside each shape's text area. Style any node with <code>style: { fill, stroke, textColor, fontSize, dashed, bold }</code>; CSS variables (tokens) keep dark mode working.</p>
+    <div class="docs-demo">
+      <template>
+        <o-diagram id="shapes-el" readonly style="--o-dg-height: 22rem"></o-diagram>
+        <script>
+          {
+            const types = ['rect', 'rounded', 'terminator', 'ellipse', 'circle', 'diamond', 'parallelogram', 'hexagon', 'cylinder', 'document', 'note', 'text'];
+            const tones = [null, 'primary', 'success', 'warning', 'danger', 'info'];
+            const P = Orion.diagram.presets;
+            document.getElementById('shapes-el').value = {
+              nodes: types.map((type, i) => ({ id: type, type, x: (i % 6) * 190, y: Math.floor(i / 6) * 150, label: type === 'text' ? 'Free text label' : type[0].toUpperCase() + type.slice(1) + ' shape', style: tones[i % 6] ? { ...P[tones[i % 6]] } : undefined })),
+              edges: [],
+            };
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="edges">
+    <h2>Connections</h2>
+    <p>Edges connect ports (<code>fromPort</code> / <code>toPort</code> — <code>t r b l</code> by default, or custom <code>ports</code> on a node). Without ports the best facing sides are chosen automatically. <code>type</code> is <code>orthogonal</code> (routed around shapes), <code>straight</code> or <code>curve</code>; <code>arrow</code> is <code>end both start none</code>; plus <code>label</code>, <code>labelPos</code> (0–1 along the line), <code>dashed</code>, <code>animated</code> and <code>style: { stroke, width }</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <o-diagram id="edges-el" grid="20" snap label="Connection styles" style="--o-dg-height: 24rem"></o-diagram>
+        <script>
+          document.getElementById('edges-el').value = {
+            nodes: [
+              { id: 'a', x: 0, y: 40, label: 'Source' }, { id: 'b', x: 420, y: 40, label: 'Straight' },
+              { id: 'c', x: 420, y: 160, label: 'Curve' }, { id: 'd', x: 420, y: 280, label: 'Orthogonal' },
+              { id: 'wall', type: 'rect', x: 210, y: 220, width: 100, height: 120, label: 'Obstacle', style: { dashed: true } },
+              { id: 'e', x: 0, y: 280, label: 'Animated', type: 'ellipse' },
+            ],
+            edges: [
+              { from: 'a', to: 'b', type: 'straight', label: 'straight' },
+              { from: 'a', to: 'c', type: 'curve', arrow: 'both', label: 'curve · both' },
+              { from: 'a', to: 'd', fromPort: 'b', toPort: 'l', label: 'routes around', labelPos: 0.7 },
+              { from: 'e', to: 'd', animated: true, style: { stroke: 'var(--o-success)' }, arrow: 'none', fromPort: 'b', toPort: 'b', label: 'animated' },
+            ],
+          };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="layout">
+    <h2>Auto layout</h2>
+    <p><code>layout('layered', { direction })</code> is a Sugiyama-style layered layout for flowcharts (cycles are broken, long edges get dummy nodes); <code>layout('tree')</code> is a tidy tree. Both accept <code>direction: 'TB' | 'LR' | 'BT' | 'RL'</code>, <code>rankSep</code>, <code>nodeSep</code> and <code>animate</code>. The functions are also available without a diagram as <code>Orion.diagram.layout.layered(nodes, edges, opts)</code> and <code>.tree()</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-sm" data-layout="layered" data-dir="TB">Layered ↓</button>
+          <button class="o-btn o-btn-sm" data-layout="layered" data-dir="LR">Layered →</button>
+          <button class="o-btn o-btn-sm" data-layout="tree" data-dir="TB">Tree ↓</button>
+          <button class="o-btn o-btn-sm" data-layout="tree" data-dir="LR">Tree →</button>
+          <button class="o-btn o-btn-sm o-btn-ghost" id="shuffle">Shuffle</button>
+        </div>
+        <o-diagram id="auto" grid="20" style="--o-dg-height: 26rem"></o-diagram>
+        <script>
+          {
+            const el = document.getElementById('auto');
+            const names = ['CEO', 'CTO', 'CFO', 'COO', 'Platform', 'Apps', 'Data', 'Accounting', 'Payroll', 'Logistics', 'Support', 'Security'];
+            const links = [[0, 1], [0, 2], [0, 3], [1, 4], [1, 5], [1, 6], [2, 7], [2, 8], [3, 9], [3, 10], [4, 11], [6, 11]];
+            const rnd = docs.rand(4);
+            const shuffle = () => { el.value = { nodes: names.map((label, i) => ({ id: 'n' + i, label, x: Math.round(rnd() * 700), y: Math.round(rnd() * 380), width: 120, height: 48 })), edges: links.map(([a, b]) => ({ from: 'n' + a, to: 'n' + b })) }; };
+            shuffle();
+            document.getElementById('shuffle').onclick = shuffle;
+            document.querySelectorAll('[data-layout]').forEach(b => b.onclick = () => el.layout(b.dataset.layout, { direction: b.dataset.dir, animate: true }));
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="validation">
+    <h2>Connection rules &amp; events</h2>
+    <p><code>canConnect(from, to, { fromPort, toPort, edge })</code> vetoes connections while dragging (the preview turns red). The cancelable <code>o-connect</code> event can also change <code>detail.edge</code> before it is added. Here: <em>Start</em> accepts no incoming lines and <em>End</em> no outgoing lines.</p>
+    <div class="docs-demo">
+      <template>
+        <o-diagram id="rules" grid="20" snap style="--o-dg-height: 20rem"></o-diagram>
+        <div class="docs-log" id="rules-log"></div>
+        <script>
+          {
+            const el = document.getElementById('rules');
+            el.value = { nodes: [
+              { id: 'start', type: 'circle', x: 0, y: 60, width: 72, height: 72, label: 'Start', style: { ...Orion.diagram.presets.success } },
+              { id: 'task', x: 180, y: 64, label: 'Do the work' },
+              { id: 'end', type: 'circle', x: 420, y: 60, width: 72, height: 72, label: 'End', style: { ...Orion.diagram.presets.danger } },
+            ], edges: [] };
+            el.canConnect = (from, to) => to.id !== 'start' && from.id !== 'end';
+            el.addEventListener('o-connect', e => { e.detail.edge.label = 'step'; docs.log('#rules-log', `o-connect ${e.detail.from.label} → ${e.detail.to.label}`); });
+            el.addEventListener('o-change', e => docs.log('#rules-log', `o-change (${e.detail.action}) — ${e.detail.value.edges.length} edges`));
+            el.addEventListener('o-select', e => docs.log('#rules-log', `o-select ${e.detail.items.length} item(s)`));
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="custom">
+    <h2>Custom shapes &amp; HTML nodes</h2>
+    <p>Register a shape once with <code>Orion.diagram.shapes.register(name, { size, path(w, h), text?(w, h), ports?(w, h) })</code>. Nodes of type <code>html</code> render the result of <code>renderNode(node)</code> (trusted HTML or an Element) or the sanitized <code>node.html</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <o-diagram id="custom-el" style="--o-dg-height: 20rem"></o-diagram>
+        <script>
+          {
+            Orion.diagram.shapes.register('star', {
+              size: [110, 104],
+              path: (w, h) => Array.from({ length: 10 }, (_, i) => { const r = i % 2 ? 0.42 : 1, a = -Math.PI / 2 + i * Math.PI / 5; return (i ? 'L' : 'M') + (w / 2 + Math.cos(a) * r * w / 2).toFixed(1) + ' ' + (h / 2 + Math.sin(a) * r * h / 2 + 4).toFixed(1); }).join('') + 'Z',
+              text: (w, h) => ({ x: w * 0.3, y: h * 0.38, w: w * 0.4, h: h * 0.3 }),
+            });
+            const el = document.getElementById('custom-el');
+            el.renderNode = n => `<div style="display:flex;gap:.5rem;align-items:center"><o-avatar name="${Orion.util.esc(n.data.owner)}" size="sm"></o-avatar><div><strong>${Orion.util.esc(n.label)}</strong><div style="color:var(--o-text-muted)">${Orion.util.esc(n.data.owner)}</div></div></div><div class="o-progress o-progress-sm" style="margin-top:.6rem"><div class="o-progress-bar o-c-success" style="--o-value:${+n.data.done}%"></div></div>`;
+            el.value = {
+              nodes: [
+                { id: 's', type: 'star', x: 0, y: 30, label: 'Launch', style: { ...Orion.diagram.presets.warning } },
+                { id: 'h', type: 'html', x: 220, y: 36, width: 200, height: 90, label: 'Design review', data: { owner: 'Priya Patel', done: 70 } },
+              ],
+              edges: [{ from: 's', to: 'h', type: 'curve', label: 'kick-off' }],
+            };
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="export">
+    <h2>Export &amp; import</h2>
+    <p><code>exportSVG()</code> returns standalone markup with computed colors inlined, <code>exportPNG({ scale })</code> resolves to a Blob, and <code>download('svg' | 'png' | 'json')</code> saves a file. <code>import(value)</code> loads JSON as an undoable change.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-sm" id="ex-svg">download('svg')</button>
+          <button class="o-btn o-btn-sm" id="ex-png">download('png')</button>
+          <button class="o-btn o-btn-sm" id="ex-json">download('json')</button>
+          <button class="o-btn o-btn-sm o-btn-ghost" id="ex-preview">Preview SVG below</button>
+        </div>
+        <o-diagram id="ex" style="--o-dg-height: 16rem"></o-diagram>
+        <div id="ex-out" class="o-mt-3" style="max-width:100%;overflow:auto"></div>
+        <script>
+          {
+            const el = document.getElementById('ex');
+            el.value = { nodes: [{ id: 'a', x: 0, y: 0, label: 'Export me' }, { id: 'b', type: 'cylinder', x: 260, y: -8, label: 'Storage' }], edges: [{ from: 'a', to: 'b', label: 'saves to' }] };
+            document.getElementById('ex-svg').onclick = () => el.download('svg', 'diagram');
+            document.getElementById('ex-png').onclick = () => el.download('png', 'diagram');
+            document.getElementById('ex-json').onclick = () => el.download('json', 'diagram');
+            document.getElementById('ex-preview').onclick = () => { document.getElementById('ex-out').innerHTML = el.exportSVG().replace(/^<\?xml[^>]*>/, ''); };
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="performance">
+    <h2>Large diagrams</h2>
+    <p>Pan and zoom only change one transform; rendering is keyed and incremental, routing uses a spatial hash, and labels are hidden when zoomed far out. This generates <strong>1,000 shapes and 1,500 connections</strong>.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3"><button class="o-btn o-btn-sm o-btn-primary" id="big-go">Generate 1,000 shapes</button><span class="o-text-muted o-text-sm" id="big-info"></span></div>
+        <o-diagram id="big" minimap readonly style="--o-dg-height: 26rem"></o-diagram>
+        <script>
+          document.getElementById('big-go').onclick = () => {
+            const rnd = docs.rand(11), nodes = [], edges = [], cols = 40;
+            for (let i = 0; i < 1000; i++) nodes.push({ id: 'n' + i, type: ['rounded', 'rect', 'ellipse', 'diamond'][i % 4], x: (i % cols) * 200, y: Math.floor(i / cols) * 140, width: 130, height: 60, label: 'Node ' + (i + 1) });
+            for (let i = 0; edges.length < 1500; i++) { const a = i % 1000, b = rnd() < 0.5 ? a + 1 : a + cols; if (b < 1000 && (b % cols || b === a + cols)) edges.push({ from: 'n' + a, to: 'n' + b }); }
+            const t0 = performance.now();
+            const el = document.getElementById('big');
+            el.value = { nodes, edges };
+            requestAnimationFrame(() => requestAnimationFrame(() => { document.getElementById('big-info').textContent = `Rendered in ${Math.round(performance.now() - t0)} ms`; }));
+          };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard &amp; accessibility</h2>
+    <p>The canvas is a focusable <code>role="application"</code> region with a summary label; shapes are options of a multi-select listbox, and a visually hidden list describes every shape and connection for screen readers. Actions are announced through a live region.</p>
+    <table class="docs-api">
+      <thead><tr><th>Keys</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Tab / Shift+Tab</td><td>Move focus (and selection) between shapes.</td></tr>
+        <tr><td>Arrow keys</td><td>Move the selection one grid step (Shift: ×5, Alt: 1px). Without a selection: pan.</td></tr>
+        <tr><td>Enter / F2</td><td>Edit the label of the selected shape or connection (Enter saves, Shift+Enter adds a line, Esc cancels).</td></tr>
+        <tr><td>Shift+F10 / Menu key</td><td>Open the action menu: <em>Connect to…</em>, <em>Disconnect from…</em>, arrange, group, layout, export.</td></tr>
+        <tr><td>Delete / Backspace</td><td>Delete the selection.</td></tr>
+        <tr><td>Ctrl/⌘+Z · Ctrl/⌘+Shift+Z (Ctrl+Y)</td><td>Undo · redo.</td></tr>
+        <tr><td>Ctrl/⌘+C · X · V · D</td><td>Copy · cut · paste · duplicate.</td></tr>
+        <tr><td>Ctrl/⌘+A</td><td>Select all.</td></tr>
+        <tr><td>Ctrl/⌘+G · Ctrl/⌘+Shift+G</td><td>Group · ungroup.</td></tr>
+        <tr><td>Ctrl/⌘+] · Ctrl/⌘+[</td><td>Bring to front · send to back.</td></tr>
+        <tr><td>+ · − · 0 · 1</td><td>Zoom in · zoom out · 100% · zoom to fit.</td></tr>
+        <tr><td>Space + drag, middle button, touch drag</td><td>Pan. Wheel / pinch zooms.</td></tr>
+        <tr><td>Esc</td><td>Cancel a drag, then clear the selection.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Value</h3>
+    <pre class="docs-code-block" data-lang="js">
+      {
+        nodes: [{ id, type, x, y, width, height, label,
+                  style: { fill, stroke, textColor, fontSize, dashed, bold, strokeWidth, align },
+                  ports: [{ id, side: 'top'|'right'|'bottom'|'left', offset: 0.5, label, kind: 'in'|'out'|'both', max }],
+                  group, locked, image, html, data }],
+        edges: [{ id, from, fromPort, to, toPort, label, labelPos, type: 'orthogonal'|'straight'|'curve',
+                  arrow: 'end'|'both'|'start'|'none', dashed, animated, style: { stroke, width }, data }]
+      }
+    </pre>
+    <h3>Attributes &amp; properties</h3>
+    <table class="docs-api">
+      <thead><tr><th>Name</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>value</td><td>object (JSON)</td><td>{nodes:[],edges:[]}</td><td>The diagram. Reading returns a fresh copy. Also accepted as a child <code>&lt;script type="application/json"&gt;</code>.</td></tr>
+        <tr><td>grid</td><td>number</td><td>20</td><td>Grid size (0 hides the grid).</td></tr>
+        <tr><td>snap</td><td>boolean</td><td>false</td><td>Snap moves / resizes / drops to the grid.</td></tr>
+        <tr><td>guides</td><td>boolean</td><td>true</td><td>Smart alignment guides while dragging.</td></tr>
+        <tr><td>minimap</td><td>boolean</td><td>false</td><td>Minimap with the draggable viewport rectangle.</td></tr>
+        <tr><td>readonly</td><td>boolean</td><td>false</td><td>Viewer mode: select, pan, zoom, click only.</td></tr>
+        <tr><td>palette</td><td>boolean | array</td><td>—</td><td>Shape palette. Array items: type names or <code>{ type, label, width, height, style, icon }</code>.</td></tr>
+        <tr><td>properties</td><td>boolean</td><td>false</td><td>Properties inspector for the selection.</td></tr>
+        <tr><td>toolbar</td><td>boolean</td><td>false</td><td>Toolbar (undo, redo, arrange, layout, export).</td></tr>
+        <tr><td>edge-type / arrow</td><td>string</td><td>orthogonal / end</td><td>Defaults for new connections.</td></tr>
+        <tr><td>wheel</td><td>'zoom' | 'pan'</td><td>zoom</td><td>Wheel zooms, or pans (Ctrl+wheel zooms).</td></tr>
+        <tr><td>min-zoom / max-zoom</td><td>number</td><td>0.1 / 3</td><td>Zoom limits.</td></tr>
+        <tr><td>auto-fit</td><td>boolean</td><td>true</td><td>Fit the content when a value is loaded.</td></tr>
+        <tr><td>create-on-dblclick</td><td>boolean</td><td>true</td><td>Double-clicking empty canvas creates a shape.</td></tr>
+        <tr><td>pan-on-drag</td><td>boolean</td><td>false</td><td>Dragging empty canvas pans instead of drawing a selection box.</td></tr>
+        <tr><td>corner-radius</td><td>number</td><td>8</td><td>Radius of orthogonal edge corners.</td></tr>
+        <tr><td>canConnect</td><td>function</td><td>—</td><td><code>(from, to, { fromPort, toPort, edge }) → boolean</code> connection rule.</td></tr>
+        <tr><td>renderNode</td><td>function</td><td>—</td><td><code>(node) → html | Element</code> for <code>html</code> nodes.</td></tr>
+        <tr><td>shapes</td><td>object</td><td>—</td><td>Per-instance custom shapes (same format as <code>register</code>).</td></tr>
+        <tr><td>label</td><td>string</td><td>—</td><td>Accessible name (also the export title and file name).</td></tr>
+        <tr><td>texts</td><td>object</td><td>—</td><td>Per-instance string overrides (<code>diagram.*</code> keys).</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>getValue() / setValue(v, { history })</td><td>Read a copy / replace the diagram (no events; history reset unless <code>history: true</code>).</td></tr>
+        <tr><td>import(v)</td><td>Load a value as an undoable change (fires <code>o-change</code>).</td></tr>
+        <tr><td>addNode(node) · updateNode(id, patch) · removeNode(id)</td><td>Edit nodes (patch may be a function). Return copies.</td></tr>
+        <tr><td>addEdge(edge) · updateEdge(id, patch) · removeEdge(id)</td><td>Edit edges.</td></tr>
+        <tr><td>connect(from, to, { fromPort, toPort, label })</td><td>Connect like a user: runs <code>canConnect</code> and the cancelable <code>o-connect</code>.</td></tr>
+        <tr><td>layout(type, { direction, rankSep, nodeSep, animate, fit })</td><td><code>'layered'</code> or <code>'tree'</code>; returns a Promise.</td></tr>
+        <tr><td>fit({ padding, animate, maxZoom }) · zoomTo(k | 'fit') · focusNode(id)</td><td>View control. <code>zoom</code> reads the current scale.</td></tr>
+        <tr><td>select(nodeIds, edgeIds) · selectAll() · clearSelection() · getSelection()</td><td>Selection.</td></tr>
+        <tr><td>copy() · cut() · paste(at?) · duplicate() · deleteSelection() · moveSelection(dx, dy)</td><td>Editing commands.</td></tr>
+        <tr><td>group() · ungroup() · bringToFront() · sendToBack()</td><td>Arrange.</td></tr>
+        <tr><td>undo() · redo() · canUndo · canRedo</td><td>History (100 steps).</td></tr>
+        <tr><td>editLabel(id, 'node' | 'edge')</td><td>Start inline editing.</td></tr>
+        <tr><td>exportSVG({ background, padding }) · exportPNG({ scale }) · download(format, name)</td><td>Export.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-change</td><td>{ value, action }</td><td>After every committed change (move, connect, label, style, undo…).</td></tr>
+        <tr><td>o-select</td><td>{ items, nodes, edges }</td><td>Selection changed.</td></tr>
+        <tr><td>o-node-click / o-node-dblclick</td><td>{ node, originalEvent }</td><td>Click (no drag) on a shape; Enter in read-only mode.</td></tr>
+        <tr><td>o-edge-click</td><td>{ edge, originalEvent }</td><td>Click on a connection.</td></tr>
+        <tr><td>o-connect</td><td>{ edge, from, to }</td><td>Cancelable. Before a user connection is added; edit <code>detail.edge</code> to decorate it.</td></tr>
+        <tr><td>o-delete</td><td>{ nodes, edges }</td><td>Cancelable. Before items are deleted.</td></tr>
+        <tr><td>o-layout</td><td>{ type, direction }</td><td>After an auto layout.</td></tr>
+        <tr><td>o-viewport</td><td>{ x, y, zoom }</td><td>Pan / zoom (does not bubble).</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS variables</h3>
+    <p><code>--o-dg-height</code>, <code>--o-dg-bg</code>, <code>--o-dg-grid</code>, <code>--o-dg-node-fill</code>, <code>--o-dg-node-stroke</code>, <code>--o-dg-text</code>, <code>--o-dg-edge</code>, <code>--o-dg-select</code>.</p>
+    <h3>Frameworks</h3>
+    <p>Set <code>value</code>, <code>canConnect</code> and <code>renderNode</code> as properties (React 19, Vue <code>:value</code>, Angular <code>[value]</code>); React 18 may pass <code>value</code> as a JSON string. Feeding the <code>o-change</code> value back into <code>value</code> is safe: identical values are ignored, so undo history survives controlled usage.</p>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Overlays gallery — Orion Admin</title>
+<script src="../../dist/orion.js"></script>
+<style>
+  body { padding: 1.5rem; max-width: 64rem; margin: 0 auto; }
+  .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-bottom: 1rem; }
+  .toolbar .spacer { flex: 1 1 auto; }
+  table.o-table td, table.o-table th { white-space: nowrap; }
+</style>
+</head>
+<body>
+<h1 class="o-h3" style="margin:0 0 .25rem">Overlays integration gallery</h1>
+<p class="o-text-muted" style="margin:0 0 1.25rem">A single page combining modal, dialogs, toast, tooltip, popover, dropdown, context menu and drawer — used to eyeball how they interact together (stacking, z-index, focus) outside the docs shell.</p>
+
+<div class="toolbar">
+  <button class="o-btn o-btn-primary" id="btn-new" data-o-tooltip="Create a new user"><o-icon name="plus"></o-icon> New user</button>
+
+  <div class="o-dropdown">
+    <button class="o-btn" data-o-toggle="dropdown">Bulk actions <o-icon name="chevron-down"></o-icon></button>
+    <div class="o-dropdown-menu">
+      <button class="o-dropdown-item" id="act-export"><o-icon name="download"></o-icon> Export selected</button>
+      <button class="o-dropdown-item" id="act-email"><o-icon name="send"></o-icon> Email selected</button>
+      <div class="o-dropdown-divider"></div>
+      <button class="o-dropdown-item is-danger" id="act-delete"><o-icon name="trash"></o-icon> Delete selected</button>
+    </div>
+  </div>
+
+  <button class="o-btn" id="btn-filters"><o-icon name="filter"></o-icon> Filters</button>
+  <o-popover for="btn-filters" heading="Filters" placement="bottom-start" close-button width="16rem">
+    <div class="o-field"><label class="o-label" for="f-status">Status</label>
+      <select class="o-select" id="f-status"><option>Any</option><option>Active</option><option>Suspended</option></select>
+    </div>
+  </o-popover>
+
+  <span class="spacer"></span>
+  <button class="o-btn o-btn-ghost" id="btn-drawer-settings" aria-label="Settings" data-o-tooltip="Table settings"><o-icon name="settings"></o-icon></button>
+</div>
+
+<div class="o-table-wrap">
+  <table class="o-table o-table-hover" id="users-table">
+    <thead><tr><th style="width:2rem"><input type="checkbox" id="check-all"></th><th>Name</th><th>Role</th><th>Status</th><th></th></tr></thead>
+    <tbody id="users-tbody"></tbody>
+  </table>
+</div>
+
+<template id="row-menu-tpl">
+  <button class="o-dropdown-item" data-action="view"><o-icon name="external-link"></o-icon> View profile</button>
+  <button class="o-dropdown-item" data-action="edit"><o-icon name="edit"></o-icon> Edit</button>
+  <button class="o-dropdown-item" data-action="reset"><o-icon name="lock"></o-icon> Reset password</button>
+  <div class="o-dropdown-divider"></div>
+  <button class="o-dropdown-item is-danger" data-action="delete"><o-icon name="trash"></o-icon> Delete</button>
+</template>
+
+<o-drawer id="settings-drawer" placement="end" size="sm" heading="Table settings">
+  <div class="o-field"><label class="o-check"><input type="checkbox" checked> <span>Show avatars</span></label></div>
+  <div class="o-field" style="margin-top:.625rem"><label class="o-check"><input type="checkbox"> <span>Compact rows</span></label></div>
+  <div slot="footer"><button class="o-btn o-btn-primary o-btn-block" data-o-dismiss="drawer">Done</button></div>
+</o-drawer>
+
+<div class="o-card" style="margin-top:1.5rem">
+  <div class="o-card-header"><h3 class="o-card-title">Activity log</h3></div>
+  <div class="o-card-body"><div class="docs-log" id="log" style="max-height:12rem;overflow:auto"></div></div>
+</div>
+
+<script>
+  const USERS = [
+    { id: 1, name: 'Aisha Rahman', role: 'Admin', status: 'Active' },
+    { id: 2, name: 'Ben Tan', role: 'Editor', status: 'Active' },
+    { id: 3, name: 'Chen Wei', role: 'Viewer', status: 'Suspended' },
+    { id: 4, name: 'Diego Garcia', role: 'Manager', status: 'Active' },
+  ];
+  const tbody = document.getElementById('users-tbody');
+  tbody.innerHTML = USERS.map(u => `
+    <tr data-id="${u.id}" data-name="${u.name}">
+      <td><input type="checkbox" class="row-check"></td>
+      <td>${u.name}</td>
+      <td>${u.role}</td>
+      <td><span class="o-badge ${u.status === 'Active' ? 'o-badge-soft-success' : 'o-badge-soft-danger'}">${u.status}</span></td>
+      <td><button class="o-btn o-btn-ghost o-btn-icon o-btn-sm row-menu-btn" aria-label="Row actions"><o-icon name="more-horizontal"></o-icon></button></td>
+    </tr>`).join('');
+
+  const log = msg => { const el = document.getElementById('log'); const line = document.createElement('div'); line.textContent = new Date().toLocaleTimeString() + '  ' + msg; el.prepend(line); };
+
+  document.getElementById('btn-new').addEventListener('click', async () => {
+    const m = Orion.modal({
+      title: 'New user', size: 'sm',
+      content: `<form><div class="o-field"><label class="o-label is-required" for="nu-name">Name</label><input class="o-input" id="nu-name" name="name" required></div></form>`,
+      buttons: [{ text: 'Cancel', value: null }, { text: 'Create', variant: 'primary', submit: true }],
+    });
+    const data = await m.result;
+    if (data) { log('created user: ' + data.name); Orion.toast.success('User created.'); }
+  });
+
+  document.getElementById('act-delete').addEventListener('click', async () => {
+    const n = document.querySelectorAll('.row-check:checked').length || 1;
+    const ok = await Orion.confirm({ title: `Delete ${n} user(s)?`, text: 'This cannot be undone.', danger: true, confirmText: 'Delete' });
+    if (ok) { log('deleted ' + n + ' user(s)'); Orion.toast.success('Deleted.'); }
+  });
+  document.getElementById('act-export').addEventListener('click', () => Orion.toast.promise(new Promise(r => setTimeout(r, 900)), { loading: 'Exporting…', success: 'Export ready.' }));
+  document.getElementById('act-email').addEventListener('click', () => Orion.toast({ text: 'Emails queued for sending.', action: { text: 'Undo', onClick: () => log('email queue cancelled') } }));
+
+  document.getElementById('btn-drawer-settings').addEventListener('click', () => document.getElementById('settings-drawer').open());
+
+  Orion.contextMenu('#users-table tbody tr, .row-menu-btn', (event, el) => {
+    const row = el.closest('tr');
+    return [
+      { type: 'header', label: row.dataset.name },
+      { label: 'View profile', icon: 'external-link' },
+      { label: 'Edit', icon: 'edit' },
+      { label: 'Reset password', icon: 'lock' },
+      { type: 'divider' },
+      { label: 'Delete', icon: 'trash', danger: true },
+    ];
+  }, { onSelect: (item, el) => log(item.label + ' -> ' + el.closest('tr').dataset.name) });
+
+  document.getElementById('check-all').addEventListener('change', e => document.querySelectorAll('.row-check').forEach(c => (c.checked = e.target.checked)));
+</script>
+</body>
+</html>

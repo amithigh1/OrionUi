@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Breadcrumb — Orion Admin</title>
+<meta name="docs:section" content="Layout &amp; Navigation">
+<meta name="docs:order" content="45">
+<meta name="docs:desc" content="Data-driven breadcrumb trail with separators, overflow collapse and auto mode">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Breadcrumb</h1>
+    <p class="docs-lead"><code>&lt;o-breadcrumb&gt;</code> renders a trail from a JSON <code>items</code> array (reusing the
+      static <code>.o-breadcrumb</code> CSS already in core), with a choice of separators, an overflow "…" menu once the trail
+      is longer than <code>max</code>, and an <code>auto</code> mode that derives the trail from the active sidebar link or the
+      URL path.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic</h2>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-breadcrumb items='[{"label":"Home","href":"#"},{"label":"Users","href":"#"},{"label":"Aisha Rahman"}]'></o-breadcrumb>
+      </template>
+    </div>
+  </section>
+
+  <section id="separators">
+    <h2>Separators &amp; icons</h2>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-stack" style="--o-gap:1rem">
+          <o-breadcrumb separator="slash" items='[{"label":"Home","href":"#","icon":"home"},{"label":"Settings","href":"#"},{"label":"Profile"}]'></o-breadcrumb>
+          <o-breadcrumb separator="chevron" items='[{"label":"Home","href":"#","icon":"home"},{"label":"Settings","href":"#"},{"label":"Profile"}]'></o-breadcrumb>
+          <o-breadcrumb separator="dot" items='[{"label":"Home","href":"#","icon":"home"},{"label":"Settings","href":"#"},{"label":"Profile"}]'></o-breadcrumb>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="overflow">
+    <h2>Overflow collapse</h2>
+    <p>When the trail is longer than <code>max</code>, the middle crumbs collapse into a "…" button with a floating menu
+      (arrow keys work, <kbd class="o-kbd">Escape</kbd> closes it).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-breadcrumb id="bc-overflow" separator="chevron" max="4" items='[
+          {"label":"Home","href":"#"},
+          {"label":"Products","href":"#"},
+          {"label":"Electronics","href":"#"},
+          {"label":"Computers","href":"#"},
+          {"label":"Laptops","href":"#"},
+          {"label":"ThinkPad X1 Carbon"}
+        ]'></o-breadcrumb>
+        <div class="docs-log" id="log-bc"></div>
+        <script>
+          document.getElementById('bc-overflow').addEventListener('o-navigate', e => docs.log('#log-bc', `o-navigate → ${e.detail.item.label}`));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="auto">
+    <h2>Auto mode</h2>
+    <p><code>auto</code> (with no <code>items</code>) builds the trail from the active <code>.o-sidebar</code> link chain when
+      one exists on the page, otherwise from the URL path segments. It re-syncs on <code>o-menu-active</code> and navigation
+      events, so it tracks a single-page app's sidebar automatically.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div style="max-width:22rem;border:1px solid var(--o-border);border-radius:var(--o-radius-lg);overflow:hidden">
+          <aside class="o-sidebar" data-o-sidebar="manual" aria-label="Example" style="--o-sidebar-w:100%;height:auto;position:static">
+            <nav class="o-sidebar-body"><ul class="o-menu">
+              <li class="o-menu-item">
+                <button class="o-menu-link o-menu-toggle" type="button" aria-expanded="true"><span class="o-menu-label">Settings</span></button>
+                <ul class="o-menu-sub">
+                  <li class="o-menu-item"><a class="o-menu-link is-active" href="#" aria-current="page">Billing</a></li>
+                  <li class="o-menu-item"><a class="o-menu-link" href="#">Security</a></li>
+                </ul>
+              </li>
+            </ul></nav>
+          </aside>
+        </div>
+        <p class="o-text-muted o-mt-3 o-mb-2">Breadcrumb, derived automatically from the sidebar above:</p>
+        <o-breadcrumb auto separator="chevron"></o-breadcrumb>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>items</td><td>Array</td><td><code>{ label, href, icon }[]</code>. The last item (or any without <code>href</code>) renders as plain text with <code>aria-current="page"</code>.</td></tr>
+        <tr><td>separator</td><td><code>slash｜chevron｜dot</code></td><td>Default <code>slash</code>.</td></tr>
+        <tr><td>max</td><td>Number</td><td>Collapse to this many visible crumbs (0 = no limit).</td></tr>
+        <tr><td>auto</td><td>Boolean</td><td>Derive the trail when <code>items</code> is empty (sidebar active chain, else URL segments).</td></tr>
+        <tr><td>texts</td><td>Object</td><td>Per-instance string overrides (<code>home</code>, <code>more</code>).</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody><tr><td>o-navigate</td><td><code>{ item, href, originalEvent }</code></td><td>Cancelable — <code>preventDefault()</code> to let a router take over.</td></tr></tbody>
+    </table>
+    <h3>CSS</h3>
+    <p>Reuses <code>.o-breadcrumb</code> / <code>.o-breadcrumb-item</code> / <code>.o-breadcrumb-chevron</code> from core, plus
+      <code>.o-breadcrumb-dot</code>, <code>.o-breadcrumb-more</code> and <code>.o-breadcrumb-menu</code> added here.</p>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Enter / Space / ↓ (on "…")</td><td>Open the overflow menu.</td></tr>
+        <tr><td>Escape</td><td>Close the overflow menu and return focus to "…".</td></tr>
+        <tr><td>Tab / click outside</td><td>Close the overflow menu.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

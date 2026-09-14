@@ -1,0 +1,33 @@
+/* ── <o-facets> ───────────────────────────────────────────────────────── */
+.o-facets { display: block; }
+.o-facets[hidden], .o-facet-chips[hidden] { display: none; }
+.o-facets-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-block-end: .75rem; }
+.o-facets-title { font-size: var(--o-fs-sm); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--o-text-muted); }
+.o-facets-clear { flex-shrink: 0; }
+.o-facets-body { display: flex; flex-direction: column; }
+.o-facets-group { padding-block: .875rem; border-block-start: 1px solid var(--o-border); }
+.o-facets-group:first-child { padding-block-start: 0; border-block-start: 0; }
+.o-facets-group-title {
+  display: flex; align-items: center; justify-content: space-between; width: 100%; gap: .5rem; padding: 0;
+  font-size: var(--o-fs-sm); font-weight: 650; color: var(--o-text); background: none; border: 0; cursor: pointer; text-align: start;
+}
+.o-facets-group-title.is-static { cursor: default; margin: 0 0 .5rem; }
+.o-facets-group-title:hover:not(.is-static) { color: var(--o-primary); }
+.o-facets-group-title:focus-visible { outline: var(--o-ring-width, 2px) solid var(--o-focus); outline-offset: 2px; border-radius: var(--o-radius-xs); }
+.o-facets-chev { flex-shrink: 0; color: var(--o-text-subtle); transition: transform var(--o-dur-fast) var(--o-ease); }
+.o-facets-group-title[aria-expanded="false"] .o-facets-chev { transform: rotate(-90deg); }
+.o-facets-group-body { margin-block-start: .625rem; overflow: hidden; }
+.o-facets-options { display: flex; flex-direction: column; gap: .125rem; }
+.o-facets-option { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin: 0; padding-block: .125rem; }
+.o-facets-option.is-disabled { opacity: .45; }
+.o-facets-count { color: var(--o-text-subtle); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.o-facets-empty { margin: 0; }
+.o-facets-range { display: flex; align-items: center; gap: .5rem; }
+.o-facets-range .o-input { min-width: 0; flex: 1 1 0; }
+.o-facets-range-sep { color: var(--o-text-subtle); flex-shrink: 0; }
+.o-facets-search .o-input { width: 100%; }
+
+/* ── <o-facet-chips> ─────────────────────────────────────────────────── */
+.o-facet-chips { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
+.o-facet-chips-list { display: flex; flex-wrap: wrap; gap: .5rem; }
+.o-facet-chips-clear { flex-shrink: 0; }

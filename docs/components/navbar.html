@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Navbar — Orion Admin</title>
+<meta name="docs:section" content="Layout &amp; Navigation">
+<meta name="docs:order" content="30">
+<meta name="docs:desc" content="Responsive top bar with dropdowns, search, hamburger collapse and hide-on-scroll">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Navbar</h1>
+    <p class="docs-lead"><code>.o-navbar</code> is a responsive top bar: brand, links (with dropdown menus), a search box,
+      action icons and a user menu. It collapses into a hamburger drawer below 992px, and offers a sticky /
+      transparent-until-scroll style and a hide-on-scroll-down option. Dropdowns reuse the <code>dropdown</code> component's
+      <code>data-o-toggle="dropdown"</code>, so they get full keyboard support for free.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic</h2>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <nav class="o-navbar" aria-label="Main" style="border-radius:var(--o-radius-lg);overflow:hidden">
+          <div class="o-navbar-inner">
+            <a class="o-navbar-brand" href="#"><span class="o-navbar-brand-mark"><o-icon name="layout-grid"></o-icon></span>Orion Admin</a>
+            <button class="o-navbar-toggle" data-o-toggle="navbar" data-o-target="#nav-basic" aria-controls="nav-basic" aria-expanded="false" aria-label="Menu"><o-icon name="menu"></o-icon></button>
+            <div class="o-navbar-collapse" id="nav-basic">
+              <ul class="o-navbar-nav">
+                <li class="o-navbar-item"><a class="o-navbar-link is-active" href="#" aria-current="page">Dashboard</a></li>
+                <li class="o-navbar-item">
+                  <button class="o-navbar-link" type="button" data-o-toggle="dropdown"><span>Products</span><o-icon name="chevron-down" class="o-navbar-caret"></o-icon></button>
+                  <div class="o-dropdown-menu">
+                    <a class="o-dropdown-item" href="#"><o-icon name="package"></o-icon>Catalog</a>
+                    <a class="o-dropdown-item" href="#"><o-icon name="layers"></o-icon>Categories</a>
+                    <div class="o-dropdown-divider"></div>
+                    <a class="o-dropdown-item" href="#"><o-icon name="truck"></o-icon>Inventory</a>
+                  </div>
+                </li>
+                <li class="o-navbar-item"><a class="o-navbar-link" href="#">Orders</a></li>
+                <li class="o-navbar-item"><a class="o-navbar-link" href="#">Reports</a></li>
+              </ul>
+              <label class="o-navbar-search"><o-icon name="search"></o-icon><input class="o-input" type="search" placeholder="Search…" aria-label="Search"></label>
+            </div>
+            <div class="o-navbar-actions">
+              <button class="o-btn o-btn-ghost o-btn-icon" aria-label="Notifications" style="position:relative"><o-icon name="bell"></o-icon><span class="o-badge o-badge-counter">3</span></button>
+              <button class="o-header-user" type="button" data-o-toggle="dropdown" data-o-target="#nav-user-basic"><span class="o-avatar o-avatar-sm">JS</span><span class="o-user-info"><span class="o-user-name">Jamie Sato</span></span></button>
+              <div class="o-dropdown-menu" id="nav-user-basic">
+                <button class="o-dropdown-item" type="button"><o-icon name="user"></o-icon>Profile</button>
+                <button class="o-dropdown-item" type="button"><o-icon name="log-out"></o-icon>Sign out</button>
+              </div>
+            </div>
+          </div>
+        </nav>
+        <p class="o-text-muted o-mt-3">Shrink the preview below 992px to see the hamburger drawer.</p>
+      </template>
+    </div>
+  </section>
+
+  <section id="variants">
+    <h2>Sticky, transparent &amp; hide-on-scroll</h2>
+    <p><code>.o-navbar-transparent</code> starts see-through (for a hero header) and becomes solid once scrolled;
+      <code>data-o-navbar-autohide</code> slides the bar out of view on scroll-down and back in on scroll-up.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div style="height:14rem;overflow:auto;border:1px solid var(--o-border);border-radius:var(--o-radius-lg);position:relative;background:linear-gradient(160deg,var(--o-primary),color-mix(in srgb, var(--o-primary) 40%, var(--o-info)))">
+          <nav class="o-navbar o-navbar-transparent o-navbar-sticky" data-o-navbar-autohide aria-label="Demo" style="top:0">
+            <div class="o-navbar-inner">
+              <a class="o-navbar-brand" href="#">Acme</a>
+              <div class="o-navbar-collapse">
+                <ul class="o-navbar-nav">
+                  <li class="o-navbar-item"><a class="o-navbar-link" href="#">Product</a></li>
+                  <li class="o-navbar-item"><a class="o-navbar-link" href="#">Pricing</a></li>
+                </ul>
+              </div>
+              <div class="o-navbar-actions"><a class="o-btn o-btn-white o-btn-sm" href="#">Sign in</a></div>
+            </div>
+          </nav>
+          <div style="height:40rem;padding:5rem 1.5rem 1.5rem;color:#fff">
+            <h3 style="margin-top:0">Scroll inside this panel</h3>
+            <p>The bar switches from transparent to solid once you scroll, and hides while scrolling down.</p>
+          </div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Class / attribute</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.o-navbar[data-o-navbar]</td><td>Root; the behavior is added automatically to every <code>.o-navbar</code>.</td></tr>
+        <tr><td>.o-navbar-inner</td><td>Centering row (<code>--o-navbar-max</code>, defaults to <code>--o-container-max</code>).</td></tr>
+        <tr><td>.o-navbar-brand, .o-navbar-toggle, .o-navbar-collapse, .o-navbar-nav / -item / -link, .o-navbar-search, .o-navbar-actions</td><td>Structural parts.</td></tr>
+        <tr><td>.o-navbar-caret</td><td>Chevron that rotates with <code>[aria-expanded="true"]</code> on its link.</td></tr>
+        <tr><td>.o-navbar-transparent</td><td>See-through until <code>.is-scrolled</code>.</td></tr>
+        <tr><td>.o-navbar-sticky</td><td><code>position: sticky</code> convenience class.</td></tr>
+        <tr><td>data-o-navbar-autohide</td><td>Hide on scroll-down, reveal on scroll-up (never while the mobile drawer is open or focus is inside).</td></tr>
+        <tr><td>data-o-toggle="navbar" [data-o-target="#collapse"]</td><td>Hamburger toggle action.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody><tr><td>o-navbar-toggle</td><td><code>{ open }</code></td><td>Dispatched on <code>.o-navbar</code> when the mobile drawer opens/closes.</td></tr></tbody>
+    </table>
+    <h3>JavaScript API</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Orion.navbar.toggle(el?) / open(el?) / close(el?)</td><td>Control the mobile drawer.</td></tr>
+        <tr><td>isOpen(el?)</td><td>Current state.</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS custom properties</h3>
+    <p><code>--o-navbar-h</code> (defaults to <code>--o-header-h</code>), <code>--o-navbar-max</code>, <code>--o-navbar-mode</code>
+      (read-only, set by media query: <code>full</code> or <code>collapsed</code>).</p>
+  </section>
+
+  <section id="frameworks">
+    <h2>Frameworks &amp; dropdowns</h2>
+    <p>Item and user-menu dropdowns are plain <code>data-o-toggle="dropdown"</code> triggers next to a
+      <code>.o-dropdown-menu</code> — see the <a href="dropdown.html">dropdown docs</a> for submenus, checkbox/radio items and
+      the full keyboard map. Mount the navbar the same way in React/Vue/Angular as any other markup; the collapse and scroll
+      behaviors attach automatically via a <code>MutationObserver</code>, so they work even when the framework renders the
+      navbar after the initial page load.</p>
+  </section>
+</main>
+</body>
+</html>

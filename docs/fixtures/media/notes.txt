@@ -1,0 +1,11 @@
+Release checklist — media package
+=================================
+
+[x] Carousel: swipe, keyboard, autoplay with pause control
+[x] Gallery + lightbox: pinch, wheel and double-tap zoom
+[x] Lazy loading with blur-up placeholders
+[x] Cropper: 8 handles, rotation, flip, EXIF orientation
+[x] Video / audio players with captions and waveform
+[ ] PDF page thumbnails (out of scope: needs a PDF renderer)
+
+Owner: Media team · Last updated 2026-09-12

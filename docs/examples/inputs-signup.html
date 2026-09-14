@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign-up example — Orion Admin</title>
+<script src="../../dist/orion.js"></script>
+<style>
+  body { display: flex; justify-content: center; padding: 2.5rem 1rem; }
+  .wrap { width: 100%; max-width: 30rem; }
+  .step { display: none; }
+  .step.is-active { display: block; }
+  .steps-head { display: flex; align-items: center; gap: .5rem; margin-bottom: 1.5rem; }
+  .steps-head .dot { flex: 1 1 0; height: 4px; border-radius: 999px; background: var(--o-surface-3); }
+  .steps-head .dot.is-done { background: var(--o-primary); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="o-card">
+    <div class="o-card-body">
+      <div class="steps-head"><div class="dot is-done" id="dot1"></div><div class="dot" id="dot2"></div><div class="dot" id="dot3"></div></div>
+
+      <form id="signup-form" novalidate>
+        <div class="step is-active" data-step="1">
+          <h2 class="o-mb-1">Create your account</h2>
+          <p class="o-text-muted o-mb-4">Step 1 of 3 — account details</p>
+          <div class="o-field"><label class="o-label is-required" for="su-name">Full name</label><input class="o-input" id="su-name" name="name" required placeholder="Ada Lovelace"></div>
+          <div class="o-field"><label class="o-label is-required" for="su-email">Email</label><input class="o-input" id="su-email" name="email" type="email" required placeholder="ada@example.com"></div>
+          <div class="o-field">
+            <label class="o-label is-required" for="su-phone">Mobile number</label>
+            <o-phone id="su-phone" name="phone" country="MY" preferred="MY,SG,US,GB" required></o-phone>
+          </div>
+          <div class="o-field">
+            <label class="o-label is-required" for="su-pass">Password</label>
+            <div class="o-input-wrap"><input class="o-input" id="su-pass" name="password" type="password" required data-o-password-toggle data-o-password-generate="18" data-o-strength data-o-strength-min="2" data-o-strength-user="#su-name,#su-email"></div>
+          </div>
+          <div class="o-form-actions"><button class="o-btn o-btn-primary o-btn-block" type="button" id="to-step2">Continue</button></div>
+        </div>
+
+        <div class="step" data-step="2">
+          <h2 class="o-mb-1">Verify your number</h2>
+          <p class="o-text-muted o-mb-4">Step 2 of 3 — we sent a 6-digit code by SMS (demo code: <strong>123456</strong>)</p>
+          <div class="o-field o-d-flex" style="justify-content:center">
+            <o-otp id="su-otp" name="otp" length="6" resend-seconds="30" autofocus></o-otp>
+          </div>
+          <div class="o-form-actions"><button class="o-btn o-btn-ghost" type="button" id="back1">Back</button><button class="o-btn o-btn-primary" type="button" id="to-step3">Verify</button></div>
+        </div>
+
+        <div class="step" data-step="3">
+          <h2 class="o-mb-1">Tell us about you</h2>
+          <p class="o-text-muted o-mb-4">Step 3 of 3 — optional, helps us personalise your workspace</p>
+          <div class="o-field">
+            <label class="o-label" for="su-interests">Interests</label>
+            <o-tags id="su-interests" name="interests" suggestions='["Design","Engineering","Product","Marketing","Sales","Support","Data","Finance"]' max="6"></o-tags>
+          </div>
+          <div class="o-field">
+            <label class="o-label" for="su-bio">Short bio <span class="o-label-hint">optional</span></label>
+            <textarea class="o-textarea" id="su-bio" name="bio" rows="3" maxlength="240" data-o-counter data-o-autosize="6" placeholder="What are you working on?"></textarea>
+          </div>
+          <div class="o-form-actions"><button class="o-btn o-btn-ghost" type="button" id="back2">Back</button><button class="o-btn o-btn-success" type="submit">Create account</button></div>
+        </div>
+      </form>
+
+      <div id="done" hidden>
+        <div class="o-empty is-success">
+          <div class="o-empty-icon" id="done-icon"></div>
+          <h3 class="o-empty-title">Welcome aboard!</h3>
+          <p class="o-empty-text" id="done-summary"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  const form = document.getElementById('signup-form');
+  const goto = n => {
+    document.querySelectorAll('.step').forEach(s => s.classList.toggle('is-active', +s.dataset.step === n));
+    [1, 2, 3].forEach(i => document.getElementById('dot' + i).classList.toggle('is-done', i <= n));
+  };
+  document.getElementById('to-step2').addEventListener('click', () => {
+    const name = document.getElementById('su-name'), email = document.getElementById('su-email'), phone = document.getElementById('su-phone'), pass = document.getElementById('su-pass');
+    if (!name.value || !email.checkValidity() || !phone.valid || !pass.value) { form.reportValidity?.(); [name, email, pass].forEach(el => el.reportValidity?.()); return; }
+    goto(2);
+  });
+  document.getElementById('back1').addEventListener('click', () => goto(1));
+  document.getElementById('to-step3').addEventListener('click', () => {
+    const otp = document.getElementById('su-otp');
+    if (otp.value === '123456') goto(3);
+    else otp.setError('That code is incorrect — try 123456 for this demo');
+  });
+  document.getElementById('back2').addEventListener('click', () => goto(2));
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    document.getElementById('done-icon').innerHTML = String(Orion.icon('check-circle'));
+    document.getElementById('done-summary').textContent = `${fd.get('name')} · ${fd.get('email')} · ${fd.get('phone')} · interests: ${fd.getAll('interests').join(', ') || 'none'}`;
+    form.hidden = true;
+    document.getElementById('done').hidden = false;
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Captcha — Orion Admin</title>
+<meta name="docs:section" content="Forms">
+<meta name="docs:order" content="90">
+<meta name="docs:desc" content="A self-contained text/math/slider captcha plus reCAPTCHA, hCaptcha and Turnstile adapters">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Captcha</h1>
+    <p class="docs-lead"><code>&lt;o-captcha type="text|math|slider"&gt;</code> is a self-contained, canvas-drawn challenge, plus <code>&lt;o-recaptcha&gt;</code> / <code>&lt;o-hcaptcha&gt;</code> / <code>&lt;o-turnstile&gt;</code> adapters that lazy-load the real vendor widget.</p>
+    <div class="o-alert o-alert-warning">
+      <o-icon name="alert-triangle"></o-icon>
+      <div class="o-alert-content"><strong>Client-side captcha is a deterrent, not protection.</strong> Every widget on this page runs entirely in the visitor's browser, so a scripted attacker can read the answer (or skip the check) the same way they read this page. It reduces casual spam bots — it does not stop a determined one. Real protection means verifying the result on your <em>server</em>, on every submission: pass a real question/answer through <code>challenge</code>/<code>onVerify</code> below, or check the vendor's token against their siteverify API for the adapters.</div>
+    </div>
+  </header>
+
+  <section id="text-math-slider">
+    <h2>&lt;o-captcha&gt; — text, math &amp; slider</h2>
+    <p>All three need no network access. Each demo has its own "Verify" button calling <code>.verify()</code>.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div style="display:flex;flex-wrap:wrap;gap:2rem">
+          <div>
+            <o-captcha id="cap-text" type="text"></o-captcha>
+            <button class="o-btn o-btn-sm o-btn-primary" id="cap-text-btn" style="margin-top:.5rem">Verify</button>
+          </div>
+          <div>
+            <o-captcha id="cap-math" type="math"></o-captcha>
+            <button class="o-btn o-btn-sm o-btn-primary" id="cap-math-btn" style="margin-top:.5rem">Verify</button>
+            <p class="o-help">Use the speaker icon to hear the challenge read aloud.</p>
+          </div>
+          <div>
+            <o-captcha id="cap-slider" type="slider"></o-captcha>
+            <p class="o-help">Verifies itself as soon as the piece is slid into place.</p>
+          </div>
+        </div>
+        <div class="docs-log" id="cap-log"></div>
+        <script>
+          document.getElementById('cap-text-btn').onclick = async () => docs.log('#cap-log', 'text verify(): ' + await document.getElementById('cap-text').verify());
+          document.getElementById('cap-math-btn').onclick = async () => docs.log('#cap-log', 'math verify(): ' + await document.getElementById('cap-math').verify());
+          document.getElementById('cap-slider').addEventListener('o-verify', e => docs.log('#cap-log', 'slider o-verify: ' + JSON.stringify(e.detail)));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="server-hooks">
+    <h2>Server verification hooks</h2>
+    <p><code>challenge</code> fetches the question from your backend; <code>onVerify</code> posts the answer back and returns pass/fail — the canvas becomes cosmetic and the real decision happens server-side. Mocked here with an in-page "server".</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-captcha id="cap-server" type="math"></o-captcha>
+        <div class="docs-log" id="cap-server-log"></div>
+        <script>
+          // A tiny stand-in for a real backend: it generates the question AND remembers the answer,
+          // so the client never sees (and can't read out of the page) what a correct answer is.
+          const mockServer = { answers: new Map() };
+          function mockChallenge() {
+            const a = 1 + Math.floor(Math.random() * 9), b = 1 + Math.floor(Math.random() * 9), id = 'q' + Math.random().toString(36).slice(2);
+            mockServer.answers.set(id, a + b);
+            return { id, question: `${a} + ${b} = ?` };
+          }
+          const capServer = document.getElementById('cap-server');
+          capServer.challenge = async () => { await new Promise(r => setTimeout(r, 200)); return mockChallenge(); };
+          capServer.onVerify = async ({ id, answer }) => { await new Promise(r => setTimeout(r, 200)); return String(mockServer.answers.get(id)) === String(answer).trim(); };
+          capServer.addEventListener('o-verify', e => docs.log('#cap-server-log', 'server-checked o-verify: ' + JSON.stringify(e.detail)));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="validate-integration">
+    <h2>With Orion.validate</h2>
+    <p><code>data-o-rules="captcha"</code> runs <code>.verify()</code> as part of a normal form submit.</p>
+    <div class="docs-demo">
+      <template>
+        <form class="o-form-grid" data-o-validate onsubmit="event.preventDefault()">
+          <div class="o-field"><label class="o-label is-required" for="cap-form-email">Email</label><input class="o-input" id="cap-form-email" name="email" type="email" required></div>
+          <div class="o-field"><label class="o-label">Security check</label><o-captcha type="math" name="captcha" data-o-rules="captcha"></o-captcha></div>
+          <div class="o-form-actions o-span-full"><button class="o-btn o-btn-primary" type="submit">Submit</button></div>
+        </form>
+      </template>
+    </div>
+  </section>
+
+  <section id="adapters">
+    <h2>&lt;o-recaptcha&gt; / &lt;o-hcaptcha&gt; / &lt;o-turnstile&gt;</h2>
+    <p>Shown here <strong>without</strong> a <code>sitekey</code>, so each renders its placeholder and makes zero network requests. Once you have a real sitekey from <a href="https://www.google.com/recaptcha/about/" target="_blank" rel="noopener">Google reCAPTCHA</a>, <a href="https://www.hcaptcha.com/" target="_blank" rel="noopener">hCaptcha</a> or <a href="https://www.cloudflare.com/products/turnstile/" target="_blank" rel="noopener">Cloudflare Turnstile</a>, just add the attribute — the vendor script then loads lazily and the widget renders for real.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div style="display:flex;flex-wrap:wrap;gap:1.5rem">
+          <o-recaptcha version="v2"></o-recaptcha>
+          <o-hcaptcha></o-hcaptcha>
+          <o-turnstile></o-turnstile>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>&lt;o-captcha&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>type</td><td><code>text</code> (default) · <code>math</code> · <code>slider</code></td></tr>
+        <tr><td>length / caseSensitive / audio / tolerance</td><td>Text length (default 5), case sensitivity, show the "Listen" button, slider px tolerance (default 6).</td></tr>
+        <tr><td>challenge(type)</td><td><code>async → { id?, image?, question?, piece?, y?, pieceWidth? }</code> — moves the challenge itself to your server.</td></tr>
+        <tr><td>onVerify(ctx)</td><td><code>async ({ type, id?, answer?, position? }) → boolean</code> — moves the pass/fail decision to your server.</td></tr>
+        <tr><td>verify() / refresh() / reset() / speak()</td><td>Methods; <code>reset()</code> is an alias for <code>refresh()</code>.</td></tr>
+        <tr><td>o-verify { valid } / o-refresh {}</td><td>Events.</td></tr>
+        <tr><td>data-o-rules="captcha"</td><td>Wires <code>.verify()</code> into <code>Orion.validate</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-recaptcha&gt; / &lt;o-hcaptcha&gt; / &lt;o-turnstile&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>sitekey</td><td>Nothing loads from the network until this is set.</td></tr>
+        <tr><td>version</td><td>reCAPTCHA only: <code>v2</code> (default) · <code>invisible</code> · <code>v3</code>. Ignored by the other two.</td></tr>
+        <tr><td>theme / size / action</td><td>Passed straight to the vendor's <code>render()</code>.</td></tr>
+        <tr><td>value</td><td>The solved token (empty until solved, or after it expires).</td></tr>
+        <tr><td>execute() / reset() / verify()</td><td><code>execute()</code> re-runs an invisible/v3 challenge for a fresh token; <code>verify()</code> resolves once a token exists.</td></tr>
+        <tr><td>o-verify { token } / o-expire {} / o-error {}</td><td>Events.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

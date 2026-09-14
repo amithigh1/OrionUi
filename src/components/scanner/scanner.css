@@ -1,0 +1,76 @@
+/* <o-scanner> — camera preview with a scan-window overlay + permission/error states.
+ * `.o-scanner-stage` / `.o-scanner-video` / `.o-scanner-overlay` are the SHARED camera-stage building blocks:
+ * `camera/` reuses them for `<o-doc-scanner>` (the `.o-scanner` host class + these three), adding its own
+ * `.o-scanner-quad` / `.o-scanner-handle` / `.o-scanner-loupe` / `.o-scanner-edit-canvas` etc. on top. Keep these
+ * three rules generic (no QR/barcode-only assumptions) so camera never needs its own copy. */
+o-scanner, .o-scanner {
+  display: block; position: relative; width: 100%; max-width: 32rem; border-radius: var(--o-radius-lg); overflow: hidden;
+  background: #000; box-shadow: var(--o-shadow-sm); border: 1px solid var(--o-border);
+}
+o-scanner:not(:defined) { visibility: hidden; }
+.o-scanner-stage {
+  position: relative; width: 100%; aspect-ratio: var(--o-scanner-ar, 4 / 3); max-height: 34rem; overflow: hidden;
+  background: #0b0b10; isolation: isolate;
+}
+.o-scanner-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.o-scanner[data-state="scanning"] .o-scanner-video, .o-scanner[data-state="starting"] .o-scanner-video, .o-scanner[data-state="result"] .o-scanner-video { opacity: 1; }
+.o-scanner:not([data-state="scanning"]):not([data-state="starting"]):not([data-state="result"]) .o-scanner-video { opacity: 0; }
+
+.o-scanner-overlay { position: absolute; inset: 0; width: 100%; height: 100%; display: grid; place-items: center; pointer-events: none; }
+.o-scanner-frame {
+  position: relative; width: 68%; aspect-ratio: 1.4; max-width: 22rem; border-radius: var(--o-radius-lg);
+  box-shadow: 0 0 0 999px rgba(0, 0, 0, .38);
+}
+.o-scanner-frame::before, .o-scanner-frame::after,
+.o-scanner-frame > .o-scanner-line { content: ""; }
+.o-scanner-frame {
+  --corner: 1.75rem; --thick: 3px;
+}
+.o-scanner-frame::before {
+  position: absolute; inset: 0; border-radius: inherit;
+  background:
+    linear-gradient(#fff, #fff) top left / var(--corner) var(--thick) no-repeat,
+    linear-gradient(#fff, #fff) top left / var(--thick) var(--corner) no-repeat,
+    linear-gradient(#fff, #fff) top right / var(--corner) var(--thick) no-repeat,
+    linear-gradient(#fff, #fff) top right / var(--thick) var(--corner) no-repeat,
+    linear-gradient(#fff, #fff) bottom left / var(--corner) var(--thick) no-repeat,
+    linear-gradient(#fff, #fff) bottom left / var(--thick) var(--corner) no-repeat,
+    linear-gradient(#fff, #fff) bottom right / var(--corner) var(--thick) no-repeat,
+    linear-gradient(#fff, #fff) bottom right / var(--thick) var(--corner) no-repeat;
+  opacity: .92;
+}
+.o-scanner-line {
+  position: absolute; inset-inline: 4%; height: 2px; top: 6%;
+  background: linear-gradient(90deg, transparent, var(--o-primary), transparent);
+  border-radius: 2px; box-shadow: 0 0 8px color-mix(in srgb, var(--o-primary) 70%, transparent);
+  animation: o-scanner-sweep 2.2s ease-in-out infinite;
+}
+.o-scanner[data-state]:not([data-state="scanning"]) .o-scanner-line { animation-play-state: paused; opacity: 0; }
+@keyframes o-scanner-sweep { 0%, 100% { top: 6%; } 50% { top: 92%; } }
+.o-scanner.is-hit .o-scanner-frame::before { filter: drop-shadow(0 0 0 var(--o-success)); }
+.o-scanner.is-hit .o-scanner-frame { outline: 4px solid var(--o-success); outline-offset: -2px; border-radius: var(--o-radius-lg); }
+
+.o-scanner-status {
+  position: absolute; inset-inline: 0; bottom: 0; padding: .625rem .75rem; text-align: center;
+  font-size: var(--o-fs-sm); color: #fff; background: linear-gradient(transparent, rgba(0, 0, 0, .65)); min-height: 1.5rem;
+}
+.o-scanner[data-state="idle"] .o-scanner-status, .o-scanner[data-state="scanning"] .o-scanner-status, .o-scanner[data-state="result"] .o-scanner-status { background: none; }
+.o-scanner[data-state="idle"]::before, .o-scanner[data-state="starting"]::before,
+.o-scanner[data-state="error"]::before, .o-scanner[data-state="unsupported"]::before, .o-scanner[data-state="denied"]::before {
+  content: ""; position: absolute; inset: 0; z-index: 1;
+  background: radial-gradient(circle at 50% 40%, #1b2033, #0b0b10);
+}
+.o-scanner[data-state="error"] .o-scanner-status, .o-scanner[data-state="unsupported"] .o-scanner-status, .o-scanner[data-state="denied"] .o-scanner-status {
+  position: static; background: var(--o-danger-subtle); color: var(--o-danger-text); z-index: 2; margin: 0;
+}
+.o-scanner[data-state="idle"] .o-scanner-status, .o-scanner[data-state="starting"] .o-scanner-status { position: static; z-index: 2; color: var(--o-text-muted); background: transparent; padding-top: 2.5rem; }
+.o-scanner[data-state="idle"] .o-scanner-overlay, .o-scanner[data-state="starting"] .o-scanner-overlay,
+.o-scanner[data-state="error"] .o-scanner-overlay, .o-scanner[data-state="unsupported"] .o-scanner-overlay, .o-scanner[data-state="denied"] .o-scanner-overlay { display: none; }
+
+.o-scanner-toolbar { display: flex; align-items: center; justify-content: center; gap: .375rem; padding: .5rem; background: var(--o-surface); border-top: 1px solid var(--o-border); flex-wrap: wrap; }
+.o-scanner-toolbar .o-btn { color: var(--o-text); }
+.o-scanner-select { width: auto; max-width: 11rem; }
+.o-scanner-stage.is-dragover::after {
+  content: "\2193"; position: absolute; inset: .5rem; z-index: 3; display: grid; place-items: center;
+  border: 2px dashed #fff; border-radius: var(--o-radius); color: #fff; font-size: 1.5rem; background: rgba(0, 0, 0, .35);
+}

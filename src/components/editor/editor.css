@@ -1,0 +1,152 @@
+/* ============================================================================
+ * <o-editor> — rich text editor
+ * ========================================================================== */
+o-editor { display: block; }
+o-editor:not(:defined) { visibility: hidden; min-height: 12rem; }
+
+.o-editor {
+  --o-ed-bg: var(--o-surface);
+  position: relative; display: flex; flex-direction: column; min-width: 0; max-width: 100%;
+  background: var(--o-ed-bg); border: 1px solid var(--o-input-border); border-radius: var(--o-radius);
+  box-shadow: var(--o-shadow-xs); overflow: hidden; text-align: start;
+  transition: border-color var(--o-dur-fast) ease, box-shadow var(--o-dur-fast) ease;
+}
+.o-editor.is-focused { border-color: var(--o-primary); box-shadow: 0 0 0 var(--o-ring-width) color-mix(in srgb, var(--o-focus) var(--o-ring-alpha), transparent); }
+.o-editor.is-invalid { --o-focus: var(--o-danger); border-color: var(--o-danger); }
+.o-editor.is-readonly .o-editor-content, .o-editor.is-disabled .o-editor-content { background: var(--o-surface-2); }
+.o-editor.is-disabled { opacity: .75; }
+.o-editor.is-fullscreen {
+  position: fixed; inset: 0; z-index: var(--o-z-modal); max-width: none; border-radius: 0; border-width: 0;
+  display: flex; flex-direction: column;
+}
+.o-editor.is-fullscreen .o-editor-body { flex: 1 1 auto; overflow: auto; }
+.o-editor.is-fullscreen .o-editor-content { min-height: 100%; }
+
+/* ── toolbar ─────────────────────────────────────────────────────────── */
+.o-editor-toolbar {
+  display: flex; flex-wrap: nowrap; align-items: center; gap: .25rem; min-width: 0; padding: .375rem .5rem;
+  background: var(--o-surface-2); border-bottom: 1px solid var(--o-border); overflow: hidden;
+}
+.o-editor-tb-group { display: flex; align-items: center; flex: none; gap: 1px; padding-inline-end: .375rem; margin-inline-end: .375rem; border-inline-end: 1px solid var(--o-border); }
+.o-editor-tb-group:last-of-type { padding-inline-end: 0; margin-inline-end: 0; border-inline-end: 0; }
+.o-editor-btn { flex: none; --o-btn-h: 1.875rem; }
+.o-editor-btn[aria-pressed="true"] { --o-btn-hover-bg: var(--o-primary-subtle); background-color: var(--o-primary-subtle); color: var(--o-primary-text); }
+.o-editor-btn:disabled { opacity: .4; }
+.o-editor-blocktype { flex: none; gap: .25rem; padding-inline: .5rem; max-width: 8.5rem; }
+.o-editor-blocktype-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.o-editor-blocktype > .o-icon { flex: none; width: .875rem; height: .875rem; color: var(--o-text-muted); }
+.o-editor-tb-more { flex: none; margin-inline-start: auto; }
+.o-editor-toolbar:has(.o-editor-tb-more:not([hidden])) { flex-wrap: nowrap; }
+
+/* ── body / content ──────────────────────────────────────────────────── */
+.o-editor-body { position: relative; flex: 1 1 auto; min-width: 0; }
+.o-editor-content {
+  position: relative; min-height: 10rem; padding: 1rem 1.125rem; outline: none; caret-color: var(--o-text);
+  max-width: none; overflow-wrap: anywhere;
+}
+.o-editor-content[dir="rtl"] { text-align: start; }
+.o-editor-content:focus { outline: none; }
+.o-editor-content > :first-child { margin-top: 0; }
+.o-editor-content > :last-child { margin-bottom: 0; }
+.o-editor-content :where(h1, h2, h3, h4) { scroll-margin-top: 1rem; }
+.o-editor-content [dir] { unicode-bidi: plaintext; }
+.o-editor-content:has(> p:only-child > br:only-child)::before {
+  content: attr(data-ph); position: absolute; inset-inline-start: 1.125rem; top: 1rem; color: var(--o-text-subtle); pointer-events: none;
+}
+
+/* placeholder for a checklist / list item left empty */
+.o-editor-content li:only-child:empty { list-style: none; }
+
+/* selection markers used internally must never affect layout */
+.o-editor-content [data-o-sel] { display: inline; }
+
+/* links */
+.o-editor-content a { color: var(--o-link); cursor: text; }
+.o-editor-content a:hover { text-decoration-thickness: 2px; }
+
+/* check lists */
+.o-editor-content ul[data-type="check"] { list-style: none; padding-inline-start: 0; }
+.o-editor-content ul[data-type="check"] > li { position: relative; padding-inline-start: 1.75rem; }
+.o-editor-content ul[data-type="check"] > li::before {
+  content: ""; position: absolute; inset-inline-start: 0; top: .35em; width: 1.125rem; height: 1.125rem; box-sizing: border-box;
+  border: 1px solid var(--o-border-strong); border-radius: 4px; background: var(--o-surface); cursor: pointer;
+}
+.o-editor-content ul[data-type="check"] > li[data-checked="true"] { color: var(--o-text-muted); text-decoration: line-through; }
+.o-editor-content ul[data-type="check"] > li[data-checked="true"]::before {
+  background: var(--o-primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3E%3C/svg%3E") center / .8rem no-repeat;
+  border-color: var(--o-primary);
+}
+.o-editor-content ul[data-type="check"] > li > ul, .o-editor-content ul[data-type="check"] > li > ol { text-decoration: none; color: inherit; }
+
+/* mention tokens follow the shared .o-mention style (mentions.css) */
+.o-editor-content .o-mention { cursor: default; }
+
+/* code blocks: reuse token colors from codeeditor.css; add a language badge */
+.o-editor-content pre { position: relative; white-space: pre-wrap; word-break: break-word; tab-size: 2; }
+.o-editor-content pre[data-lang-name]::after {
+  content: attr(data-lang-name); position: absolute; top: .375rem; inset-inline-end: .5rem; font-family: var(--o-font-sans);
+  font-size: var(--o-fs-xs); color: var(--o-text-subtle); pointer-events: none; user-select: none;
+}
+.o-editor-content pre code { display: block; }
+
+/* image selection + resize handles */
+.o-editor-content img { max-width: 100%; height: auto; border-radius: var(--o-radius-sm); cursor: default; }
+.o-editor-content img.is-selected { outline: 2px solid var(--o-primary); outline-offset: 2px; }
+.o-editor-imgtools { position: absolute; z-index: 2; pointer-events: none; }
+.o-editor-imghandle {
+  position: absolute; width: .75rem; height: .75rem; background: var(--o-primary); border: 2px solid var(--o-surface);
+  border-radius: 50%; pointer-events: auto; box-shadow: var(--o-shadow-xs);
+}
+.o-editor-imghandle-nw { top: -.4375rem; inset-inline-start: -.4375rem; cursor: nwse-resize; }
+.o-editor-imghandle-ne { top: -.4375rem; inset-inline-end: -.4375rem; cursor: nesw-resize; }
+.o-editor-imghandle-sw { bottom: -.4375rem; inset-inline-start: -.4375rem; cursor: nesw-resize; }
+.o-editor-imghandle-se { bottom: -.4375rem; inset-inline-end: -.4375rem; cursor: nwse-resize; }
+
+/* horizontal rule */
+.o-editor-content hr { border: 0; border-top: 1px solid var(--o-border-strong); margin: 1.5em 0; }
+
+/* ── footer / counters ───────────────────────────────────────────────── */
+.o-editor-footer { display: flex; justify-content: flex-end; padding: .25rem .75rem; font-size: var(--o-fs-xs); color: var(--o-text-muted); border-top: 1px solid var(--o-border); background: var(--o-surface-2); }
+.o-editor-count { unicode-bidi: plaintext; font-variant-numeric: tabular-nums; }
+.o-editor-count.is-limit { color: var(--o-danger-text); font-weight: 600; }
+
+/* ── bubble (selection) toolbar ──────────────────────────────────────── */
+.o-editor-bubble { position: fixed; z-index: var(--o-z-popover); display: flex; align-items: center; gap: 1px; padding: .25rem; }
+.o-editor-bubble-sep { flex: none; width: 1px; height: 1.25rem; margin-inline: .125rem; background: var(--o-border); }
+
+/* ── popovers (link / image / table / color) ────────────────────────── */
+.o-editor-pop { display: flex; flex-direction: column; gap: .625rem; width: 17.5rem; max-width: calc(100vw - 1rem); padding: .25rem; }
+.o-editor-pop .o-field { margin: 0; }
+.o-editor-pop-error { font-size: var(--o-fs-xs); color: var(--o-danger-text); }
+.o-editor-pop-actions { display: flex; justify-content: flex-end; gap: .5rem; }
+.o-editor-pop-tabs { display: flex; gap: .25rem; border-bottom: 1px solid var(--o-border); margin-bottom: .25rem; }
+.o-editor-pop-tab { padding: .375rem .25rem; font-size: var(--o-fs-sm); font-weight: 500; color: var(--o-text-muted); background: none; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; cursor: pointer; }
+.o-editor-pop-tab.is-active { color: var(--o-primary-text); border-bottom-color: var(--o-primary); }
+.o-editor-pop-pane { display: flex; flex-direction: column; gap: .5rem; }
+.o-editor-pop-hint { margin: 0; font-size: var(--o-fs-xs); color: var(--o-text-muted); }
+.o-editor-pop-image { width: 19rem; }
+
+.o-editor-tgrid { display: grid; grid-template-columns: repeat(8, 1.25rem); grid-template-rows: repeat(8, 1.25rem); gap: 2px; padding: .25rem; }
+.o-editor-tgrid-cell { background: var(--o-surface-2); border: 1px solid var(--o-border); border-radius: 2px; }
+.o-editor-tgrid-cell.is-on { background: var(--o-primary-subtle); border-color: var(--o-primary-border); }
+.o-editor-tgrid-label { padding: .125rem .25rem .375rem; font-size: var(--o-fs-sm); color: var(--o-text-muted); text-align: center; }
+
+.o-editor-swatches { display: grid; grid-template-columns: repeat(6, 1.75rem); gap: .375rem; padding: .25rem; }
+.o-editor-swatch { width: 1.75rem; height: 1.75rem; padding: 0; background: var(--sw); border: 1px solid var(--o-border); border-radius: 50%; cursor: pointer; }
+.o-editor-swatch:hover, .o-editor-swatch:focus-visible { box-shadow: 0 0 0 2px var(--o-surface), 0 0 0 4px var(--sw); outline: none; }
+.o-editor-swatch-row { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: 0 .25rem; }
+.o-editor-swatch-custom { width: 2rem; height: 1.75rem; padding: 2px; cursor: pointer; }
+
+/* ── source (HTML) view ──────────────────────────────────────────────── */
+.o-editor-source { display: flex; flex-direction: column; gap: .5rem; padding: .75rem; }
+.o-editor-source-fallback { min-height: 12rem; font-family: var(--o-font-mono); font-size: var(--o-fs-sm); resize: vertical; }
+.o-editor-source-actions { display: flex; justify-content: flex-end; gap: .5rem; }
+.o-editor.is-fullscreen .o-editor-source { flex: 1 1 auto; }
+.o-editor.is-fullscreen .o-editor-source-fallback { flex: 1 1 auto; }
+
+/* ── responsive ──────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .o-editor-tb-group { padding-inline-end: .25rem; margin-inline-end: .25rem; }
+  .o-editor-blocktype { max-width: 6rem; }
+  .o-editor-pop, .o-editor-pop-image { width: min(15.5rem, calc(100vw - 2rem)); }
+}

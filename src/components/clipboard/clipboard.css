@@ -1,0 +1,13 @@
+/* clipboard: <o-copy>, copy feedback bubble */
+.o-copy { display: inline-flex; vertical-align: middle; }
+.o-copy[variant="input"] { display: flex; width: 100%; min-width: 0; }
+.o-copy[variant="input"] > .o-input-group { min-width: 0; }
+.o-copy-field { font-family: var(--o-font-mono); font-size: var(--o-fs-sm); text-overflow: ellipsis; }
+.o-copy-btn { flex-shrink: 0; }
+.is-copied { --o-btn-fg: var(--o-success-text); --o-btn-hover-fg: var(--o-success-text); }
+.o-copy-check { color: var(--o-success-text); }
+.o-copy-bubble {
+  position: fixed; padding: .3rem .55rem; font-size: var(--o-fs-xs); font-weight: 600; line-height: 1.2; white-space: nowrap;
+  color: var(--o-bg); background: var(--o-text); border-radius: var(--o-radius-sm); box-shadow: var(--o-shadow); pointer-events: none;
+}
+.o-copy-bubble.is-error { color: var(--o-on-danger); background: var(--o-danger); }

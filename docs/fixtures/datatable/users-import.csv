@@ -1,0 +1,13 @@
+Name,Email,Role,Department,Salary,Joined,Status
+Farid Lee (new),farid.lee1+new@example.com,Manager,Engineering,42600,2026-09-01,Pending
+Mei Sato (new),mei.sato8+new@example.com,Editor,Operations,91500,2026-09-02,Pending
+Rahul Okafor (new),rahul.okafor15+new@example.com,Support,Finance,61400,2026-09-03,Pending
+Chen Sato (new),chen.sato22+new@example.com,Editor,Operations,124600,2026-09-04,Pending
+Hiro Haddad (new),hiro.haddad29+new@example.com,Support,Operations,92500,2026-09-05,Pending
+Diego Smith (new),diego.smith36+new@example.com,Manager,Engineering,50800,2026-09-06,Pending
+Isabel Dubois (new),isabel.dubois43+new@example.com,Manager,Sales,97200,2026-09-07,Pending
+Tomas Smith (new),tomas.smith50+new@example.com,Manager,Engineering,117700,2026-09-08,Pending
+Quinn Lee (new),quinn.lee57+new@example.com,Viewer,Engineering,105800,2026-09-09,Pending
+Farid Kim (new),farid.kim64+new@example.com,Admin,Design,67700,2026-09-01,Pending
+Grace Wong (new),grace.wong71+new@example.com,Manager,Design,50300,2026-09-02,Pending
+Grace Okafor (new),grace.okafor78+new@example.com,Viewer,Engineering,79900,2026-09-03,Pending

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Page not found — Orion Admin</title>
+<script src="../dist/orion.js"></script>
+</head>
+<body class="o-container">
+  <div class="o-error-page">
+    <div>
+      <p class="o-error-code">404</p>
+      <h1 class="o-h2">This page went missing</h1>
+      <p class="o-lead o-mb-5">The page you are looking for does not exist, or it moved somewhere else.</p>
+      <div class="o-input-wrap o-mx-auto o-mb-5" style="max-width:24rem">
+        <o-icon name="search"></o-icon>
+        <input class="o-input" id="q" type="search" placeholder="Search the admin…" aria-label="Search">
+      </div>
+      <div class="o-cluster o-justify-center">
+        <a class="o-btn o-btn-primary" href="dashboard.html"><o-icon name="home"></o-icon>Back to dashboard</a>
+        <button class="o-btn" onclick="history.back()"><o-icon name="arrow-left"></o-icon>Go back</button>
+        <a class="o-btn o-btn-ghost" href="index.html">All templates</a>
+      </div>
+    </div>
+  </div>
+<script>
+  document.getElementById('q').addEventListener('keydown', e => {
+    if (e.key === 'Enter') (Orion.commandPalette ? Orion.commandPalette.open({ query: e.target.value }) : Orion.toast?.(`Searching for “${e.target.value}”`));
+  });
+</script>
+</body>
+</html>

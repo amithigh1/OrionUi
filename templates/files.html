@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>File manager — Orion Admin</title>
+<script src="../dist/orion.js"></script>
+<link rel="stylesheet" href="assets/shell.css">
+<style>
+  .fm { display: grid; gap: 1.25rem; grid-template-columns: 1fr; align-items: start; }
+  #fm-tree { height: 14rem; } /* the tree's row list is a scroll viewport, so the host decides its height */
+  @media (min-width: 1024px) { .fm { grid-template-columns: 15rem 1fr; } }
+  .fm-grid { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); }
+  .fm-tile { position: relative; padding: 1rem .75rem; text-align: center; border: 1px solid var(--o-border);
+    border-radius: var(--o-radius); background: var(--o-bg-elevated); cursor: pointer; transition: border-color .12s, background .12s; }
+  .fm-tile:hover { border-color: var(--o-primary); background: var(--o-bg-subtle); }
+  .fm-tile:focus-visible { outline: 2px solid var(--o-primary); outline-offset: 2px; }
+  .fm-tile[aria-selected="true"] { border-color: var(--o-primary); box-shadow: 0 0 0 1px var(--o-primary) inset; background: var(--o-primary-subtle); }
+  .fm-tile > o-icon { font-size: 1.75rem; }
+  .fm-tile-name { margin-top: .5rem; font-size: var(--o-fs-sm); font-weight: 550; overflow-wrap: anywhere;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .fm-drop { border: 2px dashed var(--o-border-strong); border-radius: var(--o-radius); padding: 1.5rem; text-align: center; }
+  .fm-drop.is-over { border-color: var(--o-primary); background: var(--o-primary-subtle); }
+</style>
+<script>
+  window.PAGE = {
+    id: 'files', title: 'Files', subtitle: 'Shared documents, exports and media',
+    breadcrumbs: [{ label: 'Home', href: 'dashboard.html' }, { label: 'Workspace' }, { label: 'Files' }],
+    actions: '<button class="o-btn" id="fm-newfolder"><o-icon name="folder-plus"></o-icon>New folder</button>'
+      + '<button class="o-btn o-btn-primary" id="fm-upload"><o-icon name="upload"></o-icon>Upload</button>',
+  };
+</script>
+<script src="assets/shell.js" defer></script>
+</head>
+<body>
+<div id="app-content">
+  <div class="fm">
+    <!-- Folder tree + storage -->
+    <aside class="o-stack">
+      <div class="o-card">
+        <div class="o-card-header"><b>Folders</b></div>
+        <div class="o-card-body o-p-2"><o-tree id="fm-tree" label="Folders"></o-tree></div>
+      </div>
+      <div class="o-card">
+        <div class="o-card-body o-stack o-gap-2">
+          <div class="o-between o-text-sm"><b>Storage</b><span class="o-text-muted" id="fm-used">—</span></div>
+          <div class="o-progress"><div class="o-progress-bar" style="--o-value:62%"></div></div>
+          <small class="o-text-muted">62 GB of 100 GB used</small>
+          <button class="o-btn o-btn-sm o-btn-block o-mt-2" type="button">Upgrade plan</button>
+        </div>
+      </div>
+    </aside>
+
+    <div>
+      <div class="o-cluster o-mb-3">
+        <o-breadcrumb id="fm-path" separator="chevron"></o-breadcrumb>
+        <div class="o-spacer"></div>
+        <div class="o-input-wrap" style="max-width:16rem"><o-icon name="search"></o-icon>
+          <input class="o-input o-input-sm" id="fm-search" type="search" placeholder="Search files" aria-label="Search files"></div>
+        <div class="o-segmented" role="group" aria-label="View mode" id="fm-view">
+          <button type="button" data-view="grid" aria-pressed="true" title="Grid"><o-icon name="grid"></o-icon></button>
+          <button type="button" data-view="list" aria-pressed="false" title="List"><o-icon name="list"></o-icon></button>
+        </div>
+      </div>
+
+      <!-- Selection bar -->
+      <div class="o-alert o-alert-primary o-mb-3" id="fm-selbar" hidden>
+        <o-icon name="check-square"></o-icon>
+        <div class="o-alert-content"><b id="fm-selcount"></b> selected</div>
+        <div class="o-cluster">
+          <button class="o-btn o-btn-xs" type="button" id="fm-dl"><o-icon name="download"></o-icon>Download</button>
+          <button class="o-btn o-btn-xs" type="button" id="fm-share"><o-icon name="share-2"></o-icon>Share</button>
+          <button class="o-btn o-btn-xs o-btn-soft-danger" type="button" id="fm-del"><o-icon name="trash"></o-icon>Delete</button>
+          <button class="o-btn o-btn-xs o-btn-ghost" type="button" id="fm-clear">Clear</button>
+        </div>
+      </div>
+
+      <div class="fm-drop o-mb-3" id="fm-drop">
+        <o-icon name="upload-cloud" size="28" class="o-text-muted"></o-icon>
+        <p class="o-mb-0 o-mt-2 o-text-sm">Drop files here, or <button class="o-btn-link" type="button" id="fm-browse">browse</button> — up to 25 MB each</p>
+      </div>
+
+      <div id="fm-grid" class="fm-grid" role="listbox" aria-multiselectable="true" aria-label="Files"></div>
+      <div id="fm-list" hidden><o-datatable id="fm-dt" row-key="name" selectable searchable="false" page-size="20" responsive="stack"></o-datatable></div>
+      <div class="o-card" id="fm-empty" hidden><div class="o-empty">
+        <div class="o-empty-icon"><o-icon name="folder-open"></o-icon></div>
+        <h4 class="o-empty-title">This folder is empty</h4>
+        <p class="o-empty-text">Upload a file or create a subfolder to get started.</p>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<o-modal id="fm-up-modal" title="Upload files" size="md">
+  <o-upload id="fm-up" multiple max-size="25mb"></o-upload>
+  <div slot="footer"><button class="o-btn" type="button" data-o-dismiss="modal">Done</button></div>
+</o-modal>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const O = Orion, F = O.format, esc = O.util.esc, now = Date.now(), D = 864e5;
+
+  const ICONS = { folder: ['folder', 'warning'], pdf: ['file-text', 'danger'], doc: ['file-text', 'primary'],
+    xls: ['table', 'success'], img: ['image', 'info'], vid: ['video', 'primary'], zip: ['archive', 'secondary'], other: ['file', 'secondary'] };
+  const kindOf = n => n.endsWith('/') ? 'folder'
+    : /\.pdf$/i.test(n) ? 'pdf' : /\.(docx?|md|txt)$/i.test(n) ? 'doc' : /\.(xlsx?|csv)$/i.test(n) ? 'xls'
+    : /\.(png|jpe?g|gif|webp|svg)$/i.test(n) ? 'img' : /\.(mp4|webm|mov)$/i.test(n) ? 'vid' : /\.(zip|tar|gz)$/i.test(n) ? 'zip' : 'other';
+
+  const FILES = {
+    '/': [['Reports/', 0], ['Invoices/', 0], ['Brand assets/', 0], ['Exports/', 0],
+      ['Q3-board-pack.pdf', 4.2e6], ['headcount-plan.xlsx', 182e3], ['team-photo.jpg', 2.6e6], ['onboarding.md', 14e3]],
+    '/Reports': [['2026/', 0], ['revenue-september.xlsx', 96e3], ['churn-analysis.pdf', 1.1e6], ['cohorts.csv', 48e3]],
+    '/Reports/2026': [['jan.pdf', 620e3], ['feb.pdf', 640e3], ['mar.pdf', 590e3]],
+    '/Invoices': [['INV-2031.pdf', 88e3], ['INV-2030.pdf', 91e3], ['INV-2029.pdf', 86e3], ['statement.csv', 22e3]],
+    '/Brand assets': [['logo-dark.svg', 12e3], ['logo-light.svg', 12e3], ['product-shot.png', 3.4e6], ['promo.mp4', 18.2e6], ['guidelines.pdf', 5.8e6]],
+    '/Exports': [['users-2026-09.csv', 1.9e6], ['orders-2026-09.csv', 8.4e6], ['archive.zip', 42e6]],
+  };
+  const mk = ([name, size], i) => ({
+    name: name.replace(/\/$/, ''), isFolder: name.endsWith('/'), size, kind: kindOf(name),
+    sizeLabel: name.endsWith('/') ? '—' : F.bytes(size),
+    modified: new Date(now - (i + 1) * 1.7 * D), by: ['Amira R.', 'Daniel O.', 'Sofia M.', 'Kenji T.'][i % 4],
+  });
+
+  let cwd = '/', selected = new Set(), query = '';
+  const entries = () => (FILES[cwd] || []).map(mk)
+    .filter(e => !query || e.name.toLowerCase().includes(query))
+    .sort((a, b) => (b.isFolder - a.isFolder) || a.name.localeCompare(b.name));
+  const childPath = name => (cwd === '/' ? '' : cwd) + '/' + name;
+
+  // Tree ----------------------------------------------------------------
+  const tree = document.getElementById('fm-tree');
+  tree.nodes = [{ id: '/', label: 'All files', icon: 'hard-drive', expanded: true, children: [
+    { id: '/Reports', label: 'Reports', icon: 'folder', children: [{ id: '/Reports/2026', label: '2026', icon: 'folder' }] },
+    { id: '/Invoices', label: 'Invoices', icon: 'folder' },
+    { id: '/Brand assets', label: 'Brand assets', icon: 'folder' },
+    { id: '/Exports', label: 'Exports', icon: 'folder' },
+  ] }];
+  tree.addEventListener('o-select', e => { if (e.detail.id !== cwd) go(String(e.detail.id)); });
+
+  // Breadcrumb ----------------------------------------------------------
+  const crumb = document.getElementById('fm-path');
+  function paintPath() {
+    const parts = cwd.split('/').filter(Boolean);
+    crumb.items = [{ label: 'All files', href: '#/', icon: 'hard-drive' },
+      ...parts.map((p, i) => ({ label: p, href: '#/' + parts.slice(0, i + 1).join('/') }))];
+  }
+  crumb.addEventListener('o-navigate', e => {
+    e.preventDefault();
+    go(decodeURIComponent(e.detail.href.slice(1)) || '/');
+  });
+
+  function go(path) {
+    cwd = path.replace(/\/$/, '') || '/';
+    selected.clear(); paintPath(); render();
+  }
+
+  // Grid + table --------------------------------------------------------
+  const grid = document.getElementById('fm-grid'), listWrap = document.getElementById('fm-list');
+  const empty = document.getElementById('fm-empty'), dt = document.getElementById('fm-dt');
+  dt.columns = [
+    { key: 'name', title: 'Name', sortable: true },
+    { key: 'sizeLabel', title: 'Size', sortable: true },
+    { key: 'modified', title: 'Modified', type: 'date', format: 'relative', sortable: true },
+    { key: 'by', title: 'Owner', sortable: true },
+  ];
+  dt.addEventListener('o-row-dblclick', e => open(e.detail.row));
+  dt.addEventListener('o-select', e => { selected = new Set(e.detail.rows.map(r => r.name)); paintSel(); });
+
+  function render() {
+    const rows = entries();
+    empty.hidden = rows.length > 0;
+    grid.innerHTML = rows.map(r => {
+      const [icon, color] = ICONS[r.kind];
+      return `<div class="fm-tile" role="option" tabindex="0" data-name="${esc(r.name)}" aria-selected="${selected.has(r.name)}">
+        <o-icon name="${icon}" class="o-text-${color}"></o-icon>
+        <div class="fm-tile-name">${esc(r.name)}</div>
+        <small class="o-text-muted">${r.isFolder ? 'Folder' : r.sizeLabel}</small>
+      </div>`;
+    }).join('');
+    dt.rows = rows;
+    paintSel();
+    document.getElementById('fm-used').textContent = F.bytes(Object.values(FILES).flat().reduce((s, [, b]) => s + b, 0)) + ' in this workspace';
+  }
+
+  function paintSel() {
+    const n = selected.size;
+    document.getElementById('fm-selbar').hidden = !n;
+    document.getElementById('fm-selcount').textContent = `${n} item${n === 1 ? '' : 's'}`;
+    grid.querySelectorAll('.fm-tile').forEach(t => t.setAttribute('aria-selected', selected.has(t.dataset.name)));
+  }
+
+  const find = name => entries().find(e => e.name === name);
+  const placeholderImage = name => 'data:image/svg+xml;utf8,' + encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><rect width="800" height="600" fill="#e5e7eb"/><text x="400" y="300" text-anchor="middle" font-family="sans-serif" font-size="28" fill="#6b7280">${name}</text></svg>`);
+  function open(row) {
+    if (!row) return;
+    if (row.isFolder) return go(childPath(row.name));
+    if (row.kind === 'img') return O.lightbox([{ src: placeholderImage(row.name), title: row.name }], { origin: grid.querySelector(`[data-name="${CSS.escape(row.name)}"]`) });
+    O.toast(`Previewing ${row.name}`);
+  }
+
+  grid.addEventListener('click', e => {
+    const tile = e.target.closest('.fm-tile'); if (!tile) return;
+    const name = tile.dataset.name;
+    if (e.metaKey || e.ctrlKey) { selected.has(name) ? selected.delete(name) : selected.add(name); }
+    else { selected.clear(); selected.add(name); }
+    paintSel();
+  });
+  grid.addEventListener('dblclick', e => { const t = e.target.closest('.fm-tile'); if (t) open(find(t.dataset.name)); });
+  grid.addEventListener('keydown', e => {
+    const tile = e.target.closest('.fm-tile'); if (!tile) return;
+    if (e.key === 'Enter') { e.preventDefault(); open(find(tile.dataset.name)); }
+    if (e.key === ' ') { e.preventDefault(); const n = tile.dataset.name; selected.has(n) ? selected.delete(n) : selected.add(n); paintSel(); }
+  });
+
+  // Context menu (delegated, so re-rendered tiles keep working) ---------
+  O.contextMenu('#fm-grid .fm-tile', (event, tile) => {
+    const name = tile.dataset.name, row = find(name);
+    return [
+      { label: row?.isFolder ? 'Open folder' : 'Open', icon: 'external-link', onClick: () => open(row) },
+      { label: 'Download', icon: 'download', onClick: () => O.toast(`Downloading ${name}`) },
+      { label: 'Rename', icon: 'edit-2', onClick: async () => {
+        const next = await O.prompt({ title: 'Rename', label: 'New name', value: name, required: true });
+        if (!next || next === name) return;
+        const list = FILES[cwd], i = list.findIndex(([n]) => n.replace(/\/$/, '') === name);
+        if (i > -1) { list[i] = [list[i][0].endsWith('/') ? next + '/' : next, list[i][1]]; render(); O.toast.success('Renamed'); }
+      } },
+      { label: 'Copy link', icon: 'link', onClick: () => O.clipboard.copy(location.origin + childPath(name)).then(ok => O.toast(ok ? 'Link copied' : 'Copy failed')) },
+      { type: 'divider' },
+      { label: 'Delete', icon: 'trash', danger: true, onClick: () => remove([name]) },
+    ];
+  });
+
+  async function remove(names) {
+    if (!await O.confirm({ title: `Delete ${names.length} item${names.length === 1 ? '' : 's'}?`,
+      text: 'Deleted items go to the trash for 30 days.', confirmText: 'Delete', danger: true })) return;
+    FILES[cwd] = (FILES[cwd] || []).filter(([n]) => !names.includes(n.replace(/\/$/, '')));
+    selected.clear(); dt.clearSelection(); render(); O.toast.success('Moved to trash');
+  }
+
+  // Selection actions ---------------------------------------------------
+  document.getElementById('fm-del').addEventListener('click', () => remove([...selected]));
+  document.getElementById('fm-clear').addEventListener('click', () => { selected.clear(); dt.clearSelection(); paintSel(); });
+  document.getElementById('fm-dl').addEventListener('click', () => O.toast(`Preparing ${selected.size} file(s) as a zip`));
+  document.getElementById('fm-share').addEventListener('click', () => {
+    const link = `${location.origin}/s/${Math.random().toString(36).slice(2, 10)}`;
+    O.modal({
+      title: 'Share ' + (selected.size === 1 ? [...selected][0] : `${selected.size} items`), size: 'sm',
+      content: `<div class="o-field"><label class="o-label" for="fm-share-perm">Anyone with the link</label>
+          <select class="o-select" id="fm-share-perm"><option>Can view</option><option>Can comment</option><option>Can edit</option></select></div>
+        <div class="o-input-group o-mt-3"><input class="o-input" id="fm-share-url" readonly value="${link}" aria-label="Share link">
+          <button class="o-btn" type="button" data-o-action="copy" data-o-target="#fm-share-url"><o-icon name="copy"></o-icon></button></div>`,
+      buttons: [{ text: 'Done', variant: 'primary' }],
+    });
+  });
+
+  // Upload --------------------------------------------------------------
+  const upModal = document.getElementById('fm-up-modal'), up = document.getElementById('fm-up');
+  const openUpload = () => upModal.open();
+  document.getElementById('fm-upload').addEventListener('click', openUpload);
+  document.getElementById('fm-browse').addEventListener('click', openUpload);
+  const addFiles = files => {
+    files.forEach(f => (FILES[cwd] = FILES[cwd] || []).unshift([f.name, f.size]));
+    render(); O.toast.success(`${files.length} file(s) added to ${cwd}`);
+  };
+  up.addEventListener('o-complete', e => {
+    const list = (e.detail?.files || e.detail?.items || []).map(f => f.file || f);
+    if (list.length) addFiles(list);
+  });
+
+  const drop = document.getElementById('fm-drop');
+  ['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('is-over'); }));
+  ['dragleave', 'drop'].forEach(t => drop.addEventListener(t, () => drop.classList.remove('is-over')));
+  drop.addEventListener('drop', e => { e.preventDefault(); const files = [...(e.dataTransfer?.files || [])]; if (files.length) addFiles(files); });
+
+  document.getElementById('fm-newfolder').addEventListener('click', async () => {
+    const name = await O.prompt({ title: 'New folder', label: 'Folder name', placeholder: 'Untitled folder', required: true });
+    if (!name) return;
+    (FILES[cwd] = FILES[cwd] || []).unshift([name + '/', 0]);
+    FILES[childPath(name)] = [];
+    render(); O.toast.success(`Created ${name}`);
+  });
+
+  document.getElementById('fm-search').addEventListener('input', O.util.debounce(e => { query = e.target.value.trim().toLowerCase(); render(); }, 160));
+  document.getElementById('fm-view').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-view]'); if (!btn) return;
+    const list = btn.dataset.view === 'list';
+    btn.parentElement.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b === btn));
+    grid.hidden = list; listWrap.hidden = !list;
+  });
+
+  paintPath(); render();
+});
+</script>
+</body>
+</html>

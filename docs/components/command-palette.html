@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Command Palette — Orion Admin</title>
+<meta name="docs:section" content="Search &amp; Commands">
+<meta name="docs:order" content="10">
+<meta name="docs:desc" content="A ⌘K command palette with fuzzy ranking, nested pages and async providers">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Command Palette</h1>
+    <p class="docs-lead">A Raycast/Linear-style command menu: register commands once with <code>Orion.commands.register()</code>,
+    then open the modal palette from anywhere with <kbd class="o-kbd">Ctrl</kbd>/<kbd class="o-kbd">⌘</kbd> <kbd class="o-kbd">K</kbd>.
+    Fuzzy ranking, sections, recent commands, nested pages with a breadcrumb, async providers and danger-command
+    confirmation all work out of the box. <code>&lt;o-command-menu&gt;</code> renders the same list inline, without a dialog.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Register commands &amp; open the palette</h2>
+    <p>Press <kbd class="o-kbd">Ctrl</kbd>+<kbd class="o-kbd">K</kbd> (<kbd class="o-kbd">⌘K</kbd> on Mac) anywhere on this page, or click the button below.
+    Commands are grouped by <code>section</code>, ranked by fuzzy match against <code>title</code> / <code>subtitle</code> / <code>keywords</code>,
+    and the ones you run are remembered under <em>Recent</em> the next time you open the palette with an empty query.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-primary" id="cp-open"><o-icon name="search"></o-icon> Open command palette <kbd class="o-kbd">Ctrl K</kbd></button>
+        <div class="docs-log o-mt-3" id="cp-log"></div>
+        <script>{
+          document.getElementById('cp-open').addEventListener('click', () => Orion.commandPalette.open());
+          document.addEventListener('o-command', e => docs.log('#cp-log', `ran "${e.detail.command.title}"`));
+
+          Orion.commands.register([
+            { id: 'nav-dashboard', title: 'Go to Dashboard', icon: 'home', section: 'Navigate', keywords: ['home', 'overview'], run: () => docs.log('#cp-log', 'navigate: dashboard') },
+            { id: 'nav-users', title: 'Go to Users', icon: 'user', section: 'Navigate', shortcut: 'g u', run: () => docs.log('#cp-log', 'navigate: users') },
+            { id: 'nav-billing', title: 'Go to Billing', icon: 'columns', section: 'Navigate', run: () => docs.log('#cp-log', 'navigate: billing') },
+            { id: 'new-invoice', title: 'Create invoice', subtitle: 'Billing', icon: 'plus', section: 'Actions', shortcut: 'mod+i', run: () => docs.log('#cp-log', 'create invoice') },
+            { id: 'invite', title: 'Invite team member', subtitle: 'People', icon: 'user', section: 'Actions', run: () => docs.log('#cp-log', 'invite opened') },
+            { id: 'toggle-theme', title: 'Toggle theme', icon: 'sun', section: 'Actions', keywords: ['dark', 'light', 'appearance'], run: () => Orion.theme.cycle() },
+            { id: 'delete-project', title: 'Delete current project', icon: 'trash', section: 'Actions', danger: true, badge: 'Danger', run: () => docs.log('#cp-log', 'project deleted (demo)') },
+            {
+              id: 'settings', title: 'Settings', icon: 'settings', section: 'Actions', keywords: ['preferences', 'config'],
+              children: [
+                { id: 'settings-profile', title: 'Profile settings', icon: 'user', run: () => docs.log('#cp-log', 'open: profile settings') },
+                { id: 'settings-security', title: 'Security settings', icon: 'lock', run: () => docs.log('#cp-log', 'open: security settings') },
+                { id: 'settings-billing', title: 'Billing settings', icon: 'columns', run: () => docs.log('#cp-log', 'open: billing settings') },
+                { id: 'settings-notifications', title: 'Notification settings', icon: 'bell', run: () => docs.log('#cp-log', 'open: notification settings') },
+              ],
+            },
+            {
+              id: 'docs-link', title: 'Documentation', icon: 'help-circle', section: 'Help',
+              load: async (q) => [
+                { id: 'doc-getting-started', title: 'Getting started' },
+                { id: 'doc-api', title: 'API reference' },
+                { id: 'doc-faq', title: 'FAQ' },
+              ].filter(d => !q || d.title.toLowerCase().includes(q.toLowerCase())),
+            },
+          ]);
+
+          // Async provider: fuzzy-search a demo "Users" dataset with a simulated network delay.
+          const people = docs.people(200);
+          Orion.commands.register({
+            id: 'users', section: 'Users', icon: 'user', minChars: 1, debounce: 200,
+            search: async (query, { signal }) => {
+              await new Promise(r => setTimeout(r, 300));
+              if (signal.aborted) throw new DOMException('aborted', 'AbortError');
+              return Orion.util.fuzzySearch(people, query, p => p.name + ' ' + p.email, 6)
+                .map(p => ({ id: 'user-' + p.id, title: p.name, subtitle: p.email, icon: 'user', run: () => docs.log('#cp-log', 'open user: ' + p.name) }));
+            },
+          });
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="menu">
+    <h2>Inline variant — <code>&lt;o-command-menu&gt;</code></h2>
+    <p>The same engine without a dialog: useful embedded in a sidebar, a popover, or a settings panel. Pass a local
+    <code>commands</code> list to scope it (otherwise it uses the global registry above).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div style="width:22rem;max-width:100%">
+          <o-command-menu id="cp-menu" hints></o-command-menu>
+        </div>
+        <div class="docs-log o-mt-3" id="cp-menu-log"></div>
+        <script>{
+          const menu = document.getElementById('cp-menu');
+          menu.commands = [
+            { id: 'm-new', title: 'New document', icon: 'plus', section: 'Create' },
+            { id: 'm-new-folder', title: 'New folder', icon: 'file', section: 'Create' },
+            { id: 'm-share', title: 'Share…', icon: 'link', section: 'Actions' },
+            { id: 'm-export', title: 'Export as PDF', icon: 'download', section: 'Actions' },
+            { id: 'm-archive', title: 'Archive item', icon: 'trash', section: 'Actions', danger: true },
+          ];
+          menu.addEventListener('o-command', e => docs.log('#cp-menu-log', 'ran "' + e.detail.command.title + '"'));
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="hotkey">
+    <h2>Configuring the hotkey</h2>
+    <p>The default shortcut is <code>mod+k</code> (⌘K / Ctrl+K). Change or disable it with <code>Orion.commandPalette.hotkey()</code>;
+    it is wired through <code>Orion.shortcuts</code> when the shortcuts package is loaded, and falls back to a small built-in
+    key listener otherwise so the palette works with just this package.</p>
+    <pre class="docs-code-block" data-lang="js">
+      Orion.commandPalette.hotkey('mod+shift+p');   // rebind
+      Orion.commandPalette.hotkey(false);           // disable the global hotkey entirely
+
+      Orion.commandPalette.open({ query: 'invoice' });     // open pre-filled
+      Orion.commandPalette.open({ page: 'settings' });     // jump straight into a nested page
+      Orion.commandPalette.close();
+      Orion.commandPalette.toggle();
+      Orion.commandPalette.isOpen;
+    </pre>
+  </section>
+
+  <section id="api">
+    <h2>JS API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>Orion.commands.register(commands | provider | () =&gt; commands)</code></td><td>Returns an <code>unregister()</code> function. See <strong>Command</strong> shape below.</td></tr>
+        <tr><td><code>Orion.commands.add(command)</code> / <code>.remove(id)</code> / <code>.update(id, patch)</code></td><td>Manage a single command.</td></tr>
+        <tr><td><code>Orion.commands.get(id)</code> / <code>.list()</code> / <code>.providers()</code> / <code>.clear()</code></td><td>Inspect the registry.</td></tr>
+        <tr><td><code>Orion.commandPalette.open({ query?, page? })</code></td><td><code>page</code> is a command id (or a command object) with <code>children</code>/<code>load</code> to jump straight into.</td></tr>
+        <tr><td><code>Orion.commandPalette.close()</code> / <code>.toggle(opts)</code> / <code>.isOpen</code></td><td></td></tr>
+        <tr><td><code>Orion.commandPalette.hotkey(combo | false)</code></td><td>Default <code>'mod+k'</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>Command</h3>
+    <pre class="docs-code-block" data-lang="js">
+      interface Command {
+        id?: string; title: string; subtitle?: string; icon?: string; section?: string;
+        keywords?: string[]; shortcut?: string; badge?: string | number; danger?: boolean; disabled?: boolean;
+        run?(ctx: { close(): void; query: string }): void;
+        href?: string;                                   // used when there is no run()
+        children?: Command[];                             // pushes a nested page immediately
+        load?(query: string): Command[] | Promise&lt;Command[]&gt;;  // pushes a nested page that (re)loads per query
+        when?(): boolean;                                  // hide the command when this returns false
+      }
+      // Provider (searched only while the query is non-empty, at the root page):
+      interface CommandProvider {
+        id?: string; section: string; icon?: string; minChars?: number /* 1 */; debounce?: number /* 200 */; limit?: number /* 8 */;
+        search(query: string, ctx: { signal: AbortSignal }): Promise&lt;Command[]&gt;;
+      }
+    </pre>
+    <h2>&lt;o-command-menu&gt; properties</h2>
+    <table class="docs-api">
+      <thead><tr><th>Prop</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>commands</code></td><td><code>Command[]</code></td><td><code>[]</code></td><td>Local list; falls back to the global registry when empty.</td></tr>
+        <tr><td><code>placeholder</code></td><td>string</td><td>–</td><td></td></tr>
+        <tr><td><code>autofocus</code></td><td>boolean</td><td><code>false</code></td><td></td></tr>
+        <tr><td><code>providers</code></td><td>boolean</td><td><code>false</code></td><td>Also query <code>Orion.commands.providers()</code>.</td></tr>
+        <tr><td><code>hints</code></td><td>boolean</td><td><code>true</code></td><td>Shows the keyboard-hints footer.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Returns</th><th></th></tr></thead>
+      <tbody>
+        <tr><td><code>focus()</code></td><td><code>void</code></td><td></td></tr>
+        <tr><td><code>reset(query?)</code></td><td><code>void</code></td><td>Back to the root page.</td></tr>
+        <tr><td><code>refresh()</code></td><td><code>void</code></td><td>Re-render (e.g. after a <code>when()</code> changed).</td></tr>
+      </tbody>
+    </table>
+    <h2>Events</h2>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th><code>detail</code></th><th>Fired by</th></tr></thead>
+      <tbody>
+        <tr><td><code>o-command</code></td><td><code>{ command, query }</code></td><td>Palette dialog, <code>&lt;o-command-menu&gt;</code> (as <code>o-command</code>)</td></tr>
+        <tr><td><code>o-open</code> / <code>o-close</code></td><td><code>{}</code> / <code>{ reason }</code></td><td>Palette dialog only</td></tr>
+        <tr><td><code>o-before-open</code></td><td>cancelable</td><td>Palette dialog only</td></tr>
+        <tr><td><code>o-search</code></td><td><code>{ query }</code></td><td><code>&lt;o-command-menu&gt;</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td><kbd class="o-kbd">Ctrl</kbd>/<kbd class="o-kbd">⌘</kbd> <kbd class="o-kbd">K</kbd></td><td>Toggle the palette (configurable).</td></tr>
+        <tr><td><kbd class="o-kbd">↑</kbd> / <kbd class="o-kbd">↓</kbd></td><td>Move the active row (loops; typeahead also jumps to a match).</td></tr>
+        <tr><td><kbd class="o-kbd">Home</kbd> / <kbd class="o-kbd">End</kbd></td><td>First / last row.</td></tr>
+        <tr><td><kbd class="o-kbd">Enter</kbd></td><td>Run the active command, open its nested page, or (for a <code>danger</code> command) arm confirmation — press again to run.</td></tr>
+        <tr><td><kbd class="o-kbd">Backspace</kbd></td><td>With an empty query, goes back one page.</td></tr>
+        <tr><td><kbd class="o-kbd">Esc</kbd></td><td>Closes the palette (or clears the query first, per the browser's native search-input behavior).</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="frameworks">
+    <h2>Frameworks</h2>
+    <p><code>Orion.commands.register()</code> and <code>Orion.commandPalette</code> are plain JS — call them from a React <code>useEffect</code>,
+    a Vue <code>onMounted</code>, or an Angular service constructor, and call the returned <code>unregister()</code> on teardown.</p>
+    <pre class="docs-code-block" data-lang="js">
+      useEffect(() => Orion.commands.register([{ id: 'save', title: 'Save', run: () => save() }]), []);
+    </pre>
+  </section>
+</main>
+</body>
+</html>

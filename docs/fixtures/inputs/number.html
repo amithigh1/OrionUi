@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Number &amp; password fixture — Orion Admin</title>
+<script src="../../../dist/orion.js"></script>
+</head>
+<body class="o-container o-py-6">
+<form id="f" class="o-stack" style="max-width:28rem">
+  <label for="usd">USD</label>
+  <o-number id="usd" name="usd" currency="USD" locale="en-US" min="0" max="100000" step="0.5"></o-number>
+  <o-number id="eur" name="eur" currency="EUR" locale="de-DE" value="1234.5"></o-number>
+  <o-number id="jpy" name="jpy" currency="JPY" locale="ja-JP" controls="split"></o-number>
+  <o-number id="myr" name="myr" currency="MYR" locale="ms-MY" value="99.9"></o-number>
+  <o-number id="kg" name="kg" unit="kg" allow-negative precision="2" controls="none"></o-number>
+  <o-number id="pct" name="pct" percent max="100"></o-number>
+  <input class="o-input" id="bh" data-o-number data-o-number-name="amount" data-o-currency="EUR" data-o-number-locale="de-DE">
+  <div class="o-input-wrap"><input class="o-input" id="pw" name="pw" type="password" data-o-password-toggle data-o-password-generate="20"></div>
+  <input class="o-input" id="pw2" type="password" data-o-strength data-o-strength-min="2">
+  <button class="o-btn" type="reset">Reset</button>
+</form>
+</body>
+</html>

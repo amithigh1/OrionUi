@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Icons — Orion Admin</title>
+<meta name="docs:section" content="Foundation">
+<meta name="docs:order" content="60">
+<meta name="docs:desc" content="400+ hand-drawn 24px stroke icons, brand marks, aliases, sizing and color helpers">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Icons</h1>
+    <p class="docs-lead"><span data-icons-total>400+</span> hand-drawn icons on a 24&times;24 grid with 2px round strokes, all
+      drawn in <code>currentColor</code>. Use them with <code>&lt;o-icon&gt;</code> or <code>Orion.icon()</code>, scale them with one CSS
+      variable, and look them up by name, alias or category.</p>
+  </header>
+
+  <section id="gallery">
+    <h2>Gallery</h2>
+    <p>Search by name, alias (<code>close</code>, <code>gear</code>, <code>cart</code>…) or category. Click an icon to copy its
+      <code>&lt;o-icon&gt;</code> tag and open its details. Arrow keys move between icons; Enter or Space copies.</p>
+    <div class="docs-demo" data-code="none">
+      <template>
+        <style>
+          .icons-app { display: grid; gap: .875rem; }
+          .icons-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .625rem 1rem; }
+          .icons-search { flex: 1 1 16rem; min-width: 0; }
+          .icons-size { display: flex; align-items: center; gap: .5rem; font-size: var(--o-fs-sm); color: var(--o-text-muted); }
+          .icons-size .o-range { width: 7.5rem; }
+          .icons-size output { min-width: 2.5rem; font-variant-numeric: tabular-nums; color: var(--o-text); }
+          .icons-stroke { display: flex; align-items: center; gap: .5rem; font-size: var(--o-fs-sm); color: var(--o-text-muted); }
+          .icons-chips { display: flex; flex-wrap: wrap; gap: .375rem; }
+          .icons-chips .o-chip small { margin-inline-start: .25rem; color: var(--o-text-subtle); font-variant-numeric: tabular-nums; }
+          .icons-chips .o-chip[aria-pressed="true"] small { color: inherit; opacity: .75; }
+          .icons-status { margin: 0; font-size: var(--o-fs-xs); color: var(--o-text-muted); }
+          .icons-scroll { max-height: min(34rem, 68vh); margin-inline: -.25rem; padding: .25rem; }
+          .icons-grid { --o-icon-size: 24px; display: grid; grid-template-columns: repeat(auto-fill, minmax(6.25rem, 1fr)); gap: .375rem; }
+          .icons-cell {
+            position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .5rem;
+            min-height: calc(var(--o-icon-size) + 3.75rem); padding: .75rem .25rem .5rem; border: 1px solid transparent; border-radius: var(--o-radius);
+            color: var(--o-text); background: var(--o-surface-2); font: inherit; cursor: pointer; transition: border-color var(--o-dur-fast), background var(--o-dur-fast);
+          }
+          .icons-cell:hover { border-color: var(--o-border-strong); background: var(--o-surface); }
+          .icons-cell:focus-visible { outline: 2px solid var(--o-focus); outline-offset: 1px; }
+          .icons-cell.is-active { border-color: var(--o-primary-border); background: var(--o-primary-subtle); color: var(--o-primary-text); }
+          .icons-cell > span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .6875rem; color: var(--o-text-muted); }
+          .icons-cell.is-active > span { color: inherit; }
+          .icons-cell::after {
+            content: "Copied"; position: absolute; inset-block-start: .3rem; inset-inline-end: .3rem; padding: 0 .35rem; border-radius: var(--o-radius-pill);
+            font-size: .625rem; font-weight: 600; line-height: 1.5; color: var(--o-on-success); background: var(--o-success); opacity: 0; transform: scale(.8);
+            transition: opacity var(--o-dur-fast), transform var(--o-dur-fast); pointer-events: none;
+          }
+          .icons-cell.is-copied::after { opacity: 1; transform: none; }
+          .icons-detail { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1rem 1.25rem; padding: 1rem; border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); background: var(--o-surface-2); }
+          .icons-preview { display: grid; place-items: center; width: 7rem; height: 7rem; border-radius: var(--o-radius); color: var(--o-text);
+            background-color: var(--o-surface); background-image: linear-gradient(var(--o-border) 1px, transparent 1px), linear-gradient(90deg, var(--o-border) 1px, transparent 1px);
+            background-size: calc(100% / 12) calc(100% / 12); border: 1px solid var(--o-border); --o-icon-size: 5rem; }
+          .icons-meta { display: grid; gap: .5rem; align-content: start; min-width: 0; }
+          .icons-meta h3 { margin: 0; font-size: var(--o-fs-lg); font-family: var(--o-font-mono); }
+          .icons-meta p { margin: 0; font-size: var(--o-fs-sm); color: var(--o-text-muted); }
+          .icons-sizes { display: flex; align-items: flex-end; gap: .75rem; color: var(--o-text); }
+          .icons-actions { display: flex; flex-wrap: wrap; gap: .375rem; }
+          .icons-svg { grid-column: 1 / -1; margin: 0; padding: .75rem 1rem; max-height: 14rem; overflow: auto; font: .75rem/1.6 var(--o-font-mono);
+            white-space: pre-wrap; word-break: break-all; color: var(--o-text); background: var(--o-surface); border: 1px solid var(--o-border); border-radius: var(--o-radius); }
+          @media (max-width: 575.98px) {
+            .icons-grid { grid-template-columns: repeat(auto-fill, minmax(4.75rem, 1fr)); }
+            .icons-chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: -1rem; padding: 0 1rem .125rem; }
+            .icons-chips::-webkit-scrollbar { display: none; }
+            .icons-chips .o-chip { flex: none; }
+            .icons-detail { gap: .75rem; padding: .75rem; }
+            .icons-preview { width: 4.5rem; height: 4.5rem; --o-icon-size: 3.25rem; }
+            .icons-sizes { display: none; }
+            .icons-size .o-range { width: 5.5rem; }
+            .icons-scroll { max-height: 60vh; }
+          }
+        </style>
+        <div class="icons-app" id="icons-app">
+          <div class="icons-toolbar">
+            <label class="o-input-wrap icons-search">
+              <o-icon name="search"></o-icon>
+              <input class="o-input" type="search" placeholder="Search icons…" aria-label="Search icons" autocomplete="off" spellcheck="false">
+            </label>
+            <label class="icons-size">Size <input class="o-range" type="range" min="16" max="48" step="4" value="24"><output>24px</output></label>
+            <div class="icons-stroke"><span id="icons-stroke-label">Stroke</span>
+              <div class="o-segmented" role="radiogroup" aria-labelledby="icons-stroke-label">
+                <label><input type="radio" name="icons-stroke" value="o-icon-thin"><span>1.5</span></label>
+                <label><input type="radio" name="icons-stroke" value="" checked><span>2</span></label>
+                <label><input type="radio" name="icons-stroke" value="o-icon-bold"><span>2.5</span></label>
+              </div>
+            </div>
+          </div>
+          <div class="icons-chips" role="group" aria-label="Filter by category"></div>
+          <div class="icons-detail" hidden>
+            <div class="icons-preview"></div>
+            <div class="icons-meta">
+              <h3></h3>
+              <p class="icons-info"></p>
+              <div class="icons-sizes" aria-hidden="true"></div>
+              <div class="icons-actions">
+                <button type="button" class="o-btn o-btn-sm" data-copy="html"><o-icon name="copy"></o-icon>&lt;o-icon&gt;</button>
+                <button type="button" class="o-btn o-btn-sm" data-copy="js"><o-icon name="code"></o-icon>Orion.icon()</button>
+                <button type="button" class="o-btn o-btn-sm" data-copy="svg"><o-icon name="file-code"></o-icon>Copy SVG</button>
+                <button type="button" class="o-btn o-btn-sm o-btn-ghost" data-toggle-svg aria-expanded="false"><o-icon name="eye"></o-icon>Show SVG</button>
+              </div>
+            </div>
+            <pre class="icons-svg" hidden></pre>
+          </div>
+          <p class="icons-status" aria-live="polite"></p>
+          <div class="icons-scroll o-scroll"><div class="icons-grid"></div></div>
+          <div class="o-empty o-empty-sm" hidden>
+            <div class="o-empty-icon"><o-icon name="search"></o-icon></div>
+            <p class="o-empty-title">No icons found</p>
+            <p class="o-empty-text">Try another word, or <button type="button" class="o-btn o-btn-link o-btn-sm" data-reset>clear the filters</button>.</p>
+          </div>
+        </div>
+        <script>
+        (() => {
+          const O = window.Orion, I = O.icons;
+          const app = document.getElementById('icons-app');
+          const $ = s => app.querySelector(s);
+          const input = $('.icons-search input'), range = $('.icons-size input'), out = $('.icons-size output');
+          const chips = $('.icons-chips'), grid = $('.icons-grid'), status = $('.icons-status'), empty = $('.o-empty');
+          const detail = $('.icons-detail'), pre = $('.icons-svg');
+          const cats = I.categories;
+          const catOf = {};
+          for (const c in cats) for (const n of cats[c]) catOf[n] = c;
+          const ALL = Object.keys(cats).flatMap(c => cats[c]).concat(I.names().filter(n => !(n in catOf)));
+          let cat = 'All', stroke = '', selected = null, copyTimer = 0;
+
+          const cells = new Map(ALL.map(name => {
+            const b = document.createElement('button');
+            b.type = 'button'; b.className = 'icons-cell'; b.dataset.name = name; b.title = name;
+            b.innerHTML = String(O.icon(name)) + '<span></span>';
+            b.lastChild.textContent = name;
+            return [name, b];
+          }));
+
+          const copy = async text => {
+            try { await navigator.clipboard.writeText(text); return true; }
+            catch { const ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;opacity:0'; document.body.append(ta); ta.select(); let ok = false; try { ok = document.execCommand('copy'); } catch {} ta.remove(); return ok; }
+          };
+          const strokeWidth = () => (stroke === 'o-icon-thin' ? 1.5 : stroke === 'o-icon-bold' ? 2.5 : 2);
+          const svgOf = name => `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${strokeWidth()}" stroke-linecap="round" stroke-linejoin="round">${I.get(name)}</svg>`;
+          const snippet = (kind, name) => kind === 'js' ? `Orion.icon('${name}')` : kind === 'svg' ? svgOf(name) : `<o-icon name="${name}"></o-icon>`;
+
+          function paintChips(counts) {
+            chips.innerHTML = '';
+            for (const c of ['All', ...Object.keys(cats)]) {
+              const b = document.createElement('button');
+              b.type = 'button'; b.className = 'o-chip'; b.dataset.cat = c;
+              b.setAttribute('aria-pressed', String(c === cat));
+              b.textContent = c;
+              const s = document.createElement('small'); s.textContent = counts[c] || 0; b.append(s);
+              chips.append(b);
+            }
+          }
+          function render() {
+            const q = input.value.trim();
+            const matched = q ? I.search(q) : ALL;
+            const counts = { All: matched.length };
+            for (const n of matched) counts[catOf[n]] = (counts[catOf[n]] || 0) + 1;
+            paintChips(counts);
+            const list = cat === 'All' ? matched : matched.filter(n => catOf[n] === cat);
+            for (const n of list) cells.get(n).lastChild.innerHTML = q ? O.util.highlight(n, q) : n;
+            grid.replaceChildren(...list.map(n => cells.get(n)));
+            grid.parentElement.scrollTop = 0;
+            empty.hidden = list.length > 0;
+            status.textContent = `${list.length} ${list.length === 1 ? 'icon' : 'icons'}${cat !== 'All' ? ' in ' + cat : ''}${q ? ` matching “${q}”` : ''}`;
+          }
+          function select(name) {
+            selected = name;
+            cells.forEach((c, n) => c.classList.toggle('is-active', n === name));
+            detail.hidden = false;
+            detail.querySelector('.icons-preview').innerHTML = String(O.icon(name, { class: stroke }));
+            detail.querySelector('h3').textContent = name;
+            const al = I.aliasesOf(name);
+            detail.querySelector('.icons-info').textContent = (catOf[name] || 'Other') + (al.length ? ' · also: ' + al.join(', ') : '');
+            detail.querySelector('.icons-sizes').innerHTML = [16, 20, 24, 32].map(s => String(O.icon(name, { size: s, class: stroke }))).join('');
+            if (!pre.hidden) pre.textContent = svgOf(name);
+          }
+          async function copyCell(cell) {
+            const name = cell.dataset.name;
+            select(name);
+            await copy(snippet('html', name));
+            cells.forEach(c => c.classList.remove('is-copied'));
+            cell.classList.add('is-copied');
+            clearTimeout(copyTimer); copyTimer = setTimeout(() => cell.classList.remove('is-copied'), 1200);
+            O.announce(`Copied <o-icon name="${name}">`);
+          }
+
+          input.addEventListener('input', render);
+          input.addEventListener('keydown', e => { if (e.key === 'Enter') { const first = grid.firstElementChild; if (first) { e.preventDefault(); first.focus(); } } });
+          chips.addEventListener('click', e => { const b = e.target.closest('.o-chip'); if (!b) return; cat = b.dataset.cat; render(); chips.querySelector(`[data-cat="${CSS.escape(cat)}"]`)?.focus(); });
+          range.addEventListener('input', () => { grid.style.setProperty('--o-icon-size', range.value + 'px'); out.textContent = range.value + 'px'; });
+          app.addEventListener('change', e => {
+            if (e.target.name !== 'icons-stroke') return;
+            stroke = e.target.value;
+            grid.classList.remove('o-icon-thin', 'o-icon-bold');
+            if (stroke) grid.classList.add(stroke);
+            if (selected) select(selected);
+          });
+          grid.addEventListener('click', e => { const c = e.target.closest('.icons-cell'); if (c) copyCell(c); });
+          grid.addEventListener('keydown', e => {
+            const list = [...grid.children], i = list.indexOf(document.activeElement);
+            if (i < 0) return;
+            const top = list[0].offsetTop; let cols = list.findIndex(c => c.offsetTop !== top); if (cols < 0) cols = list.length;
+            const rtl = getComputedStyle(grid).direction === 'rtl';
+            const step = { ArrowRight: rtl ? -1 : 1, ArrowLeft: rtl ? 1 : -1, ArrowDown: cols, ArrowUp: -cols }[e.key];
+            let j = step != null ? i + step : e.key === 'Home' ? 0 : e.key === 'End' ? list.length - 1 : null;
+            if (j == null) return;
+            e.preventDefault();
+            list[Math.max(0, Math.min(list.length - 1, j))].focus();
+          });
+          detail.addEventListener('click', async e => {
+            const b = e.target.closest('button'); if (!b || !selected) return;
+            if (b.hasAttribute('data-toggle-svg')) {
+              pre.hidden = !pre.hidden; if (!pre.hidden) pre.textContent = svgOf(selected);
+              b.setAttribute('aria-expanded', String(!pre.hidden));
+              b.lastChild.textContent = pre.hidden ? 'Show SVG' : 'Hide SVG';
+              b.querySelector('o-icon').setAttribute('name', pre.hidden ? 'eye' : 'eye-off');
+              return;
+            }
+            const kind = b.dataset.copy; if (!kind) return;
+            await copy(snippet(kind, selected));
+            const label = b.lastChild, text = label.textContent;
+            label.textContent = 'Copied!'; setTimeout(() => { label.textContent = text; }, 1200);
+            O.announce('Copied ' + (kind === 'svg' ? 'SVG markup' : snippet(kind, selected)));
+          });
+          app.querySelector('[data-reset]').addEventListener('click', () => { input.value = ''; cat = 'All'; render(); input.focus(); });
+          input.placeholder = `Search ${ALL.length} icons…`;
+          render();
+          select(I.has('dashboard') ? 'dashboard' : ALL[0]);
+        })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="usage">
+    <h2>Using icons</h2>
+    <p>The <code>&lt;o-icon&gt;</code> element renders an inline SVG. It inherits the text color and scales with the font size
+      (1.25em by default), so it lines up with text in buttons, inputs, menus and tables without extra CSS.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-icon name="home"></o-icon>
+        <o-icon name="users"></o-icon>
+        <o-icon name="chart-bar"></o-icon>
+        <o-icon name="shopping-cart"></o-icon>
+        <o-icon name="settings"></o-icon>
+        <button class="o-btn o-btn-primary"><o-icon name="plus"></o-icon> New invoice</button>
+        <button class="o-btn">Export <o-icon name="download"></o-icon></button>
+        <button class="o-btn o-btn-icon" aria-label="Filter"><o-icon name="filter"></o-icon></button>
+        <span class="o-badge o-badge-soft-success"><o-icon name="check-circle"></o-icon> Paid</span>
+      </template>
+    </div>
+  </section>
+
+  <section id="javascript">
+    <h2>JavaScript</h2>
+    <p><code>Orion.icon(name, options)</code> returns the SVG markup (a trusted HTML string you can drop into templates) and
+      <code>Orion.iconEl(name, options)</code> returns a ready <code>SVGElement</code>. Options: <code>size</code>,
+      <code>class</code>, <code>label</code> and <code>stroke</code>.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div id="js-icons" class="o-d-flex o-items-center o-gap-3"></div>
+        <script>
+          const box = document.getElementById('js-icons');
+          box.innerHTML = String(Orion.icon('bell-ring', { size: 28 }))
+            + String(Orion.icon('shield-check', { size: 28, class: 'o-text-success' }))
+            + String(Orion.icon('alert-triangle', { size: 28, label: 'Warning', class: 'o-text-warning' }));
+          box.append(Orion.iconEl('rocket', { size: 28, stroke: 1.5 }));
+        </script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+      // markup string (SafeHTML) – use String() or insert it with Orion.h / html``
+      el.innerHTML = String(Orion.icon('check', { size: 16, class: 'o-text-success' }));
+
+      // element
+      button.prepend(Orion.iconEl('download'));
+
+      // lookups
+      Orion.icons.has('gear');            // true (alias)
+      Orion.icons.resolve('gear');        // 'settings'
+      Orion.icons.search('cart');         // ['shopping-cart', ...]
+      Orion.icons.categories.Commerce;    // ['shopping-cart', 'shopping-bag', ...]
+      Orion.icons.names().length;         // canonical icons (aliases excluded)
+    </pre>
+  </section>
+
+  <section id="custom">
+    <h2>Adding your own icons</h2>
+    <p>Register inner SVG markup drawn on a 24&times;24 grid. Leave out <code>fill</code>/<code>stroke</code> so the shared
+      2px round stroke applies; add <code>fill="currentColor" stroke="none"</code> on shapes that must be solid. Re-registering an
+      existing name replaces it everywhere, including already rendered <code>&lt;o-icon&gt;</code> elements.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-icon name="ticket" class="o-icon-xl"></o-icon>
+        <o-icon name="support-ticket" class="o-icon-xl o-text-primary"></o-icon>
+        <script>
+          Orion.icons.add({
+            ticket: '<path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v8a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2z"/><path d="M9 6v12" stroke-dasharray="2 2.5"/>',
+          });
+          Orion.icons.alias('support-ticket', 'ticket');
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="aliases">
+    <h2>Aliases</h2>
+    <p>Common alternative names resolve to the same drawing: <code>close</code> &rarr; <code>x</code>, <code>delete</code> &rarr;
+      <code>trash</code>, <code>gear</code>/<code>cog</code> &rarr; <code>settings</code>, <code>pencil</code> &rarr; <code>edit</code>,
+      <code>cart</code> &rarr; <code>shopping-cart</code> and <span data-icons-aliases>many</span> more. They are registered as real
+      icons, so they work everywhere a name is accepted. Add your own with <code>Orion.icons.alias('name', 'target')</code>.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-icon name="close"></o-icon>
+        <o-icon name="delete"></o-icon>
+        <o-icon name="gear"></o-icon>
+        <o-icon name="pencil"></o-icon>
+        <o-icon name="cart"></o-icon>
+        <o-icon name="email"></o-icon>
+        <o-icon name="spinner" class="o-icon-spin"></o-icon>
+      </template>
+    </div>
+  </section>
+
+  <section id="sizing">
+    <h2>Sizing &amp; stroke</h2>
+    <p>Icons follow <code>--o-icon-size</code> (default <code>1.25em</code>). The size classes set that variable, so they work on
+      the SVG, on <code>&lt;o-icon&gt;</code> or on any parent. An explicit <code>size</code> attribute always wins.
+      <code>.o-icon-thin</code> and <code>.o-icon-bold</code> change the stroke to 1.5 or 2.5.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-icon name="layers" class="o-icon-xs"></o-icon>
+        <o-icon name="layers" class="o-icon-sm"></o-icon>
+        <o-icon name="layers"></o-icon>
+        <o-icon name="layers" class="o-icon-lg"></o-icon>
+        <o-icon name="layers" class="o-icon-xl"></o-icon>
+        <o-icon name="layers" class="o-icon-2xl"></o-icon>
+        <o-icon name="layers" size="56"></o-icon>
+      </template>
+    </div>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-icon-thin o-icon-xl o-d-flex o-gap-3"><o-icon name="calendar-check"></o-icon><o-icon name="message-circle"></o-icon><o-icon name="wallet"></o-icon></div>
+        <div class="o-icon-xl o-d-flex o-gap-3"><o-icon name="calendar-check"></o-icon><o-icon name="message-circle"></o-icon><o-icon name="wallet"></o-icon></div>
+        <div class="o-icon-bold o-icon-xl o-d-flex o-gap-3"><o-icon name="calendar-check"></o-icon><o-icon name="message-circle"></o-icon><o-icon name="wallet"></o-icon></div>
+      </template>
+    </div>
+  </section>
+
+  <section id="color">
+    <h2>Color &amp; backgrounds</h2>
+    <p>Strokes use <code>currentColor</code>: set <code>color</code> (or a <code>.o-text-*</code> utility) on the icon or its parent.
+      <code>.o-icon-bg</code> adds a tinted circle from the current color context: combine it with <code>.o-c-{color}</code>,
+      <code>.o-icon-bg-solid</code> or <code>.o-icon-bg-rounded</code>.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-icon name="trending-up" class="o-icon-lg o-text-success"></o-icon>
+        <o-icon name="trending-down" class="o-icon-lg o-text-danger"></o-icon>
+        <o-icon name="alert-triangle" class="o-icon-lg o-text-warning"></o-icon>
+        <o-icon name="info" class="o-icon-lg o-text-info"></o-icon>
+        <o-icon name="users" class="o-icon-bg o-icon-lg"></o-icon>
+        <o-icon name="dollar-sign" class="o-icon-bg o-icon-lg o-c-success"></o-icon>
+        <o-icon name="shopping-bag" class="o-icon-bg o-icon-lg o-c-warning"></o-icon>
+        <o-icon name="activity" class="o-icon-bg o-icon-bg-rounded o-icon-lg o-c-info"></o-icon>
+        <o-icon name="zap" class="o-icon-bg o-icon-bg-solid o-icon-lg o-c-danger"></o-icon>
+      </template>
+    </div>
+  </section>
+
+  <section id="brands">
+    <h2>Brand marks</h2>
+    <p>Simplified monochrome marks prefixed with <code>brand-</code>, for sign-in buttons, social links and integrations.
+      Brand names and logos are trademarks of their owners; follow each brand's guidelines.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn"><o-icon name="brand-google"></o-icon> Continue with Google</button>
+        <button class="o-btn"><o-icon name="brand-microsoft"></o-icon> Microsoft</button>
+        <button class="o-btn"><o-icon name="brand-github"></o-icon> GitHub</button>
+        <span class="o-d-flex o-gap-2 o-text-muted">
+          <o-icon name="brand-x" label="X"></o-icon><o-icon name="brand-linkedin" label="LinkedIn"></o-icon><o-icon name="brand-youtube" label="YouTube"></o-icon>
+          <o-icon name="brand-instagram" label="Instagram"></o-icon><o-icon name="brand-discord" label="Discord"></o-icon><o-icon name="brand-slack" label="Slack"></o-icon>
+        </span>
+      </template>
+    </div>
+  </section>
+
+  <section id="rtl">
+    <h2>Right-to-left</h2>
+    <p>Directional icons mirror automatically under <code>dir="rtl"</code>: arrows, chevrons, <code>undo</code>/<code>redo</code>,
+      <code>reply</code>/<code>forward</code>, <code>log-in</code>/<code>log-out</code>, <code>send</code>, <code>indent</code>/<code>outdent</code>,
+      <code>list</code>, the <code>corner-*</code> arrows and the sidebar toggles (<code>Orion.icons.rtl</code> lists them). Add
+      <code>.o-icon-flip</code> to mirror any other icon, or <code>.o-icon-no-flip</code> to keep one as drawn.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div dir="rtl" class="o-d-flex o-gap-3 o-icon-lg">
+          <o-icon name="arrow-right"></o-icon><o-icon name="undo"></o-icon><o-icon name="reply"></o-icon><o-icon name="corner-down-left"></o-icon>
+          <o-icon name="indent"></o-icon><o-icon name="panel-left-close"></o-icon><o-icon name="chart-line" class="o-icon-flip"></o-icon>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="accessibility">
+    <h2>Accessibility</h2>
+    <p>Icons are decorative by default: they get <code>aria-hidden="true"</code> and <code>focusable="false"</code>. When an icon
+      carries meaning on its own, give it a <code>label</code>: it becomes <code>role="img"</code> with an
+      <code>aria-label</code> and a <code>&lt;title&gt;</code>. Icon-only buttons need an <code>aria-label</code> on the button,
+      and color should never be the only signal (pair status icons with text).</p>
+    <pre class="docs-code-block" data-lang="html">
+      &lt;!-- decorative: hidden from assistive technology --&gt;
+      &lt;button class="o-btn"&gt;&lt;o-icon name="download"&gt;&lt;/o-icon&gt; Export&lt;/button&gt;
+
+      &lt;!-- meaningful on its own: announced as an image --&gt;
+      &lt;o-icon name="alert-triangle" label="Payment overdue"&gt;&lt;/o-icon&gt;
+
+      &lt;!-- icon-only button: label the button --&gt;
+      &lt;button class="o-btn o-btn-icon" aria-label="Delete row"&gt;&lt;o-icon name="trash"&gt;&lt;/o-icon&gt;&lt;/button&gt;
+    </pre>
+  </section>
+
+  <section id="frameworks">
+    <h2>Frameworks</h2>
+    <p><code>&lt;o-icon&gt;</code> is a light-DOM custom element with string attributes, so it works as-is in React, Vue, Angular and
+      Svelte (<code>&lt;o-icon name="check" /&gt;</code>). In React you can also render markup directly:
+      <code>&lt;span dangerouslySetInnerHTML={{ __html: String(Orion.icon('check')) }} /&gt;</code>. Server-side, the bundle
+      loads in Node and <code>Orion.icon()</code> returns plain markup.</p>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>&lt;o-icon&gt; attributes</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>name</td><td>string</td><td>Icon name or alias. Unknown names render an empty 24&times;24 box.</td></tr>
+        <tr><td>size</td><td>number | length</td><td>Width and height (<code>24</code>, <code>2rem</code>). Wins over the CSS size.</td></tr>
+        <tr><td>label</td><td>string</td><td>Accessible name; turns the icon into <code>role="img"</code> with a <code>&lt;title&gt;</code>.</td></tr>
+        <tr><td>stroke</td><td>number</td><td>Stroke width (default 2).</td></tr>
+      </tbody>
+    </table>
+    <p><code>&lt;o-icon&gt;</code> fires no events and has no methods; set <code>name</code>/<code>size</code>/<code>label</code>/<code>stroke</code> as attributes or properties.</p>
+    <h3>JavaScript</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Orion.icon(name, opts)</td><td>SVG markup (SafeHTML). <code>opts</code>: <code>size</code>, <code>class</code>, <code>label</code>, <code>stroke</code>.</td></tr>
+        <tr><td>Orion.iconEl(name, opts)</td><td>Same, as an <code>SVGElement</code>.</td></tr>
+        <tr><td>Orion.icons.add(map)</td><td>Register or replace icons: <code>{ name: '&lt;path d="…"/&gt;' }</code>. Aliases of a replaced icon follow it.</td></tr>
+        <tr><td>Orion.icons.alias(name, target)</td><td>Add an alias (also accepts an object map). Never overrides a real icon.</td></tr>
+        <tr><td>Orion.icons.get(name) / has(name)</td><td>Inner markup of an icon / whether a name (or alias) exists.</td></tr>
+        <tr><td>Orion.icons.list() / names()</td><td>All registered names including aliases / canonical names only.</td></tr>
+        <tr><td>Orion.icons.resolve(name)</td><td>Canonical name for an alias (<code>'gear'</code> &rarr; <code>'settings'</code>).</td></tr>
+        <tr><td>Orion.icons.aliasesOf(name)</td><td>Aliases of an icon (<code>'x'</code> &rarr; <code>['close', 'cancel']</code>).</td></tr>
+        <tr><td>Orion.icons.aliases</td><td>Alias map <code>{ alias: canonical }</code>.</td></tr>
+        <tr><td>Orion.icons.categories</td><td><code>{ Navigation: [...], Actions: [...], … }</code>; every canonical icon appears once.</td></tr>
+        <tr><td>Orion.icons.categoryOf(name)</td><td>Category of an icon or alias.</td></tr>
+        <tr><td>Orion.icons.search(query, limit)</td><td>Fuzzy, ranked search over names, aliases and categories.</td></tr>
+        <tr><td>Orion.icons.rtl</td><td>Names of the extra icons that mirror in RTL.</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS</h3>
+    <table class="docs-api">
+      <thead><tr><th>Class / variable</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>--o-icon-size</td><td>Icon width and height (default <code>1.25em</code>).</td></tr>
+        <tr><td>.o-icon-xs / -sm / -md / -lg / -xl / -2xl</td><td>12, 16, 20, 24, 32 and 48px. On the icon, on <code>&lt;o-icon&gt;</code> or on a parent.</td></tr>
+        <tr><td>.o-icon-thin / .o-icon-bold</td><td>Stroke width 1.5 / 2.5.</td></tr>
+        <tr><td>.o-icon-bg</td><td>Tinted circular background from <code>--o-c-subtle</code> / <code>--o-c-text</code> (use with <code>.o-c-{color}</code>).</td></tr>
+        <tr><td>.o-icon-bg-solid / .o-icon-bg-rounded</td><td>Solid <code>--o-c</code> background / rounded-square shape.</td></tr>
+        <tr><td>.o-icon-spin</td><td>Continuous rotation (loaders).</td></tr>
+        <tr><td>.o-icon-flip / .o-icon-no-flip</td><td>Mirror in RTL / never mirror.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+<script>
+  (function () {
+    var I = window.Orion && Orion.icons;
+    if (!I || !I.names) return;
+    document.querySelectorAll('[data-icons-total]').forEach(function (el) { el.textContent = I.names().length; });
+    document.querySelectorAll('[data-icons-aliases]').forEach(function (el) { el.textContent = Object.keys(I.aliases).length; });
+  })();
+</script>
+</body>
+</html>

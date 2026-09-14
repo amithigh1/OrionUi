@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Print Preview — Orion Admin</title>
+<meta name="docs:section" content="Data">
+<meta name="docs:order" content="70">
+<meta name="docs:desc" content="Paginated print preview with paper, orientation, margins, scale and PDF download">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Print Preview</h1>
+    <p class="docs-lead"><code>Orion.printPreview(target)</code> shows any element, HTML or dataset as real paper pages before printing: choose the paper size, orientation, margins, scale and background graphics, see exactly where pages break, then print through a hidden frame with matching <code>@page</code> rules — or download a PDF for tabular data. Headers and footers get page numbers.</p>
+  </header>
+
+  <section id="element">
+    <h2>Preview an element</h2>
+    <p>The element is cloned (form values kept, canvases turned into images, components flattened to their rendered markup) and split into pages between blocks, list items and table rows. Table headers repeat on every page, and <code>break-before: page</code> / <code>break-inside: avoid</code> are honoured.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-primary" id="pp-open"><o-icon name="printer"></o-icon> Print preview</button>
+          <button class="o-btn" id="pp-land">Landscape, narrow margins</button>
+        </div>
+        <article class="o-card" id="pp-report">
+          <div class="o-card-header"><div><h3 class="o-card-title">Monthly operations report</h3><p class="o-card-subtitle">September 2026 · Kuala Lumpur office</p></div><span class="o-badge o-badge-soft-success">On track</span></div>
+          <div class="o-card-body">
+            <div class="o-grid-auto o-mb-4" style="--o-min: 9rem">
+              <div class="o-stat"><span class="o-stat-label">Revenue</span><span class="o-stat-value">$482k</span><span class="o-trend is-up">12.4%</span></div>
+              <div class="o-stat"><span class="o-stat-label">Orders</span><span class="o-stat-value">3,914</span><span class="o-trend is-up">4.1%</span></div>
+              <div class="o-stat"><span class="o-stat-label">Refunds</span><span class="o-stat-value">1.8%</span><span class="o-trend is-down">0.3%</span></div>
+              <div class="o-stat"><span class="o-stat-label">NPS</span><span class="o-stat-value">61</span><span class="o-trend is-flat">0</span></div>
+            </div>
+            <h4>Summary</h4>
+            <p>Revenue grew for the third consecutive month, driven by partner channels in Asia Pacific. Fulfilment times improved after the warehouse move; refunds stayed below target. The table below lists every account manager with their monthly results.</p>
+            <div class="o-table-wrap o-mb-4" id="pp-table"></div>
+            <h4>Notes</h4>
+            <ol id="pp-notes"></ol>
+          </div>
+        </article>
+        <script>
+          (() => {
+            const people = docs.people(42);
+            document.getElementById('pp-table').innerHTML = Orion.export.tableHTML(people, { columns: [{ key: 'id', title: '#' }, { key: 'name', title: 'Account manager' }, { key: 'department', title: 'Team' }, { key: 'country', title: 'Country' }, { key: 'salary', title: 'Pipeline', type: 'currency' }, { key: 'progress', title: 'Quota', value: r => r.progress / 100, type: 'percent' }], tableClass: 'o-table o-table-sm o-table-striped' });
+            document.getElementById('pp-notes').innerHTML = Array.from({ length: 8 }, (_, i) => `<li>Follow-up item ${i + 1}: review the forecast with the regional leads and confirm the staffing plan for the next quarter.</li>`).join('');
+            document.getElementById('pp-open').onclick = () => Orion.printPreview('#pp-report', { title: 'Monthly operations report' });
+            document.getElementById('pp-land').onclick = () => Orion.printPreview('#pp-report', { title: 'Monthly operations report', orientation: 'landscape', margins: 'narrow', paper: 'Letter' });
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="table">
+    <h2>Print a dataset</h2>
+    <p><code>Orion.printTable(rows, columns, options)</code> builds a clean report (title, generated date, record count, bordered table) and opens the preview; the toolbar’s <strong>Download PDF</strong> button produces the same report with <code>O.export.pdf</code>. Pass <code>preview: false</code> to go straight to the print dialog.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-primary" id="pt-open"><o-icon name="printer"></o-icon> Print 150 people</button>
+        <button class="o-btn" id="pt-direct">Print without preview</button>
+        <script>
+          (() => {
+            const rows = docs.people(150);
+            const columns = [{ key: 'id', title: 'ID' }, { key: 'name', title: 'Name' }, { key: 'email', title: 'Email' }, { key: 'role', title: 'Role' }, { key: 'status', title: 'Status' }, { key: 'joined', title: 'Joined', type: 'date' }];
+            document.getElementById('pt-open').onclick = () => Orion.printTable(rows, columns, { title: 'People directory', subtitle: 'All departments' });
+            document.getElementById('pt-direct').onclick = () => Orion.printTable(rows, columns, { title: 'People directory', preview: false });
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="html">
+    <h2>HTML, headers &amp; footers</h2>
+    <p>Pass trusted HTML directly. <code>header</code> and <code>footer</code> accept text with <code>{page}</code>, <code>{pages}</code>, <code>{title}</code>, <code>{date}</code> and <code>{time}</code> tokens, an object with <code>left</code> / <code>center</code> / <code>right</code> slots, or a function returning text or a node.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-primary" id="ph-open"><o-icon name="printer"></o-icon> Preview an invoice</button>
+        <script>
+          (() => {
+            const items = Array.from({ length: 26 }, (_, i) => ({ item: ['Consulting', 'Design sprint', 'Cloud hosting', 'Support plan', 'Training'][i % 5] + ' — ' + ['phase ', 'module ', 'tier ', 'seat ', 'day '][i % 5] + (i + 1), qty: 1 + (i % 4), price: 120 + (i * 37) % 900 }));
+            const money = v => Orion.format.currency(v);
+            const html = `<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:2rem">
+                <div><h1 style="margin:0">Invoice #1042</h1><p class="o-muted">Issued 11 September 2026 · due in 30 days</p></div>
+                <div style="text-align:end"><strong>Orion Labs Sdn Bhd</strong><br>Level 12, Menara Orion<br>50450 Kuala Lumpur</div></div>
+              <p><strong>Bill to:</strong> ACME Corporation, 1 Infinite Loop, Singapore 049315</p>
+              <table class="o-table o-table-sm o-table-bordered"><thead><tr><th>Item</th><th class="o-num">Qty</th><th class="o-num">Price</th><th class="o-num">Amount</th></tr></thead>
+              <tbody>${items.map(r => `<tr><td>${r.item}</td><td class="o-num">${r.qty}</td><td class="o-num">${money(r.price)}</td><td class="o-num">${money(r.qty * r.price)}</td></tr>`).join('')}</tbody>
+              <tfoot><tr><td colspan="3">Total</td><td class="o-num">${money(items.reduce((s, r) => s + r.qty * r.price, 0))}</td></tr></tfoot></table>
+              <div style="break-before: page"><h2>Terms &amp; conditions</h2><p>This page always starts on a new sheet because it uses <code>break-before: page</code>. Payment is due within 30 days. Late payments incur a 1.5% monthly fee.</p></div>`;
+            document.getElementById('ph-open').onclick = () => Orion.printPreview(html, {
+              title: 'Invoice #1042',
+              header: { left: 'Orion Labs · Invoice #1042', right: '{date}' },
+              footer: ({ page, pages }) => `Page ${page} of ${pages} · Thank you for your business`,
+            });
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Function / option</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Orion.printPreview(target, opts)</td><td>Opens the preview. <code>target</code>: element, selector, trusted HTML string, or <code>{ rows, columns, title, subtitle }</code>. Returns <code>{ el, pages, print(), close(), update(opts), closed: Promise }</code>.</td></tr>
+        <tr><td>Orion.printTable(rows, columns, opts)</td><td>Report preview for a dataset; <code>preview: false</code> prints immediately.</td></tr>
+        <tr><td>Orion.printPreview.print(target, opts)</td><td>Print without the preview (native pagination, same paper settings).</td></tr>
+        <tr><td>title</td><td>Document title (header default, print job name, PDF title).</td></tr>
+        <tr><td>paper</td><td><code>'A4' | 'Letter' | 'Legal' | 'A3' | 'A5'</code> or <code>[width, height]</code> in mm. Default A4.</td></tr>
+        <tr><td>orientation</td><td><code>'portrait' | 'landscape'</code>.</td></tr>
+        <tr><td>margins</td><td><code>'default'</code> (15 mm), <code>'narrow'</code> (8), <code>'wide'</code> (25), <code>'none'</code>, a number of mm or <code>{ top, right, bottom, left }</code>.</td></tr>
+        <tr><td>scale</td><td>Content scale (<code>1</code> = 100%) or <code>'fit'</code> to shrink wide content to the page width.</td></tr>
+        <tr><td>background</td><td>Print background colours and images (default true).</td></tr>
+        <tr><td>header, footer, showPageNumbers</td><td>See above. Defaults: title and date in the header, “Page X of N” in the footer. <code>false</code> hides one.</td></tr>
+        <tr><td>onPrint({ pages, paper, orientation })</td><td>Called before printing; return <code>false</code> to cancel.</td></tr>
+        <tr><td>pdf</td><td>Show “Download PDF” for tabular data (default true; needs rows/columns or a single table).</td></tr>
+        <tr><td>Orion.printPreview.paginate(flowEl, pageHeightPx)</td><td>The measure-then-place pagination algorithm used internally, exposed for advanced/custom preview UIs.</td></tr>
+      </tbody>
+    </table>
+    <h3>Keyboard</h3>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Tab</td><td>Moves through the toolbar controls and the page area (focus stays in the dialog).</td></tr>
+        <tr><td>Ctrl / ⌘ + P</td><td>Print the previewed pages.</td></tr>
+        <tr><td>Arrow keys / Page Up / Page Down</td><td>Scroll the pages when the page area has focus.</td></tr>
+        <tr><td>Esc</td><td>Close the preview.</td></tr>
+      </tbody>
+    </table>
+    <h3>Notes</h3>
+    <p>The preview measures content at the paper’s real size (96 CSS px per inch), so what you see is what the printer receives: the printed pages are the preview pages. HTML passed as a string is inserted as-is — sanitize user content with <code>Orion.sanitize()</code> first.</p>
+  </section>
+</main>
+</body>
+</html>

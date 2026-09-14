@@ -1,0 +1,138 @@
+/* ============================================================================
+ * <o-map> — slippy map chrome. Tiles/markers/vectors are positioned with
+ * inline transforms (JS); this file only styles the static chrome.
+ * ========================================================================== */
+.o-map {
+  position: relative; display: block; width: 100%; height: 400px; min-height: 200px;
+  overflow: hidden; background: var(--o-surface-2); border: 1px solid var(--o-border); border-radius: var(--o-radius-lg);
+  touch-action: none; outline: none; -webkit-tap-highlight-color: transparent; isolation: isolate;
+}
+.o-map:focus-visible { box-shadow: 0 0 0 var(--o-ring-width) color-mix(in srgb, var(--o-focus) var(--o-ring-alpha), transparent); }
+.o-map:fullscreen { border-radius: 0; height: 100%; }
+
+.o-map-viewport { position: absolute; inset: 0; overflow: hidden; cursor: grab; }
+.o-map-viewport.is-dragging { cursor: grabbing; }
+.o-map-tiles, .o-map-svg, .o-map-markers, .o-map-popups { position: absolute; inset: 0; }
+/* .o-map-level (a zoom crossfade layer) sets an explicit z-index so the incoming/outgoing zoom
+ * levels stack correctly; without isolation that z-index escapes .o-map-tiles and is compared
+ * against .o-map-svg/.o-map-markers/.o-map-popups too (which stay at the implicit z-index:auto),
+ * so the tiles would paint above markers/vectors/popups instead of below them. Isolating contains
+ * it to the tile layer, restoring plain DOM-order stacking (tiles, then vectors, markers, popups). */
+.o-map-tiles { isolation: isolate; }
+.o-map-svg { width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.o-map-markers, .o-map-popups { pointer-events: none; }
+.o-map-level { position: absolute; inset: 0; }
+.o-map-tile {
+  position: absolute; top: 0; left: 0; transform-origin: 0 0; display: block;
+  opacity: 0; transition: opacity var(--o-dur) var(--o-ease); image-rendering: -webkit-optimize-contrast;
+  backface-visibility: hidden; user-select: none; -webkit-user-drag: none;
+}
+.o-map-tile.is-loaded { opacity: 1; }
+.o-map-viewport.is-dark-tiles .o-map-tile.o-map-tile-img,
+.o-map-viewport.is-dark-tiles img.o-map-tile { filter: invert(1) hue-rotate(180deg) brightness(.94) contrast(.92) saturate(.9); }
+
+/* ── markers ─────────────────────────────────────────────────────────── */
+.o-map-marker {
+  position: absolute; top: 0; left: 0; width: 26px; height: 34px; margin: -34px 0 0 -13px;
+  padding: 0; border: 0; background: none; pointer-events: auto; cursor: pointer; line-height: 0;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,.35)); transition: transform var(--o-dur-fast) var(--o-ease);
+}
+.o-map-marker:hover svg, .o-map-marker:focus-visible svg { transform: scale(1.12); transform-origin: 50% 100%; }
+.o-map-marker:focus-visible { outline: none; filter: drop-shadow(0 2px 3px rgba(0,0,0,.35)) drop-shadow(0 0 0 3px color-mix(in srgb, var(--o-focus) 55%, transparent)); }
+.o-map-marker.is-dragging { filter: drop-shadow(0 6px 10px rgba(0,0,0,.4)); z-index: 5; }
+.o-map-marker.is-draggable { cursor: grab; }
+.o-map-marker.o-map-marker-custom { width: auto; height: auto; margin: -18px 0 0 -18px; filter: none; }
+.o-map-marker svg { display: block; }
+
+.o-map-cluster {
+  position: absolute; top: 0; left: 0; width: var(--o-map-cluster-size, 36px); height: var(--o-map-cluster-size, 36px);
+  margin-top: calc(var(--o-map-cluster-size, 36px) / -2); margin-left: calc(var(--o-map-cluster-size, 36px) / -2);
+  display: grid; place-items: center; border-radius: 50%; border: 3px solid color-mix(in srgb, var(--o-primary) 30%, transparent);
+  background: var(--o-primary); color: var(--o-on-primary); font-weight: 700; font-size: var(--o-fs-sm);
+  cursor: pointer; pointer-events: auto; box-shadow: var(--o-shadow-sm); transition: transform var(--o-dur-fast) var(--o-ease);
+}
+.o-map-cluster:hover, .o-map-cluster:focus-visible { transform: scale(1.08); outline: none; }
+.o-map-cluster:focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--o-focus) 55%, transparent); }
+
+.o-map-locate-dot { position: absolute; top: 0; left: 0; width: 14px; height: 14px; margin: -7px 0 0 -7px; pointer-events: none; }
+.o-map-locate-dot::after {
+  content: ""; position: absolute; inset: 2px; border-radius: 50%; background: var(--o-primary); border: 2px solid var(--o-surface); box-shadow: var(--o-shadow-sm);
+}
+.o-map-locate-accuracy { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 50%; background: color-mix(in srgb, var(--o-primary) 16%, transparent); border: 1px solid color-mix(in srgb, var(--o-primary) 40%, transparent); }
+.o-map-locate-pulse {
+  position: absolute; inset: -6px; border-radius: 50%; background: var(--o-primary); opacity: .5; animation: o-map-pulse 1.8s ease-out infinite;
+}
+@keyframes o-map-pulse { 0% { transform: scale(.4); opacity: .55; } 100% { transform: scale(2.2); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .o-map-locate-pulse { animation: none; opacity: .25; } }
+
+/* ── vector overlay ─────────────────────────────────────────────────── */
+.o-map-vector { pointer-events: none; }
+
+/* ── popups ──────────────────────────────────────────────────────────── */
+.o-map-popup {
+  position: absolute; top: 0; left: 0; z-index: 6; min-width: 10rem; max-width: min(20rem, calc(100% - 1rem));
+  padding-block: .625rem; padding-inline: .75rem 1.75rem; pointer-events: auto; font-size: var(--o-fs-sm);
+}
+.o-map-popup::after {
+  content: ""; position: absolute; top: 100%; left: var(--o-map-popup-arrow-x, 50%); transform: translateX(-50%);
+  border: 6px solid transparent; border-top-color: var(--o-elevated); filter: drop-shadow(0 2px 1px rgba(0,0,0,.06));
+}
+.o-map-popup-close {
+  position: absolute; top: .375rem; inset-inline-end: .375rem; width: 1.5rem; height: 1.5rem; display: grid; place-items: center;
+  border: 0; border-radius: var(--o-radius-sm); background: transparent; color: var(--o-text-muted); cursor: pointer;
+}
+.o-map-popup-close:hover { background: var(--o-surface-2); color: var(--o-text); }
+.o-map-popup-close svg { width: 14px; height: 14px; }
+.o-map-popup-body :first-child { margin-top: 0; } .o-map-popup-body :last-child { margin-bottom: 0; }
+
+/* ── controls ────────────────────────────────────────────────────────── */
+.o-map-controls { position: absolute; top: .625rem; inset-inline-end: .625rem; z-index: 4; display: flex; flex-direction: column; align-items: flex-end; gap: .5rem; }
+.o-map-zoomctl { display: flex; flex-direction: column; border-radius: var(--o-radius); overflow: hidden; box-shadow: var(--o-shadow-sm); }
+.o-map-ctlbtn {
+  width: 2.25rem; height: 2.25rem; display: grid; place-items: center; border: 1px solid var(--o-border); background: var(--o-surface);
+  color: var(--o-text); cursor: pointer; box-shadow: var(--o-shadow-sm); padding: 0;
+}
+.o-map-zoomctl .o-map-ctlbtn { border-radius: 0; box-shadow: none; border-bottom-width: 0; }
+.o-map-zoomctl .o-map-ctlbtn:last-child { border-bottom-width: 1px; }
+.o-map-ctlbtn:not(.o-map-zoomctl .o-map-ctlbtn) { border-radius: var(--o-radius); }
+.o-map-ctlbtn:hover { background: var(--o-surface-2); }
+.o-map-ctlbtn:focus-visible { outline: none; z-index: 1; box-shadow: 0 0 0 var(--o-ring-width) color-mix(in srgb, var(--o-focus) var(--o-ring-alpha), transparent); }
+.o-map-ctlbtn svg { width: 18px; height: 18px; }
+.o-map-ctlbtn:disabled, .o-map-ctlbtn.is-loading { opacity: .55; cursor: not-allowed; }
+.o-map-ctlbtn[hidden], .o-map-zoomctl[hidden] { display: none; }
+.o-map-layerselect { width: auto; max-width: 9rem; box-shadow: var(--o-shadow-sm); }
+.o-map-listtoggle { background: var(--o-surface); box-shadow: var(--o-shadow-sm); }
+
+.o-map-scale {
+  position: absolute; bottom: .5rem; inset-inline-start: .625rem; z-index: 4; border: 0; cursor: pointer;
+  padding: 0 .25rem .25rem; background: transparent; color: var(--o-text); font-size: var(--o-fs-xs); font-weight: 600;
+  border-bottom: 2px solid var(--o-text); border-inline: 2px solid var(--o-text); width: var(--o-map-scale-w, 60px);
+  text-shadow: 0 1px 2px var(--o-surface), 0 -1px 2px var(--o-surface);
+}
+
+.o-map-attribution {
+  position: absolute; bottom: 0; inset-inline-end: 0; z-index: 4; max-width: 100%; padding: .0625rem .4rem;
+  background: color-mix(in srgb, var(--o-surface) 78%, transparent); color: var(--o-text-muted); font-size: 10px; line-height: 1.6;
+  border-start-start-radius: var(--o-radius-sm);
+}
+.o-map-attribution a { color: inherit; }
+
+/* ── list-of-markers alternative view ──────────────────────────────────── */
+.o-map-list {
+  position: absolute; inset: 0; z-index: 8; background: var(--o-surface); overflow: auto; padding: .75rem;
+}
+.o-map-list-title { font-weight: 600; margin-bottom: .5rem; }
+.o-map-list-items { list-style: none; margin: 0 0 .75rem; padding: 0; display: flex; flex-direction: column; gap: .25rem; }
+.o-map-list-item {
+  display: block; width: 100%; text-align: start; padding: .5rem .625rem; border: 1px solid var(--o-border); border-radius: var(--o-radius);
+  background: var(--o-surface-2); color: var(--o-text); cursor: pointer; font: inherit;
+}
+.o-map-list-item:hover { background: var(--o-surface-3); }
+.o-map-list-item:focus-visible { outline: none; box-shadow: 0 0 0 var(--o-ring-width) color-mix(in srgb, var(--o-focus) var(--o-ring-alpha), transparent); }
+
+.o-map-google { position: absolute; inset: 0; }
+
+@media (max-width: 420px) {
+  .o-map-controls { top: .375rem; inset-inline-end: .375rem; gap: .375rem; }
+  .o-map-ctlbtn { width: 2rem; height: 2rem; }
+}

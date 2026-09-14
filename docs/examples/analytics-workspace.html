@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Analytics workspace — Orion Admin</title>
+<script src="../../dist/orion.js"></script>
+<style>
+  body { margin: 0; min-height: 100vh; background: var(--o-bg); color: var(--o-text); font: var(--o-fs-base)/1.5 var(--o-font-sans); }
+  header {
+    position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: wrap; align-items: center; gap: .625rem;
+    padding: .75rem 1.25rem; background: var(--o-surface); border-bottom: 1px solid var(--o-border);
+  }
+  header h1 { margin: 0; font-size: var(--o-fs-lg); flex: 1 1 auto; min-width: 10rem; }
+  main { padding: 1.25rem; }
+  o-virtual-list { block-size: 100%; border: 0; border-radius: 0; }
+  .aw-vlist-row { display: flex; align-items: center; gap: .625rem; width: 100%; min-width: 0; }
+  .aw-vlist-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .aw-log-list { display: flex; flex-direction: column; height: 100%; overflow: auto; }
+  .aw-log-row { display: flex; align-items: baseline; gap: .5rem; padding: .5rem .25rem; border-bottom: 1px solid var(--o-border); font-size: var(--o-fs-sm); }
+  .aw-log-row:last-child { border-bottom: 0; }
+  .aw-log-time { flex: none; color: var(--o-text-subtle); font-size: var(--o-fs-xs); font-variant-numeric: tabular-nums; }
+  .aw-counter { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: .375rem; text-align: center; }
+  .aw-counter o-countup { font-size: 2rem; font-weight: 700; }
+</style>
+</head>
+<body>
+<header>
+  <span class="o-dot o-c-primary" aria-hidden="true"></span>
+  <h1>Acme Analytics — Workspace</h1>
+  <div class="o-cluster" style="--o-gap:.5rem">
+    <button class="o-btn o-btn-sm o-btn-primary" type="button" data-o-action="dashboard" data-o-value="edit" data-o-target="#dash" aria-pressed="false">
+      <o-icon name="edit-3"></o-icon> Edit layout
+    </button>
+    <button class="o-btn o-btn-sm" type="button" data-o-action="dashboard" data-o-value="catalog" data-o-target="#dash">
+      <o-icon name="plus"></o-icon> Add widget
+    </button>
+    <button class="o-btn o-btn-sm o-btn-ghost" type="button" data-o-action="dashboard" data-o-value="reset" data-o-target="#dash">Reset</button>
+  </div>
+</header>
+<main>
+  <o-dashboard id="dash" persist="example-analytics-workspace" columns="12" row-height="76" gap="16" label="Analytics workspace">
+
+    <o-widget id="kpis" heading="This week" x="0" y="0" w="12" h="2" locked headerless>
+      <o-stat-group id="kpi-group" min="11rem"></o-stat-group>
+    </o-widget>
+
+    <o-widget id="team" heading="Team" icon="users" subtitle="312 people" x="0" y="2" w="5" h="6"
+              collapsible removable refreshable>
+      <o-virtual-list id="team-list" item-height="48" label="Team members"></o-virtual-list>
+    </o-widget>
+
+    <o-widget id="activity" heading="Live activity" icon="activity" x="5" y="2" w="7" h="6"
+              collapsible removable flush>
+      <div class="aw-log-list" id="activity-list"></div>
+    </o-widget>
+
+  </o-dashboard>
+</main>
+<script>
+  (() => {
+    const F = Orion.format;
+
+    /* ---- fake data ---- */
+    const FIRST = ['Aisha', 'Ben', 'Chen', 'Diego', 'Elena', 'Farid', 'Grace', 'Hiro', 'Ines', 'Jamal', 'Kavya', 'Liam', 'Mei', 'Noor', 'Omar', 'Priya', 'Quinn', 'Rahul', 'Sofia', 'Tariq'];
+    const LAST = ['Tan', 'Rahman', 'Silva', 'Ivanova', 'Haddad', 'Kim', 'Costa', 'Novak', 'Chua', 'Mensah', 'Dubois', 'Okafor', 'Nasser', 'Brown', 'Lindqvist'];
+    const ROLES = ['Support', 'Engineering', 'Sales', 'Design', 'Marketing', 'Finance'];
+    const rand = seed => { let s = seed; return () => (s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff; };
+    const r1 = rand(7);
+    const people = Array.from({ length: 312 }, (_, i) => {
+      const first = FIRST[i % FIRST.length], last = LAST[Math.floor(i / FIRST.length) % LAST.length];
+      return { id: i, name: `${first} ${last} ${Math.floor(i / (FIRST.length * LAST.length)) || ''}`.trim(), role: ROLES[i % ROLES.length], online: r1() > 0.6 };
+    });
+
+    /* ---- KPI row ---- */
+    document.getElementById('kpi-group').innerHTML = `
+      <o-stat label="Active users" value="8420" compact icon="users" color="primary" delta="6.2" countup
+              sparkline="[52,58,55,63,60,67,71,68,74,79,76,84]"></o-stat>
+      <o-stat label="Revenue" value="48210" format="currency" compact icon="wallet" color="success" delta="11.4" countup
+              sparkline="[28,31,29,34,33,37,39,36,41,44,42,48]"></o-stat>
+      <o-stat label="Error rate" value="0.42" format="percent" icon="alert-triangle" color="warning" delta="-18" delta-good="down"></o-stat>
+      <o-stat label="Uptime" value="99.98" format="percent" decimals="2" icon="check-circle" color="info" goal="99.9"></o-stat>`;
+
+    /* ---- team virtual list: 312 rows, only the visible window is ever rendered ---- */
+    const teamList = document.getElementById('team-list');
+    teamList.renderItem = p => {
+      const el = document.createElement('div');
+      el.className = 'aw-vlist-row';
+      el.innerHTML = `<span class="o-avatar o-avatar-sm o-status-anchor">${p.name.split(' ').map(w => w[0]).slice(0, 2).join('')}
+          <span class="o-status ${p.online ? 'o-status-online' : 'o-status-offline'}"></span></span>
+        <span class="aw-vlist-name"><b>${p.name}</b> <span class="o-text-muted">— ${p.role}</span></span>`;
+      return el;
+    };
+    teamList.items = people;
+    document.getElementById('team').addEventListener('o-widget-refresh', e => {
+      e.detail.waitUntil(new Promise(res => setTimeout(() => { teamList.refresh(); res(); }, 400)));
+    });
+
+    /* ---- live activity: Orion.infiniteScroll loads more log lines as the widget body scrolls ---- */
+    const VERBS = ['signed in', 'updated billing details', 'invited a teammate', 'exported a report', 'closed a ticket', 'left a comment', 'uploaded a file', 'changed their plan'];
+    const total = 240, pageSize = 24;
+    const r2 = rand(19);
+    const logs = Array.from({ length: total }, (_, i) => {
+      const p = people[Math.floor(r2() * people.length)];
+      return { id: i, who: p.name, verb: VERBS[i % VERBS.length], at: Date.now() - i * 96000 };
+    });
+    Orion.infiniteScroll('#activity-list', {
+      threshold: 150,
+      load: async page => {
+        await new Promise(res => setTimeout(res, 300));
+        const rows = logs.slice((page - 1) * pageSize, page * pageSize);
+        return { items: rows, hasMore: page * pageSize < total };
+      },
+      render: row => {
+        const el = document.createElement('div');
+        el.className = 'aw-log-row';
+        el.innerHTML = `<span class="aw-log-time">${F.relative(new Date(row.at))}</span><span><b>${row.who}</b> ${row.verb}</span>`;
+        return el;
+      },
+    });
+
+    /* ---- widget catalog: a sticky note and a standalone live counter, added via "Add widget" ---- */
+    document.getElementById('dash').catalog = [
+      {
+        type: 'note', title: 'Sticky note', icon: 'file-text', description: 'A free-form text card', w: 4, h: 3, removable: true, collapsible: true,
+        renderer: body => { body.innerHTML = '<textarea class="o-textarea" style="height:100%;resize:none" placeholder="Write something…"></textarea>'; },
+      },
+      {
+        type: 'counter', title: 'Live counter', icon: 'hash', description: 'An animated Orion.countUp value', w: 3, h: 3, removable: true, refreshable: true,
+        renderer: body => {
+          body.innerHTML = '<div class="aw-counter"><span class="o-text-sm o-text-muted">Signups today</span><o-countup to="0" duration="1200"></o-countup></div>';
+          body.querySelector('o-countup').to = 40 + Math.round(Math.random() * 400);
+        },
+      },
+    ];
+    document.getElementById('dash').addEventListener('o-widget-refresh', e => {
+      const cu = e.detail.widget.querySelector('o-countup');
+      if (!cu) return;
+      e.detail.waitUntil(cu.start(0).then(() => { cu.to = 40 + Math.round(Math.random() * 400); return cu.start(); }));
+    });
+  })();
+</script>
+</body>
+</html>

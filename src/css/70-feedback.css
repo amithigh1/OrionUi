@@ -1,0 +1,100 @@
+/* ============================================================================
+ * Feedback: progress bars & rings, spinners/loaders, skeleton & shimmer,
+ * loading overlays, page top-bar.
+ * ========================================================================== */
+
+/* ── progress ─────────────────────────────────────────────────────────── */
+.o-progress { --o-progress-h: .5rem; position: relative; display: flex; width: 100%; height: var(--o-progress-h); overflow: hidden; background: var(--o-surface-3); border-radius: var(--o-radius-pill); font-size: .625rem; }
+.o-progress-bar {
+  display: flex; align-items: center; justify-content: center; height: 100%; width: var(--o-value, 0%); overflow: hidden;
+  color: var(--o-on-c, #fff); background-color: var(--o-c, var(--o-primary)); white-space: nowrap; font-weight: 600;
+  transition: width .45s var(--o-ease);
+}
+.o-progress-sm { --o-progress-h: .25rem; } .o-progress-lg { --o-progress-h: 1rem; } .o-progress-xl { --o-progress-h: 1.25rem; font-size: .75rem; }
+.o-progress-striped .o-progress-bar, .o-progress-bar.is-striped {
+  background-image: linear-gradient(45deg, rgba(255,255,255,.18) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.18) 50%, rgba(255,255,255,.18) 75%, transparent 75%, transparent);
+  background-size: 1rem 1rem;
+}
+.o-progress-animated .o-progress-bar, .o-progress-bar.is-animated { animation: o-progress-stripes 1s linear infinite; }
+.o-progress-indeterminate .o-progress-bar { width: 40% !important; animation: o-indeterminate 1.3s ease-in-out infinite; }
+.o-progress-labeled { display: flex; align-items: center; gap: .75rem; }
+.o-progress-labeled > .o-progress { flex: 1 1 auto; }
+.o-progress-labeled > .o-progress-value { font-size: var(--o-fs-xs); font-weight: 600; color: var(--o-text-muted); min-width: 2.5rem; text-align: end; font-variant-numeric: tabular-nums; }
+
+/* ring: <div class="o-progress-ring" style="--o-value:72"><span>72%</span></div> */
+.o-progress-ring {
+  --o-value: 0; --o-size: 4rem; --o-thickness: .4rem;
+  position: relative; display: inline-grid; place-items: center; flex-shrink: 0; width: var(--o-size); height: var(--o-size);
+  font-size: calc(var(--o-size) * .22); font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.o-progress-ring::before {
+  content: ""; position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(var(--o-c, var(--o-primary)) calc(var(--o-value) * 1%), var(--o-surface-3) 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - var(--o-thickness)), #000 calc(100% - var(--o-thickness) + 1px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - var(--o-thickness)), #000 calc(100% - var(--o-thickness) + 1px));
+  transition: background .4s;
+}
+.o-progress-ring > * { position: relative; }
+
+/* ── spinners & loaders ───────────────────────────────────────────────── */
+.o-spinner {
+  --o-spinner-size: 1.5rem;
+  display: inline-block; flex-shrink: 0; width: var(--o-spinner-size); height: var(--o-spinner-size); vertical-align: middle;
+  color: var(--o-c, var(--o-primary)); border: calc(var(--o-spinner-size) * .12) solid currentColor; border-inline-end-color: transparent; border-radius: 50%;
+  animation: o-spin .7s linear infinite;
+}
+.o-spinner-xs { --o-spinner-size: .875rem; } .o-spinner-sm { --o-spinner-size: 1.125rem; } .o-spinner-lg { --o-spinner-size: 2.5rem; } .o-spinner-xl { --o-spinner-size: 3.5rem; }
+.o-spinner-track { border-color: color-mix(in srgb, currentColor 18%, transparent); border-top-color: currentColor; }
+.o-spinner-grow { border: 0; background: currentColor; opacity: 0; animation: o-grow .9s ease-in-out infinite; }
+.o-spinner-inherit { color: inherit; }
+/* three bouncing dots: <span class="o-loader-dots"><i></i><i></i><i></i></span> */
+.o-loader-dots { display: inline-flex; align-items: center; gap: .3em; color: var(--o-c, var(--o-primary)); vertical-align: middle; }
+.o-loader-dots > i { width: .5em; height: .5em; border-radius: 50%; background: currentColor; animation: o-dots 1.2s infinite ease-in-out both; }
+.o-loader-dots > i:nth-child(1) { animation-delay: -.32s; } .o-loader-dots > i:nth-child(2) { animation-delay: -.16s; }
+/* equalizer bars: <span class="o-loader-bars"><i></i><i></i><i></i><i></i></span> */
+.o-loader-bars { display: inline-flex; align-items: center; gap: .18em; height: 1.25em; color: var(--o-c, var(--o-primary)); vertical-align: middle; }
+.o-loader-bars > i { width: .22em; height: 100%; border-radius: 1px; background: currentColor; animation: o-bars 1s infinite ease-in-out; }
+.o-loader-bars > i:nth-child(2) { animation-delay: .1s; } .o-loader-bars > i:nth-child(3) { animation-delay: .2s; } .o-loader-bars > i:nth-child(4) { animation-delay: .3s; }
+
+/* overlay spinner over a container: Orion.loading(el, true) or <div class="o-loading-overlay"> */
+.o-is-loading { position: relative !important; }
+.o-loading-overlay {
+  position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .75rem;
+  color: var(--o-text-muted); font-size: var(--o-fs-sm); background: color-mix(in srgb, var(--o-surface) 72%, transparent);
+  border-radius: inherit; backdrop-filter: blur(1.5px); animation: o-fade-in var(--o-dur) both;
+}
+.o-page-loader { position: fixed; inset: 0; z-index: 2000; display: grid; place-items: center; background: var(--o-bg); transition: opacity .3s, visibility .3s; }
+.o-page-loader.is-done { opacity: 0; visibility: hidden; }
+/* top progress bar (Orion.progress.start/done) */
+.o-topbar { position: fixed; top: 0; inset-inline: 0; z-index: 2100; height: 3px; pointer-events: none; }
+.o-topbar-bar { height: 100%; width: 0; background: var(--o-c, var(--o-primary)); box-shadow: 0 0 10px var(--o-c, var(--o-primary)); transition: width .3s var(--o-ease), opacity .4s; }
+
+/* ── skeleton & shimmer ───────────────────────────────────────────────── */
+.o-skeleton {
+  position: relative; display: block; overflow: hidden; min-height: 1em;
+  color: transparent !important; background: var(--o-surface-3); border-radius: var(--o-radius-sm);
+  user-select: none; pointer-events: none;
+}
+.o-skeleton > * { visibility: hidden; }
+.o-skeleton::after {
+  content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--o-surface) 65%, transparent), transparent);
+  animation: o-shimmer 1.4s infinite;
+}
+[dir="rtl"] .o-skeleton::after { transform: translateX(100%); animation-name: o-shimmer-rtl; }
+.o-skeleton-pulse { animation: o-pulse 1.6s ease-in-out infinite; }
+.o-skeleton-pulse::after { display: none; }
+.o-skeleton-text { height: .8em; margin: .45em 0; border-radius: var(--o-radius-xs); }
+.o-skeleton-text:last-child:not(:first-child) { width: 70%; }
+.o-skeleton-title { height: 1.25em; width: 45%; margin-bottom: .75em; }
+.o-skeleton-circle { border-radius: 50%; flex-shrink: 0; }
+.o-skeleton-avatar { width: 2.5rem; height: 2.5rem; border-radius: 50%; flex-shrink: 0; }
+.o-skeleton-btn { width: 6rem; height: var(--o-control-h); border-radius: var(--o-radius); }
+.o-skeleton-img { width: 100%; aspect-ratio: 16 / 9; border-radius: var(--o-radius); }
+/* apply shimmer to any container: children become placeholders */
+.o-shimmer { position: relative; overflow: hidden; }
+.o-shimmer::after {
+  content: ""; position: absolute; inset: 0; transform: translateX(-100%); pointer-events: none;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--o-surface) 55%, transparent), transparent);
+  animation: o-shimmer 1.5s infinite;
+}

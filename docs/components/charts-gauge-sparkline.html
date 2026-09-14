@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gauges &amp; Sparklines — Orion Admin</title>
+<meta name="docs:section" content="Charts">
+<meta name="docs:order" content="50">
+<meta name="docs:desc" content="Gauges with targets and status bands, progress rings, sparklines and KPI tiles">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Gauges &amp; sparklines</h1>
+    <p class="docs-lead">Single numbers against a limit and tiny inline trends: gauges with a target and status bands, progress rings, <code>&lt;o-sparkline&gt;</code> (line, area, bar, win/loss) and KPI tiles that pair a figure with its trend.</p>
+  </header>
+
+  <section id="gauge">
+    <h2>Gauge with target &amp; bands</h2>
+    <p>Bands tint the track with a lighter step of their color; with <code>status</code> bands the value arc takes the color of the band it falls in ("the fill carries severity"), and the status is always spelled out below the figure — never color alone. The target is a tick across the arc.</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-grid" style="--o-cols: 3; --o-gap: 1rem" id="gauges">
+          <div class="o-card"><div class="o-card-header"><h3 class="o-card-title">CPU</h3></div><div class="o-card-body"><o-chart id="g-cpu"></o-chart></div></div>
+          <div class="o-card"><div class="o-card-header"><h3 class="o-card-title">Memory</h3></div><div class="o-card-body"><o-chart id="g-mem"></o-chart></div></div>
+          <div class="o-card"><div class="o-card-header"><h3 class="o-card-title">Disk I/O</h3></div><div class="o-card-body"><o-chart id="g-io"></o-chart></div></div>
+        </div>
+        <script>
+          {
+            const bands = [
+              { from: 0, to: 70, status: 'good', label: 'Healthy' },
+              { from: 70, to: 90, status: 'warning', label: 'Elevated' },
+              { from: 90, to: 100, status: 'critical', label: 'Critical' },
+            ];
+            const gauge = (id, value, target) => (document.getElementById(id).config = {
+              type: 'gauge', yAxis: { suffix: '%', format: v => Math.round(v) },
+              gauge: { value, target, bands, label: 'of capacity' },
+            });
+            gauge('g-cpu', 43, 70);
+            gauge('g-mem', 78, 85);
+            gauge('g-io', 94, 90);
+            // live values: update() tweens the arc
+            setInterval(() => document.getElementById('g-cpu').update({ gauge: { value: Math.round(35 + Math.random() * 30) } }), 2500);
+          }
+        </script>
+        <style>@media (max-width: 900px) { #gauges { --o-cols: 1 !important; } }</style>
+      </template>
+    </div>
+  </section>
+
+  <section id="gauge-options">
+    <h2>Semicircle, needle &amp; plain gauges</h2>
+    <p><code>gauge.arc</code> sets the sweep (90–300°, default 240), <code>gauge.needle</code> draws a needle instead of the center figure, and without bands the track is a light step of the value's own hue.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-grid" style="--o-cols: 3; --o-gap: 1.5rem" id="gauges2">
+          <o-chart type="gauge" config='{ "gauge": { "value": 62, "arc": 180, "label": "NPS", "min": -100, "max": 100 } }'></o-chart>
+          <o-chart type="gauge" config='{ "gauge": { "value": 3.4, "max": 5, "needle": true, "label": "Rating", "bands": [{ "from": 0, "to": 2, "color": "seq-200" }, { "from": 2, "to": 4, "color": "seq-300" }, { "from": 4, "to": 5, "color": "seq-500" }] } }'></o-chart>
+          <o-chart type="gauge" config='{ "yAxis": { "format": "currency" }, "gauge": { "value": 182400, "max": 250000, "target": 200000, "label": "Q3 bookings", "color": 3 } }'></o-chart>
+        </div>
+        <style>@media (max-width: 900px) { #gauges2 { --o-cols: 1 !important; } }</style>
+      </template>
+    </div>
+  </section>
+
+  <section id="progress">
+    <h2>Progress ring</h2>
+    <p>A full ring whose track is a lighter step of the same hue. Values are shown as a percentage of <code>progress.max</code> (default 100).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-chart type="progress" height="140" style="width: 140px" config='{ "progress": { "value": 72, "label": "Onboarding" } }'></o-chart>
+        <o-chart type="progress" height="140" style="width: 140px" config='{ "progress": { "value": 41, "max": 60, "label": "Seats", "color": 2 } }'></o-chart>
+        <o-chart type="progress" height="140" style="width: 140px" config='{ "progress": { "value": 93, "label": "Storage", "bands": [{ "from": 0, "to": 80, "status": "good" }, { "from": 80, "to": 100, "status": "critical" }] } }'></o-chart>
+        <o-chart type="progress" height="96" style="width: 96px" config='{ "toolbar": false, "progress": { "value": 18 } }'></o-chart>
+      </template>
+    </div>
+  </section>
+
+  <section id="sparklines">
+    <h2>Sparklines</h2>
+    <p><code>&lt;o-sparkline values="…"&gt;</code> draws an inline trend sized by CSS (default 6rem × 1.75rem). By default the trend wears the de-emphasis gray and the current period the accent; set <code>color</code> (slot number, token or CSS color) to paint it all. Hover for values; screen readers get a spoken summary.</p>
+    <div class="docs-demo">
+      <template>
+        <table class="o-table o-table-sm">
+          <thead><tr><th>Type</th><th>Default</th><th>Colored</th><th>Markup</th></tr></thead>
+          <tbody>
+            <tr><td>line</td><td><o-sparkline values="12,15,14,18,17,21,19,24,23,27,26,31"></o-sparkline></td><td><o-sparkline color="1" curve="smooth" values="12,15,14,18,17,21,19,24,23,27,26,31"></o-sparkline></td><td><code>&lt;o-sparkline values="12,15,14,…"&gt;</code></td></tr>
+            <tr><td>area</td><td><o-sparkline type="area" values="31,29,30,26,27,24,25,21,22,19,20,17"></o-sparkline></td><td><o-sparkline type="area" color="3" values="31,29,30,26,27,24,25,21,22,19,20,17"></o-sparkline></td><td><code>type="area" color="3"</code></td></tr>
+            <tr><td>bar</td><td><o-sparkline type="bar" values="8,11,9,14,12,6,4,10,13,12,15,18"></o-sparkline></td><td><o-sparkline type="bar" color="2" values="8,11,-3,14,12,-6,4,10,13,-2,15,18"></o-sparkline></td><td><code>type="bar"</code> (negatives go below the baseline)</td></tr>
+            <tr><td>winloss</td><td><o-sparkline type="winloss" values="1,1,-1,1,0,1,-1,-1,1,1,1,-1"></o-sparkline></td><td><o-sparkline type="winloss" labels='["W1","W2","W3","W4","W5","W6","W7","W8","W9","W10","W11","W12"]' values="3,2,-1,4,0,1,-2,-1,2,5,1,-3"></o-sparkline></td><td><code>type="winloss"</code> (sign only)</td></tr>
+            <tr><td>min / max</td><td><o-sparkline highlight="minmax" values="42,48,44,51,39,46,58,53,49,55"></o-sparkline></td><td><o-sparkline highlight="minmax" format="percent" color="7" values="0.42,0.48,0.44,0.51,0.39,0.46,0.58,0.53,0.49,0.55"></o-sparkline></td><td><code>highlight="minmax" format="percent"</code></td></tr>
+          </tbody>
+        </table>
+      </template>
+    </div>
+  </section>
+
+  <section id="kpi">
+    <h2>KPI tiles</h2>
+    <p>The stat-tile contract: label (sentence case) · value (proportional figures, auto-compact) · signed delta against a named period · a 12-point trend. Build it from the <code>.o-stat</code> classes and <code>Orion.sparkline()</code>.</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-grid-auto-fit" style="--o-min: 14rem; --o-gap: 1rem" id="kpi-row"></div>
+        <script>
+          {
+            const tiles = [
+              { label: 'Monthly recurring revenue', value: 128400, fmt: v => Orion.format.currency(v, 'USD', { notation: 'compact', maximumFractionDigits: 1 }), delta: '+6.2%', up: true, trend: [96, 98, 101, 104, 103, 108, 111, 114, 117, 119, 124, 128.4] },
+              { label: 'Active workspaces', value: 3812, fmt: v => Orion.format.number(v), delta: '+214', up: true, trend: [2980, 3050, 3120, 3160, 3250, 3310, 3390, 3460, 3520, 3610, 3700, 3812] },
+              { label: 'Trials started', value: 486, fmt: v => Orion.format.number(v), delta: '+38', up: true, trend: [312, 340, 298, 356, 371, 402, 388, 417, 431, 409, 448, 486], type: 'bar' },
+              { label: 'Median response', value: 212, fmt: v => v + ' ms', delta: '+18 ms', up: false, trend: [180, 176, 185, 179, 188, 190, 186, 195, 201, 198, 206, 212] },
+            ];
+            const row = document.getElementById('kpi-row');
+            for (const k of tiles) {
+              const el = document.createElement('div');
+              el.className = 'o-card o-card-compact';
+              el.innerHTML = '<div class="o-card-body o-stat"><span class="o-stat-label"></span><div class="o-between" style="gap:.75rem"><span class="o-stat-value"></span><span class="kpi-spark"></span></div><span class="o-stat-meta"><span class="o-trend"></span> vs last month</span></div>';
+              el.querySelector('.o-stat-label').textContent = k.label;
+              el.querySelector('.o-stat-value').append(Object.assign(document.createElement('bdi'), { textContent: k.fmt(k.value) }));
+              const tr = el.querySelector('.o-trend');
+              tr.append(Object.assign(document.createElement('bdi'), { textContent: k.delta })); tr.classList.add(k.up ? 'is-up' : 'is-down');
+              row.append(el);
+              Orion.sparkline(el.querySelector('.kpi-spark'), k.trend, { type: k.type || 'line', label: k.label, labels: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'] });
+            }
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Gauge &amp; progress options</h3>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>gauge.value</td><td><code>number</code></td><td>Current value (or <code>series[0].data[0]</code>).</td></tr>
+        <tr><td>gauge.min / max</td><td><code>number</code></td><td>Scale, default 0–100.</td></tr>
+        <tr><td>gauge.target</td><td><code>number</code></td><td>Target tick across the arc (also in the tooltip and table).</td></tr>
+        <tr><td>gauge.bands</td><td><code>[{ from, to, status</code> <code>color, label }]</code></td><td>Track tints. <code>status</code>: <code>good</code> <code>warning</code> <code>serious</code> <code>critical</code>.</td></tr>
+        <tr><td>gauge.severity</td><td><code>boolean</code></td><td>Color the value arc by its status band (default when bands have a status).</td></tr>
+        <tr><td>gauge.arc / needle / label / color / format / minMax</td><td></td><td>Sweep in degrees, needle mode, caption, value color, value formatter, end labels.</td></tr>
+        <tr><td>progress.value / max / label / color / thickness / bands</td><td></td><td>Same model for the full ring.</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-sparkline&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute / prop</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>values</td><td><code>"4,8,5"</code> | JSON | <code>number[]</code></td><td>Data; <code>null</code> leaves a gap.</td></tr>
+        <tr><td>type</td><td><code>line</code> <code>area</code> <code>bar</code> <code>winloss</code></td><td>Mark type (default <code>line</code>).</td></tr>
+        <tr><td>color</td><td>slot number, token (<code>status-good</code>, <code>--my-var</code>) or CSS color</td><td>Paint the whole trend (default: gray trend, accent current point).</td></tr>
+        <tr><td>highlight</td><td><code>last</code> <code>minmax</code> <code>none</code></td><td>Emphasised points.</td></tr>
+        <tr><td>min / max</td><td><code>number</code></td><td>Fix the vertical scale (to compare several sparklines).</td></tr>
+        <tr><td>labels</td><td><code>string[]</code></td><td>Shown in the tooltip next to the value.</td></tr>
+        <tr><td>format / currency</td><td><code>number</code> <code>percent</code> <code>currency</code> <code>compact</code> | function</td><td>Value formatting in the tooltip and summary.</td></tr>
+        <tr><td>label</td><td><code>string</code></td><td>Accessible name prefix (default "Trend").</td></tr>
+        <tr><td>curve / tooltip</td><td><code>linear | smooth</code>, <code>boolean</code></td><td>Line shape; disable the hover tooltip.</td></tr>
+      </tbody>
+    </table>
+    <pre class="docs-code-block" data-lang="js">
+      // JS: create or update a sparkline inside any element
+      const sp = Orion.sparkline('#cell', [4, 8, 5, 9], { type: 'bar', color: 2 });
+      sp.values = [5, 9, 6, 11]; // re-renders
+    </pre>
+  </section>
+</main>
+</body>
+</html>

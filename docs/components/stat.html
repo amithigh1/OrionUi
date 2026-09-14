@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stat — Orion Admin</title>
+<meta name="docs:section" content="Dashboard">
+<meta name="docs:order" content="20">
+<meta name="docs:desc" content="KPI cards: value formatting, delta arrows, sparklines, goal progress, and an animated count-up">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Stat</h1>
+    <p class="docs-lead"><code>&lt;o-stat&gt;</code> is a KPI tile: a formatted value (currency, percent, compact, bytes, duration…), a delta arrow colored by whether the direction is actually <em>favorable</em> (not just up/down), an optional sparkline and progress-to-goal, and an animated count-up. <code>&lt;o-stat-group&gt;</code> lays out a responsive row of them with dividers. <code>&lt;o-countup&gt;</code> / <code>Orion.countUp()</code> animate any number on their own.</p>
+  </header>
+
+  <section id="overview">
+    <h2>Overview</h2>
+    <p>The minimum viable stat is a <code>label</code> and a <code>value</code>. Add <code>delta</code> (with <code>period</code>) for the comparison row, and <code>icon</code>/<code>color</code> for the top-corner glyph.</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-grid-auto" style="--o-min:12rem;--o-gap:1rem;width:100%">
+          <o-stat label="Revenue" value="84210" format="currency" currency="USD" delta="12.4" period="vs last month" icon="wallet"></o-stat>
+          <o-stat label="Orders" value="1284" delta="4.1" period="vs last month" icon="shopping-cart" color="success"></o-stat>
+          <o-stat label="Refund rate" value="2.1" format="percent" delta="-0.4" delta-good="down" period="vs last month" icon="rotate-ccw" color="warning"></o-stat>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="formatting">
+    <h2>Value formatting</h2>
+    <p><code>format</code> covers the usual KPI shapes: <code>currency</code>, <code>percent</code> (a ratio out of 100 — <code>12.4</code> renders "12.4%"), <code>compact</code>, <code>bytes</code>, <code>duration</code> (milliseconds) and <code>raw</code> (no formatting, just <code>prefix</code>/<code>suffix</code>). The same formatter is available standalone as <code>Orion.countUp.format(value, opts)</code>.</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-grid-auto" style="--o-min:10rem;--o-gap:1rem;width:100%">
+          <o-stat variant="minimal" label="Currency" value="128450.5" format="currency" currency="EUR"></o-stat>
+          <o-stat variant="minimal" label="Percent" value="64.2" format="percent"></o-stat>
+          <o-stat variant="minimal" label="Compact" value="1284000" compact></o-stat>
+          <o-stat variant="minimal" label="Bytes" value="93460000" format="bytes"></o-stat>
+          <o-stat variant="minimal" label="Duration" value="734000" format="duration"></o-stat>
+          <o-stat variant="minimal" label="Raw" value="v2.4.1" format="raw" prefix="build "></o-stat>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="delta-sparkline">
+    <h2>Delta &amp; sparkline</h2>
+    <p><code>delta-good</code> decides which direction is favorable — a rising refund rate is bad news, so it sets <code>delta-good="down"</code> to keep the arrow red. <code>sparkline</code> accepts a plain array (or a JSON string, for the HTML attribute); <code>sparkline-type</code> switches line/area/bar. Hover a sparkline for the per-point tooltip.</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-grid-auto" style="--o-min:13rem;--o-gap:1rem;width:100%">
+          <o-stat label="Signups" value="342" delta="18.5" icon="user-plus" sparkline="[24,28,26,31,29,34,38,36,41,45,42,48]"></o-stat>
+          <o-stat label="Churn" value="1.8" format="percent" delta="-0.3" delta-good="down" icon="trending-down" color="danger" sparkline="[3.1,2.9,2.8,2.6,2.4,2.3,2.1,2.0,1.9,1.9,1.8,1.8]"></o-stat>
+          <o-stat label="Errors / day" value="12" delta="40" delta-good="down" icon="alert-triangle" color="warning" sparkline-type="bar" sparkline="[3,5,4,8,6,9,7,12,9,14,10,12]"></o-stat>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="goal">
+    <h2>Progress to goal</h2>
+    <p>Set <code>goal</code> to show progress as a bar (<code>goal-type="bar"</code>, default) or a ring that replaces the icon slot (<code>goal-type="ring"</code>).</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-grid-auto" style="--o-min:12rem;--o-gap:1rem;width:100%">
+          <o-stat label="Quarterly revenue" value="84200" format="currency" compact goal="100000" icon="target"></o-stat>
+          <o-stat label="Support SLA" value="97" format="percent" goal="95" goal-type="ring" color="success"></o-stat>
+          <o-stat label="Onboarding" value="7" goal="7" suffix=" / 7 steps" goal-type="bar" color="info"></o-stat>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="countup">
+    <h2>Count-up</h2>
+    <p><code>countup</code> on <code>&lt;o-stat&gt;</code> animates from 0 to <code>value</code> the first time the tile scrolls into view (and re-animates on later <code>value</code> changes). <code>&lt;o-countup&gt;</code> is the same animation as a standalone element; <code>Orion.countUp(el, to, opts)</code> drives any element imperatively. All three honor <code>prefers-reduced-motion</code> (and the in-app override, <code>html.o-motion-reduce</code>) by jumping straight to the end value.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-stack" style="--o-gap:1rem;align-items:center;text-align:center">
+          <o-stat variant="minimal" label="Total raised" value="482910" format="currency" compact countup icon="trending-up"></o-stat>
+          <div style="font-size:2rem;font-weight:700"><o-countup id="cu-demo" to="9482" duration="1600"></o-countup></div>
+          <button class="o-btn o-btn-sm" type="button" id="cu-again">Count up again</button>
+        </div>
+        <script>
+          {
+            const cu = document.getElementById('cu-demo');
+            document.getElementById('cu-again').onclick = () => { cu.to = Math.round(1000 + Math.random() * 20000); cu.start(0); };
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="stat-group">
+    <h2>&lt;o-stat-group&gt;</h2>
+    <p>A responsive row: columns auto-fit down to <code>min</code>, with dividers between tiles (<code>plain</code> removes the shared card chrome and dividers, useful when each <code>&lt;o-stat&gt;</code> already has its own card).</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div style="padding:1.5rem">
+          <o-stat-group min="10rem" label="This month">
+            <o-stat label="Sessions" value="48220" compact delta="8.9" icon="activity"></o-stat>
+            <o-stat label="Conversion" value="3.4" format="percent" delta="0.4" icon="target"></o-stat>
+            <o-stat label="Avg. order" value="62.1" format="currency" delta="-1.1" delta-good="up" icon="shopping-bag"></o-stat>
+            <o-stat label="Bounce rate" value="38.2" format="percent" delta="2.1" delta-good="down" icon="log-out"></o-stat>
+          </o-stat-group>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="link">
+    <h2>Clickable stat</h2>
+    <p>Set <code>href</code> to make the whole tile a real, keyboard-focusable link.</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-grid-auto" style="--o-min:12rem;--o-gap:1rem;width:100%">
+          <o-stat label="Open tickets" value="24" icon="life-buoy" href="#" color="info"></o-stat>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="js-api">
+    <h2>JS API &amp; events</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster" style="--o-gap:.5rem">
+          <button class="o-btn o-btn-sm" type="button" data-m="format">Orion.countUp.format(1284.5, {compact:true})</button>
+          <button class="o-btn o-btn-sm" type="button" data-m="imperative">Orion.countUp(#target, 777)</button>
+        </div>
+        <p class="o-text-lg o-fw-bold" id="imp-target">0</p>
+        <div class="docs-log" id="api-log"></div>
+        <script>
+          {
+            document.querySelector('[data-m="format"]').onclick = () => docs.log('#api-log', 'Orion.countUp.format -> ' + Orion.countUp.format(1284.5, { compact: true }));
+            document.querySelector('[data-m="imperative"]').onclick = () => {
+              Orion.countUp('#imp-target', Math.round(Math.random() * 999), { duration: 900 });
+              docs.log('#api-log', 'Orion.countUp(#imp-target, …) started');
+            };
+            document.getElementById('cu-demo')?.addEventListener('o-countup-end', e => docs.log('#api-log', 'o-countup-end ' + JSON.stringify(e.detail)));
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard &amp; accessibility</h2>
+    <p>A <code>href</code> stat is a real anchor (<code>.o-stat-link</code>, tab-focusable, activates on Enter) with a computed <code>aria-label</code> combining the label, value and delta text. The animated digits are marked <code>aria-hidden</code>; a visually-hidden sibling always holds the final, stable value so screen readers never read intermediate tween frames — <code>&lt;o-countup announce&gt;</code> additionally calls <code>Orion.announce()</code> with the finished value. The goal bar/ring is <code>role="progressbar"</code> with <code>aria-valuenow</code>/<code>aria-valuetext</code> ("42% of 80 goal" or "Goal reached"). The built-in sparkline (used when the charts package isn't loaded) is <code>role="img"</code> with an <code>aria-label</code> summarizing the trend, not per-point SVG. Delta direction is never color-only: an arrow icon and screen-reader text ("Up 12.4%, favorable") always accompany it.</p>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>&lt;o-stat&gt; properties / attributes</h3>
+    <table class="docs-api">
+      <thead><tr><th>Property (attribute)</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>label</td><td>string</td><td>—</td><td>Header label.</td></tr>
+        <tr><td>value</td><td>any</td><td>—</td><td>The number (or pre-formatted string when <code>format="raw"</code>). Empty shows nothing, or a skeleton while <code>loading</code>.</td></tr>
+        <tr><td>format</td><td>string</td><td>—</td><td><code>number</code> | <code>currency</code> | <code>percent</code> | <code>compact</code> | <code>duration</code> | <code>bytes</code> | <code>raw</code>.</td></tr>
+        <tr><td>currency</td><td>string</td><td>—</td><td>ISO currency code, for <code>format="currency"</code>.</td></tr>
+        <tr><td>decimals</td><td>number</td><td>auto</td><td>Fixed fraction digits; default infers from the value's own decimals.</td></tr>
+        <tr><td>prefix / suffix</td><td>string</td><td>—</td><td>Literal text around the formatted value.</td></tr>
+        <tr><td>compact</td><td>boolean</td><td>false</td><td>Shorthand for compact notation when <code>format</code> is <code>number</code>/unset.</td></tr>
+        <tr><td>delta</td><td>number</td><td>—</td><td>Percent/amount change; sign picks the arrow (&gt;0 up, &lt;0 down, 0 flat).</td></tr>
+        <tr><td>deltaFormat (delta-format)</td><td>string</td><td>'percent'</td><td><code>percent</code> | <code>currency</code> | <code>compact</code> | <code>number</code> — how <code>delta</code> itself is formatted.</td></tr>
+        <tr><td>deltaDecimals (delta-decimals)</td><td>number</td><td>—</td><td>Fraction digits for the delta.</td></tr>
+        <tr><td>deltaGood (delta-good)</td><td>'up' | 'down' | 'none'</td><td>'up'</td><td>Which direction is favorable (colored green). <code>none</code> is always neutral.</td></tr>
+        <tr><td>period</td><td>string</td><td>—</td><td>Comparison label next to the delta, e.g. "vs last month".</td></tr>
+        <tr><td>icon</td><td>string</td><td>—</td><td>Icon name, top-end corner.</td></tr>
+        <tr><td>color</td><td>string</td><td>—</td><td>Semantic color name applied to the icon (and the whole card in <code>variant="gradient"</code>).</td></tr>
+        <tr><td>description</td><td>string</td><td>—</td><td>Small muted line under the value.</td></tr>
+        <tr><td>sparkline</td><td>array</td><td>—</td><td>Numeric series. Uses the charts package's <code>&lt;o-sparkline&gt;</code> if registered, else a built-in SVG.</td></tr>
+        <tr><td>sparklineType (sparkline-type)</td><td>'line' | 'area' | 'bar'</td><td>'line'</td><td></td></tr>
+        <tr><td>sparklineLabels (sparkline-labels)</td><td>array</td><td>—</td><td>Per-point labels for the hover tooltip.</td></tr>
+        <tr><td>goal</td><td>number</td><td>—</td><td>Target value; shows progress for <code>value / goal</code>.</td></tr>
+        <tr><td>goalType (goal-type)</td><td>'bar' | 'ring'</td><td>'bar'</td><td><code>ring</code> replaces the icon slot.</td></tr>
+        <tr><td>loading</td><td>boolean (reflects)</td><td>false</td><td>Skeleton while there's no value yet, otherwise dims the card while refreshing.</td></tr>
+        <tr><td>variant (reflects)</td><td>'default' | 'minimal' | 'gradient'</td><td>'default'</td><td><code>minimal</code> is bare, for embedding in your own card or a <code>&lt;o-widget&gt;</code>.</td></tr>
+        <tr><td>href / target</td><td>string</td><td>—</td><td>Makes the tile a real link.</td></tr>
+        <tr><td>countup</td><td>boolean</td><td>false</td><td>Animate from 0 the first time visible, and on later <code>value</code> changes.</td></tr>
+        <tr><td>duration</td><td>number</td><td>1200</td><td>Count-up duration, ms.</td></tr>
+        <tr><td>texts</td><td>object</td><td>—</td><td>Per-instance string overrides.</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-stat-group&gt; properties / attributes</h3>
+    <table class="docs-api">
+      <thead><tr><th>Property (attribute)</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>min</td><td>string</td><td>'12rem'</td><td>Minimum column width (auto-fit grid).</td></tr>
+        <tr><td>columns</td><td>number</td><td>—</td><td>Fixed column count instead of auto-fit.</td></tr>
+        <tr><td>plain</td><td>boolean</td><td>false</td><td>No group chrome/dividers — each <code>&lt;o-stat&gt;</code> keeps its own card.</td></tr>
+        <tr><td>label</td><td>string</td><td>—</td><td><code>aria-label</code> for the group (<code>role="group"</code>).</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-countup&gt; properties / attributes / methods / events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>to / from</td><td>number. Target / starting value (<code>from</code> also shows before the element is ever visible).</td></tr>
+        <tr><td>duration</td><td>number, default 1200ms.</td></tr>
+        <tr><td>format, currency, decimals, prefix, suffix, compact</td><td>Same formatting props as <code>&lt;o-stat&gt;</code>.</td></tr>
+        <tr><td>announce</td><td>boolean. Call <code>Orion.announce()</code> with the final value when the animation finishes.</td></tr>
+        <tr><td>repeat</td><td>boolean. Replay every time the element re-enters the viewport (default: once).</td></tr>
+        <tr><td>start(from?)</td><td>Animate now; returns the tween's promise.</td></tr>
+        <tr><td>reset()</td><td>Cancel and show <code>from</code> again.</td></tr>
+        <tr><td>o-countup-end</td><td><code>{ value }</code> — the animation finished.</td></tr>
+      </tbody>
+    </table>
+    <h3>Orion.countUp(target, to, opts) &amp; Orion.countUp.format(value, opts)</h3>
+    <p><code>opts</code>: <code>{ from, duration, format, decimals, currency, prefix, suffix, compact }</code> (<code>format</code> may also be a function <code>(n) =&gt; string</code>). Returns <code>{ promise, cancel() }</code>; if <code>from</code> is omitted it is parsed out of the element's current text, so re-triggering continues from what's on screen. <code>Orion.countUp.format</code> is the same value formatter used everywhere above, usable standalone.</p>
+  </section>
+</main>
+</body>
+</html>

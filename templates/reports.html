@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reports — Orion Admin</title>
+<script src="../dist/orion.js"></script>
+<link rel="stylesheet" href="assets/shell.css">
+<script>
+  window.PAGE = {
+    id: 'reports', title: 'Reports', subtitle: 'Sales performance across regions and channels.',
+    breadcrumbs: [{ label: 'Home', href: 'dashboard.html' }, { label: 'Reports' }],
+    actions: '<o-daterange id="report-range" presets style="max-width:16rem"></o-daterange>'
+      + '<button class="o-btn" id="print-report"><o-icon name="printer"></o-icon>Print</button>'
+      + '<button class="o-btn o-btn-primary" id="pdf-report"><o-icon name="file-text"></o-icon>PDF</button>',
+  };
+</script>
+<script src="assets/shell.js" defer></script>
+</head>
+<body>
+<div id="app-content">
+  <div class="o-grid o-grid-cols-1 o-grid-cols-lg-2 o-gap-5 o-mb-5">
+    <div class="o-card"><div class="o-card-header"><h2 class="o-card-title">Sales by region</h2></div><div class="o-card-body"><o-chart id="c-region" class="tpl-chart"></o-chart></div></div>
+    <div class="o-card"><div class="o-card-header"><h2 class="o-card-title">Monthly trend</h2></div><div class="o-card-body"><o-chart id="c-trend" class="tpl-chart"></o-chart></div></div>
+    <div class="o-card"><div class="o-card-header"><h2 class="o-card-title">Conversion funnel</h2></div><div class="o-card-body"><o-chart id="c-funnel" class="tpl-chart"></o-chart></div></div>
+    <div class="o-card"><div class="o-card-header"><h2 class="o-card-title">Activity by weekday &amp; hour</h2></div><div class="o-card-body"><o-chart id="c-heat" class="tpl-chart"></o-chart></div></div>
+  </div>
+
+  <div class="o-card">
+    <div class="o-card-header">
+      <div><h2 class="o-card-title">Pivot analysis</h2><p class="o-card-subtitle">Drag fields between rows, columns and values.</p></div>
+    </div>
+    <div class="o-card-body"><o-pivot id="pivot" style="min-height:26rem"></o-pivot></div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const D = Orion.date, F = Orion.format;
+    const REGIONS = ['North', 'South', 'East', 'West', 'Central'];
+    const CHANNELS = ['Online', 'Retail', 'Partner', 'Wholesale'];
+    const months = Array.from({ length: 12 }, (_, i) => D.format(new Date(2026, i, 1), 'MMM'));
+
+    let seed = 11; const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+    const facts = [];
+    REGIONS.forEach(region => CHANNELS.forEach(channel => months.forEach((month, mi) => {
+      facts.push({ region, channel, month, quarter: 'Q' + (Math.floor(mi / 3) + 1), sales: Math.round(8000 + rnd() * 42000), units: Math.round(30 + rnd() * 300) });
+    })));
+
+    const sum = (fn, filter = () => true) => facts.filter(filter).reduce((s, f) => s + fn(f), 0);
+
+    Orion.chart?.(document.getElementById('c-region'), {
+      type: 'bar', horizontal: true, labels: REGIONS,
+      series: [{ name: 'Sales', data: REGIONS.map(r => sum(f => f.sales, f => f.region === r)) }],
+      yAxis: { format: 'compact' },
+    });
+    Orion.chart?.(document.getElementById('c-trend'), {
+      type: 'column', labels: months, stacked: true,
+      series: CHANNELS.map(c => ({ name: c, data: months.map(m => sum(f => f.sales, f => f.month === m && f.channel === c)) })),
+      yAxis: { format: 'compact' }, legend: { show: true },
+    });
+    Orion.chart?.(document.getElementById('c-funnel'), {
+      type: 'funnel', labels: ['Visits', 'Sign-ups', 'Trials', 'Paid', 'Renewed'],
+      series: [{ name: 'Users', data: [48200, 12400, 5100, 1840, 1290] }],
+    });
+    const hours = ['08', '10', '12', '14', '16', '18', '20'];
+    Orion.chart?.(document.getElementById('c-heat'), {
+      type: 'heatmap', labels: hours,
+      series: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => ({
+        name: day, data: hours.map(() => Math.round(rnd() * 100)),
+      })),
+    });
+
+    const pivot = document.getElementById('pivot');
+    if (pivot && 'data' in pivot) {
+      pivot.data = facts;
+      pivot.config = {
+        rows: ['region', 'channel'], columns: ['quarter'],
+        values: [{ field: 'sales', agg: 'sum', format: 'currency' }],
+        showTotals: true, showSubtotals: true, heatmap: true,
+      };
+    }
+
+    document.getElementById('print-report')?.addEventListener('click', () => {
+      const target = document.querySelector('.o-app-content');
+      Orion.printPreview ? Orion.printPreview(target, { title: 'Sales report', orientation: 'landscape' })
+        : Orion.print ? Orion.print(target, { title: 'Sales report' }) : window.print();
+    });
+    document.getElementById('pdf-report')?.addEventListener('click', () => {
+      if (!Orion.export?.pdf) return Orion.toast?.('Load the data package for PDF export');
+      Orion.export.pdf(facts.slice(0, 120), {
+        columns: [{ key: 'region', title: 'Region' }, { key: 'channel', title: 'Channel' }, { key: 'month', title: 'Month' },
+          { key: 'sales', title: 'Sales', format: v => F.currency(v) }, { key: 'units', title: 'Units' }],
+        title: 'Sales report', subtitle: 'Generated from the Orion Admin reports template', filename: 'sales-report.pdf', orientation: 'landscape',
+      });
+    });
+  });
+</script>
+</body>
+</html>

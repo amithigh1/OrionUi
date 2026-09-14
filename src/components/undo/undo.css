@@ -1,0 +1,22 @@
+/* <o-undo-controls> */
+.o-undo-controls { display: inline-flex; vertical-align: middle; }
+.o-undo-controls > .o-btn[aria-disabled="true"] { pointer-events: auto; cursor: not-allowed; }
+.o-undo-controls > .o-btn[aria-disabled="true"]:hover { background-color: var(--o-btn-bg); }
+.o-undo-controls > .o-undo-hist { width: auto; padding-inline: .375rem; }
+[dir="rtl"] .o-undo-controls .o-icon-undo, [dir="rtl"] .o-undo-controls .o-icon-redo { transform: scaleX(-1); }
+.o-undo-menu { min-width: 15rem; max-width: min(22rem, calc(100vw - 1rem)); max-height: 20rem; padding: .25rem; }
+.o-undo-menu:focus { outline: none; }
+.o-undo-menu-title { padding: .375rem .625rem .25rem; font-size: var(--o-fs-xs); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--o-text-muted); }
+.o-undo-item { display: flex; align-items: center; gap: .5rem; padding: .4rem .625rem; font-size: var(--o-fs-sm); border-radius: var(--o-radius-sm); cursor: pointer; user-select: none; }
+.o-undo-item:hover, .o-undo-item.is-active { background: var(--o-surface-3); }
+.o-undo-item:focus { outline: none; }
+.o-undo-item:focus-visible { box-shadow: inset 0 0 0 2px var(--o-focus); }
+.o-undo-check { width: 1rem; height: 1rem; color: var(--o-primary-text); visibility: hidden; }
+.o-undo-item[aria-checked="true"] { font-weight: 600; }
+.o-undo-item[aria-checked="true"] .o-undo-check { visibility: visible; }
+.o-undo-item.is-undone .o-undo-label { color: var(--o-text-subtle); text-decoration: line-through; text-decoration-color: color-mix(in srgb, currentColor 50%, transparent); }
+.o-undo-label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.o-undo-time { flex-shrink: 0; font-size: var(--o-fs-xs); color: var(--o-text-subtle); }
+.o-undo-sep { height: 1px; margin: .25rem 0; background: var(--o-border); }
+.o-undo-clear { color: var(--o-danger-text); }
+.o-undo-clear > .o-icon { width: 1rem; height: 1rem; }

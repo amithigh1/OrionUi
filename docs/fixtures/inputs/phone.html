@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phone fixture — Orion Admin</title>
+<script src="../../../dist/orion.js"></script>
+</head>
+<body class="o-container o-py-6">
+<form id="f" class="o-stack" style="max-width:28rem">
+  <label for="p1">Mobile</label>
+  <o-phone id="p1" name="p1" country="MY" preferred="MY,SG,US" required></o-phone>
+  <o-phone id="p2" name="p2" country="US" format="international"></o-phone>
+  <o-phone id="p3" name="p3" value="+442079460958"></o-phone>
+  <button class="o-btn" type="reset">Reset</button>
+</form>
+</body>
+</html>

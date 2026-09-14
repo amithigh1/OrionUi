@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Team workspace — Orion Admin</title>
+<script src="../../dist/orion.js"></script>
+<style>
+  body { margin: 0; height: 100vh; display: flex; flex-direction: column; background: var(--o-bg); color: var(--o-text); font: var(--o-fs-base)/1.5 var(--o-font-sans); }
+  header { display: flex; align-items: center; gap: .75rem; padding: .625rem 1.25rem; background: var(--o-surface); border-bottom: 1px solid var(--o-border); flex-shrink: 0; }
+  header h1 { margin: 0; font-size: var(--o-fs-lg); flex: 1 1 auto; }
+  main { flex: 1 1 auto; display: flex; min-height: 0; }
+  .ws-roster { flex: 0 0 15rem; border-inline-end: 1px solid var(--o-border); padding: 1rem; overflow: auto; }
+  .ws-roster h2 { margin: 0 0 .75rem; font-size: var(--o-fs-xs); text-transform: uppercase; letter-spacing: .04em; color: var(--o-text-muted); }
+  .ws-chat { flex: 1 1 auto; min-width: 0; padding: 1rem; }
+  .ws-chat o-chat { height: 100%; }
+  .ws-activity { flex: 0 0 18rem; border-inline-start: 1px solid var(--o-border); padding: 1rem; overflow: auto; }
+  .ws-activity h2 { margin: 0 0 .75rem; font-size: var(--o-fs-xs); text-transform: uppercase; letter-spacing: .04em; color: var(--o-text-muted); }
+  @media (max-width: 960px) { .ws-activity { display: none; } }
+  @media (max-width: 680px) { .ws-roster { display: none; } }
+</style>
+</head>
+<body>
+<header>
+  <o-icon name="sparkles" style="color:var(--o-primary)"></o-icon>
+  <h1>Launch Team</h1>
+  <button class="o-btn o-btn-ghost o-btn-icon" id="away-toggle" title="Toggle my status" aria-label="Toggle my status"><o-presence id="me-dot" show-label="false" status="online"></o-presence></button>
+  <o-notification-bell id="bell"></o-notification-bell>
+  <o-avatar name="Aisha Rahman" size="sm" status="online"></o-avatar>
+</header>
+<main>
+  <aside class="ws-roster">
+    <h2>Who's online</h2>
+    <o-presence-list id="roster" group-by="status"></o-presence-list>
+  </aside>
+  <section class="ws-chat">
+    <o-chat id="chat" layout="full" current-user='{"id":"me","name":"Aisha Rahman"}'></o-chat>
+  </section>
+  <aside class="ws-activity">
+    <h2>Recent activity</h2>
+    <o-activity-feed id="feed" compact></o-activity-feed>
+  </aside>
+</main>
+<script>
+(() => {
+  const now = Date.now();
+  const team = [
+    { id: 'me', name: 'Aisha Rahman', role: 'Admin', group: 'Engineering' },
+    { id: 'ben', name: 'Ben Tan', role: 'Engineer', group: 'Engineering' },
+    { id: 'chen', name: 'Chen Wei', role: 'Designer', group: 'Design' },
+    { id: 'grace', name: 'Grace Kim', role: 'Product', group: 'Product' },
+    { id: 'diego', name: 'Diego Silva', role: 'Support', group: 'Support' },
+  ];
+
+  /* presence: seed the store, keep the roster + my own status dot live */
+  Orion.presence.set('me', 'online', { name: 'Aisha Rahman' });
+  Orion.presence.set('ben', 'online', { name: 'Ben Tan' });
+  Orion.presence.set('chen', 'busy', { name: 'Chen Wei' });
+  Orion.presence.set('grace', 'away', { name: 'Grace Kim' });
+  Orion.presence.set('diego', 'offline', { name: 'Diego Silva' });
+  document.getElementById('roster').items = team;
+  document.getElementById('roster').addEventListener('o-select', e => Orion.toast?.(`${e.detail.item.name} — ${e.detail.item.role}`));
+  document.getElementById('away-toggle').addEventListener('click', () => {
+    const next = Orion.presence.get('me') === 'online' ? 'away' : 'online';
+    Orion.presence.set('me', next);
+    document.getElementById('me-dot').status = next;
+  });
+  // idle auto-away: step away from the keyboard for 20s in this demo (real apps use minutes) and the
+  // dot flips to "away" on its own, then back to "online" the moment you move the mouse or type again.
+  Orion.presence.autoAway('me', { timeout: 20000 });
+  Orion.presence.subscribe(e => { if (e.userId === 'me') document.getElementById('me-dot').status = e.status; });
+
+  /* chat: a couple of conversations, one with unread history */
+  const chat = document.getElementById('chat');
+  chat.setConversations([
+    { id: 'c-ben', title: 'Ben Tan', online: true, unread: 1, members: [team[1]] },
+    { id: 'c-launch', title: 'Launch planning', members: [team[1], team[2], team[3]] },
+  ]);
+  chat.setMessages([
+    { id: 'm1', conversationId: 'c-ben', author: team[1], text: 'Pushed the fix for the checkout bug', createdAt: now - 9e5, status: 'read' },
+    { id: 'm2', conversationId: 'c-ben', author: { id: 'me' }, text: 'Nice, I will verify on staging', createdAt: now - 8.9e5, status: 'read' },
+    { id: 'm3', conversationId: 'c-ben', author: team[1], text: 'Also filed the follow-up ticket', createdAt: now - 3e5, status: 'delivered' },
+    { id: 'm4', conversationId: 'c-launch', author: team[2], text: 'New mockups are in the design file', createdAt: now - 7e6, status: 'read' },
+    { id: 'm5', conversationId: 'c-launch', author: team[3], text: 'Looks great — launching Friday?', createdAt: now - 6.8e6, status: 'read' },
+  ]);
+  chat.onSend = async ({ conversationId, message }) => {
+    Orion.notifications.push({ title: 'Message sent', body: message.text, type: 'success' });
+    return { status: 'sent' };
+  };
+  chat.addEventListener('o-send', () => {
+    // simulate a teammate's reply to keep the demo lively
+    setTimeout(() => {
+      chat.addMessage(chat.activeId, { id: Orion.util.uid('m'), conversationId: chat.activeId, author: team[1], text: 'Got it, thanks!', createdAt: new Date().toISOString(), status: 'delivered' });
+    }, 900);
+  });
+
+  /* notifications: seed a few, bridge new activity into toasts */
+  Orion.notifications.configure({ toast: true });
+  Orion.notifications.setItems([
+    { id: 1, title: 'Ben mentioned you', body: 'in "Launch planning"', type: 'mention', createdAt: now - 6e5 },
+    { id: 2, title: 'Deploy finished', body: 'v1.4.2 is live', type: 'success', createdAt: now - 2e6 },
+    { id: 3, title: 'Storage almost full', body: '92% of your plan quota used', type: 'warning', createdAt: now - 864e5 },
+  ]);
+
+  /* activity feed: recent team actions, newest pushed in live to show the store + feed working together */
+  const feed = document.getElementById('feed');
+  feed.items = [
+    { id: 1, actor: team[1], verb: 'merged PR', target: { label: '#482' }, type: 'code', icon: 'git-merge', color: 'success', createdAt: now - 4e5 },
+    { id: 2, actor: team[2], verb: 'uploaded', target: { label: 'Launch mockups v3' }, type: 'upload', icon: 'image', color: 'info', createdAt: now - 7e6 },
+    { id: 3, actor: team[3], verb: 'closed', target: { label: 'Onboarding checklist' }, type: 'task', icon: 'check-circle', color: 'success', createdAt: now - 9e6 },
+    { id: 4, actor: team[4], verb: 'replied to', target: { label: 'Customer ticket #221' }, type: 'comment', icon: 'message-square', color: 'primary', createdAt: now - 864e5 },
+  ];
+  setTimeout(() => {
+    feed.items = [{ id: 5, actor: team[1], verb: 'shipped', target: { label: 'checkout fix' }, type: 'code', icon: 'rocket', color: 'success', createdAt: Date.now() }, ...feed.items];
+    Orion.notifications.push({ title: 'Ben Tan shipped checkout fix', type: 'success' });
+  }, 2500);
+})();
+</script>
+</body>
+</html>

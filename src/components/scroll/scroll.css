@@ -1,0 +1,37 @@
+/* ============================================================================
+ * Scroll utilities: back-to-top button, scroll progress bar, scroll-spy
+ * (behavior-only, styled through .is-active/.has-active on the nav) and the
+ * .is-stuck shadow added by data-o-sticky-actions.
+ * ========================================================================== */
+o-back-to-top:not(:defined), o-scroll-progress:not(:defined) { display: none; }
+
+.o-back-to-top { position: fixed; z-index: var(--o-z-fixed); inset-block-end: 1.5rem; inset-inline-end: 1.5rem; }
+.o-back-to-top-btn {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  width: 2.75rem; height: 2.75rem; padding: 0; color: var(--o-text); background: var(--o-elevated);
+  border: 1px solid var(--o-border); border-radius: 50%; box-shadow: var(--o-shadow-lg); cursor: pointer;
+  opacity: 0; transform: translateY(.5rem) scale(.9); pointer-events: none;
+  transition: opacity var(--o-dur) var(--o-ease), transform var(--o-dur) var(--o-ease), background-color var(--o-dur-fast);
+}
+.o-back-to-top.is-visible .o-back-to-top-btn { opacity: 1; transform: none; pointer-events: auto; }
+.o-back-to-top-btn:hover { background: var(--o-surface-3); }
+.o-back-to-top-btn:focus-visible { outline: none; box-shadow: var(--o-shadow-lg), 0 0 0 var(--o-ring-width) color-mix(in srgb, var(--o-focus) var(--o-ring-alpha), transparent); }
+.o-back-to-top-icon { width: 1.125rem; height: 1.125rem; }
+.o-back-to-top[progress] .o-back-to-top-btn { background: var(--o-elevated); }
+.o-back-to-top[progress] .o-back-to-top-btn::before {
+  content: ""; position: absolute; inset: -4px; border-radius: 50%;
+  background: conic-gradient(var(--o-primary) calc(var(--o-progress, 0) * 360deg), var(--o-border) 0deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px + 1px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px + 1px));
+}
+@media (max-width: 575.98px) { .o-back-to-top { inset-block-end: calc(1rem + var(--o-bottom-nav-space, 0px)); inset-inline-end: 1rem; } }
+
+.o-scroll-progress { position: fixed; inset-inline: 0; top: 0; z-index: var(--o-z-fixed); height: 3px; background: transparent; }
+.o-scroll-progress[position="bottom"] { top: auto; bottom: 0; }
+.o-scroll-progress-bar { height: 100%; width: 0%; background: var(--o-primary); transition: width 100ms linear; }
+
+/* scroll-spy: plain nav markup, just active-state styling (reuses .o-nav-link if present) */
+[data-o-spy] :is(a.is-active, a[aria-current]):not(.o-nav-link):not(.o-menu-link) { font-weight: 600; color: var(--o-primary-text); }
+
+/* sticky actions bar */
+.o-sticky-bar.is-stuck, [data-o-sticky-actions].is-stuck { box-shadow: var(--o-shadow-lg); }

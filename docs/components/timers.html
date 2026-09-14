@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timers — Orion Admin</title>
+<meta name="docs:section" content="Scheduling">
+<meta name="docs:order" content="40">
+<meta name="docs:desc" content="Drift-free countdown timer and a lap-tracking stopwatch">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Timers</h1>
+    <p class="docs-lead"><code>&lt;o-countdown&gt;</code> counts down to a target timestamp and
+      <code>&lt;o-stopwatch&gt;</code> counts up with lap splits. Both recompute from
+      <code>Date.now()</code> on every tick, so they never drift even if the tab was backgrounded, and both work
+      with a keyboard and a screen reader out of the box.</p>
+  </header>
+
+  <section id="launch">
+    <h2>Product launch countdown</h2>
+    <p>Four variants: <code>tiles</code> (default), <code>inline</code>, <code>flip</code> and <code>ring</code>.
+      The countdown recalculates from the target time on every tick — try throttling the tab or switching away and
+      back, the numbers stay exact. <code>o-complete</code> fires once, when the target is reached.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-stack" style="gap:2rem;align-items:center">
+          <o-countdown id="cd-tiles" variant="tiles" format="dhms" label="Launch countdown"></o-countdown>
+          <o-countdown id="cd-inline" variant="inline" format="dhms"></o-countdown>
+          <o-countdown id="cd-flip" variant="flip" format="hms"></o-countdown>
+          <o-countdown id="cd-ring" variant="ring" format="hms"></o-countdown>
+        </div>
+        <div class="docs-log o-mt-3" id="cd-log"></div>
+        <script>
+          (() => {
+            const to = new Date(Date.now() + 2 * 24 * 3600e3 + 3 * 3600e3 + 45 * 60e3 + 12e3).toISOString();
+            ['cd-tiles', 'cd-inline', 'cd-flip', 'cd-ring'].forEach(id => { document.getElementById(id).to = to; });
+            document.getElementById('cd-tiles').addEventListener('o-complete', () => docs.log('#cd-log', 'o-complete'));
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="short">
+    <h2>Short countdown &amp; restart</h2>
+    <p>A 15-second demo so you can see <code>o-complete</code> fire without waiting. <code>restart(to?)</code> sets a
+      new target (or reuses the current one) and starts again.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-stack" style="align-items:center;gap:1rem">
+          <o-countdown id="cd-short" variant="tiles" format="ms"></o-countdown>
+          <button class="o-btn o-btn-primary o-btn-sm" id="cd-short-again">Restart (15s)</button>
+        </div>
+        <script>
+          (() => {
+            const el = document.getElementById('cd-short');
+            const go = () => { el.to = new Date(Date.now() + 15000).toISOString(); };
+            go();
+            document.getElementById('cd-short-again').onclick = go;
+            el.addEventListener('o-complete', () => Orion.toast ? Orion.toast('Time’s up!') : null);
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="stopwatch">
+    <h2>Stopwatch with laps</h2>
+    <p>Space to start/pause, <kbd class="o-kbd">L</kbd> to lap while running, <kbd class="o-kbd">R</kbd> to reset
+      while stopped. The fastest and slowest laps are highlighted once there are three or more.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-stopwatch id="sw1" label="Interval timer"></o-stopwatch>
+      </template>
+    </div>
+  </section>
+
+  <section id="persist">
+    <h2>Persisted stopwatch</h2>
+    <p>Set <code>persist</code> to a storage key to keep the elapsed time and laps across reloads (the running state
+      itself still needs an explicit <code>start()</code> after a reload, since silently auto-resuming a background
+      timer without the visitor asking is surprising).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-stopwatch id="sw2" persist="orion:docs:stopwatch" format="ms"></o-stopwatch>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>&lt;o-countdown&gt; API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Prop / attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>to</code></td><td>Date | string</td><td>Target timestamp.</td></tr>
+        <tr><td><code>format</code></td><td>string</td><td><code>dhms</code> (default) · <code>hms</code> (hours roll past 24) · <code>ms</code> (minutes roll past 60).</td></tr>
+        <tr><td><code>variant</code></td><td>string</td><td><code>tiles</code> (default) · <code>inline</code> · <code>flip</code> · <code>ring</code>.</td></tr>
+        <tr><td><code>labels</code></td><td>boolean</td><td>Show unit labels (days/hours/…) under each value. Default on.</td></tr>
+        <tr><td><code>autostart</code></td><td>boolean</td><td>Start as soon as <code>to</code> is set. Default on.</td></tr>
+        <tr><td><code>pause-on-hidden</code></td><td>boolean</td><td>Stop the render loop while the tab is hidden (the underlying time is never lost — it's always recomputed from <code>to</code>). Default on.</td></tr>
+        <tr><td><code>complete-text</code></td><td>string</td><td>Text shown (and announced) once the countdown reaches zero.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events &amp; methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>o-complete</code></td><td>Fires once, when <code>to</code> is reached. <code>detail: { to }</code>.</td></tr>
+        <tr><td><code>start()</code> / <code>pause()</code></td><td>Control the render loop.</td></tr>
+        <tr><td><code>restart(to?)</code></td><td>Optionally set a new target, then (re)start from zero state.</td></tr>
+        <tr><td><code>getRemaining()</code></td><td>Milliseconds remaining, or <code>null</code>.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>&lt;o-stopwatch&gt; API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Prop / attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>autostart</code></td><td>boolean</td><td>Start immediately on connect.</td></tr>
+        <tr><td><code>format</code></td><td>string</td><td><code>hms</code> (default) or <code>ms</code>.</td></tr>
+        <tr><td><code>centiseconds</code></td><td>boolean</td><td>Show a de-emphasised <code>.centiseconds</code> segment. Default on.</td></tr>
+        <tr><td><code>persist</code></td><td>string</td><td>localStorage key; when set, elapsed time and laps survive a reload.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>start()</code> / <code>resume()</code></td><td>Start or resume from the current elapsed time.</td></tr>
+        <tr><td><code>pause()</code></td><td>Stop counting, keeping the elapsed time.</td></tr>
+        <tr><td><code>toggle()</code></td><td>Start/pause (bound to Space).</td></tr>
+        <tr><td><code>lap()</code></td><td>Records a split (bound to <kbd class="o-kbd">L</kbd> while running).</td></tr>
+        <tr><td><code>reset()</code></td><td>Clears elapsed time and laps (bound to <kbd class="o-kbd">R</kbd> while stopped).</td></tr>
+        <tr><td><code>getElapsed()</code></td><td>Current elapsed milliseconds.</td></tr>
+        <tr><td><code>getLaps()</code></td><td><code>{ n, lap, total }[]</code> in milliseconds.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Orion.timer helpers</h3>
+    <table class="docs-api">
+      <thead><tr><th>Function</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>Orion.timer.parts(ms, format)</code></td><td><code>{ d, h, m, s, cs, totalMs, totalSec }</code>.</td></tr>
+        <tr><td><code>Orion.timer.clock(ms, format, withCentiseconds)</code></td><td><code>"01:02:03"</code> style clock string.</td></tr>
+        <tr><td><code>Orion.timer.compact(ms, format)</code></td><td><code>"1d 2h 03m 04s"</code> compact string.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Keyboard (stopwatch)</h3>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td><kbd class="o-kbd">Space</kbd></td><td>Start / pause.</td></tr>
+        <tr><td><kbd class="o-kbd">L</kbd></td><td>Record a lap (while running).</td></tr>
+        <tr><td><kbd class="o-kbd">R</kbd></td><td>Reset (while stopped).</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

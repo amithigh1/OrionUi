@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Validation — Orion Admin</title>
+<meta name="docs:section" content="Forms">
+<meta name="docs:order" content="10">
+<meta name="docs:desc" content="Declarative and scripted form validation: rule strings, live/async checks, error summaries and focus management">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Validation</h1>
+    <p class="docs-lead"><code>Orion.validate(form, options)</code> is the validation engine behind every Orion form: a rule-string mini-language (<code>data-o-rules="required|email|min:3"</code>), live/blur/async checks (including remote uniqueness checks), an accessible error summary, focus management and <code>Orion.serialize()</code>. It works on plain HTML forms — no other package required.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic usage</h2>
+    <p>Add <code>data-o-validate</code> to a <code>&lt;form&gt;</code> and <code>data-o-rules</code> to each field. See <a href="form-controls.html">Form controls</a> for the input styling itself.</p>
+    <div class="docs-demo">
+      <template>
+        <form class="o-form-grid" data-o-validate data-o-summary onsubmit="event.preventDefault()">
+          <div class="o-field"><label class="o-label is-required" for="v-name">Full name</label><input class="o-input" id="v-name" name="name" data-o-rules="required|min:2"></div>
+          <div class="o-field"><label class="o-label is-required" for="v-email">Email</label><input class="o-input" id="v-email" name="email" type="email" data-o-rules="required|email"></div>
+          <div class="o-field"><label class="o-label" for="v-age">Age</label><input class="o-input" id="v-age" name="age" type="number" data-o-rules="integer|between:18,99"></div>
+          <div class="o-form-actions o-span-full"><button class="o-btn o-btn-primary" type="submit">Submit</button></div>
+        </form>
+      </template>
+    </div>
+  </section>
+
+  <section id="registration">
+    <h2>Realistic example: registration form</h2>
+    <p>Combines a mocked remote availability check (<code>remote:checkEmailTaken</code>), password confirmation (<code>same:</code>), and a required checkbox (<code>accepted</code>). Try <code>taken@example.com</code> to see the remote rule fail.</p>
+    <div class="docs-demo">
+      <template>
+        <form class="o-form-grid" id="reg-form" onsubmit="event.preventDefault()">
+          <div class="o-field o-span-full"><label class="o-label is-required" for="reg-email">Email</label><input class="o-input" id="reg-email" name="email" type="email" data-o-rules="required|email|remote:checkEmailTaken" data-o-messages='{"remote":"That email is already registered"}'><div class="o-help">Try taken@example.com to see the remote check fail.</div></div>
+          <div class="o-field"><label class="o-label is-required" for="reg-pw">Password</label><input class="o-input" id="reg-pw" name="password" type="password" data-o-rules="required|minlength:8"></div>
+          <div class="o-field"><label class="o-label is-required" for="reg-pw2">Confirm password</label><input class="o-input" id="reg-pw2" name="password_confirmation" type="password" data-o-rules="required|same:password"></div>
+          <div class="o-field o-span-full"><label class="o-check"><input type="checkbox" name="agree" data-o-rules="accepted"> <span>I agree to the Terms of Service</span></label></div>
+          <div class="o-form-actions o-span-full"><button class="o-btn o-btn-primary" type="submit">Create account</button></div>
+        </form>
+        <div class="docs-log" id="reg-log"></div>
+        <script>
+          window.checkEmailTaken = async (value) => { await new Promise(r => setTimeout(r, 400)); return String(value).toLowerCase() !== 'taken@example.com'; };
+          Orion.validate('#reg-form', {
+            summary: true,
+            onSubmit: async data => { await new Promise(r => setTimeout(r, 300)); docs.log('#reg-log', 'submitted: ' + JSON.stringify(data)); },
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="rules">
+    <h2>Rule reference in action</h2>
+    <p>Every field below fires on blur (<code>data-o-live="blur"</code> is the default) so you can see each rule's message. See the full token list in the API section.</p>
+    <div class="docs-demo">
+      <template>
+        <form class="o-form-grid" data-o-validate onsubmit="event.preventDefault()">
+          <div class="o-field"><label class="o-label" for="r-url">Website (url)</label><input class="o-input" id="r-url" name="site" data-o-rules="url" placeholder="https://example.com"></div>
+          <div class="o-field"><label class="o-label" for="r-alpha">Nickname (alpha)</label><input class="o-input" id="r-alpha" name="nick" data-o-rules="alpha"></div>
+          <div class="o-field"><label class="o-label" for="r-digits">PIN (digits:4)</label><input class="o-input" id="r-digits" name="pin" inputmode="numeric" data-o-rules="digits:4"></div>
+          <div class="o-field"><label class="o-label" for="r-date">Start date (date, after:today)</label><input class="o-input" id="r-date" name="start" data-o-rules="date|after:today"></div>
+          <div class="o-field"><label class="o-label" for="r-in">Plan (in:starter,pro,enterprise)</label><input class="o-input" id="r-in" name="plan" data-o-rules="in:starter,pro,enterprise" placeholder="starter, pro or enterprise"></div>
+          <div class="o-field"><label class="o-label" for="r-diff">Backup email (different:field)</label><input class="o-input" id="r-diff" name="backup" data-o-rules="different:email"><div class="o-help">Must differ from the "Email" field in the previous demo (leave both empty to test "same value" fails once you fill one in).</div></div>
+          <div class="o-field"><label class="o-label" for="r-file">Avatar (filesize:1mb, filetype:image/*)</label><input class="o-input" id="r-file" name="avatar" type="file" data-o-rules="filesize:1mb|filetype:image/*"></div>
+          <div class="o-field"><label class="o-label" for="r-pattern">Order code (pattern)</label><input class="o-input" id="r-pattern" name="code" data-o-rules="pattern:/^[A-Z]{2}-\d{4}$/" placeholder="AB-1234"></div>
+        </form>
+      </template>
+    </div>
+  </section>
+
+  <section id="summary">
+    <h2>Error summary &amp; focus management</h2>
+    <p>Set <code>summary: true</code> (or <code>data-o-summary</code>) to render an <code>.o-validation-summary</code> alert that links to every invalid field. On submit, the first invalid field is focused and scrolled into view automatically.</p>
+    <div class="docs-demo">
+      <template>
+        <form class="o-form-grid" data-o-validate data-o-summary onsubmit="event.preventDefault()">
+          <div class="o-field"><label class="o-label is-required" for="s-first">First name</label><input class="o-input" id="s-first" name="first" data-o-rules="required"></div>
+          <div class="o-field"><label class="o-label is-required" for="s-last">Last name</label><input class="o-input" id="s-last" name="last" data-o-rules="required"></div>
+          <div class="o-field"><label class="o-label is-required" for="s-email2">Email</label><input class="o-input" id="s-email2" name="email" type="email" data-o-rules="required|email"></div>
+          <div class="o-field"><label class="o-label is-required" for="s-phone">Phone</label><input class="o-input" id="s-phone" name="phone" data-o-rules="required|phone"></div>
+          <div class="o-form-actions o-span-full"><button class="o-btn o-btn-primary" type="submit">Submit</button></div>
+        </form>
+      </template>
+    </div>
+  </section>
+
+  <section id="custom-rule">
+    <h2>Custom rules</h2>
+    <p><code>Orion.validate.rule(name, fn, message)</code> registers a reusable rule. This one requires an even number.</p>
+    <div class="docs-demo">
+      <template>
+        <form class="o-form-grid" data-o-validate onsubmit="event.preventDefault()">
+          <div class="o-field"><label class="o-label" for="c-even">Even number</label><input class="o-input" id="c-even" name="even" type="number" data-o-rules="even"></div>
+        </form>
+        <script>
+          Orion.validate.rule('even', v => +v % 2 === 0, 'Must be an even number');
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="serialize">
+    <h2>Orion.serialize(form)</h2>
+    <p>Nested names, checkbox groups and multi-selects all become a plain nested object.</p>
+    <div class="docs-demo">
+      <template>
+        <form class="o-form-grid" id="ser-form" onsubmit="event.preventDefault()">
+          <div class="o-field"><label class="o-label" for="ser-city">City (user[address][city])</label><input class="o-input" id="ser-city" name="user[address][city]"></div>
+          <fieldset class="o-field"><legend class="o-label">Interests (tags[])</legend>
+            <label class="o-check"><input type="checkbox" name="tags[]" value="design"> Design</label>
+            <label class="o-check"><input type="checkbox" name="tags[]" value="engineering"> Engineering</label>
+            <label class="o-check"><input type="checkbox" name="tags[]" value="sales"> Sales</label>
+          </fieldset>
+          <div class="o-field"><label class="o-label" for="ser-multi">Regions (multi-select)</label>
+            <select class="o-select" id="ser-multi" name="regions" multiple size="3">
+              <option value="apac">APAC</option><option value="emea">EMEA</option><option value="amer">Americas</option>
+            </select>
+          </div>
+          <div class="o-form-actions o-span-full"><button class="o-btn" type="button" id="ser-btn">Serialize</button></div>
+        </form>
+        <div class="docs-log" id="ser-log"></div>
+        <script>
+          document.getElementById('ser-btn').addEventListener('click', () => docs.log('#ser-log', JSON.stringify(Orion.serialize('#ser-form'))));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="fill">
+    <h2>Orion.fill(form, data) &amp; Orion.formFields(form)</h2>
+    <p><code>Orion.fill()</code> is the inverse of <code>Orion.serialize()</code>: it sets control values from a
+      (possibly nested) data object, using the same <code>user[address][city]</code> / <code>tags[]</code> name
+      convention, and dispatches <code>input</code>/<code>change</code> on every control it changes (so
+      <code>data-o-validate</code> and anything else listening reacts normally). <code>Orion.formFields(form)</code>
+      returns the named controls in DOM order — native inputs and any Orion form-associated custom element — which
+      is what <code>serialize()</code>/<code>fill()</code> iterate over internally, and is handy on its own for
+      building a review step or a "which fields are on this form" inspector.</p>
+    <div class="docs-demo">
+      <template>
+        <form class="o-form-grid" id="fill-form" onsubmit="event.preventDefault()">
+          <div class="o-field"><label class="o-label" for="fill-name">Name (user[name])</label><input class="o-input" id="fill-name" name="user[name]"></div>
+          <div class="o-field"><label class="o-label" for="fill-city">City (user[address][city])</label><input class="o-input" id="fill-city" name="user[address][city]"></div>
+          <fieldset class="o-field"><legend class="o-label">Interests (tags[])</legend>
+            <label class="o-check"><input type="checkbox" name="tags[]" value="design"> Design</label>
+            <label class="o-check"><input type="checkbox" name="tags[]" value="engineering"> Engineering</label>
+            <label class="o-check"><input type="checkbox" name="tags[]" value="sales"> Sales</label>
+          </fieldset>
+          <div class="o-form-actions o-span-full">
+            <button class="o-btn o-btn-primary" type="button" id="fill-btn">Orion.fill() with sample data</button>
+            <button class="o-btn" type="button" id="fill-fields-btn">Orion.formFields() names</button>
+          </div>
+        </form>
+        <div class="docs-log" id="fill-log"></div>
+        <script>
+          document.getElementById('fill-btn').addEventListener('click', () => {
+            Orion.fill('#fill-form', { user: { name: 'Ada Lovelace', address: { city: 'London' } }, tags: ['design', 'engineering'] });
+            docs.log('#fill-log', 'filled from { user: { name, address: { city } }, tags: [...] }');
+          });
+          document.getElementById('fill-fields-btn').addEventListener('click', () => {
+            const names = Orion.formFields(document.getElementById('fill-form')).map(el => el.name || el.id);
+            docs.log('#fill-log', 'formFields(): ' + names.join(', '));
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="messages">
+    <h2>Custom messages &amp; i18n</h2>
+    <p>Override a built-in message per field with <code>data-o-messages='{"rule":"text"}'</code>, or globally by adding to the <code>validation</code> i18n namespace with <code>Orion.i18n.add(locale, { validation: { required: '…' } })</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <form class="o-form-grid" data-o-validate onsubmit="event.preventDefault()">
+          <div class="o-field"><label class="o-label is-required" for="m-coupon">Coupon code</label><input class="o-input" id="m-coupon" name="coupon" data-o-rules="required" data-o-messages='{"required":"Enter a coupon, or leave the page to skip"}'></div>
+        </form>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Orion.validate(form, options)</h3>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>rules</td><td>Object of <code>name → rule string | array</code>, merged with any <code>data-o-rules</code> on the fields themselves.</td></tr>
+        <tr><td>messages</td><td>Object of <code>name → message | { rule: message }</code>.</td></tr>
+        <tr><td>live</td><td><code>'blur'</code> (default) · <code>'input'</code> · <code>'submit'</code> · <code>'dirty'</code> (revalidate only fields the user changed).</td></tr>
+        <tr><td>summary</td><td><code>true</code>, a selector, or an element to host the <code>.o-validation-summary</code> alert.</td></tr>
+        <tr><td>success</td><td>Add <code>.is-valid</code> / show <code>.o-valid-msg</code> once a touched field passes.</td></tr>
+        <tr><td>scrollToError / focusInvalid</td><td>Both default <code>true</code>.</td></tr>
+        <tr><td>remote</td><td><code>async (url, { value, name, field, form, signal }) → boolean | string | { valid, message }</code>. Default: GET <code>url?field=value</code>.</td></tr>
+        <tr><td>onSubmit</td><td><code>async (data, form) → void | { errors }</code>. When set, the engine calls it instead of letting the form submit natively; return <code>{ errors }</code> to map server-side errors back onto fields.</td></tr>
+        <tr><td>onInvalid</td><td><code>(errors, form) => void</code>, called whenever a submit attempt fails client-side.</td></tr>
+      </tbody>
+    </table>
+    <h3>Controller (returned by Orion.validate)</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>validate(scope?, opts?)</td><td>Validates every field (or just <code>scope</code>); returns a Promise&lt;boolean&gt;.</td></tr>
+        <tr><td>validateField(name)</td><td>Validates one field.</td></tr>
+        <tr><td>errors</td><td>Getter: <code>{ name: message }</code> for every currently-invalid field.</td></tr>
+        <tr><td>setErrors(errors, opts?)</td><td>Map server-side errors onto fields (or an unmatched key into the summary as a general error) and focus the first one.</td></tr>
+        <tr><td>focusField(name)</td><td>Reveal (opens parent <code>&lt;details&gt;</code>) and focus a field.</td></tr>
+        <tr><td>clear() / reset() / destroy()</td><td><code>reset()</code> also calls <code>form.reset()</code>; <code>destroy()</code> removes all listeners and the summary.</td></tr>
+      </tbody>
+    </table>
+    <h3>Orion.serialize / Orion.fill / Orion.formFields <span class="o-text-muted o-fs-sm">(<code>Orion.formUtil</code>)</span></h3>
+    <table class="docs-api">
+      <thead><tr><th>Function</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>serialize(form, {disabled, files, exclude})</td><td>→ nested plain object. Checkbox groups/multi-selects become arrays, a lone checkbox becomes <code>true</code>/<code>false</code> (or its <code>value</code>), numbers/ranges become <code>Number</code>, files become <code>File</code>/<code>File[]</code>, Orion custom fields use <code>.value</code>.</td></tr>
+        <tr><td>fill(form, data, {events=true})</td><td>The inverse: sets control values from a (nested) data object by name, creating <code>&lt;o-repeater&gt;</code> rows first when needed; dispatches native <code>input</code>/<code>change</code> on every control it changes unless <code>events: false</code>.</td></tr>
+        <tr><td>formFields(form, {buttons=false})</td><td>→ named controls (native + Orion form-associated custom elements) in DOM order — what <code>serialize</code>/<code>fill</code> iterate internally.</td></tr>
+        <tr><td>Orion.formUtil</td><td><code>{ serialize, fill, formFields, parseName, nameKey, setByName, getByName, labelOf, displayValue, controlValue, isCustomField }</code> — the same functions plus lower-level helpers (name-path parsing, a control's human label/display text) used by the repeater, wizard-review and form-builder packages.</td></tr>
+      </tbody>
+    </table>
+    <h3>Rule tokens — <code>data-o-rules="a|b:1,2"</code></h3>
+    <table class="docs-api">
+      <thead><tr><th>Rule</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>required · accepted</td><td>Non-empty; <code>accepted</code> additionally requires <code>true/on/yes/1</code> (checkboxes).</td></tr>
+        <tr><td>required_if:field[,values] · required_with:field[,…]</td><td>Conditionally required.</td></tr>
+        <tr><td>email · url · number (numeric) · integer</td><td>Format checks.</td></tr>
+        <tr><td>alpha · alphanum · alpha_dash · digits[:n] · phone</td><td>Character-set / length checks.</td></tr>
+        <tr><td>min:n · max:n · between:a,b</td><td>Adapts to string length, array item count, number, or date automatically.</td></tr>
+        <tr><td>minlength:n · maxlength:n</td><td>String or array length.</td></tr>
+        <tr><td>same:field · different:field</td><td>Compares to another field's value.</td></tr>
+        <tr><td>pattern:/regex/flags (or regex:)</td><td>Anchored to the full value when declared via <code>data-o-rules</code>.</td></tr>
+        <tr><td>date · before:ref · after:ref · before_or_equal:ref · after_or_equal:ref</td><td><code>ref</code>: <code>today</code>/<code>now</code>/<code>tomorrow</code>/<code>yesterday</code>, an ISO date, or another field's name.</td></tr>
+        <tr><td>in:a,b · not_in:a,b</td><td>Allow-list / deny-list.</td></tr>
+        <tr><td>filesize:2mb · filetype:image/*,.pdf · dimensions:min_width=100,ratio=16/9</td><td>File input checks.</td></tr>
+        <tr><td>remote:url | remote:globalFnName</td><td>Async check, debounced, cached, cancels stale requests.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>o-invalid</td><td><code>{ errors, fields }</code></td></tr>
+        <tr><td>o-valid</td><td><code>{}</code></td></tr>
+        <tr><td>o-submit</td><td><code>{ data, form }</code> — cancelable; only fires when no <code>onSubmit</code> option is set.</td></tr>
+        <tr><td>o-submitted</td><td><code>{ data, result? }</code> or <code>{ data, native: true }</code></td></tr>
+      </tbody>
+    </table>
+    <h3>CSS &amp; attributes</h3>
+    <table class="docs-api">
+      <thead><tr><th>Class / attribute</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.o-field.is-invalid / .o-error</td><td>Added to the field wrapper (or the control itself if there's no <code>.o-field</code>); the <code>.o-error</code> is created automatically if missing.</td></tr>
+        <tr><td>aria-invalid / aria-describedby</td><td>Set on the control(s); <code>aria-describedby</code> merges with any existing <code>.o-help</code>.</td></tr>
+        <tr><td>data-o-validate</td><td>Enables the engine declaratively on a form; JSON body is passed as options.</td></tr>
+        <tr><td>data-o-rules / data-o-messages / data-o-message</td><td>Per-field rule string / message overrides.</td></tr>
+        <tr><td>data-o-live / data-o-summary / data-o-success / data-o-scroll / data-o-onsubmit</td><td>Attribute equivalents of the JS options.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard &amp; accessibility</h2>
+    <p>Fields are validated on blur by default so keyboard users aren't interrupted mid-typing. On a failed submit, the first invalid field is focused and scrolled into view, and the error count is announced to screen readers (<code>announce()</code>) even without a visible summary. Every invalid control gets <code>aria-invalid="true"</code> and an <code>aria-describedby</code> pointing at its error text (merged with any help text). The summary's links jump focus straight to each field.</p>
+  </section>
+</main>
+</body>
+</html>

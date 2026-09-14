@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Theming — Orion Admin</title>
+<meta name="docs:section" content="Foundation">
+<meta name="docs:order" content="10">
+<meta name="docs:desc" content="Dark / light / auto, design tokens, runtime brand colors, multi-tenant and white-label themes, high contrast, font size">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .swatches { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); }
+  .swatch { border: 1px solid var(--o-border); border-radius: var(--o-radius); overflow: hidden; background: var(--o-surface); font-size: .75rem; }
+  .swatch > div:first-child { height: 3.25rem; }
+  .swatch > div:last-child { padding: .4rem .6rem; }
+  .swatch code { display: block; color: var(--o-text-muted); background: none !important; padding: 0 !important; }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Theming</h1>
+    <p class="docs-lead">All colors, radii, shadows and sizes are CSS custom properties (design tokens). Dark mode, high contrast,
+      font scaling, brand colors, multiple tenants and white-labelling are built in, and every component follows them automatically.</p>
+  </header>
+
+  <section id="mode">
+    <h2>Dark / light / auto</h2>
+    <p><code>auto</code> (default) follows the operating system. The choice is saved per browser (disable with <code>persist: false</code>).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-segmented" role="group" aria-label="Theme">
+          <button data-o-action="theme" data-o-value="light"><o-icon name="sun"></o-icon> Light</button>
+          <button data-o-action="theme" data-o-value="dark"><o-icon name="moon"></o-icon> Dark</button>
+          <button data-o-action="theme" data-o-value="auto"><o-icon name="monitor"></o-icon> Auto</button>
+        </div>
+        <button class="o-btn" data-o-toggle="theme">Toggle</button>
+        <span class="o-badge o-badge-soft-primary" id="mode-readout"></span>
+        <script>
+          const out = document.getElementById('mode-readout');
+          const paint = () => { out.textContent = `mode: ${Orion.theme.mode} → ${Orion.theme.resolved}`; };
+          Orion.theme.onChange(paint); paint();
+        </script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+      Orion.theme.setMode('dark');        // 'light' | 'dark' | 'auto'
+      Orion.theme.toggle();               // light ⇄ dark
+      Orion.theme.cycle();                // light → dark → auto
+      Orion.theme.resolved;               // 'light' | 'dark' (what is displayed)
+      Orion.on('theme', e => console.log(e.mode, e.resolved));
+    </pre>
+    <p>Set the initial mode without JavaScript flashes with <code>&lt;html data-theme="dark"&gt;</code> or <code>&lt;script src="orion.js" data-theme="dark"&gt;</code>.</p>
+  </section>
+
+  <section id="scoped">
+    <h2>Scoped themes</h2>
+    <p>Add <code>.o-theme-dark</code> or <code>.o-theme-light</code> to any element to theme only that area, for example a dark sidebar on a light page. Floating panels opened from inside it inherit the scope.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-grid o-grid-cols-1 o-grid-cols-md-2" style="--o-gap:0">
+          <div class="o-theme-dark o-p-6" style="background:var(--o-bg);color:var(--o-text)">
+            <h4>Dark scope</h4>
+            <p class="o-text-muted">Tokens are redefined for this subtree.</p>
+            <button class="o-btn o-btn-primary">Primary</button> <button class="o-btn">Default</button>
+            <input class="o-input o-mt-3" placeholder="Input in dark scope">
+          </div>
+          <div class="o-theme-light o-p-6" style="background:var(--o-bg);color:var(--o-text)">
+            <h4>Light scope</h4>
+            <p class="o-text-muted">Always light, even in dark mode.</p>
+            <button class="o-btn o-btn-primary">Primary</button> <button class="o-btn">Default</button>
+            <input class="o-input o-mt-3" placeholder="Input in light scope">
+          </div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="runtime">
+    <h2>Brand colors at runtime</h2>
+    <p><code>Orion.theme.set()</code> changes tokens live. Readable text colors (<code>--o-on-*</code>) and hover shades are derived automatically.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-4">
+          <label class="o-cluster">Primary <input type="color" class="o-input" id="pick-primary" value="#4f46e5"></label>
+          <label class="o-cluster">Radius <input type="range" class="o-range" id="pick-radius" min="0" max="20" value="8" style="width:10rem"></label>
+          <button class="o-btn o-btn-sm" id="theme-reset">Reset</button>
+        </div>
+        <div class="o-cluster">
+          <button class="o-btn o-btn-primary">Save changes</button>
+          <button class="o-btn o-btn-outline-primary">Outline</button>
+          <button class="o-btn o-btn-soft-primary">Soft</button>
+          <span class="o-badge o-badge-primary">Badge</span>
+          <a href="#runtime">A link</a>
+          <label class="o-check"><input type="checkbox" checked> Checkbox</label>
+          <label class="o-switch"><input type="checkbox" checked> Switch</label>
+        </div>
+        <pre class="o-pre o-mt-4" id="theme-css"></pre>
+        <script>
+          const cssOut = document.getElementById('theme-css');
+          const show = () => { cssOut.textContent = Orion.theme.exportCSS(); };
+          document.getElementById('pick-primary').addEventListener('input', e => { Orion.theme.set({ primary: e.target.value }); show(); });
+          document.getElementById('pick-radius').addEventListener('input', e => { const r = +e.target.value; Orion.theme.set({ radius: r + 'px', radiusSm: Math.max(0, r - 2) + 'px', radiusLg: r + 4 + 'px' }); show(); });
+          document.getElementById('theme-reset').addEventListener('click', () => { Orion.theme.reset(); document.getElementById('pick-primary').value = '#4f46e5'; document.getElementById('pick-radius').value = 8; show(); });
+          show();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="tenants">
+    <h2>Multi-tenant &amp; white-label</h2>
+    <p>Register named themes (tokens, branding, default mode) and switch between them. Elements marked with <code>data-o-brand="name"</code> / <code>data-o-brand="logo"</code> are updated automatically, as are the favicon and title.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-between o-mb-4 o-p-3 o-border o-rounded-lg">
+          <div class="o-hstack"><span class="o-avatar o-avatar-sm o-avatar-square" data-o-brand="logo" style="background-size:cover"></span><b data-o-brand="name">Orion Admin</b></div>
+          <div class="o-segmented" id="tenant-switch">
+            <button data-t="">Default</button><button data-t="acme">ACME</button><button data-t="globex">Globex</button><button data-t="initech">Initech</button>
+          </div>
+        </div>
+        <div class="o-cluster"><button class="o-btn o-btn-primary">Primary action</button><button class="o-btn o-btn-soft-primary">Secondary</button><span class="o-badge o-badge-soft-primary">Tenant badge</span></div>
+        <script>
+          const logo = (c) => 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="${c}"/><circle cx="16" cy="16" r="7" fill="#fff"/></svg>`);
+          Orion.theme.register('acme', { primary: '#e11d48', radius: '4px', brand: { name: 'ACME Corp', logo: logo('#e11d48') } });
+          Orion.theme.register('globex', { primary: '#0891b2', radius: '14px', brand: { name: 'Globex', logo: logo('#0891b2') } });
+          Orion.theme.register('initech', { primary: '#65a30d', font: 'Georgia, serif', brand: { name: 'Initech', logo: logo('#65a30d') } });
+          document.getElementById('tenant-switch').addEventListener('click', e => {
+            const b = e.target.closest('button'); if (!b) return;
+            if (b.dataset.t) Orion.theme.use(b.dataset.t, { persist: false });
+            else { Orion.theme.reset(); Orion.theme.brand({ name: 'Orion Admin', logo: logo('#4f46e5') }); }
+          });
+        </script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+      Orion.theme.register('acme', {
+        primary: '#e11d48', radius: '4px', font: 'Inter, sans-serif', mode: 'light',
+        brand: { name: 'ACME Corp', logo: '/acme.svg', logoDark: '/acme-white.svg', favicon: '/acme.ico', title: 'ACME Admin' }
+      });
+      Orion.theme.use('acme');           // persisted; Orion.theme.reset() to clear
+    </pre>
+  </section>
+
+  <section id="accessibility">
+    <h2>High contrast &amp; font size</h2>
+    <p>High contrast strengthens borders, muted text and focus rings (it also follows <code>prefers-contrast: more</code>). The font scale resizes every rem-based size.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn" data-o-action="theme" data-o-value="contrast"><o-icon name="eye"></o-icon> Toggle high contrast</button>
+        <div class="o-btn-group">
+          <button class="o-btn" data-o-action="theme" data-o-value="font-" aria-label="Smaller text">A−</button>
+          <button class="o-btn" data-o-action="theme" data-o-value="font0" aria-label="Default text size">A</button>
+          <button class="o-btn" data-o-action="theme" data-o-value="font+" aria-label="Larger text">A+</button>
+        </div>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+      Orion.theme.setContrast(true);
+      Orion.theme.setFontScale(1.125);   // 0.75 – 1.5
+    </pre>
+  </section>
+
+  <section id="tokens">
+    <h2>Design tokens</h2>
+    <p>Override tokens in your CSS (<code>:root { --o-primary: … }</code>) or with <code>Orion.theme.set()</code>. Semantic colors have derived variants: <code>-hover</code>, <code>-subtle</code>, <code>-border</code>, <code>-text</code> and <code>--o-on-*</code>.</p>
+    <div class="swatches" id="swatches"></div>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const names = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark', 'bg', 'surface', 'surface-2', 'surface-3', 'elevated', 'border', 'border-strong', 'text', 'text-muted', 'text-subtle',
+          'primary-subtle', 'success-subtle', 'danger-subtle', 'warning-subtle', 'chart-1', 'chart-2', 'chart-3', 'chart-4', 'chart-5', 'chart-6', 'chart-7', 'chart-8'];
+        const box = document.getElementById('swatches');
+        const paint = () => { box.innerHTML = names.map(n => `<div class="swatch"><div style="background:var(--o-${n})"></div><div><b>${n}</b><code>--o-${n}</code><code>${Orion.theme.get('--o-' + n)}</code></div></div>`).join(''); };
+        paint(); Orion.theme.onChange(() => setTimeout(paint));
+      });
+    </script>
+    <div class="docs-api-wrap o-mt-6">
+      <table class="docs-api">
+        <thead><tr><th>Token group</th><th>Variables</th></tr></thead>
+        <tbody>
+          <tr><td>Brand &amp; semantic</td><td><code>--o-primary secondary success danger warning info light dark</code> + <code>--o-on-*</code>, <code>-hover</code>, <code>-subtle</code>, <code>-border</code>, <code>-text</code></td></tr>
+          <tr><td>Surfaces &amp; text</td><td><code>--o-bg --o-surface --o-surface-2 --o-surface-3 --o-elevated --o-border --o-border-strong --o-text --o-text-muted --o-text-subtle --o-backdrop</code></td></tr>
+          <tr><td>Typography</td><td><code>--o-font-sans --o-font-mono --o-font-scale --o-fs-xs … --o-fs-4xl --o-lh</code></td></tr>
+          <tr><td>Shape</td><td><code>--o-radius-xs --o-radius-sm --o-radius --o-radius-lg --o-radius-xl --o-radius-pill</code>, <code>--o-shadow-xs … --o-shadow-xl</code></td></tr>
+          <tr><td>Controls</td><td><code>--o-control-h --o-control-h-sm --o-control-h-lg --o-control-px --o-input-bg --o-input-border --o-ring-width --o-ring-alpha --o-focus</code></td></tr>
+          <tr><td>Layout</td><td><code>--o-sidebar-w --o-sidebar-w-mini --o-header-h --o-sidebar-bg --o-sidebar-text --o-header-bg --o-container-max</code></td></tr>
+          <tr><td>Motion &amp; stacking</td><td><code>--o-ease --o-dur-fast --o-dur --o-dur-slow</code>, <code>--o-z-dropdown … --o-z-tooltip</code></td></tr>
+          <tr><td>Data visualisation</td><td><code>--o-chart-1 … --o-chart-8</code> (validated categorical order), <code>--o-seq-100 … 700</code>, <code>--o-div-neg/mid/pos</code>, <code>--o-status-good/warning/serious/critical</code></td></tr>
+          <tr><td>Color context</td><td><code>.o-c-{color}</code> sets <code>--o-c --o-on-c --o-c-subtle --o-c-text --o-c-border</code>, which many components accept (avatars, progress, stat icons, timeline markers).</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>theme.mode / resolved</td><td>Current mode (<code>light|dark|auto</code>) and the displayed mode.</td></tr>
+        <tr><td>theme.setMode(m) / toggle() / cycle()</td><td>Change the mode (persisted).</td></tr>
+        <tr><td>theme.set(tokens, scopeEl?)</td><td>Apply tokens (<code>primary</code>, <code>radius</code>, <code>font</code>… or raw <code>--o-*</code> names).</td></tr>
+        <tr><td>theme.get(token)</td><td>Computed token value.</td></tr>
+        <tr><td>theme.reset()</td><td>Remove runtime tokens and the active tenant.</td></tr>
+        <tr><td>theme.register(name, def) / use(name)</td><td>Multi-tenant themes (tokens + <code>brand</code> + <code>mode</code>).</td></tr>
+        <tr><td>theme.brand({ name, logo, logoDark, favicon, title })</td><td>White-label branding.</td></tr>
+        <tr><td>theme.setContrast(bool) / setFontScale(n)</td><td>Accessibility preferences (persisted).</td></tr>
+        <tr><td>theme.exportCSS()</td><td>CSS snippet of the runtime overrides.</td></tr>
+        <tr><td>Orion.color.*</td><td><code>parse toHex toRgb toHsl fromHsl mix lighten darken alpha luminance contrast readable palette random</code></td></tr>
+        <tr><td>data-o-action="theme"</td><td><code>data-o-value</code>: <code>light dark auto toggle cycle contrast font+ font- font0</code> or a tenant name.</td></tr>
+        <tr><td>Events</td><td><code>Orion.on('theme', fn)</code>, DOM event <code>o-theme</code> on <code>document</code>, <code>Orion.on('brand', fn)</code>.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

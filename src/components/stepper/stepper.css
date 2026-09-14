@@ -1,0 +1,103 @@
+/* Stepper (.o-steps static markup + <o-stepper>) and <o-progress-tracker> */
+o-stepper, o-progress-tracker { display: block; }
+.o-steps { --o-step-size: 2rem; position: relative; display: flex; margin: 0; padding: 0; list-style: none; }
+.o-step { position: relative; flex: 1 1 0; min-width: 0; }
+.o-step-btn {
+  display: flex; flex-direction: column; align-items: center; gap: .5rem; width: 100%; padding: 0 .25rem;
+  font: inherit; color: inherit; text-align: center; background: none; border: 0; border-radius: var(--o-radius);
+}
+button.o-step-btn { cursor: pointer; }
+button.o-step-btn:disabled { cursor: not-allowed; }
+button.o-step-btn:focus-visible { outline: none; }
+button.o-step-btn:focus-visible .o-step-marker { box-shadow: 0 0 0 var(--o-ring-width) color-mix(in srgb, var(--o-focus) 45%, transparent); }
+button.o-step-btn:focus-visible .o-step-title { text-decoration: underline; text-underline-offset: 3px; }
+.o-step-marker {
+  position: relative; z-index: 1; display: grid; place-items: center; flex-shrink: 0; width: var(--o-step-size); height: var(--o-step-size);
+  font-size: var(--o-fs-sm); font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1; color: var(--o-text-muted);
+  background: var(--o-surface); border: 2px solid var(--o-border-strong); border-radius: 50%;
+  transition: background-color var(--o-dur) var(--o-ease), border-color var(--o-dur) var(--o-ease), color var(--o-dur), box-shadow var(--o-dur);
+}
+.o-step-marker > .o-icon { width: 1rem; height: 1rem; }
+.o-step-text { display: flex; flex-direction: column; gap: .125rem; min-width: 0; max-width: 100%; }
+.o-step-title { font-size: var(--o-fs-sm); font-weight: 600; line-height: 1.3; color: var(--o-text-muted); overflow-wrap: anywhere; }
+.o-step-desc { font-size: var(--o-fs-xs); line-height: 1.35; color: var(--o-text-muted); }
+.o-step-optional { font-size: var(--o-fs-xs); color: var(--o-text-subtle); font-style: italic; }
+.o-steps:not(.is-vertical) > .o-step:not(:last-child)::after {
+  content: ""; position: absolute; top: calc(var(--o-step-size) / 2 - 1px); height: 2px; border-radius: 2px;
+  inset-inline-start: calc(50% + var(--o-step-size) / 2 + .375rem); inset-inline-end: calc(-50% + var(--o-step-size) / 2 + .375rem);
+  background: var(--o-border-strong); transition: background-color var(--o-dur) var(--o-ease);
+}
+.o-step.is-current .o-step-marker { color: var(--o-primary-text); border-color: var(--o-primary); box-shadow: 0 0 0 4px var(--o-primary-subtle); }
+.o-step.is-current .o-step-title, .o-step.is-complete .o-step-title { color: var(--o-text); }
+.o-step.is-complete .o-step-marker { color: var(--o-on-primary); background: var(--o-primary); border-color: var(--o-primary); }
+.o-step.is-error .o-step-marker { color: var(--o-on-danger); background: var(--o-danger); border-color: var(--o-danger); box-shadow: none; }
+.o-step.is-error .o-step-title { color: var(--o-danger-text); }
+.o-step.is-disabled { opacity: .5; }
+button.o-step-btn:not(:disabled):hover .o-step-marker { border-color: var(--o-primary); }
+button.o-step-btn:not(:disabled):hover .o-step-title { color: var(--o-text); }
+
+/* vertical */
+.o-steps.is-vertical { flex-direction: column; }
+.o-steps.is-vertical > .o-step { flex: none; padding-bottom: 1.5rem; }
+.o-steps.is-vertical > .o-step:last-child { padding-bottom: 0; }
+.o-steps.is-vertical .o-step-btn { flex-direction: row; align-items: flex-start; gap: .75rem; padding: 0; text-align: start; }
+.o-steps.is-vertical .o-step-text { padding-top: calc(var(--o-step-size) / 2 - .6rem); }
+.o-steps.is-vertical > .o-step:not(:last-child)::after {
+  content: ""; position: absolute; top: calc(var(--o-step-size) + .375rem); bottom: .375rem; width: 2px; border-radius: 2px;
+  inset-inline-start: calc(var(--o-step-size) / 2 - 1px); background: var(--o-border-strong);
+}
+.o-steps > .o-step.is-complete:not(:last-child)::after { background: var(--o-primary); }
+
+/* dots */
+.o-steps-dots { --o-step-size: .875rem; }
+.o-steps-dots .o-step.is-current .o-step-marker { background: var(--o-primary); }
+.o-steps-dots .o-step-title { font-weight: 500; font-size: var(--o-fs-xs); }
+
+/* progress bar with labels */
+.o-steps-progress { --o-step-size: 1.25rem; padding-top: 1.125rem; }
+.o-steps-progress::before, .o-steps-progress::after { content: ""; position: absolute; top: 0; inset-inline-start: 0; height: .375rem; border-radius: var(--o-radius-pill); }
+.o-steps-progress::before { inset-inline-end: 0; background: var(--o-surface-3); }
+.o-steps-progress::after { width: var(--o-steps-fill, 0%); background: var(--o-primary); transition: width var(--o-dur-slow) var(--o-ease); }
+.o-steps-progress > .o-step::after { display: none; }
+.o-steps-progress .o-step-btn { flex-direction: row; justify-content: center; gap: .375rem; }
+.o-steps-progress .o-step-marker { font-size: .625rem; border-width: 1.5px; }
+.o-steps-progress .o-step-marker > .o-icon { width: .7rem; height: .7rem; }
+.o-steps-progress .o-step-desc { display: none; }
+
+/* collapsed ("Step 2 of 4") */
+.o-stepper-compact { display: none; }
+.o-stepper.is-collapsed > .o-stepper-compact { display: block; }
+.o-stepper-compact-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: .125rem .75rem; margin-bottom: .5rem; }
+.o-stepper-count { font-size: var(--o-fs-xs); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--o-primary-text); }
+.o-stepper-compact-title { font-size: var(--o-fs-md); font-weight: 600; }
+.o-stepper-compact-next { margin-inline-start: auto; font-size: var(--o-fs-xs); color: var(--o-text-muted); }
+
+/* progress tracker */
+.o-tracker { --o-tracker-size: 2.5rem; }
+.o-tracker-list { display: flex; margin: 0; padding: 0; list-style: none; }
+.o-tracker-step { position: relative; display: flex; flex: 1 1 0; flex-direction: column; align-items: center; gap: .5rem; min-width: 0; padding: 0 .25rem; text-align: center; }
+.o-tracker-step:not(:last-child)::after {
+  content: ""; position: absolute; top: calc(var(--o-tracker-size) / 2 - 2px); height: 4px; border-radius: 4px;
+  inset-inline-start: calc(50% + var(--o-tracker-size) / 2); inset-inline-end: calc(-50% + var(--o-tracker-size) / 2); background: var(--o-surface-3);
+}
+.o-tracker-step.is-complete::after { background: var(--o-success); }
+.o-tracker-marker {
+  position: relative; z-index: 1; display: grid; place-items: center; flex-shrink: 0; width: var(--o-tracker-size); height: var(--o-tracker-size);
+  color: var(--o-text-subtle); background: var(--o-surface-3); border-radius: 50%;
+}
+.o-tracker-marker > .o-icon { width: 1.125rem; height: 1.125rem; }
+.o-tracker-step.is-complete .o-tracker-marker { color: var(--o-on-success); background: var(--o-success); }
+.o-tracker-step.is-current .o-tracker-marker { color: var(--o-on-primary); background: var(--o-primary); }
+.o-tracker-step.is-current .o-tracker-marker::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: 50%; background: var(--o-primary); opacity: .4; animation: o-ping 1.8s cubic-bezier(0, 0, .2, 1) infinite; }
+.o-tracker-step.is-error .o-tracker-marker { color: var(--o-on-danger); background: var(--o-danger); }
+.o-tracker-text { display: flex; flex-direction: column; gap: .125rem; min-width: 0; }
+.o-tracker-title { font-size: var(--o-fs-sm); font-weight: 600; line-height: 1.3; }
+.o-tracker-step.is-upcoming .o-tracker-title { font-weight: 500; color: var(--o-text-muted); }
+.o-tracker-step.is-error .o-tracker-title { color: var(--o-danger-text); }
+.o-tracker-time { font-size: var(--o-fs-xs); color: var(--o-text-muted); font-variant-numeric: tabular-nums; }
+.o-tracker-desc { font-size: var(--o-fs-xs); color: var(--o-text-muted); }
+.o-tracker.is-vertical .o-tracker-list { flex-direction: column; }
+.o-tracker.is-vertical .o-tracker-step { flex: none; flex-direction: row; align-items: flex-start; gap: .875rem; padding: 0 0 1.5rem; text-align: start; }
+.o-tracker.is-vertical .o-tracker-step:last-child { padding-bottom: 0; }
+.o-tracker.is-vertical .o-tracker-step:not(:last-child)::after { top: calc(var(--o-tracker-size) + .25rem); bottom: .25rem; inset-inline: calc(var(--o-tracker-size) / 2 - 2px) auto; width: 4px; height: auto; }
+.o-tracker.is-vertical .o-tracker-text { padding-top: .3rem; }

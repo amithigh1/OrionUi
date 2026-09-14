@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Typography — Orion Admin</title>
+<meta name="docs:section" content="Foundation">
+<meta name="docs:order" content="40">
+<meta name="docs:desc" content="Headings, display text, lists, code, kbd, blockquotes and prose">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Typography</h1>
+    <p class="docs-lead">A system font stack (Inter when available), 14px base for dense admin screens, and a type scale based on <code>--o-fs-*</code> tokens that follows the user's font-size preference.</p>
+  </header>
+
+  <section id="headings">
+    <h2>Headings</h2>
+    <div class="docs-demo">
+      <template>
+        <h1>h1. Heading 1.875rem</h1>
+        <h2>h2. Heading 1.5rem</h2>
+        <h3>h3. Heading 1.25rem</h3>
+        <h4>h4. Heading 1.125rem</h4>
+        <h5>h5. Heading 1rem</h5>
+        <h6>h6. Heading .875rem</h6>
+        <p class="o-h3">.o-h3 on a paragraph</p>
+        <p class="o-page-title">.o-page-title</p>
+      </template>
+    </div>
+  </section>
+
+  <section id="display">
+    <h2>Display, lead &amp; text styles</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-eyebrow">Eyebrow label</div>
+        <div class="o-display-4">Display 4</div>
+        <p class="o-lead">Lead paragraph: a slightly larger, muted introduction for pages and sections.</p>
+        <p>Regular text with <b>bold</b>, <i>italic</i>, <mark>highlight</mark>, <small>small text</small>, <abbr title="Application Programming Interface">API</abbr>, <a href="#display">a link</a>, <code class="o-code">inline code</code> and <kbd class="o-kbd">Ctrl</kbd> + <kbd class="o-kbd">K</kbd>.</p>
+        <p class="o-text-muted">.o-text-muted secondary text</p>
+        <p class="o-text-subtle o-text-sm">.o-text-subtle .o-text-sm</p>
+        <p class="o-truncate" style="max-width:18rem">.o-truncate cuts long text with an ellipsis when it overflows the container.</p>
+      </template>
+    </div>
+  </section>
+
+  <section id="lists">
+    <h2>Lists &amp; quotes</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-grid o-grid-cols-1 o-grid-cols-md-3 o-gap-6">
+          <ul class="o-list-check o-m-0"><li>Single file</li><li>Zero dependencies</li><li>Dark mode</li></ul>
+          <ul class="o-list-inline o-m-0"><li>Inline</li><li>list</li><li>items</li></ul>
+          <blockquote class="o-blockquote o-m-0">Simplicity is prerequisite for reliability.<div class="o-blockquote-footer">Edsger W. Dijkstra</div></blockquote>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="code">
+    <h2>Code blocks</h2>
+    <div class="docs-demo">
+      <template>
+        <pre class="o-pre">const table = document.querySelector('o-datatable');
+table.rows = await Orion.http.get('/api/users');</pre>
+      </template>
+    </div>
+  </section>
+
+  <section id="prose">
+    <h2>Prose</h2>
+    <p>Wrap long-form or user-generated HTML (editor output, markdown, help articles) in <code>.o-prose</code> for comfortable reading styles.</p>
+    <div class="docs-demo">
+      <template>
+        <article class="o-prose">
+          <h2>Release notes</h2>
+          <p>This release adds <strong>saved views</strong> to data tables and improves keyboard navigation in pickers.</p>
+          <ul><li>New: column chooser</li><li>Improved: RTL support</li></ul>
+          <blockquote>Tip: press <kbd>?</kbd> to see keyboard shortcuts.</blockquote>
+          <table><thead><tr><th>Version</th><th>Date</th></tr></thead><tbody><tr><td>0.1.0</td><td>2026</td></tr></tbody></table>
+        </article>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>Classes</h2>
+    <table class="docs-api">
+      <thead><tr><th>Class</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.o-h1 … .o-h6</td><td>Heading styles on any element.</td></tr>
+        <tr><td>.o-display-1 … 4</td><td>Large fluid display headings.</td></tr>
+        <tr><td>.o-lead / .o-eyebrow / .o-small / .o-muted</td><td>Text styles.</td></tr>
+        <tr><td>.o-page-title / .o-section-title</td><td>Admin page &amp; section titles.</td></tr>
+        <tr><td>.o-list-unstyled / .o-list-inline / .o-list-check</td><td>List styles.</td></tr>
+        <tr><td>.o-blockquote / .o-code / .o-pre / .o-kbd</td><td>Quotes and code.</td></tr>
+        <tr><td>.o-prose</td><td>Rich content container.</td></tr>
+        <tr><td>.o-truncate / .o-line-clamp-{1-4}</td><td>Overflow handling.</td></tr>
+        <tr><td>.o-text-{xs…4xl}, .o-fw-*, .o-lh-*, .o-font-mono, .o-tabular-nums</td><td>See <a href="utilities.html">Utilities</a>.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

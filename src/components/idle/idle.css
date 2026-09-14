@@ -1,0 +1,22 @@
+/* session timeout dialog (Orion.sessionTimeout) */
+.o-session-layer { position: fixed; inset: 0; display: grid; place-items: center; padding: 1rem; }
+.o-session-dialog {
+  position: relative; width: min(26rem, 100%); max-height: calc(100vh - 2rem); overflow: auto;
+  padding: 1.75rem 1.5rem 1.25rem; text-align: center; border-radius: var(--o-radius-xl); box-shadow: var(--o-shadow-xl);
+}
+.o-session-dialog:focus { outline: none; }
+.o-session-ring { display: grid; place-items: center; width: 3.5rem; height: 3.5rem; margin: 0 auto 1rem; border-radius: 50%; color: var(--o-warning-text); background: var(--o-warning-subtle); }
+.o-session-ring > .o-icon { width: 1.75rem; height: 1.75rem; }
+.o-session-layer.is-urgent .o-session-ring { color: var(--o-danger-text); background: var(--o-danger-subtle); animation: o-pulse 1s ease-in-out infinite; }
+.o-session-layer.is-expired .o-session-ring { color: var(--o-text-muted); background: var(--o-surface-3); animation: none; }
+.o-session-title { margin: 0 0 .5rem; font-size: var(--o-fs-xl); font-weight: 650; }
+.o-session-msg { margin: 0 0 .25rem; font-size: var(--o-fs-md); }
+.o-session-time { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--o-warning-text); }
+.o-session-layer.is-urgent .o-session-time { color: var(--o-danger-text); }
+.o-session-detail { margin: 0; font-size: var(--o-fs-sm); color: var(--o-text-muted); }
+.o-session-progress { margin: 1.125rem 0 1.25rem; }
+.o-session-progress > .o-progress-bar { --o-c: var(--o-warning); transition: width .25s linear; }
+.o-session-layer.is-urgent .o-session-progress > .o-progress-bar { --o-c: var(--o-danger); }
+.o-session-layer.is-expired .o-session-actions { margin-top: 1.25rem; }
+.o-session-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; }
+.o-session-actions > .o-btn { flex: 1 1 8rem; }

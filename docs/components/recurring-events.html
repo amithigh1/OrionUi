@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recurring Events — Orion Admin</title>
+<meta name="docs:section" content="Scheduling">
+<meta name="docs:order" content="15">
+<meta name="docs:desc" content="RFC 5545 RRULE support: expansion, human-readable descriptions and edit/delete scopes">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Recurring events</h1>
+    <p class="docs-lead"><code>&lt;o-calendar&gt;</code> understands a practical subset of RFC&nbsp;5545
+      <code>RRULE</code>, written from scratch (no third-party rrule library): daily/weekly/monthly/yearly
+      frequencies, intervals, counts, until-dates, weekday ordinals (<code>2MO</code>, <code>-1FR</code>), month
+      days, months, <code>BYSETPOS</code>, week-start and exclusions. Set an event's <code>rrule</code> field (a
+      string or an object) and the calendar expands, edits and deletes it correctly across every view.</p>
+  </header>
+
+  <section id="patterns">
+    <h2>Every supported pattern</h2>
+    <p>A calendar seeded directly with <code>RRULE</code> strings — the kind a backend would store. Notice the last
+      Friday of the month, the second Tuesday, the quarterly <code>BYMONTH</code> rule and the <code>BYSETPOS</code>
+      "last weekday of the month" rule, none of which a plain weekday/day-of-month picker can express.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-calendar id="rr-cal" view="month" views='["month","list"]' height="30rem" label="Recurring patterns"></o-calendar>
+        <script>
+          (() => {
+            const cal = document.getElementById('rr-cal');
+            cal.events = [
+              { id: 'daily', title: 'Daily stretch break', start: '2026-09-01T15:00', end: '2026-09-01T15:10', rrule: 'FREQ=DAILY', color: 'secondary' },
+              { id: 'weekdays', title: 'Standup', start: '2026-09-01T09:00', end: '2026-09-01T09:15', rrule: 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR', color: 'primary' },
+              { id: 'biweekly', title: 'Sprint retro', start: '2026-09-04T16:00', end: '2026-09-04T17:00', rrule: 'FREQ=WEEKLY;INTERVAL=2;BYDAY=FR', color: 'info' },
+              { id: 'nth', title: 'All-hands (2nd Tuesday)', start: '2026-09-08T11:00', end: '2026-09-08T12:00', rrule: 'FREQ=MONTHLY;BYDAY=2TU', color: 'success' },
+              { id: 'lastfri', title: 'Payroll close (last Friday)', start: '2026-09-25T17:00', end: '2026-09-25T17:30', rrule: 'FREQ=MONTHLY;BYDAY=-1FR', color: 'warning' },
+              { id: 'setpos', title: 'Compliance sign-off (last weekday)', start: '2026-09-30T18:00', end: '2026-09-30T18:15', rrule: 'FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-1', color: 'danger' },
+              { id: 'quarterly', title: 'Board meeting (quarterly)', start: '2026-09-15T10:00', end: '2026-09-15T12:00', rrule: 'FREQ=MONTHLY;INTERVAL=3;BYMONTHDAY=15', color: 'chart-5' },
+              { id: 'anniversary', title: 'Founding anniversary', start: '2026-11-03', allDay: true, rrule: 'FREQ=YEARLY', color: 'chart-7' },
+              { id: 'until', title: 'Beta cohort check-in', start: '2026-09-02T13:00', end: '2026-09-02T13:30', rrule: 'FREQ=WEEKLY;BYDAY=WE;COUNT=6', color: 'chart-3' },
+            ];
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="editor">
+    <h2>Recurrence editor</h2>
+    <p><code>&lt;o-recurrence-editor&gt;</code> is the standalone control the calendar's own event dialog uses — a
+      plain-language builder (does-not-repeat / daily / weekly / monthly / yearly / custom, with an end condition)
+      that reads and writes an <code>RRULE</code> string, so you can embed it in your own forms. It behaves like any
+      form control: <code>value</code>, <code>input</code>/<code>change</code>/<code>o-change</code>.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-recurrence-editor id="rr-editor" start="2026-09-16"></o-recurrence-editor>
+        <div class="docs-log o-mt-3" id="rr-editor-log"></div>
+        <script>
+          (() => {
+            const el = document.getElementById('rr-editor');
+            el.value = 'FREQ=WEEKLY;BYDAY=MO,WE,FR';
+            el.addEventListener('o-change', e => docs.log('#rr-editor-log', 'value: ' + (e.detail.value || '(does not repeat)')));
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="editing">
+    <h2>Editing and deleting a series</h2>
+    <p>Dragging, resizing or editing an occurrence of a recurring event asks which occurrences the change applies to
+      — <strong>this event</strong>, <strong>this and following events</strong>, or <strong>all events</strong> —
+      exactly like Google Calendar or Outlook. Try dragging the Tuesday standup below to a new time.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-calendar id="rr-scope" view="week" views='["week"]' editable selectable height="26rem" label="Edit scope demo"></o-calendar>
+        <div class="docs-log o-mt-3" id="rr-scope-log"></div>
+        <script>
+          (() => {
+            const cal = document.getElementById('rr-scope');
+            cal.events = [{ id: 'standup2', title: 'Team standup', start: '2026-09-08T09:00', end: '2026-09-08T09:15', rrule: 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR', color: 'primary' }];
+            cal.addEventListener('o-event-change', e => docs.log('#rr-scope-log', `o-event-change scope="${e.detail.scope}" → ${Orion.format.datetime(e.detail.event.start)}`));
+            cal.addEventListener('o-event-delete', e => docs.log('#rr-scope-log', `o-event-delete scope="${e.detail.scope}"`));
+          })();
+        </script>
+      </template>
+    </div>
+    <p>Programmatically, <code>updateEvent()</code> and <code>removeEvent()</code> act on the whole series (matching
+      the stored event's <code>id</code>); the this/following/all split only happens through the built-in drag and
+      dialog flows, which is where <code>o-event-change</code>'s <code>scope</code> field comes from.</p>
+  </section>
+
+  <section id="api">
+    <h2>RRULE support</h2>
+    <table class="docs-api">
+      <thead><tr><th>Part</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>FREQ</code></td><td><code>DAILY</code>, <code>WEEKLY</code>, <code>MONTHLY</code>, <code>YEARLY</code> (plus <code>HOURLY</code> for intraday repeats).</td></tr>
+        <tr><td><code>INTERVAL</code></td><td>Every N periods, e.g. <code>INTERVAL=2</code> with <code>FREQ=WEEKLY</code> = fortnightly.</td></tr>
+        <tr><td><code>COUNT</code> / <code>UNTIL</code></td><td>Mutually exclusive end conditions. <code>UNTIL</code> accepts a date or date-time.</td></tr>
+        <tr><td><code>BYDAY</code></td><td>Weekday list, optionally with an ordinal: <code>MO,WE,FR</code>, or <code>2MO</code> (2nd Monday), <code>-1FR</code> (last Friday).</td></tr>
+        <tr><td><code>BYMONTHDAY</code></td><td>Day-of-month list, negative counts from the end: <code>-1</code> = last day of the month.</td></tr>
+        <tr><td><code>BYMONTH</code></td><td>Restrict to specific months (1–12).</td></tr>
+        <tr><td><code>BYYEARDAY</code></td><td>Day-of-year list, negative counts from the end.</td></tr>
+        <tr><td><code>BYSETPOS</code></td><td>Picks the Nth (or -Nth) match from that period's candidate set — e.g. "last weekday of the month" is <code>BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-1</code>.</td></tr>
+        <tr><td><code>BYHOUR</code> / <code>BYMINUTE</code></td><td>Time-of-day restriction, mainly for <code>HOURLY</code> rules.</td></tr>
+        <tr><td><code>WKST</code></td><td>Week-start day, affects <code>INTERVAL</code> grouping for weekly rules.</td></tr>
+        <tr><td><code>EXDATE</code></td><td>Excluded occurrence dates; also settable per-event as <code>exdates: []</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>Orion.rrule</h3>
+    <table class="docs-api">
+      <thead><tr><th>Function</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>parse(input)</code></td><td>String or object → normalised rule object (or <code>null</code>).</td></tr>
+        <tr><td><code>toString(rule, { full })</code></td><td>Rule → canonical <code>RRULE</code> string; <code>full</code> adds <code>DTSTART</code>/<code>EXDATE</code> lines.</td></tr>
+        <tr><td><code>expand(rule, { dtstart, from, to, exdates, limit })</code></td><td>Occurrence <code>Date[]</code> between <code>from</code> and <code>to</code> (inclusive).</td></tr>
+        <tr><td><code>between(rule, from, to, opts)</code></td><td>Shorthand for <code>expand</code> with a range.</td></tr>
+        <tr><td><code>after(rule, date, opts)</code></td><td>Next occurrence strictly after <code>date</code>, or <code>null</code>.</td></tr>
+        <tr><td><code>describe(rule, { dtstart, locale })</code></td><td>Human-readable text, e.g. "Monthly on the last Friday".</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-recurrence-editor&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Prop / attribute</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>value</code></td><td>The <code>RRULE</code> string (form-associated: participates in <code>&lt;form&gt;</code> submission and <code>FormData</code>).</td></tr>
+        <tr><td><code>start</code></td><td>The event's start date — drives the "day 16" / "3rd Wednesday" phrasing and default weekday.</td></tr>
+        <tr><td><code>week-start</code>, <code>locale</code></td><td>Override the site defaults.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

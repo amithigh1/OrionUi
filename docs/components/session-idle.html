@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Idle &amp; Session Timeout — Orion Admin</title>
+<meta name="docs:section" content="Services &amp; Utilities">
+<meta name="docs:order" content="60">
+<meta name="docs:desc" content="Idle user detection and an accessible, cross-tab session timeout warning">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .si-status { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
+  .si-pill { display: inline-flex; align-items: center; gap: .5rem; padding: .5rem .875rem; font-weight: 600; border-radius: var(--o-radius-pill); background: var(--o-success-subtle); color: var(--o-success-text); }
+  .si-pill.is-idle { background: var(--o-warning-subtle); color: var(--o-warning-text); }
+  .si-pill.is-off { background: var(--o-surface-3); color: var(--o-text-muted); }
+  .si-meter { flex: 1 1 12rem; min-width: 10rem; }
+  .si-meter .o-progress-bar { transition: width .2s linear; }
+  .si-num { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .si-grid { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr)); margin: 1rem 0 0; }
+  .si-grid > div { padding: .625rem .75rem; background: var(--o-surface-2); border: 1px solid var(--o-border); border-radius: var(--o-radius); }
+  .si-grid dt { font-size: var(--o-fs-xs); font-weight: 500; color: var(--o-text-muted); }
+  .si-grid dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Idle &amp; Session Timeout</h1>
+    <p class="docs-lead"><code>Orion.idle()</code> tells you when the user stops interacting, across every open tab. <code>Orion.sessionTimeout()</code> builds on it: it pings your server while the user is active, shows an accessible countdown before signing out, and keeps every tab in sync — extending in one tab extends all, logging out in one logs out all.</p>
+  </header>
+
+  <section id="idle">
+    <h2>Idle detection</h2>
+    <p>This watcher goes idle after <strong>5 seconds</strong> without mouse, keyboard, touch, wheel, scroll or focus activity. Activity in another tab of this page counts too (<code>crossTab: true</code>).</p>
+    <div class="docs-demo">
+      <template>
+        <div class="si-status">
+          <span class="si-pill" id="si-pill" role="status">Active</span>
+          <div class="si-meter"><div class="o-progress" aria-hidden="true"><div class="o-progress-bar" id="si-bar"></div></div></div>
+          <span class="o-small o-text-muted">idle in <span class="si-num" id="si-rem">5.0</span> s</span>
+        </div>
+        <div class="o-cluster o-mt-3">
+          <button class="o-btn o-btn-sm" id="si-start">Start</button>
+          <button class="o-btn o-btn-sm" id="si-stop">Stop</button>
+          <button class="o-btn o-btn-sm" id="si-reset">reset()</button>
+        </div>
+        <div class="docs-log" id="si-log"></div>
+        <script>
+          (() => {
+            const pill = document.getElementById('si-pill'), bar = document.getElementById('si-bar'), rem = document.getElementById('si-rem');
+            const w = Orion.idle({
+              timeout: 5000, key: 'docs-idle',
+              onIdle: e => { docs.log('#si-log', `onIdle — last activity ${new Date(e.lastActive).toLocaleTimeString()}`); },
+              onActive: e => { docs.log('#si-log', `onActive — idle for ${(e.idleFor / 1000).toFixed(1)} s${e.remote ? ' (activity in another tab)' : ''}`); },
+            });
+            const paint = () => {
+              const on = w.running, idle = on && w.isIdle, r = w.remaining;
+              pill.className = 'si-pill' + (idle ? ' is-idle' : on ? '' : ' is-off');
+              pill.innerHTML = Orion.icon(idle ? 'moon' : on ? 'user' : 'pause') + (idle ? 'Idle' : on ? 'Active' : 'Stopped');
+              bar.style.setProperty('--o-value', (on ? 100 * r / 5000 : 0) + '%');
+              rem.textContent = (r / 1000).toFixed(1);
+            };
+            setInterval(paint, 200); paint();
+            document.getElementById('si-start').onclick = () => { w.start(); docs.log('#si-log', 'start()'); };
+            document.getElementById('si-stop').onclick = () => { w.stop(); docs.log('#si-log', 'stop()'); paint(); };
+            document.getElementById('si-reset').onclick = () => w.reset();
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="session">
+    <h2>Session timeout warning</h2>
+    <p>A <strong>20-second</strong> session with a 10-second warning. Move the mouse to stay active, or wait: the dialog counts down (<em>“Your session will expire in 0:09”</em>), traps focus, announces itself, and offers <strong>Stay signed in</strong> / <strong>Log out</strong>. Once the warning is visible, only an explicit choice extends the session. Without an <code>onTimeout</code> handler the dialog shows a “Session expired” state.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster">
+          <button class="o-btn o-btn-primary" id="ss-start">Start a 20-second session</button>
+          <button class="o-btn" id="ss-stop">Stop</button>
+          <button class="o-btn o-btn-soft-warning" id="ss-warn">Show the warning now</button>
+        </div>
+        <dl class="si-grid">
+          <div><dt>State</dt><dd id="ss-state">stopped</dd></div>
+          <div><dt>Expires in</dt><dd id="ss-rem">—</dd></div>
+          <div><dt>Last activity</dt><dd id="ss-last">—</dd></div>
+          <div><dt>keepAlive pings</dt><dd id="ss-pings">0</dd></div>
+        </dl>
+        <div class="docs-log" id="ss-log"></div>
+        <script>
+          (() => {
+            let s = null, pings = 0;
+            const $ = id => document.getElementById(id);
+            const paint = () => {
+              $('ss-state').textContent = s ? s.state : 'stopped';
+              $('ss-rem').textContent = s && (s.state === 'active' || s.state === 'warning') ? (s.remaining / 1000).toFixed(0) + ' s' : '—';
+              $('ss-last').textContent = s ? new Date(s.lastActive).toLocaleTimeString() : '—';
+              $('ss-pings').textContent = pings;
+            };
+            const start = () => {
+              s?.destroy();
+              s = Orion.sessionTimeout({
+                timeout: 20000, warning: 10000, key: 'docs-session', keepAliveInterval: 5000,
+                keepAlive: async () => { pings++; docs.log('#ss-log', 'keepAlive() → POST /api/session/ping'); },
+                onLogin: () => { docs.log('#ss-log', 'Sign in again → restarting the demo session'); start(); },
+              });
+              s.on('warning', e => docs.log('#ss-log', `warning — ${Math.ceil(e.remaining / 1000)} s left`));
+              s.on('extend', e => docs.log('#ss-log', `extend()${e.remote ? ' from another tab' : ''}`));
+              s.on('end', e => docs.log('#ss-log', `session ended: ${e.reason}${e.remoteReason ? ' (' + e.remoteReason + ')' : ''}`));
+              docs.log('#ss-log', 'sessionTimeout started (20 s, warning at 10 s)');
+            };
+            $('ss-start').onclick = start;
+            $('ss-stop').onclick = () => { s?.destroy(); s = null; docs.log('#ss-log', 'stopped'); };
+            $('ss-warn').onclick = () => { if (!s || s.state !== 'active') start(); s.warn(); };
+            setInterval(paint, 250); paint();
+          })();
+        </script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+      const session = Orion.sessionTimeout({
+        timeout: 15 * 60e3,                 // 15 minutes of inactivity
+        warning: 60e3,                      // warn during the last minute
+        keepAlive: () => fetch('/api/session/ping', { method: 'POST' }),   // throttled, only while active
+        onTimeout: ({ reason }) => { location.href = '/login?reason=' + reason; },   // 'timeout' | 'logout' | 'remote'
+      });
+      session.on('warning', ({ remaining }) => console.log('warning', remaining));
+    </pre>
+  </section>
+
+  <section id="cross-tab">
+    <h2>Across tabs</h2>
+    <p>Controllers with the same <code>key</code> talk over a <code>BroadcastChannel</code> (falling back to <code>localStorage</code> events). Activity in any tab keeps every tab alive, <em>Stay signed in</em> closes the dialog everywhere and <em>Log out</em> (or expiry) signs out every tab. Only one tab calls <code>keepAlive</code> per interval. Open this page in <a href="session-idle.html#cross-tab" target="_blank" rel="noopener">another tab</a>, start a session in both, and try it — or simulate the other tab below.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn" id="xt-extend">Other tab: “Stay signed in”</button>
+        <button class="o-btn" id="xt-activity">Other tab: user activity</button>
+        <button class="o-btn o-btn-outline-danger" id="xt-logout">Other tab: “Log out”</button>
+        <script>
+          (() => {
+            const post = m => { const bc = new BroadcastChannel('orion:session:docs-session'); bc.postMessage({ ...m, at: Date.now() }); setTimeout(() => bc.close(), 50); };
+            document.getElementById('xt-extend').onclick = () => post({ type: 'extend' });
+            document.getElementById('xt-activity').onclick = () => post({ type: 'activity' });
+            document.getElementById('xt-logout').onclick = () => post({ type: 'logout', reason: 'logout' });
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="texts">
+    <h2>Texts &amp; i18n</h2>
+    <p>Every string can be passed as an option (a string with <code>{time}</code>, or a function) or translated globally with <code>Orion.i18n.add(locale, { session: { … } })</code>.</p>
+    <pre class="docs-code-block" data-lang="js">
+      Orion.sessionTimeout({
+        timeout: 30 * 60e3, warning: 2 * 60e3,
+        title: 'Still working?',
+        message: 'We will sign you out in {time} to protect your account.',
+        stayText: 'Keep me signed in', logoutText: 'Sign out now',
+        logoutUrl: '/logout',           // used when there is no onTimeout
+      });
+      Orion.i18n.add('ms', { session: { title: 'Masih di sana?', message: 'Sesi anda akan tamat dalam {time}.', stay: 'Kekal log masuk', logout: 'Log keluar' } });
+    </pre>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard &amp; accessibility</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Tab / Shift+Tab</td><td>Cycle between <em>Log out</em> and <em>Stay signed in</em> (focus is trapped; <em>Stay signed in</em> is focused first).</td></tr>
+        <tr><td>Enter / Space</td><td>Activate the focused button.</td></tr>
+        <tr><td>Escape</td><td>Same as <em>Stay signed in</em> (<code>escape: 'stay'</code>, set <code>escape: false</code> to ignore). In the expired state it runs the sign-in action.</td></tr>
+      </tbody>
+    </table>
+    <p>The dialog is a <code>role="alertdialog"</code> with <code>aria-modal</code>, labelled by its title and described by the message, so it is announced when it opens. The remaining time is re-announced at 30 and 10 seconds (not every second). While the warning is visible the tab title shows the countdown (<code>titleAlert</code>), so users notice it in a background tab. The countdown and progress bar honour reduced motion.</p>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Orion.idle(options) → watcher</h3>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>timeout</td><td>60000</td><td>Milliseconds without activity before <code>onIdle</code>.</td></tr>
+        <tr><td>events</td><td>pointermove pointerdown keydown wheel touchstart scroll focus visibilitychange</td><td>Activity events (captured, passive).</td></tr>
+        <tr><td>crossTab</td><td>true</td><td>Share activity with other tabs using the same <code>key</code>.</td></tr>
+        <tr><td>key</td><td>'default'</td><td>Channel name for cross-tab sharing.</td></tr>
+        <tr><td>element</td><td>document</td><td>Only watch activity inside this element.</td></tr>
+        <tr><td>onIdle({ lastActive, idleFor })</td><td>—</td><td>Called once when the user becomes idle. Bus event <code>idle</code>.</td></tr>
+        <tr><td>onActive({ remote, idleFor })</td><td>—</td><td>Called when activity resumes (<code>remote</code> = in another tab). Bus event <code>active</code>.</td></tr>
+        <tr><td>autoStart</td><td>true</td><td>Start immediately.</td></tr>
+      </tbody>
+    </table>
+    <table class="docs-api">
+      <thead><tr><th>Watcher member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>isIdle · lastActive · remaining · running</td><td>Current state (timestamps in ms).</td></tr>
+        <tr><td>reset()</td><td>Mark the user active now (in every tab).</td></tr>
+        <tr><td>start() · stop()</td><td>Attach / detach all listeners and the channel.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Orion.sessionTimeout(options) → controller</h3>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>timeout</td><td>900000</td><td>Inactivity (ms) before the session ends.</td></tr>
+        <tr><td>warning</td><td>60000</td><td>Show the countdown this many ms before the end.</td></tr>
+        <tr><td>keepAlive</td><td>—</td><td><code>async () =&gt; {}</code> called on activity (at most once per <code>keepAliveInterval</code> across all tabs) and on <em>Stay signed in</em>.</td></tr>
+        <tr><td>keepAliveInterval</td><td>timeout / 3 (1 s … 5 min)</td><td>Throttle for <code>keepAlive</code>.</td></tr>
+        <tr><td>onTimeout({ reason })</td><td>—</td><td>Sign the user out / redirect. <code>reason</code>: <code>'timeout' | 'logout' | 'remote'</code>.</td></tr>
+        <tr><td>onWarning · onExtend · onKeepAliveError</td><td>—</td><td>Callbacks.</td></tr>
+        <tr><td>logoutUrl · loginUrl · onLogin</td><td>—</td><td>Used when there is no <code>onTimeout</code>: redirect, or the expired dialog's sign-in action (default: reload).</td></tr>
+        <tr><td>title · message · detail · stayText · logoutText · expiredTitle · expiredMessage · loggedOutTitle · loggedOutMessage · loginText</td><td>i18n</td><td>Text overrides (<code>{time}</code> placeholder in <code>message</code>).</td></tr>
+        <tr><td>escape</td><td>'stay'</td><td>Escape key behaviour in the warning dialog.</td></tr>
+        <tr><td>titleAlert</td><td>true</td><td>Prefix the document title with the countdown during the warning.</td></tr>
+        <tr><td>crossTab · key · events</td><td>true · 'session' · idle events</td><td>Cross-tab sync and activity events.</td></tr>
+        <tr><td>autoStart</td><td>true</td><td>Start immediately.</td></tr>
+      </tbody>
+    </table>
+    <table class="docs-api">
+      <thead><tr><th>Controller member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>state</td><td><code>'active' | 'warning' | 'expired' | 'stopped'</code></td></tr>
+        <tr><td>remaining · expiresAt · lastActive</td><td>Milliseconds / timestamps.</td></tr>
+        <tr><td>extend() · reset()</td><td>Restart the inactivity window in every tab and ping <code>keepAlive</code>.</td></tr>
+        <tr><td>logout(reason = 'logout')</td><td>End the session in every tab.</td></tr>
+        <tr><td>warn()</td><td>Jump to the warning immediately (previews, tests).</td></tr>
+        <tr><td>start() · stop() · destroy()</td><td>Lifecycle (<code>destroy</code> also removes the dialog).</td></tr>
+        <tr><td>on(event, fn)</td><td>Controller events below. <code>Orion.sessionTimeout.current</code> is the newest controller.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Where</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>warning</td><td>controller · bus <code>session:warning</code></td><td>{ remaining }</td></tr>
+        <tr><td>tick</td><td>controller</td><td>{ remaining } — every 250 ms while warning</td></tr>
+        <tr><td>extend</td><td>controller · bus <code>session:extend</code></td><td>{ remote, wasWarning }</td></tr>
+        <tr><td>timeout / logout / end</td><td>controller · bus <code>session:timeout</code></td><td>{ reason, remoteReason }</td></tr>
+        <tr><td>keepalive / keepalive-error</td><td>controller</td><td>{ at } / error</td></tr>
+        <tr><td>idle / active</td><td>bus (from <code>Orion.idle</code>)</td><td>{ lastActive, idleFor, remote }</td></tr>
+      </tbody>
+    </table>
+    <h3>i18n keys</h3>
+    <p><code>session.title · message · detail · stay · logout · remaining · expiredTitle · expiredMessage · loggedOutTitle · loggedOutMessage · login</code></p>
+    <h3>Frameworks</h3>
+    <p>Create the controller once after login (e.g. in your root component's mount effect) and call <code>destroy()</code> on logout/unmount. Server-side the functions return inert controllers.</p>
+  </section>
+</main>
+</body>
+</html>

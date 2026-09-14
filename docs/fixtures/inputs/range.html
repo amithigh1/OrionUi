@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Range fixture — Orion Admin</title>
+<script src="../../../dist/orion.js"></script>
+</head>
+<body class="o-container o-py-6">
+<form id="f" class="o-stack" style="max-width:28rem;gap:2rem;display:flex;flex-direction:column">
+  <o-range id="r1" name="volume" min="0" max="100" value="40"></o-range>
+  <o-range id="r2" dual name="price" value-start="200" value-end="800" min="0" max="1000" step="10" min-distance="50" format="currency:USD"></o-range>
+  <o-range id="r3" min="0" max="5" step="1" value="2" marks='[{"value":0,"label":"0"},{"value":5,"label":"5"}]' ticks></o-range>
+  <o-range id="r4" orientation="vertical" min="0" max="10" value="3"></o-range>
+  <button class="o-btn" type="reset">Reset</button>
+</form>
+</body>
+</html>

@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Infinite Scroll — Orion Admin</title>
+<meta name="docs:section" content="Data">
+<meta name="docs:order" content="85">
+<meta name="docs:desc" content="Sentinel-driven infinite loading with loading/error/end states, a load-more button mode, chat-style history and virtual-list integration">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Infinite Scroll</h1>
+    <p class="docs-lead"><code>Orion.infiniteScroll(container, options)</code> loads more data as the user nears the edge of a list — an invisible sentinel and <code>IntersectionObserver</code> do the watching, so there is nothing to wire up on scroll events. Loading, error-with-retry and end-of-list states are built in; a declarative <code>data-o-infinite</code> attribute covers the fetch-and-append-HTML case with no JS at all.</p>
+  </header>
+
+  <section id="overview">
+    <h2>Overview</h2>
+    <p>Give it a <code>load(page, { signal })</code> function that resolves an array (or <code>{ items, hasMore }</code>), and a <code>render(item)</code>. New pages load automatically as the sentinel at the bottom nears the viewport.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div style="padding:1.5rem">
+          <div class="o-list" id="inf-basic" style="max-block-size:22rem;overflow:auto"></div>
+        </div>
+        <script>
+          {
+            const all = docs.people(240);
+            const pageSize = 20;
+            async function load(page) {
+              await new Promise(r => setTimeout(r, 500));
+              const rows = all.slice((page - 1) * pageSize, page * pageSize);
+              return { items: rows, hasMore: page * pageSize < all.length };
+            }
+            Orion.infiniteScroll('#inf-basic', {
+              load,
+              render: p => {
+                const el = document.createElement('div');
+                el.className = 'o-list-item';
+                el.innerHTML = `<span class="o-avatar o-avatar-sm">${p.first[0]}${p.last[0]}</span>
+                  <span class="o-list-content"><span class="o-list-title">${p.name}</span><span class="o-list-sub">${p.role} · ${p.department}</span></span>`;
+                return el;
+              },
+            });
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="button">
+    <h2>"Load more" button mode</h2>
+    <p>Set <code>mode: 'button'</code> to require an explicit click instead of auto-loading on scroll — useful for expensive pages, or to keep the user's scroll position predictable.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div style="padding:1.5rem">
+          <div class="o-list" id="inf-button" style="max-block-size:18rem;overflow:auto"></div>
+        </div>
+        <script>
+          {
+            const all = docs.people(90, 2);
+            const pageSize = 15;
+            Orion.infiniteScroll('#inf-button', {
+              mode: 'button',
+              load: async page => { await new Promise(r => setTimeout(r, 400)); const rows = all.slice((page - 1) * pageSize, page * pageSize); return { items: rows, hasMore: page * pageSize < all.length }; },
+              render: p => `<div class="o-list-item">${p.name} — <span class="o-text-muted">${p.city}, ${p.country}</span></div>`,
+            });
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="errors">
+    <h2>Errors, retry &amp; latency</h2>
+    <p>A rejected <code>load()</code> shows an error row with a <b>Retry</b> button (this demo fails roughly one page in three). Reaching the end of the data shows an end-of-list row.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div style="padding:1.5rem">
+          <div class="o-list" id="inf-err" style="max-block-size:18rem;overflow:auto"></div>
+        </div>
+        <script>
+          {
+            const all = docs.people(70, 5);
+            const pageSize = 12;
+            let attempt = 0;
+            Orion.infiniteScroll('#inf-err', {
+              load: async page => {
+                await new Promise(r => setTimeout(r, 450));
+                attempt++;
+                if (attempt % 3 === 0) throw new Error('Network hiccup — please retry.');
+                const rows = all.slice((page - 1) * pageSize, page * pageSize);
+                return { items: rows, hasMore: page * pageSize < all.length };
+              },
+              render: p => `<div class="o-list-item">${p.name}</div>`,
+            });
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="chat">
+    <h2>Chat-style history (<code>direction: 'up'</code>)</h2>
+    <p>Set <code>direction: 'up'</code> to load older items when the user scrolls <em>toward the top</em>, prepending them while keeping the current view perfectly still — the standard pattern for a message thread. The view opens already scrolled to the newest message.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div style="padding:1.5rem">
+          <div class="o-list" id="inf-chat" style="max-block-size:20rem;overflow:auto;display:flex;flex-direction:column"></div>
+        </div>
+        <script>
+          {
+            const people = docs.people(6, 9);
+            const all = Array.from({ length: 300 }, (_, i) => {
+              const p = people[i % people.length];
+              return { id: i, from: p.name, text: 'Message #' + (i + 1) + ' — ' + ['Sounds good.', 'On it.', 'Can we sync later?', 'Thanks!', 'Looks great 👍', 'Pushed the update.'][i % 6] };
+            });
+            const pageSize = 20;
+            const box = document.getElementById('inf-chat');
+            box.addEventListener('o-infinite-load', function toBottom(e) {
+              if (e.detail.page !== 1) return;
+              box.removeEventListener('o-infinite-load', toBottom);
+              requestAnimationFrame(() => { box.scrollTop = box.scrollHeight; });
+            });
+            Orion.infiniteScroll(box, {
+              direction: 'up', initialPage: 1,
+              load: async page => {
+                await new Promise(r => setTimeout(r, 400));
+                const end = all.length - (page - 1) * pageSize, start = Math.max(0, end - pageSize);
+                return { items: all.slice(start, end), hasMore: start > 0 };
+              },
+              render: m => { const row = document.createElement('div'); row.style.padding = '.375rem .25rem'; row.innerHTML = `<b>${m.from}</b> <span class="o-text-muted o-text-xs">#${m.id + 1}</span><div>${m.text}</div>`; return row; },
+            });
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="virtual">
+    <h2>Driving a <code>&lt;o-virtual-list&gt;</code></h2>
+    <p>When <code>container</code> is an <code>&lt;o-virtual-list&gt;</code>, <code>infiniteScroll</code> hooks its <code>o-near-end</code> / <code>o-near-start</code> events instead of a sentinel, and merges results with <code>appendItems()</code> / <code>prependItems()</code> — no extra DOM to manage, and it scales to very large feeds.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div style="padding:1.5rem">
+          <p class="o-text-sm o-text-muted o-mb-2">Loaded: <b id="inf-vl-count">0</b> of 5,000</p>
+          <o-virtual-list id="inf-vl" item-height="44" style="block-size:18rem"></o-virtual-list>
+        </div>
+        <script>
+          {
+            const total = 5000, pageSize = 100;
+            const all = docs.people(total, 4);
+            const list = document.getElementById('inf-vl');
+            list.renderItem = (p, i) => `<span>#${i + 1} · ${p.name} — ${p.role}</span>`;
+            const ctrl = Orion.infiniteScroll(list, {
+              load: async page => { await new Promise(r => setTimeout(r, 250)); const rows = all.slice((page - 1) * pageSize, page * pageSize); return { items: rows, hasMore: page * pageSize < total }; },
+            });
+            list.addEventListener('o-infinite-load', () => { document.getElementById('inf-vl-count').textContent = list.items.length; });
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="declarative">
+    <h2>Declarative: <code>data-o-infinite</code></h2>
+    <p>For a server-rendered feed, skip the JS entirely: point <code>data-o-infinite-url</code> at an endpoint that returns the next page as an HTML fragment (<code>{page}</code> is substituted, or appended as a query parameter). The response is sanitized before insertion unless the element carries <code>data-o-trusted</code>.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div style="padding:1.5rem">
+          <div class="o-list" id="inf-decl" style="max-block-size:16rem;overflow:auto"></div>
+        </div>
+        <script>
+          {
+            const box = document.getElementById('inf-decl');
+            if (Orion.http && Orion.http.mock) {
+              const people = docs.people(60, 8);
+              Orion.http.mock([
+                ['GET /api/feed', ({ query }) => {
+                  const page = +query.page || 1, pageSize = 10;
+                  const rows = people.slice((page - 1) * pageSize, page * pageSize);
+                  const html = rows.map(p => `<div class="o-list-item">${p.name} — <span class="o-text-muted">${p.role}</span></div>`).join('');
+                  return { status: 200, headers: { 'X-Has-More': String(page * pageSize < people.length) }, body: html };
+                }],
+              ], { delay: 350 });
+              box.setAttribute('data-o-infinite', '');
+              box.setAttribute('data-o-infinite-url', '/api/feed?page={page}');
+              Orion.upgrade(box);
+            } else {
+              box.innerHTML = '<p class="o-text-muted o-p-3">This demo needs the <code>http</code> package’s mock server, which isn’t part of this bundle.</p>';
+            }
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="events">
+    <h2>Events &amp; methods</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster" style="--o-gap:.5rem">
+          <button class="o-btn o-btn-sm" type="button" data-m="reset">reset()</button>
+          <button class="o-btn o-btn-sm" type="button" data-m="load">loadMore()</button>
+          <button class="o-btn o-btn-sm" type="button" data-m="destroy">destroy()</button>
+        </div>
+        <div class="o-list" id="inf-ev" style="max-block-size:12rem;overflow:auto;margin-top:.75rem"></div>
+        <div class="docs-log" id="inf-ev-log"></div>
+        <script>
+          {
+            const all = docs.people(100, 6);
+            const pageSize = 10;
+            let ctrl = make();
+            function make() {
+              return Orion.infiniteScroll('#inf-ev', {
+                load: async page => { await new Promise(r => setTimeout(r, 300)); const rows = all.slice((page - 1) * pageSize, page * pageSize); return { items: rows, hasMore: page * pageSize < all.length }; },
+                render: p => `<div class="o-list-item">${p.name}</div>`,
+              });
+            }
+            document.getElementById('inf-ev').addEventListener('o-infinite-load', e => docs.log('#inf-ev-log', `o-infinite-load page ${e.detail.page} (${e.detail.items.length} items, done=${e.detail.done})`));
+            document.getElementById('inf-ev').addEventListener('o-infinite-error', e => docs.log('#inf-ev-log', 'o-infinite-error ' + e.detail.error.message));
+            document.querySelector('[data-m="reset"]').onclick = () => { document.getElementById('inf-ev').innerHTML = ''; ctrl.destroy(); ctrl = make(); docs.log('#inf-ev-log', 'reset — reloaded from page 1'); };
+            document.querySelector('[data-m="load"]').onclick = () => ctrl.loadMore();
+            document.querySelector('[data-m="destroy"]').onclick = () => { ctrl.destroy(); docs.log('#inf-ev-log', 'destroyed — sentinel stopped watching'); };
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Orion.infiniteScroll(container, options)</h3>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>load</td><td>(page, { signal }) =&gt; items[] | { items, hasMore } | html | { html, hasMore }</td><td>—</td><td>Required. Return a plain array, <code>{ items, hasMore }</code>, an HTML string, or <code>{ html, hasMore }</code> (appended as markup — see <code>trusted</code>). <code>hasMore</code> defaults to "did we get anything back".</td></tr>
+        <tr><td>render</td><td>(item) =&gt; Node | string</td><td>—</td><td>Row content for array/items results. Ignored for html results and when <code>container</code> is an <code>&lt;o-virtual-list&gt;</code> (it has its own <code>renderItem</code>).</td></tr>
+        <tr><td>mode</td><td>'auto' | 'button'</td><td>'auto'</td><td><code>auto</code> loads via an <code>IntersectionObserver</code> sentinel; <code>button</code> shows a "Load more" button instead.</td></tr>
+        <tr><td>threshold</td><td>number</td><td>300</td><td>Sentinel <code>rootMargin</code>, in px — how far from the edge loading starts.</td></tr>
+        <tr><td>initialPage</td><td>number</td><td>1</td><td>First page number passed to <code>load</code>.</td></tr>
+        <tr><td>direction</td><td>'down' | 'up'</td><td>'down'</td><td><code>up</code> prepends and preserves scroll position (chat history).</td></tr>
+        <tr><td>trusted</td><td>boolean</td><td>false</td><td>Skip <code>sanitize()</code> for html results — only for markup you generated yourself.</td></tr>
+        <tr><td>showEnd</td><td>boolean</td><td>true</td><td>Show the end-of-list row once <code>hasMore</code> is false.</td></tr>
+        <tr><td>root</td><td>Element | null</td><td>auto-detected</td><td><code>IntersectionObserver</code> root; auto-detects an <code>overflow: auto/scroll</code> container, else the viewport.</td></tr>
+        <tr><td>texts</td><td>object</td><td>—</td><td>Override <code>loading, error, retry, end, loadMore, loaded</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>Return value</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>loadMore()</td><td>Force the next page now (also used to retry after an error).</td></tr>
+        <tr><td>reset(page = initialPage)</td><td>Clear loaded items, forget <code>done</code>, and (in <code>auto</code> mode) reload from <code>page</code>.</td></tr>
+        <tr><td>destroy()</td><td>Stop observing and remove the sentinel/status chrome. Already-loaded content is left as-is.</td></tr>
+        <tr><td>loading / done / page</td><td>Read-only live status.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-infinite-load</td><td>{ page, items, html, done }</td><td>A page finished loading.</td></tr>
+        <tr><td>o-infinite-error</td><td>{ page, error }</td><td>A page failed to load (not fired for a cancelled/aborted request).</td></tr>
+      </tbody>
+    </table>
+    <h3>Declarative attributes</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>data-o-infinite</td><td>Marks the container.</td></tr>
+        <tr><td>data-o-infinite-url</td><td>Endpoint returning an HTML fragment. Use a literal <code>{page}</code> placeholder, or it is appended as a query parameter (name from <code>data-o-infinite-param</code>, default <code>page</code>).</td></tr>
+        <tr><td>data-o-infinite-mode / -threshold / -initial-page / -direction</td><td>Same as the JS options.</td></tr>
+        <tr><td>data-o-trusted</td><td>Skip sanitizing the response.</td></tr>
+        <tr><td>X-Has-More response header</td><td>"true" / "false" tells the behavior whether to keep loading; omit it to infer from a non-empty body.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

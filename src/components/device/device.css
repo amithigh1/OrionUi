@@ -1,0 +1,2 @@
+/* device: data-o-show / data-o-hide (utility-strength so it beats display utilities) */
+.o-device-hidden { display: none !important; }

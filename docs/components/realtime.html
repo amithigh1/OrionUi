@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Realtime — Orion Admin</title>
+<meta name="docs:section" content="Services &amp; Utilities">
+<meta name="docs:order" content="20">
+<meta name="docs:desc" content="WebSocket, SignalR, Server-Sent Events, polling and live data refresh with a connection indicator">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<script>
+  /* In-browser mock servers used by the demos (see "Testing without a server"). Replace the URLs with real endpoints in your app. */
+  window.wsServer = Orion.realtime.mockServer('wss://demo.orion.local/live', socket => {
+    const prices = { ORN: 128.4, ACME: 54.1, GLOBX: 312.9 };
+    socket.send({ type: 'welcome', text: 'Hello from the mock server' });
+    const tick = setInterval(() => {
+      const s = Object.keys(prices)[Math.floor(Math.random() * 3)];
+      prices[s] = +(prices[s] * (1 + (Math.random() - 0.5) / 40)).toFixed(2);
+      socket.send({ type: 'price', symbol: s, value: prices[s] });
+    }, 1200);
+    socket.on('message', raw => { const m = JSON.parse(raw); socket.send(m.type === 'ping' ? { type: 'pong' } : { type: 'echo', data: m }); });
+    socket.on('close', () => clearInterval(tick));
+  });
+  window.chatHub = Orion.signalr.mockHub('/hubs/chat', {
+    methods: {
+      SendMessage(user, text) { this.clients.all.send('ReceiveMessage', user, text, new Date().toISOString()); },
+      Add(a, b) { return a + b; },
+      async *Countdown(n) { for (let i = n; i >= 0; i--) { await new Promise(r => setTimeout(r, 350)); yield i; } },
+      Fail() { throw new Error('Something broke on the server'); },
+    },
+    onConnected(id) { this.clients.caller.send('ReceiveMessage', 'Hub', 'Welcome, your connection id is ' + id.slice(0, 13), new Date().toISOString()); },
+  });
+  window.orderFeed = Orion.sse.mock('/api/orders/stream', conn => {
+    const names = ['Aisha Rahman', 'Ben Tan', 'Chen Garcia', 'Diego Smith', 'Elena Kowalski'];
+    let id = +(conn.query.lastEventId || 1000);
+    const t = setInterval(() => {
+      id++;
+      conn.send({ id, customer: names[id % names.length], total: Math.round(20 + Math.random() * 480) }, { event: 'order', id });
+      if (id % 4 === 0) conn.send({ text: 'Warehouse B is running low on SKU-' + (id % 97) }, { event: 'notice' });
+    }, 1500);
+    conn.on('close', () => clearInterval(t));
+  });
+  Orion.http.mock([
+    { method: 'GET', url: '/api/metrics', delay: [120, 320], response: () => ({ active: 180 + Math.round(Math.random() * 40), queue: Math.round(Math.random() * 12), latency: Math.round(40 + Math.random() * 60), at: Date.now() }) },
+    { method: 'GET', url: '/api/kpis.html', delay: 200, response: () => `<div class="o-stat"><span class="o-stat-label">Orders today</span><span class="o-stat-value">${1800 + Math.round(Math.random() * 90)}</span><span class="o-stat-meta"><span class="o-trend is-up">${(Math.random() * 9).toFixed(1)}%</span> vs yesterday</span></div>` },
+  ]);
+</script>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Realtime</h1>
+    <p class="docs-lead">Resilient WebSocket, ASP.NET Core SignalR and Server-Sent Events clients with reconnect backoff, heartbeats, offline awareness and send queues, plus polling and live DOM refresh. <code>&lt;o-live-indicator&gt;</code> shows the connection status. There are no dependencies. Even the SignalR hub protocol is implemented from scratch.</p>
+  </header>
+
+  <section id="overview">
+    <h2>Overview</h2>
+    <p>Every client is an event emitter with a <code>status</code> of <code>connecting | open | reconnecting | closed</code> and registers itself in <code>Orion.realtime.clients</code>, which is how <code>&lt;o-live-indicator for="id"&gt;</code> finds it. Reconnects use exponential backoff with jitter. They pause while the browser is offline and resume immediately when it comes back. The demos talk to in-browser mock servers, so they need no network. Pass a real <code>wss://</code> or hub URL in your app.</p>
+    <div class="o-alert o-alert-info"><o-icon name="info"></o-icon><div class="o-alert-content">Clients are constructors you can inject for tests (<code>{ WebSocket, EventSource, fetch }</code> options) and they load safely in Node for SSR. Nothing connects until you create a client.</div></div>
+  </section>
+
+  <section id="websocket">
+    <h2>WebSocket</h2>
+    <p>JSON is on by default. Objects are encoded, incoming strings are parsed, and messages shaped like <code>{ type: 'price' }</code> also fire a <code>'price'</code> event. <code>send()</code> queues while the socket is connecting or reconnecting and flushes in order once it opens. The heartbeat sends a ping every <code>interval</code> and drops the socket when nothing arrives within <code>timeout</code>, which catches dead connections that never fire <code>close</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-between o-flex-wrap">
+          <o-live-indicator for="demo-ws" pill></o-live-indicator>
+          <div class="o-cluster">
+            <button class="o-btn o-btn-sm" id="ws-close" type="button">Disconnect</button>
+            <button class="o-btn o-btn-sm" id="ws-open" type="button">Connect</button>
+            <button class="o-btn o-btn-sm" id="ws-drop" type="button">Simulate network drop</button>
+            <button class="o-btn o-btn-sm" id="ws-down" type="button" aria-pressed="false">Server down</button>
+          </div>
+        </div>
+        <div class="o-grid o-grid-cols-3 o-mt-3" id="ws-ticker"></div>
+        <form class="o-input-group o-mt-3" id="ws-form">
+          <label class="o-sr-only" for="ws-msg">Message</label>
+          <input class="o-input" id="ws-msg" value="Hello, socket" autocomplete="off">
+          <button class="o-btn o-btn-primary" type="submit">Send</button>
+        </form>
+        <div class="docs-log" id="ws-log"></div>
+        <script>
+          {
+            const log = m => docs.log('#ws-log', m);
+            const ticker = document.getElementById('ws-ticker');
+            const cards = {};
+            for (const s of ['ORN', 'ACME', 'GLOBX']) {
+              cards[s] = Orion.h('div', { class: 'o-card o-card-body o-stat' }, Orion.h('span', { class: 'o-stat-label' }, s), Orion.h('span', { class: 'o-stat-value' }, '—'), Orion.h('span', { class: 'o-stat-meta' }, 'waiting…'));
+              ticker.append(cards[s]);
+            }
+            const ws = Orion.ws('wss://demo.orion.local/live', { id: 'demo-ws', heartbeat: { interval: 8000, timeout: 4000 }, reconnect: { min: 500, max: 8000 } });
+            ws.on('status', (s, prev) => log(`status: ${prev} → ${s}`));
+            ws.on('reconnecting', e => log(`reconnect attempt ${e.attempt} in ${e.delay} ms`));
+            ws.on('welcome', m => log(m.text));
+            ws.on('echo', m => log('echo: ' + JSON.stringify(m.data)));
+            ws.on('price', m => {
+              const c = cards[m.symbol], v = c.children[1], old = parseFloat(v.textContent);
+              v.textContent = m.value.toFixed(2);
+              c.children[2].innerHTML = Number.isNaN(old) ? 'live' : `<span class="o-trend ${m.value >= old ? 'is-up' : 'is-down'}">${Math.abs(m.value - old).toFixed(2)}</span>`;
+            });
+            document.getElementById('ws-form').onsubmit = e => { e.preventDefault(); const text = document.getElementById('ws-msg').value; const ok = ws.send({ type: 'chat', text }); log(!ok ? 'not sent: the client was closed with close()' : ws.isOpen ? 'sent' : `queued (${ws.queued} waiting)`); };
+            document.getElementById('ws-close').onclick = () => ws.close();
+            document.getElementById('ws-open').onclick = () => ws.open();
+            document.getElementById('ws-drop').onclick = () => wsServer.drop();
+            const down = document.getElementById('ws-down');
+            down.onclick = () => { const on = down.getAttribute('aria-pressed') !== 'true'; down.setAttribute('aria-pressed', on); wsServer.refuse(on); if (on) wsServer.drop(); };
+          }
+        </script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+      const ws = Orion.ws('wss://api.example.com/live', {
+        id: 'live',                                              // for &lt;o-live-indicator for="live"&gt;
+        protocols: ['v1'],
+        reconnect: { min: 500, max: 30000, factor: 2, jitter: 0.5, maxRetries: Infinity, shouldReconnect: ev =&gt; ev.code !== 4401 },
+        heartbeat: { interval: 25000, timeout: 10000, message: { type: 'ping' } },
+        queue: true,                                             // send() while connecting / offline
+      });
+      ws.url = () =&gt; `wss://api.example.com/live?token=${auth.token}`;   // a function gives each attempt a fresh token
+      ws.on('order.created', msg =&gt; table.refresh());
+    </pre>
+  </section>
+
+  <section id="signalr">
+    <h2>SignalR</h2>
+    <p><code>Orion.signalr(hubUrl, options)</code> speaks the ASP.NET Core SignalR JSON hub protocol over WebSockets. It covers negotiation (including Azure SignalR redirects and access tokens), the handshake, record-separator framing, invocations with completions, streams, client results, keep-alive pings every 15 s, a 30 s server timeout and automatic reconnect. The API follows <code>@microsoft/signalr</code>, so existing code ports easily.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-between o-flex-wrap">
+          <o-live-indicator for="demo-hub" pill></o-live-indicator>
+          <div class="o-cluster">
+            <button class="o-btn o-btn-sm" id="sr-stop" type="button">Stop</button>
+            <button class="o-btn o-btn-sm" id="sr-start" type="button">Start</button>
+            <button class="o-btn o-btn-sm" id="sr-drop" type="button">Drop connection</button>
+          </div>
+        </div>
+        <div class="o-card o-mt-3">
+          <ul class="o-feed o-card-body o-scroll" id="sr-msgs" style="max-height:13rem;padding-block:.25rem" aria-live="polite"></ul>
+          <form class="o-card-footer" id="sr-form">
+            <label class="o-sr-only" for="sr-text">Message</label>
+            <input class="o-input" id="sr-text" placeholder="Type a message…" autocomplete="off" value="Hi team 👋">
+            <button class="o-btn o-btn-primary" type="submit">Send</button>
+          </form>
+        </div>
+        <div class="o-cluster o-mt-3">
+          <button class="o-btn o-btn-sm" id="sr-add" type="button">invoke('Add', 2, 3)</button>
+          <button class="o-btn o-btn-sm" id="sr-stream" type="button">stream('Countdown', 5)</button>
+          <button class="o-btn o-btn-sm" id="sr-fail" type="button">invoke('Fail')</button>
+        </div>
+        <div class="docs-log" id="sr-log"></div>
+        <script>
+          {
+            const log = m => docs.log('#sr-log', m), list = document.getElementById('sr-msgs'), h = Orion.h;
+            const hub = Orion.signalr('/hubs/chat', { id: 'demo-hub', reconnect: [0, 1000, 3000, 5000] });
+            hub.on('ReceiveMessage', (user, text, at) => {
+              list.append(h('li', { class: 'o-feed-item' }, h('o-avatar', { name: user, size: 'sm' }), h('div', { class: 'o-feed-content' }, h('strong', user), ' ', text, h('div', { class: 'o-feed-time' }, Orion.format.time(at)))));
+              list.scrollTop = list.scrollHeight;
+            });
+            hub.onreconnecting(err => log('reconnecting… ' + (err ? err.message : '')));
+            hub.onreconnected(id => log('reconnected, connectionId ' + id));
+            hub.onclose(err => log('closed' + (err ? ': ' + err.message : '')));
+            const start = () => hub.start().then(() => log('connected, connectionId ' + hub.connectionId), e => log('start failed: ' + e.message));
+            start();
+            document.getElementById('sr-start').onclick = start;
+            document.getElementById('sr-stop').onclick = () => hub.stop();
+            document.getElementById('sr-drop').onclick = () => chatHub.drop();
+            document.getElementById('sr-form').onsubmit = e => { e.preventDefault(); const t = document.getElementById('sr-text'); hub.send('SendMessage', 'You', t.value).catch(err => log(err.message)); t.value = ''; };
+            document.getElementById('sr-add').onclick = async () => log('Add(2, 3) = ' + await hub.invoke('Add', 2, 3));
+            document.getElementById('sr-stream').onclick = () => hub.stream('Countdown', 5).subscribe({ next: n => log('stream item ' + n), complete: () => log('stream complete'), error: e => log(e.message) });
+            document.getElementById('sr-fail').onclick = () => hub.invoke('Fail').catch(e => log(`${e.name}: ${e.message}`));
+          }
+        </script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+      const hub = Orion.signalr('https://api.example.com/hubs/orders', {
+        accessTokenFactory: () =&gt; auth.token,        // Authorization header for negotiate, ?access_token= for the socket
+        reconnect: [0, 2000, 10000, 30000],             // or { nextRetryDelayInMilliseconds: ctx =&gt; ms | null } or false
+        headers: { 'X-Tenant': 'acme' }, skipNegotiation: false, keepAliveInterval: 15000, serverTimeout: 30000,
+      });
+      hub.on('OrderCreated', order =&gt; grid.add(order));
+      hub.on('GetClientTime', () =&gt; Date.now());        // client results: the return value is sent back to the server
+      await hub.start();
+      const total = await hub.invoke('GetTotal', { month: 9 });
+      for await (const tick of hub.stream('Ticker', 'ORN')) chart.push(tick);
+    </pre>
+  </section>
+
+  <section id="sse">
+    <h2>Server-Sent Events</h2>
+    <p><code>Orion.sse(url, options)</code> wraps <code>EventSource</code>. It parses JSON, fires one event per SSE <code>event:</code> type (<code>on()</code> subscribes lazily), and reconnects with backoff. It also keeps working after HTTP errors, where the native EventSource gives up. On reconnect the last event id is sent as <code>?lastEventId=…</code> so the server can resume.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-between">
+          <o-live-indicator for="demo-sse" pill></o-live-indicator>
+          <button class="o-btn o-btn-sm" id="sse-toggle" type="button" aria-pressed="false">Pause stream</button>
+        </div>
+        <ul class="o-list o-mt-3" id="sse-list" aria-live="polite"><li class="o-list-item o-muted">Waiting for orders…</li></ul>
+        <div class="docs-log" id="sse-log"></div>
+        <script>
+          {
+            const list = document.getElementById('sse-list'), h = Orion.h;
+            const feed = Orion.sse('/api/orders/stream', { id: 'demo-sse', events: ['order'] });
+            feed.on('order', o => {
+              if (list.firstElementChild?.classList.contains('o-muted')) list.innerHTML = '';
+              list.prepend(h('li', { class: 'o-list-item' }, h('span', { class: 'o-badge o-badge-soft-primary' }, '#' + o.id), h('span', { class: 'o-list-content' }, o.customer), h('span', { class: 'o-list-meta' }, Orion.format.currency(o.total))));
+              while (list.children.length > 4) list.lastElementChild.remove();
+            });
+            feed.on('notice', n => docs.log('#sse-log', 'notice: ' + n.text));
+            const btn = document.getElementById('sse-toggle');
+            btn.onclick = () => { const paused = btn.getAttribute('aria-pressed') === 'true'; paused ? feed.open() : feed.close(); btn.setAttribute('aria-pressed', String(!paused)); btn.textContent = paused ? 'Pause stream' : 'Resume stream'; };
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="live">
+    <h2>Live data refresh</h2>
+    <p><code>Orion.poll(fn, options)</code> runs <code>fn({ signal, count })</code> on an interval. Runs never overlap. Polling pauses while the tab is hidden or offline and catches up when it returns, and errors back off exponentially up to <code>maxInterval</code>. <code>Orion.live(el, { url | source, render })</code> keeps a DOM region fresh. It fetches a URL on an interval or subscribes to a push source (<code>Orion.ws</code>, <code>Orion.sse</code>, <code>Orion.signalr</code> or any emitter). HTML strings are sanitized, while output from your own <code>render()</code> is trusted.</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-grid o-grid-cols-1 o-grid-cols-md-4" id="lv-kpis">
+          <div class="o-card o-card-body o-stat"><span class="o-stat-label">Active users</span><span class="o-stat-value" data-k="active">—</span></div>
+          <div class="o-card o-card-body o-stat"><span class="o-stat-label">Jobs in queue</span><span class="o-stat-value" data-k="queue">—</span></div>
+          <div class="o-card o-card-body o-stat"><span class="o-stat-label">p95 latency</span><span class="o-stat-value" data-k="latency">—</span></div>
+          <div class="o-card o-card-body" id="lv-html"></div>
+        </div>
+        <div class="o-between o-mt-3 o-flex-wrap">
+          <span class="o-small o-muted" id="lv-at">Not updated yet</span>
+          <div class="o-cluster">
+            <button class="o-btn o-btn-sm" id="lv-toggle" type="button">Pause</button>
+            <button class="o-btn o-btn-sm" id="lv-refresh" type="button">Refresh now</button>
+          </div>
+        </div>
+        <script>
+          {
+            const root = document.getElementById('lv-kpis'), at = document.getElementById('lv-at');
+            const p = Orion.poll(({ signal }) => Orion.http.get('/api/metrics', { signal }), {
+              interval: 3000,
+              onData: m => {
+                root.querySelector('[data-k=active]').textContent = m.active;
+                root.querySelector('[data-k=queue]').textContent = m.queue;
+                root.querySelector('[data-k=latency]').textContent = m.latency + ' ms';
+                at.textContent = 'Updated ' + Orion.format.time(m.at, 'medium');
+              },
+            });
+            Orion.live('#lv-html', { url: '/api/kpis.html', interval: 5000 });
+            const tb = document.getElementById('lv-toggle');
+            tb.onclick = () => { p.running ? p.stop() : p.start(); tb.textContent = p.running ? 'Pause' : 'Resume'; };
+            document.getElementById('lv-refresh').onclick = () => p.refresh();
+          }
+        </script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+      // push: re-render a region whenever the socket sends { type: 'stats' }
+      Orion.live('#stats', { source: ws, event: 'stats', render: (s, el) =&gt; Orion.util.html`&lt;b&gt;${s.total}&lt;/b&gt; orders` });
+      // pull: HTML fragment every 30 s (sanitized)
+      const kpis = Orion.live('#kpis', { url: '/fragments/kpis.html', interval: 30000 });
+      kpis.refresh(); kpis.stop(); kpis.destroy();
+    </pre>
+  </section>
+
+  <section id="indicator">
+    <h2>Live indicator</h2>
+    <p><code>&lt;o-live-indicator&gt;</code> shows a status dot and a label. Status is also carried by shape: a pulsing ring means connected, a blinking dot means (re)connecting, and a hollow dot means disconnected or offline. <code>for="auto"</code> (the default) combines every client. <code>for="id"</code> follows one client, and setting the <code>client</code> property binds any object that has a <code>status</code>. Add <code>pill</code> for a chip or <code>compact</code> for a dot only, which keeps the label for screen readers and in the tooltip.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-live-indicator class="lv-state" data-s="open" pill></o-live-indicator>
+        <o-live-indicator class="lv-state" data-s="connecting" pill></o-live-indicator>
+        <o-live-indicator class="lv-state" data-s="reconnecting" pill></o-live-indicator>
+        <o-live-indicator class="lv-state" data-s="closed" pill></o-live-indicator>
+        <o-live-indicator class="lv-state" data-s="idle"></o-live-indicator>
+        <o-live-indicator class="lv-state" data-s="open" compact></o-live-indicator>
+        <o-live-indicator for="auto"></o-live-indicator>
+        <script>
+          document.querySelectorAll('.lv-state').forEach(el => { el.client = { status: el.dataset.s }; });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="testing">
+    <h2>Testing without a server</h2>
+    <p>Mock servers run in the page. Clients connect to them automatically when the URL matches, or you can pass the mock constructors explicitly. Use <code>drop()</code> to simulate a network loss (abnormal close 1006) and <code>refuse(true)</code> to simulate a server that is down.</p>
+    <pre class="docs-code-block" data-lang="js">
+      const srv = Orion.realtime.mockServer('wss://demo.local/ws', (socket, { url, query }) =&gt; {
+        socket.send({ type: 'hello' });
+        socket.on('message', data =&gt; socket.send(data));       // echo
+      }, { latency: 20 });
+      srv.broadcast({ type: 'news' }); srv.drop(); srv.refuse(true); srv.close();
+      Orion.ws('wss://anything', { WebSocket: Orion.realtime.MockWebSocket });   // explicit injection
+
+      const hub = Orion.signalr.mockHub('/hubs/chat', {
+        methods: { Add: (a, b) =&gt; a + b, *Counter(n) { for (let i = 0; i &lt; n; i++) yield i; } },
+        onConnected(id) { this.clients.caller.send('Welcome', id); },
+      });
+      hub.clients.all.send('ReceiveMessage', 'bot', 'hi'); hub.drop(); hub.sendClose('maintenance', true); hub.close();
+
+      const feed = Orion.sse.mock('/api/stream', conn =&gt; conn.send({ n: 1 }, { event: 'tick', id: '1' }));
+    </pre>
+    <p>For end-to-end tests against a real server, <code>docs/examples/services-a-tests-rt.html</code> runs the same suites against a Node WebSocket, SignalR and SSE server.</p>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Orion.ws(url, options) → WSClient</h3>
+    <table class="docs-api">
+      <thead><tr><th>Option / member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>id</td><td>Registry id (default is generated) used by <code>&lt;o-live-indicator for&gt;</code>.</td></tr>
+        <tr><td>protocols / binaryType</td><td>Passed to the WebSocket.</td></tr>
+        <tr><td>json</td><td><code>true</code>: stringify objects and parse incoming strings. JSON <code>{ type }</code> messages also emit <code>type</code>.</td></tr>
+        <tr><td>reconnect</td><td><code>{ min: 500, max: 30000, factor: 2, jitter: 0.5, maxRetries: Infinity, shouldReconnect(ev) }</code>, <code>true</code>, a number (max retries) or <code>false</code>.</td></tr>
+        <tr><td>heartbeat</td><td><code>{ interval: 25000, timeout: 10000, message, isPong(msg) }</code> or <code>false</code> (default). A <code>'pong'</code> / <code>{type:'pong'}</code> reply is consumed.</td></tr>
+        <tr><td>queue / queueMax</td><td>Buffer <code>send()</code> calls until the socket opens (<code>true</code>, max 1000).</td></tr>
+        <tr><td>WebSocket / autoConnect / offlineAware</td><td>Injectable constructor, connect immediately (<code>true</code>), and pause while offline (<code>true</code>).</td></tr>
+        <tr><td>send(data) → boolean</td><td>Sends now or queues.</td></tr>
+        <tr><td>open() / close(code, reason) / reconnect() / destroy()</td><td>Connection control. <code>close()</code> is final and <code>destroy()</code> also unregisters.</td></tr>
+        <tr><td>status / isOpen / readyState / retries / queued</td><td>State.</td></tr>
+        <tr><td>on(event, fn) → off</td><td><code>open, message, close, error, status (s, prev, info), reconnecting ({ attempt, delay }), reconnected, queued, pong, timeout, giveup, &lt;type&gt;</code></td></tr>
+      </tbody>
+    </table>
+    <h3>Orion.signalr(url, options) → HubConnection</h3>
+    <table class="docs-api">
+      <thead><tr><th>Option / member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>accessTokenFactory</td><td><code>() =&gt; token | Promise</code>. Sent as a Bearer header on negotiate and as <code>access_token</code> on the socket.</td></tr>
+        <tr><td>reconnect</td><td>Array of delays (default <code>[0, 2000, 10000, 30000]</code>), <code>{ nextRetryDelayInMilliseconds(ctx) }</code> or <code>false</code>.</td></tr>
+        <tr><td>headers / skipNegotiation / withCredentials</td><td>Negotiate headers, connect straight to the WebSocket, cookies (<code>true</code>).</td></tr>
+        <tr><td>keepAliveInterval / serverTimeout / handshakeTimeout</td><td>15000 / 30000 / 15000 ms.</td></tr>
+        <tr><td>WebSocket / fetch</td><td>Injectable transports for tests.</td></tr>
+        <tr><td>start() / stop()</td><td>Promise. <code>start()</code> rejects when negotiation or the handshake fails (no automatic retry on the first start, as in the official client).</td></tr>
+        <tr><td>on(method, fn) → off / off(method, fn?)</td><td>Server-to-client methods (case-insensitive). A return value answers client-result invocations.</td></tr>
+        <tr><td>invoke(method, ...args) → Promise</td><td>Waits for the completion. Server errors reject with <code>Orion.signalr.HubError</code>.</td></tr>
+        <tr><td>send(method, ...args) → Promise</td><td>Fire and forget.</td></tr>
+        <tr><td>stream(method, ...args)</td><td><code>.subscribe({ next, error, complete }) → { dispose() }</code> (dispose sends CancelInvocation), or <code>for await</code>.</td></tr>
+        <tr><td>onreconnecting(fn) / onreconnected(fn) / onclose(fn) / onstate(fn)</td><td>Lifecycle callbacks. Each returns <code>off</code>.</td></tr>
+        <tr><td>state / status / connectionId</td><td><code>Disconnected | Connecting | Connected | Disconnecting | Reconnecting</code>, mapped to indicator statuses.</td></tr>
+        <tr><td>Orion.signalr.protocol</td><td><code>{ write, parse, split, handshake, RS, types }</code>. The framing helpers, which are unit-tested.</td></tr>
+      </tbody>
+    </table>
+    <h3>Orion.sse(url, options) → SSEClient</h3>
+    <table class="docs-api">
+      <thead><tr><th>Option / member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>events</td><td>Event types to subscribe up front. <code>on(type)</code> also subscribes new types lazily.</td></tr>
+        <tr><td>withCredentials / json / reconnect / lastEventIdParam</td><td>Cookies, JSON parsing (<code>true</code>), backoff options, resume parameter (<code>'lastEventId'</code>, <code>null</code> disables it).</td></tr>
+        <tr><td>EventSource</td><td>Injectable constructor.</td></tr>
+        <tr><td>open() / close() / destroy() / status / lastEventId</td><td>Control and state. Events: <code>open, message, error, status, reconnecting, reconnected, giveup, close, &lt;type&gt;</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>Polling &amp; live</h3>
+    <table class="docs-api">
+      <thead><tr><th>API</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Orion.poll(fn, { interval, immediate, pauseWhenHidden, pauseWhenOffline, backoffOnError, maxInterval, autoStart, onData, onError })</td><td>Returns <code>{ start, stop, refresh, running, busy, errors, count, interval (settable), lastData, lastRun, lastError, on('data' | 'error' | 'start' | 'stop') }</code>.</td></tr>
+        <tr><td>Orion.live(el, { url | source, event, interval, render, trusted, announce, http, onError })</td><td>Returns <code>{ refresh, start, stop, running, poller, destroy }</code>. Dispatches <code>o-live-update</code> / <code>o-live-error</code> on the element. Stops by itself when the element leaves the DOM.</td></tr>
+        <tr><td>Orion.realtime</td><td><code>clients</code> (Map), <code>get(id)</code>, <code>status()</code> (combined), <code>onStatus(fn)</code>, <code>backoff(attempt, opts)</code>, <code>mockServer</code>, <code>MockWebSocket</code>, <code>MockEventSource</code>. Also the <code>realtime:status</code> bus event and <code>o-realtime-status</code> on document.</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-live-indicator&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute / property</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>for</td><td><code>auto</code> (default: every client) or a client id.</td></tr>
+        <tr><td>client (property)</td><td>Binds a client object directly.</td></tr>
+        <tr><td>pill / compact</td><td>Chip style / dot only (label for screen readers and in the tooltip).</td></tr>
+        <tr><td>texts</td><td>Overrides for <code>realtime.connected / connecting / reconnecting / disconnected / offline / idle</code>.</td></tr>
+        <tr><td>status (getter) / o-change</td><td>Current status and the change event <code>{ status }</code>. The element has <code>role="status"</code>, so screen readers announce changes politely.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

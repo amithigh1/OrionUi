@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Table: Editing &amp; Selection — Orion Admin</title>
+<meta name="docs:section" content="Data">
+<meta name="docs:order" content="30">
+<meta name="docs:desc" content="Inline cell and row editing, validation, selection, bulk actions and row actions">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Data Table: editing &amp; selection</h1>
+    <p class="docs-lead">Edit cells in place with validation and an async save hook, edit whole rows, select with click, <kbd class="o-kbd">Shift</kbd>-ranges or <kbd class="o-kbd">Ctrl</kbd>, run bulk actions on the selection and add per-row actions.</p>
+  </header>
+
+  <section id="cell-editing">
+    <h2>Inline cell editing</h2>
+    <p>Double-click a cell, or focus it and press <kbd class="o-kbd">Enter</kbd> / <kbd class="o-kbd">F2</kbd>. <kbd class="o-kbd">Enter</kbd> saves, <kbd class="o-kbd">Esc</kbd> cancels, <kbd class="o-kbd">Tab</kbd> saves and moves to the next editable cell. Edited cells get a corner marker; <kbd class="o-kbd">Ctrl</kbd>+<kbd class="o-kbd">Z</kbd> undoes the last edit. <code>onSave(row, changes)</code> may be async — throw (or return <code>false</code>) to roll back.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-cluster o-p-3" style="border-bottom:1px solid var(--o-border)">
+          <label class="o-switch o-mb-0"><input type="checkbox" id="dt-edit-fail"><span>Simulate save failures</span></label>
+          <button class="o-btn o-btn-sm" id="dt-edit-undo"><o-icon name="rotate-cw"></o-icon> Undo</button>
+          <button class="o-btn o-btn-sm" id="dt-edit-changes">Show changes</button>
+        </div>
+        <o-datatable id="dt-edit" page-size="6" editable toolbar='{"columns":false,"density":false,"export":false}'></o-datatable>
+        <div class="docs-log o-m-3" id="dt-edit-log"></div>
+        <script>{
+          const dt = document.getElementById('dt-edit');
+          const log = m => docs.log('#dt-edit-log', m);
+          dt.columns = [
+            { key: 'name', title: 'Name', required: true, width: 180 },
+            { key: 'email', title: 'Email', width: 240, validate: v => /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(v) || 'Enter a valid email address' },
+            { key: 'role', title: 'Role', type: 'badge', options: ['Admin', 'Editor', 'Viewer', 'Manager', 'Support'], colors: { Admin: 'danger', Manager: 'primary', Editor: 'info', Support: 'warning', Viewer: 'secondary' } },
+            { key: 'salary', title: 'Salary', type: 'currency', format: { maximumFractionDigits: 0 }, min: 30000, max: 250000 },
+            { key: 'joined', title: 'Joined', type: 'date' },
+            { key: 'remote', title: 'Remote', type: 'boolean' },
+            { key: 'id', title: 'ID', type: 'number', editable: false, width: 70 },
+          ];
+          dt.rows = docs.people(30, 8).map(p => ({ ...p, remote: p.tags.includes('remote') }));
+          dt.onSave = async (row, changes) => {
+            await new Promise(r => setTimeout(r, 500));
+            if (document.getElementById('dt-edit-fail').checked) throw new Error('Server rejected the change (demo)');
+            log(`saved #${row.id} ${JSON.stringify(changes)}`);
+          };
+          dt.addEventListener('o-cell-edit', e => { if (e.detail.column === 'name' && /admin/i.test(e.detail.value)) { e.preventDefault(); log('o-cell-edit vetoed: names cannot contain "admin"'); } });
+          dt.addEventListener('o-save-error', e => log('o-save-error ' + e.detail.error.message));
+          document.getElementById('dt-edit-undo').onclick = () => dt.undo();
+          document.getElementById('dt-edit-changes').onclick = () => log('changes ' + JSON.stringify(dt.getChanges().map(c => ({ id: c.key, columns: c.columns }))));
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="row-editing">
+    <h2>Row edit mode</h2>
+    <p>With <code>edit-mode="row"</code> an <strong>Edit</strong> action (or double-click / <kbd class="o-kbd">Enter</kbd>) turns every editable cell of the row into an editor with <strong>Save</strong> and <strong>Cancel</strong>. All fields are validated before <code>onSave(row, changes)</code> runs once with every change.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-datatable id="dt-rowedit" edit-mode="row" editable page-size="5" toolbar="false"></o-datatable>
+        <div class="docs-log o-m-3" id="dt-rowedit-log"></div>
+        <script>{
+          const dt = document.getElementById('dt-rowedit');
+          dt.columns = [
+            { key: 'name', title: 'Name', required: true },
+            { key: 'department', title: 'Department', editor: 'select', options: ['Engineering', 'Sales', 'Marketing', 'Finance', 'Operations', 'Design', 'HR', 'Legal'] },
+            { key: 'rating', title: 'Rating', type: 'number', format: 1, min: 1, max: 5 },
+            { key: 'status', title: 'Status', type: 'badge', options: ['Active', 'Pending', 'Inactive', 'Suspended'], colors: { Active: 'success', Pending: 'warning', Inactive: 'secondary', Suspended: 'danger' } },
+          ];
+          dt.rows = docs.people(12, 31);
+          dt.rowActions = [{ label: 'Delete', icon: 'trash', variant: 'danger', confirm: 'Delete this person?', action: row => dt.removeRow(row) }];
+          dt.onSave = async (row, changes) => { await new Promise(r => setTimeout(r, 400)); docs.log('#dt-rowedit-log', `saved #${row.id} ${JSON.stringify(changes)}`); };
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="selection">
+    <h2>Selection &amp; bulk actions</h2>
+    <p>Add <code>selectable</code> for a checkbox column. Click a checkbox, <kbd class="o-kbd">Shift</kbd>+click for a range, <kbd class="o-kbd">Ctrl</kbd>+click a row to toggle it, <kbd class="o-kbd">Space</kbd> on a focused row, <kbd class="o-kbd">Ctrl</kbd>+<kbd class="o-kbd">A</kbd> for everything. The header checkbox selects the page and offers <em>Select all N results</em>. Selection is kept across pages by row id (<code>row-key</code>, default <code>id</code>). <code>bulkActions</code> appear in a bar with the count.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-datatable id="dt-bulk" selectable page-size="6"></o-datatable>
+        <div class="docs-log o-m-3" id="dt-bulk-log"></div>
+        <script>{
+          const dt = document.getElementById('dt-bulk');
+          const log = m => docs.log('#dt-bulk-log', m);
+          dt.columns = [{ key: 'name', type: 'avatar', subtitle: 'email', width: 250 }, 'department', { key: 'status', type: 'badge', colors: { Active: 'success', Pending: 'warning', Inactive: 'secondary', Suspended: 'danger' } }, { key: 'lastLogin', title: 'Last login', type: 'datetime' }];
+          dt.rows = docs.people(45, 13);
+          dt.bulkActions = [
+            { label: 'Activate', icon: 'check', action: rows => { rows.forEach(r => dt.updateRow(r, { status: 'Active' })); log(`activated ${rows.length}`); } },
+            { label: 'Export', icon: 'download', action: rows => log(dt.export('csv', { rows: 'selected', download: false }).then ? 'exported CSV of ' + rows.length + ' rows' : '') },
+            { label: 'Delete', icon: 'trash', variant: 'danger', confirm: 'Delete {count} people?', action: rows => { dt.removeRow(rows); log(`deleted ${rows.length}`); } },
+          ];
+          dt.addEventListener('o-select', e => log(`o-select ${e.detail.count} → [${e.detail.keys.slice(0, 8).join(', ')}${e.detail.keys.length > 8 ? '…' : ''}]`));
+        }</script>
+      </template>
+    </div>
+    <h3>Single selection</h3>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-datatable id="dt-single" selectable="single" select-on-click page-size="4" toolbar="false"></o-datatable>
+        <p class="o-p-3 o-mb-0 o-muted" id="dt-single-out">Click a row.</p>
+        <script>{
+          const dt = document.getElementById('dt-single');
+          dt.columns = ['name', 'email', 'city'];
+          dt.rows = docs.people(16, 44);
+          dt.addEventListener('o-select', e => { document.getElementById('dt-single-out').textContent = e.detail.rows[0] ? `Selected: ${e.detail.rows[0].name}` : 'Nothing selected'; });
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="row-actions">
+    <h2>Row actions</h2>
+    <p><code>rowActions</code> adds an actions column. Up to two actions (or those with <code>inline: true</code>) render as icon buttons; the rest go into a “⋯” menu (Orion.menu when available, otherwise a built-in menu). <code>confirm</code> asks first (Orion.confirm or a built-in popover); <code>hidden(row)</code> and <code>disabled(row)</code> control per-row state.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-cluster o-p-3" style="border-bottom:1px solid var(--o-border)">
+          <button class="o-btn o-btn-primary o-btn-sm" id="dt-ra-add"><o-icon name="plus"></o-icon> Add row</button>
+          <button class="o-btn o-btn-sm" id="dt-ra-update">Promote first row</button>
+          <button class="o-btn o-btn-sm" id="dt-ra-find">Scroll to #20</button>
+        </div>
+        <o-datatable id="dt-ra" page-size="5" toolbar='{"columns":false,"density":false}'></o-datatable>
+        <div class="docs-log o-m-3" id="dt-ra-log"></div>
+        <script>{
+          const dt = document.getElementById('dt-ra');
+          const log = m => docs.log('#dt-ra-log', m);
+          dt.columns = ['name', { key: 'role', type: 'badge', colors: { Admin: 'danger', Manager: 'primary', Editor: 'info', Support: 'warning', Viewer: 'secondary' } }, { key: 'status', type: 'badge', colors: { Active: 'success', Pending: 'warning', Inactive: 'secondary', Suspended: 'danger' } }, { key: 'joined', type: 'date' }];
+          dt.rows = docs.people(24, 51);
+          dt.rowActions = [
+            { label: 'View', icon: 'eye', inline: true, action: row => log('view ' + row.name) },
+            { label: 'Edit', icon: 'edit', inline: true, action: row => log('edit ' + row.name) },
+            { label: 'Duplicate', icon: 'copy', action: row => { dt.addRow({ ...row, id: Date.now(), name: row.name + ' (copy)' }, { at: 'start' }); log('duplicated ' + row.name); } },
+            { label: 'Approve', icon: 'check', hidden: row => row.status !== 'Pending', action: row => dt.updateRow(row, { status: 'Active' }) },
+            { label: 'Delete', icon: 'trash', variant: 'danger', confirm: row => `Delete ${row.name}?`, disabled: row => row.role === 'Admin', action: row => { dt.removeRow(row); log('deleted ' + row.name); } },
+          ];
+          let n = 1000;
+          document.getElementById('dt-ra-add').onclick = () => { const p = docs.people(1, n)[0]; dt.addRow({ ...p, id: ++n, status: 'Pending' }, { at: 'start' }); dt.goToPage(1); dt.scrollToRow(n); };
+          document.getElementById('dt-ra-update').onclick = () => { const r = dt.getRows({ page: true })[0]; if (r) dt.updateRow(r, { role: 'Admin', status: 'Active' }); };
+          document.getElementById('dt-ra-find').onclick = () => dt.scrollToRow(20, { focus: true });
+          dt.addEventListener('o-row-click', e => log('o-row-click ' + e.detail.row.name + (e.detail.column ? ' · ' + e.detail.column : '')));
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Keys</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Enter · F2 · double-click</td><td>Edit the focused cell (row mode: edit the row).</td></tr>
+        <tr><td>Enter</td><td>Save the editor (row mode: save the row).</td></tr>
+        <tr><td>Esc</td><td>Cancel editing and return focus to the cell.</td></tr>
+        <tr><td>Tab / Shift+Tab</td><td>Save and edit the next / previous editable cell.</td></tr>
+        <tr><td>Ctrl+Z</td><td>Undo the last edit (calls <code>onSave</code> with the old value).</td></tr>
+        <tr><td>Space</td><td>Toggle selection of the focused row (header checkbox cell: the whole page).</td></tr>
+        <tr><td>Shift+click · Ctrl+click</td><td>Select a range · toggle a row.</td></tr>
+        <tr><td>Ctrl+A</td><td>Select all rows (press again to clear).</td></tr>
+        <tr><td>Enter on an actions cell</td><td>Moves focus into the cell's buttons; Esc returns to the cell.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Name</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>editable</td><td>Makes every column of an editable type editable (columns may still opt out with <code>editable: false</code>; <code>editable: row =&gt; bool</code> for per-row rules).</td></tr>
+        <tr><td>edit-mode</td><td><code>cell</code> (default) or <code>row</code>.</td></tr>
+        <tr><td>onSave</td><td><code>async (row, changes, info) =&gt; void | false</code>. Throw or return <code>false</code> to roll back.</td></tr>
+        <tr><td>column.editor</td><td><code>'text'|'number'|'select'|'date'|'datetime'|'checkbox'</code> or <code>({ value, row, column, commit, cancel }) =&gt; Element | { el, getValue, focus }</code>.</td></tr>
+        <tr><td>column.validate</td><td><code>(value, row) =&gt; true | string</code> — a string is shown as the error. Also <code>required</code>, <code>min</code>, <code>max</code>.</td></tr>
+        <tr><td>column.options</td><td>Choices for <code>select</code> editors (defaults to filter options / badge colors).</td></tr>
+        <tr><td>selectable</td><td><code>multi</code> (also the bare attribute) or <code>single</code>. <code>select-on-click</code> selects on row click.</td></tr>
+        <tr><td>bulkActions</td><td><code>[{ label, icon, variant, confirm, action(rows, { all, query, keys, count, table }) }]</code> — property only.</td></tr>
+        <tr><td>rowActions</td><td><code>[{ label, icon, variant, inline, confirm, hidden(row), disabled(row), action(row, { event, key, table }) }]</code> — property only.</td></tr>
+        <tr><td>editCell(key, col) · editRow(key)</td><td>Start editing programmatically. <code>saveRowEdit()</code>, <code>cancelRowEdit()</code>.</td></tr>
+        <tr><td>undo() · getChanges() · acceptChanges()</td><td>Undo stack, edited rows <code>[{ key, row, columns }]</code>, clear dirty markers.</td></tr>
+        <tr><td>getSelected() · select(keys, on) · selectAll(scope) · clearSelection()</td><td>Selection API (<code>scope</code>: <code>'page'</code> or <code>'all'</code>).</td></tr>
+        <tr><td>addRow(row, { at }) · updateRow(key, patch) · removeRow(keys)</td><td>Mutate client data by row key.</td></tr>
+        <tr><td>o-cell-edit</td><td>Cancelable, before a value is applied: <code>{ row, key, column, value, oldValue, undo }</code> (listeners may change <code>detail.value</code>).</td></tr>
+        <tr><td>o-cell-change · o-save-error</td><td>After a successful save · when <code>onSave</code> failed and the value was rolled back.</td></tr>
+        <tr><td>o-row-edit</td><td>Cancelable, before a row edit is saved: <code>{ row, key, changes }</code>.</td></tr>
+        <tr><td>o-edit-start · o-edit-cancel</td><td>Editor opened · cancelled.</td></tr>
+        <tr><td>o-select</td><td><code>{ rows, keys, count, all, query }</code> whenever the selection changes.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

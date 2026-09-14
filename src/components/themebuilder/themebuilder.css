@@ -1,0 +1,49 @@
+/* <o-theme-builder>: a controls sidebar + live previews/contrast main area. Tokens only. */
+o-theme-builder, .o-theme-builder { display: grid; grid-template-columns: 20rem 1fr; gap: 1.5rem; align-items: start; min-width: 0; }
+@media (max-width: 860px) { .o-theme-builder { grid-template-columns: 1fr; } }
+
+.o-tb-controls { display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; max-height: 44rem; overflow-y: auto; padding-inline-end: .25rem; }
+@media (max-width: 860px) { .o-tb-controls { max-height: none; } }
+.o-tb-section { padding: 1rem; background: var(--o-surface); border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); }
+.o-tb-section-title { margin: 0 0 .75rem; font-size: var(--o-fs-sm); font-weight: 700; color: var(--o-text); }
+.o-tb-field { margin-bottom: .875rem; }
+.o-tb-field:last-child { margin-bottom: 0; }
+.o-tb-field-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: .25rem; }
+.o-tb-field-value { font-size: var(--o-fs-xs); font-variant-numeric: tabular-nums; color: var(--o-text-muted); }
+.o-tb-row { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: .625rem; }
+.o-tb-segmented { width: 100%; }
+.o-tb-segmented > button { flex: 1 1 0; }
+
+.o-tb-colors { display: grid; grid-template-columns: 1fr 1fr; gap: .875rem 1rem; }
+.o-tb-colorfield { min-width: 0; }
+.o-tb-colorfield o-colorpicker { width: 100%; }
+.o-tb-native-color { width: 100%; height: 2rem; padding: .1875rem; background: var(--o-input-bg); border: 1px solid var(--o-input-border); border-radius: var(--o-radius); cursor: pointer; }
+.o-tb-native-color::-webkit-color-swatch-wrapper { padding: 0; }
+.o-tb-native-color::-webkit-color-swatch { border: 0; border-radius: calc(var(--o-radius) - 3px); }
+.o-tb-palette { display: flex; margin-top: .375rem; border-radius: var(--o-radius-sm); overflow: hidden; box-shadow: 0 0 0 1px var(--o-border); }
+.o-tb-swatch { flex: 1 1 0; height: .875rem; }
+
+.o-tb-presets { display: grid; grid-template-columns: repeat(2, 1fr); gap: .5rem; }
+.o-tb-preset { display: flex; align-items: center; gap: .5rem; padding: .5rem .625rem; font-size: var(--o-fs-sm); color: var(--o-text); background: var(--o-surface-2); border: 1px solid var(--o-border); border-radius: var(--o-radius); cursor: pointer; text-align: start; }
+.o-tb-preset:hover { border-color: var(--o-border-strong); background: var(--o-surface-3); }
+.o-tb-preset-swatch { width: 1rem; height: 1rem; border-radius: 50%; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+.o-tb-code { font-family: var(--o-font-mono); font-size: var(--o-fs-xs); margin-bottom: .5rem; }
+.o-tb-reset { margin-top: -.25rem; }
+
+/* ── previews ── */
+.o-tb-main { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
+.o-tb-previews { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+@media (max-width: 640px) { .o-tb-previews { grid-template-columns: 1fr; } }
+.o-tb-preview { min-width: 0; border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); overflow: hidden; box-shadow: var(--o-shadow-sm); }
+.o-tb-preview-label { padding: .5rem .875rem; font-size: var(--o-fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--o-text-muted); background: var(--o-surface-2); border-bottom: 1px solid var(--o-border); }
+.o-tb-stage { display: flex; min-height: 16rem; background: var(--o-bg); color: var(--o-text); font-family: var(--o-font-sans); }
+.o-tb-preview-sidebar { display: flex; flex-direction: column; gap: .625rem; width: 6rem; flex-shrink: 0; padding: .875rem .75rem; font-size: var(--o-fs-xs); font-weight: 500; }
+.o-tb-sidebar-brand { width: 1.25rem; height: 1.25rem; border-radius: var(--o-radius-sm); background: var(--o-primary); margin-bottom: .375rem; }
+.o-tb-preview-content { flex: 1 1 auto; min-width: 0; padding: 1rem; }
+.o-tb-preview-content .o-card { box-shadow: var(--o-shadow-sm); }
+.o-tb-preview-actions { display: flex; gap: .5rem; margin: .75rem 0; }
+.o-tb-preview-content table.o-table td { padding-block: .375rem; }
+
+/* ── contrast table ── */
+.o-tb-contrast-table td, .o-tb-contrast-table th { vertical-align: middle; }
+.o-tb-contrast-table .o-swatch { width: .875rem; height: .875rem; border-radius: var(--o-radius-xs); vertical-align: -1px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.1); }

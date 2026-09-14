@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tags fixture — Orion Admin</title>
+<script src="../../../dist/orion.js"></script>
+</head>
+<body class="o-container o-py-6">
+<form id="f" class="o-stack" style="max-width:28rem">
+  <o-tags id="t1" name="skills" value='["javascript","css"]' suggestions='["javascript","css","html","go","rust","python"]' max="8"></o-tags>
+  <o-tags id="t2" name="colored" value='["urgent","done"]' colors='{"urgent":"danger","done":"success"}'></o-tags>
+  <o-tags id="t3" name="strict" suggestions='["red","green","blue"]' strict></o-tags>
+  <button class="o-btn" type="reset">Reset</button>
+</form>
+</body>
+</html>

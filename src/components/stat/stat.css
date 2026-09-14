@@ -1,0 +1,102 @@
+/* ============================================================================
+ * Stat: <o-stat> KPI tile, <o-stat-group> responsive row, <o-countup>.
+ * `.o-stat`, `.o-stat-label`, `.o-stat-value`, `.o-stat-meta`, `.o-stat-icon` and `.o-trend`
+ * base rules live in 60-content.css (also usable hand-authored, without the custom element).
+ * This file adds the custom-element-only parts: card chrome, delta, period, sparkline box,
+ * goal bar/ring, clickable variant, loading skeleton and the responsive group grid.
+ * ========================================================================== */
+o-stat:not(:defined), o-stat-group:not(:defined), o-countup:not(:defined) { visibility: hidden; }
+
+.o-stat { position: relative; }
+.o-stat-card {
+  padding: 1.25rem; background: var(--o-surface); border: 1px solid var(--o-border);
+  border-radius: var(--o-radius-lg); box-shadow: var(--o-shadow-sm);
+}
+.o-stat-v-gradient.o-stat-card {
+  background: linear-gradient(155deg, color-mix(in srgb, var(--o-c, var(--o-primary)) 10%, var(--o-surface)) 0%, var(--o-surface) 65%);
+  border-color: var(--o-c-border, var(--o-primary-border));
+}
+.o-stat-v-minimal { gap: .1875rem; }
+
+/* icon / goal-ring float to the top end corner so label + value stay full width */
+.o-stat:has(> .o-stat-icon:not([hidden])), .o-stat:has(> .o-stat-ring) { padding-inline-end: 3.25rem; }
+.o-stat > .o-stat-icon { position: absolute; top: 0; inset-inline-end: 0; }
+.o-stat-v-gradient > .o-stat-icon { color: var(--o-on-c, var(--o-on-primary)); background: var(--o-c, var(--o-primary)); }
+.o-stat-ring { position: absolute; top: 0; inset-inline-end: 0; --o-size: 2.75rem; --o-thickness: .25rem; font-size: .7rem; color: var(--o-c-text, var(--o-primary-text)); }
+.o-stat-ring.is-reached { color: var(--o-success-text); }
+.o-stat-ring.is-reached::before { background: conic-gradient(var(--o-success) calc(var(--o-value) * 1%), var(--o-surface-3) 0); }
+
+.o-stat-desc { margin: 0; font-size: var(--o-fs-xs); color: var(--o-text-muted); }
+
+/* delta: direction arrow (icon) + amount, colored by favorable/unfavorable, not just direction */
+.o-stat-delta { display: inline-flex; align-items: center; gap: .1875rem; font-size: var(--o-fs-xs); font-weight: 700; white-space: nowrap; }
+.o-stat-delta > .o-icon { width: .8rem; height: .8rem; flex-shrink: 0; }
+.o-stat-delta.is-good { color: var(--o-success-text); }
+.o-stat-delta.is-bad { color: var(--o-danger-text); }
+.o-stat-delta.is-neutral { color: var(--o-text-muted); }
+.o-stat-period { font-size: var(--o-fs-xs); color: var(--o-text-subtle); }
+.o-stat-meta.o-skeleton { display: inline-block; width: 5rem; min-height: 1.1em; }
+.o-stat-meta.o-skeleton > * { display: none; }
+
+/* sparkline box: fills the tile width under the meta row */
+.o-stat-spark { position: relative; width: 100%; height: 2.25rem; margin-block-start: .125rem; line-height: 0; }
+.o-stat-spark > o-sparkline { display: block; width: 100%; height: 100%; }
+.o-stat-spark.is-bar { height: 2rem; }
+.o-stat.is-link .o-stat-spark { cursor: pointer; }
+.o-spark-svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.o-stat-spark .o-spark-line { fill: none; stroke: var(--o-text-subtle); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.o-stat-spark .o-spark-line.is-last { stroke: var(--o-chart-1); }
+.o-stat-spark .o-spark-area { fill: var(--o-chart-1); fill-opacity: .1; stroke: none; }
+.o-stat-spark .o-spark-bar { fill: var(--o-text-subtle); opacity: .55; }
+.o-stat-spark .o-spark-bar.is-last { fill: var(--o-chart-1); opacity: 1; }
+.o-stat-spark .o-spark-dot { fill: var(--o-chart-1); stroke: var(--o-surface); stroke-width: 1.5; paint-order: stroke; }
+.o-stat-spark .o-spark-dot.is-hover { pointer-events: none; }
+.o-stat-spark .o-spark-hair { stroke: var(--o-border-strong); stroke-width: 1; }
+.o-stat-spark .o-spark-tip {
+  position: absolute; top: -.25rem; z-index: 1; display: flex; align-items: baseline; gap: .375rem;
+  padding: .1875rem .5rem; font-size: var(--o-fs-xs); line-height: 1.4; white-space: nowrap; pointer-events: none;
+  color: var(--o-on-dark); background: var(--o-text); border-radius: var(--o-radius-sm); transform: translate(-50%, -100%);
+}
+.o-stat-spark .o-spark-tip > b { font-weight: 650; font-variant-numeric: tabular-nums; }
+.o-stat-spark .o-spark-tip > span:not(:empty) { color: color-mix(in srgb, var(--o-on-dark) 70%, transparent); }
+.o-stat-spark .o-spark-tip > span:empty { display: none; }
+
+/* progress-to-goal */
+.o-stat-goal { margin-block-start: .125rem; }
+.o-stat-goal-row { display: flex; align-items: center; gap: .25rem; margin-block-end: .3125rem; font-size: var(--o-fs-xs); color: var(--o-text-muted); }
+.o-stat-goal-row > .o-icon { width: .8rem; height: .8rem; color: var(--o-success-text); }
+.o-stat-goal.is-reached .o-progress-bar { background-color: var(--o-success); }
+
+/* clickable variant */
+.o-stat-link { position: absolute; inset: 0; border-radius: inherit; }
+.o-stat.is-link { transition: transform var(--o-dur) var(--o-ease), box-shadow var(--o-dur) var(--o-ease), border-color var(--o-dur); }
+.o-stat.is-link.o-stat-card:hover { transform: translateY(-2px); box-shadow: var(--o-shadow-lg); border-color: var(--o-border-strong); }
+.o-stat-link:focus-visible { outline: none; }
+.o-stat.is-link:has(.o-stat-link:focus-visible) { outline: none; box-shadow: 0 0 0 var(--o-ring-width) color-mix(in srgb, var(--o-focus) var(--o-ring-alpha), transparent); }
+.o-stat.is-link { cursor: pointer; }
+.o-stat.is-link:not(.o-stat-card) { padding: .625rem; margin: -.625rem; border-radius: var(--o-radius); transition: background-color var(--o-dur-fast); }
+.o-stat.is-link:not(.o-stat-card):hover { background: var(--o-surface-2); }
+
+/* ── <o-stat-group> ───────────────────────────────────────────────────── */
+o-stat-group, .o-stat-group {
+  --o-stat-min: 12rem;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(var(--o-stat-min), 1fr)); align-items: stretch;
+}
+o-stat-group.has-cols, .o-stat-group.has-cols { grid-template-columns: repeat(var(--o-stat-cols, 4), 1fr); }
+o-stat-group:not(.is-plain), .o-stat-group:not(.is-plain) {
+  background: var(--o-surface); border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); box-shadow: var(--o-shadow-sm); overflow: hidden;
+}
+o-stat-group:not(.is-plain) > o-stat, .o-stat-group:not(.is-plain) > .o-stat { padding: 1.25rem; }
+o-stat-group:not(.is-plain) > o-stat.o-stat-card, .o-stat-group:not(.is-plain) > .o-stat.o-stat-card { background: none; border: 0; border-radius: 0; box-shadow: none; }
+o-stat-group:not(.is-plain) > o-stat, .o-stat-group:not(.is-plain) > .o-stat { border-inline-start: 1px solid var(--o-border); }
+o-stat-group:not(.is-plain) > o-stat:first-child, .o-stat-group:not(.is-plain) > .o-stat:first-child { border-inline-start: 0; }
+@media (max-width: 640px) {
+  o-stat-group, .o-stat-group { grid-template-columns: repeat(auto-fit, minmax(min(var(--o-stat-min), 100%), 1fr)); }
+  o-stat-group:not(.is-plain) > o-stat, .o-stat-group:not(.is-plain) > .o-stat { border-inline-start: 0; border-top: 1px solid var(--o-border); }
+  o-stat-group:not(.is-plain) > o-stat:first-child, .o-stat-group:not(.is-plain) > .o-stat:first-child { border-top: 0; }
+}
+.o-stat-group.is-plain { gap: 1rem; }
+.o-stat-group.is-plain > .o-stat.o-stat-card { height: 100%; }
+
+/* ── <o-countup> ──────────────────────────────────────────────────────── */
+o-countup, .o-countup { display: inline-block; font-variant-numeric: tabular-nums; }

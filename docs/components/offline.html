@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Offline — Orion Admin</title>
+<meta name="docs:section" content="Services &amp; Utilities">
+<meta name="docs:order" content="45">
+<meta name="docs:desc" content="Offline detection, a persisted mutation queue replayed in order, and <o-offline-banner>">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <style>
+    .off-list { list-style: none; margin: .5rem 0 0; padding: 0; font-size: var(--o-fs-sm); }
+    .off-list li { display: flex; align-items: center; gap: .5rem; padding: .375rem 0; border-bottom: 1px solid var(--o-border); }
+    .off-list li:last-child { border-bottom: 0; }
+    .off-banner-demo { position: relative; height: 5rem; border: 1px dashed var(--o-border); border-radius: var(--o-radius); overflow: hidden; }
+    .off-banner-demo o-offline-banner[position="inline"] { position: static; }
+  </style>
+  <header class="docs-hero">
+    <h1>Offline</h1>
+    <p class="docs-lead"><code>Orion.offline</code> tracks connectivity (real and simulated), queues mutating requests made while offline, and replays them in order once you're back — persisted in IndexedDB (falling back to localStorage, then memory) so the queue survives a reload. <code>&lt;o-offline-banner&gt;</code> shows the state automatically.</p>
+  </header>
+
+  <section id="simulate">
+    <h2>Simulate offline</h2>
+    <p><code>Orion.offline.simulate(true|false|null)</code> overrides the real network state — handy for demos and tests. Toggling it below drives every demo on this page and the banner underneath.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-cluster">
+          <button class="o-btn o-btn-sm o-btn-danger" id="off-go-offline">Go offline</button>
+          <button class="o-btn o-btn-sm o-btn-success" id="off-go-online">Go online</button>
+          <span class="o-badge" id="off-status"></span>
+        </div>
+        <div class="off-banner-demo o-mt-3">
+          <o-offline-banner position="inline" id="off-banner"></o-offline-banner>
+        </div>
+        <div class="docs-log" id="log-off"></div>
+        <script>
+          const paintOff = () => document.getElementById('off-status').textContent = Orion.offline.status;
+          document.getElementById('off-go-offline').onclick = () => Orion.offline.simulate(true);
+          document.getElementById('off-go-online').onclick = () => Orion.offline.simulate(false);
+          Orion.offline.onChange(off => { docs.log('#log-off', off ? 'o-offline' : 'o-online'); paintOff(); });
+          paintOff();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="queue">
+    <h2>Request queue &amp; replay</h2>
+    <p>Pass <code>offline: 'queue'</code> to a mutating <code>Orion.http</code> call: while offline it resolves immediately with <code>{ queued: true, id }</code> instead of failing, and the request is stored for replay, in order, as soon as the connection returns (or call <code>Orion.offline.sync()</code> yourself).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-cluster">
+          <button class="o-btn o-btn-sm o-btn-primary" id="off-add">Save a note (offline: 'queue')</button>
+          <button class="o-btn o-btn-sm" id="off-sync">Sync now</button>
+          <button class="o-btn o-btn-sm o-btn-ghost" id="off-clear">Clear queue</button>
+        </div>
+        <ul class="off-list" id="off-queue-list"></ul>
+        <script>
+          Orion.http.mock([{ method: 'POST', url: '/api/notes', response: req => ({ id: Date.now(), ...req.body }) }]);
+          const paintQueue = () => {
+            const items = Orion.offline.queue.list();
+            document.getElementById('off-queue-list').innerHTML = items.length
+              ? items.map(e => `<li><o-icon name="clock"></o-icon> ${e.method} ${e.url} — ${new Date(e.createdAt).toLocaleTimeString()}</li>`).join('')
+              : '<li class="o-text-muted">Queue is empty.</li>';
+          };
+          let n = 1;
+          document.getElementById('off-add').onclick = async () => {
+            const res = await Orion.http.post('/api/notes', { text: 'Note ' + n++ }, { offline: 'queue', full: true });
+            docs.log('#log-off', res.queued ? 'queued (offline)' : 'sent immediately');
+            paintQueue();
+          };
+          document.getElementById('off-sync').onclick = async () => { const r = await Orion.offline.sync(); docs.log('#log-off', `sync: sent ${r.sent}, failed ${r.failed}, remaining ${r.remaining}`); paintQueue(); };
+          document.getElementById('off-clear').onclick = async () => { await Orion.offline.queue.clear(); paintQueue(); };
+          Orion.offline.queue.onChange(paintQueue);
+          paintQueue();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="banner">
+    <h2>&lt;o-offline-banner&gt;</h2>
+    <p>Appears automatically while offline, shows the number of queued changes with a Retry button, then a transient "Back online" / "Syncing…" message. Use <code>state</code> to force a state for previews.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-sm" data-state="offline">Preview: offline</button>
+          <button class="o-btn o-btn-sm" data-state="syncing">Preview: syncing</button>
+          <button class="o-btn o-btn-sm" data-state="online">Preview: online</button>
+          <button class="o-btn o-btn-sm o-btn-ghost" data-state="auto">Auto (real state)</button>
+        </div>
+        <o-offline-banner position="inline" id="off-preview"></o-offline-banner>
+        <script>
+          const prev = document.getElementById('off-preview');
+          document.querySelectorAll('[data-state]').forEach(b => b.addEventListener('click', () => prev.state = b.dataset.state));
+          prev.addEventListener('o-retry', () => docs.log('#log-off', 'o-retry'));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>isOffline / isOnline / status / simulated</td><td>Read-only getters (<code>status</code>: <code>'online' | 'offline'</code>).</td></tr>
+        <tr><td>onChange(fn(isOffline)) → off()</td><td>Also: <code>on/off(event, fn)</code> for <code>'sync-start' | 'sync' | 'replayed' | 'failed'</code>.</td></tr>
+        <tr><td>simulate(true | false | null)</td><td>Override the real network state (<code>null</code> restores it).</td></tr>
+        <tr><td>waitForOnline() → Promise&lt;void&gt;</td><td>Resolves once online (immediately if already online).</td></tr>
+        <tr><td>check(url?, { timeout }) → Promise&lt;boolean&gt;</td><td>Active connectivity probe (HEAD request) — <code>navigator.onLine</code> can lie.</td></tr>
+        <tr><td>configure({ maxAttempts, autoSync })</td><td>Defaults: <code>maxAttempts: 5</code>, <code>autoSync: true</code>.</td></tr>
+        <tr><td>sync() → Promise&lt;{ sent, failed, remaining }&gt;</td><td>Replay the queue now, in order; stops at the first network failure.</td></tr>
+        <tr><td>queue.add({ url, method, headers, body, meta }) → entry</td><td>Usually called for you via <code>Orion.http(url, { offline: 'queue' })</code>.</td></tr>
+        <tr><td>queue.list() / .get(id) / .remove(id) / .clear() / .size / .persistence</td><td><code>persistence</code>: <code>'idb' | 'local' | 'memory'</code>.</td></tr>
+        <tr><td>queue.onConflict(fn(entry, err) → 'retry'|'drop'|'keep'|{url,headers,body})</td><td>Called on HTTP 409/412.</td></tr>
+        <tr><td>queue.onError(fn(entry, err) → 'drop'|'keep')</td><td>Called on other failures once <code>maxAttempts</code> is reached.</td></tr>
+        <tr><td>queue.onReplay(fn(entry, res))</td><td>Called after each successful replay.</td></tr>
+      </tbody>
+    </table>
+    <h3>Document events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>o-offline / o-online</td><td><code>{ simulated }</code> — also toggles <code>&lt;html class="o-is-offline"&gt;</code>.</td></tr>
+        <tr><td>o-offline-queue</td><td><code>{ size, items }</code> — the queue changed.</td></tr>
+        <tr><td>o-offline-sync-start / o-offline-sync</td><td><code>{ total }</code> / <code>{ sent, failed, remaining }</code>.</td></tr>
+        <tr><td>o-offline-failed</td><td><code>{ entry, error }</code> — an entry was dropped after exhausting retries.</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-offline-banner&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>position</td><td>string</td><td>top</td><td><code>top | bottom | inline</code>.</td></tr>
+        <tr><td>online-duration</td><td>number</td><td>3000</td><td>ms the "Back online" message stays before auto-hiding.</td></tr>
+        <tr><td>state</td><td>string</td><td>auto</td><td><code>auto | offline | online | syncing</code> — forces a state.</td></tr>
+        <tr><td>show-queue</td><td>boolean</td><td>true</td><td>Show the queued-change count while offline.</td></tr>
+      </tbody>
+      <tbody>
+        <tr><td colspan="4"><strong>Methods:</strong> <code>retry()</code> (probes, then syncs). <strong>Events:</strong> <code>o-show</code>, <code>o-hide</code>, <code>o-retry</code> (cancelable). <strong>Factory:</strong> <code>Orion.offline.banner({ position })</code> creates (or reuses) one on <code>&lt;body&gt;</code>.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="pwa-link">
+    <h2>Service worker queueing</h2>
+    <p>The offline queue above runs in the page. A <a href="pwa.html">service worker</a> route with <code>queue: true</code> queues failed mutations at the network level instead (survives the page closing) and replays them on activation, Background Sync, or the next successful request — see <a href="pwa.html#strategies">caching strategies</a>.</p>
+  </section>
+</main>
+</body>
+</html>

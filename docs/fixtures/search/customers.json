@@ -1,0 +1,12 @@
+[
+  { "id": "c1", "title": "Fresh Foods Co", "subtitle": "fresh-foods@example.com", "meta": "Customer" },
+  { "id": "c2", "title": "Fresh Start Bakery", "subtitle": "start@example.com", "meta": "Customer" },
+  { "id": "c3", "title": "Freshline Logistics", "subtitle": "logistics@example.com", "meta": "Customer" },
+  { "id": "c4", "title": "Freshly Brewed Coffee Co", "subtitle": "brewed@example.com", "meta": "Customer" },
+  { "id": "c5", "title": "Fresh Market Grocers", "subtitle": "market@example.com", "meta": "Customer" },
+  { "id": "c6", "title": "Fresh Air Gyms", "subtitle": "gyms@example.com", "meta": "Customer" },
+  { "id": "c7", "title": "Freshwater Aquatics", "subtitle": "aquatics@example.com", "meta": "Customer" },
+  { "id": "c8", "title": "Northwind Traders", "subtitle": "northwind@example.com", "meta": "Customer" },
+  { "id": "c9", "title": "Contoso Ltd", "subtitle": "contoso@example.com", "meta": "Customer" },
+  { "id": "c10", "title": "Globex Corporation", "subtitle": "globex@example.com", "meta": "Customer" }
+]

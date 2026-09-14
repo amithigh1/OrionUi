@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>React, Vue &amp; Angular — Orion Admin</title>
+<meta name="docs:section" content="Getting Started">
+<meta name="docs:order" content="20">
+<meta name="docs:title" content="React, Vue &amp; Angular">
+<meta name="docs:desc" content="Use Orion Admin in React 18/19, Vue 3, Angular, Svelte and plain JavaScript">
+<script src="../dist/orion.js"></script>
+<link rel="stylesheet" href="assets/docs.css">
+<script src="assets/nav.js" defer></script>
+<script src="assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>React, Vue &amp; Angular</h1>
+    <p class="docs-lead">Orion Admin components are native Custom Elements, so the same single file works in every framework. You don't need separate packages or wrappers to maintain. There is a tiny helper for React and a plugin for Vue.</p>
+  </header>
+
+  <section id="install">
+    <h2>Install</h2>
+    <pre class="docs-code-block" data-lang="js">
+      npm install orion-admin
+      // once, at your app entry point (main.jsx / main.ts):
+      import Orion from 'orion-admin';   // defines all &lt;o-*&gt; elements and injects the CSS
+    </pre>
+    <p>Or keep the <code>&lt;script src="…/orion.min.js"&gt;</code> tag in <code>index.html</code> and use the global <code>window.Orion</code>.</p>
+  </section>
+
+  <section id="react">
+    <h2>React (18 and 19)</h2>
+    <p><code>Orion.react(React)</code> returns wrapper components. Props become element <b>properties</b> (arrays, objects and functions work in React 18 as well), <code>onXxx</code> handlers subscribe to <code>o-xxx</code> events (for example <code>onRowClick</code> → <code>o-row-click</code>), native events pass through, and <code>ref</code> gives you the element with all its methods.</p>
+    <pre class="docs-code-block" data-lang="js">
+      import React, { useState, useRef } from 'react';
+      import Orion from 'orion-admin';
+      const { Select, Datatable, Datepicker, Chart } = Orion.react(React);   // any &lt;o-*&gt; by name
+
+      export function Users() {
+        const [role, setRole] = useState('admin');
+        const table = useRef(null);
+        return (
+          &lt;&gt;
+            &lt;Select value={role} options={[{ value: 'admin', label: 'Admin' }, { value: 'editor', label: 'Editor' }]}
+                    onChange={e =&gt; setRole(e.detail.value)} /&gt;
+            &lt;Datatable ref={table} columns={columns} source={loadUsers} pageSize={25}
+                       onRowClick={e =&gt; open(e.detail.row)} /&gt;
+            &lt;button className="o-btn o-btn-primary" onClick={() =&gt; Orion.toast.success('Saved')}&gt;Save&lt;/button&gt;
+            &lt;button className="o-btn" onClick={() =&gt; table.current.export('csv')}&gt;Export&lt;/button&gt;
+          &lt;/&gt;
+        );
+      }
+    </pre>
+    <ul>
+      <li>CSS-only components need no wrapper: <code>&lt;div className="o-card"&gt;</code>. Behaviors work on plain JSX: <code>&lt;input data-o-mask="(999) 999-9999" /&gt;</code>.</li>
+      <li>You can also use the raw tags (<code>&lt;o-select&gt;</code>) in React 19. Set complex props and events through a ref.</li>
+      <li><code>Orion.react(React).wrap('my-element')</code> wraps any custom element.</li>
+      <li>Next.js / SSR: import Orion in a client component (<code>'use client'</code>) or with <code>useEffect(() =&gt; { import('orion-admin') }, [])</code>. Importing on the server is safe but does nothing.</li>
+    </ul>
+  </section>
+
+  <section id="vue">
+    <h2>Vue 3</h2>
+    <p><code>v-model</code> works out of the box on Orion form controls (they expose <code>value</code> and fire native <code>input</code> events). Tell the compiler that <code>o-*</code> tags are custom elements:</p>
+    <pre class="docs-code-block" data-lang="js">
+      // vite.config.js
+      import vue from '@vitejs/plugin-vue';
+      export default { plugins: [vue({ template: { compilerOptions: { isCustomElement: tag =&gt; tag.startsWith('o-') } } })] };
+
+      // main.js
+      import { createApp } from 'vue';
+      import Orion from 'orion-admin';
+      import App from './App.vue';
+      createApp(App).use(Orion.vue).mount('#app');   // adds this.$orion and inject('orion')
+    </pre>
+    <pre class="docs-code-block" data-lang="html">
+      &lt;template&gt;
+        &lt;o-select v-model="country" :options="countries" searchable /&gt;
+        &lt;o-datatable :columns="columns" :rows="users" @o-row-click="open($event.detail.row)" /&gt;
+        &lt;o-daterange v-model="range" /&gt;
+        &lt;button class="o-btn o-btn-primary" @click="$orion.toast.success('Saved')"&gt;Save&lt;/button&gt;
+      &lt;/template&gt;
+    </pre>
+    <p>Use <code>:prop</code> for arrays and objects (Vue sets them as properties). Event names are kebab-case with the <code>o-</code> prefix.</p>
+  </section>
+
+  <section id="angular">
+    <h2>Angular</h2>
+    <pre class="docs-code-block" data-lang="ts">
+      // main.ts
+      import 'orion-admin';
+
+      // any standalone component (or NgModule)
+      import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+      import { FormsModule } from '@angular/forms';
+
+      @Component({
+        selector: 'app-users',
+        standalone: true,
+        imports: [FormsModule],
+        schemas: [CUSTOM_ELEMENTS_SCHEMA],
+        template: `
+          &lt;o-select ngDefaultControl [(ngModel)]="role" [options]="roles"&gt;&lt;/o-select&gt;
+          &lt;o-datatable [columns]="columns" [rows]="users" (o-row-click)="open($event.detail.row)"&gt;&lt;/o-datatable&gt;
+          &lt;button class="o-btn o-btn-primary" (click)="save()"&gt;Save&lt;/button&gt;`
+      })
+      export class UsersComponent {
+        roles = [{ value: 'admin', label: 'Admin' }, { value: 'editor', label: 'Editor' }];
+        role = 'admin';
+        save() { (window as any).Orion.toast.success('Saved'); }
+      }
+    </pre>
+    <p><code>ngDefaultControl</code> connects <code>ngModel</code> / <code>formControlName</code> to Orion controls (value property + input event). Property bindings <code>[prop]</code> pass arrays and objects directly, and <code>(o-event)</code> listens to component events.</p>
+  </section>
+
+  <section id="svelte">
+    <h2>Svelte, Solid, Lit &amp; plain JavaScript</h2>
+    <pre class="docs-code-block" data-lang="html">
+      &lt;!-- Svelte --&gt;
+      &lt;o-select options={roles} value={role} on:o-change={e =&gt; role = e.detail.value}&gt;&lt;/o-select&gt;
+
+      &lt;!-- plain JS --&gt;
+      &lt;o-select id="role"&gt;&lt;/o-select&gt;
+      &lt;script&gt;
+        const el = document.getElementById('role');
+        el.options = [{ value: 'admin', label: 'Admin' }];
+        el.addEventListener('o-change', e =&gt; console.log(e.detail.value));
+      &lt;/script&gt;
+    </pre>
+  </section>
+
+  <section id="typescript">
+    <h2>TypeScript</h2>
+    <p>Types ship in <code>dist/orion.d.ts</code>. They cover the global <code>Orion</code> API and every <code>&lt;o-*&gt;</code> element in <code>HTMLElementTagNameMap</code>, so <code>document.querySelector('o-select')</code> is typed.</p>
+  </section>
+
+  <section id="rules">
+    <h2>Rules of thumb</h2>
+    <ul>
+      <li>Frameworks may set properties before Orion loads, render children after the element is created, or move elements. Orion handles all of these.</li>
+      <li>Don't mix framework-controlled children with components that manage their own children (for example sortable lists). Use the component's <code>controlled</code> mode or data props.</li>
+      <li>Every event bubbles and is <code>composed</code>, so you can also listen on a parent.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

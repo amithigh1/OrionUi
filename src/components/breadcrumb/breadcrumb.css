@@ -1,0 +1,25 @@
+/* ============================================================================
+ * <o-breadcrumb> additions on top of the static .o-breadcrumb CSS in core
+ * (60-content.css): a "dot" separator and the overflow ("…") control + menu.
+ * ========================================================================== */
+o-breadcrumb:not(:defined) { visibility: hidden; }
+.o-breadcrumb-dot { --o-breadcrumb-sep: "\00b7"; }
+.o-breadcrumb-dot .o-breadcrumb-item + .o-breadcrumb-item::before { font-weight: 700; }
+
+.o-breadcrumb-more {
+  display: inline-flex; align-items: center; justify-content: center; width: 1.5rem; height: 1.375rem; padding: 0;
+  font: inherit; line-height: 1; color: var(--o-text-muted); background: var(--o-surface-3); border: 0; border-radius: var(--o-radius-sm);
+  cursor: pointer;
+}
+.o-breadcrumb-more:hover { color: var(--o-text); background: var(--o-surface-2); border-color: var(--o-border-strong); }
+.o-breadcrumb-more:focus-visible { outline: none; box-shadow: 0 0 0 var(--o-ring-width) color-mix(in srgb, var(--o-focus) var(--o-ring-alpha), transparent); }
+.o-breadcrumb-more[aria-expanded="true"] { color: var(--o-text); background: var(--o-surface-2); }
+
+.o-breadcrumb-menu { display: flex; flex-direction: column; min-width: 10rem; max-width: 16rem; padding: .375rem; }
+.o-breadcrumb-menu-item {
+  display: block; padding: .4375rem .625rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: var(--o-fs-sm); color: var(--o-text); text-decoration: none; border-radius: var(--o-radius-sm);
+}
+a.o-breadcrumb-menu-item:hover { background: var(--o-surface-3); text-decoration: none; }
+a.o-breadcrumb-menu-item:focus-visible { outline: none; background: var(--o-surface-3); }
+.o-breadcrumb-menu-item.is-static { color: var(--o-text-muted); }

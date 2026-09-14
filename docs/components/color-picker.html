@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Color picker — Orion Admin</title>
+<meta name="docs:section" content="Forms">
+<meta name="docs:order" content="70">
+<meta name="docs:desc" content="Saturation/hue/alpha picker with hex/RGB/HSL fields, swatches and the EyeDropper API">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Color picker</h1>
+    <p class="docs-lead"><code>&lt;o-colorpicker&gt;</code> is a form-associated color input: a saturation/brightness
+      area, hue and alpha sliders, switchable hex/RGB/HSL fields, swatches, a persisted recent-colors list, an
+      EyeDropper button where supported, and a quick WCAG contrast check against white and black.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic (popup)</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-field">
+          <label class="o-label" for="cp-1">Brand color</label>
+          <o-colorpicker id="cp-1" name="brand" value="#4f46e5"></o-colorpicker>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="alpha">
+    <h2>Alpha channel &amp; format</h2>
+    <p><code>alpha</code> adds the alpha slider and RGBA/HSLA output. <code>format</code> controls the serialized
+      <code>value</code>/form value: <code>hex</code> (default), <code>rgb</code> or <code>hsl</code> — independent of
+      which fields the user chooses to edit with in the panel.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-form-grid">
+          <div class="o-field"><label class="o-label" for="cp-2">RGBA</label><o-colorpicker id="cp-2" alpha format="rgb" value="rgba(220,38,38,.6)"></o-colorpicker></div>
+          <div class="o-field"><label class="o-label" for="cp-3">HSL</label><o-colorpicker id="cp-3" format="hsl" value="#15803d"></o-colorpicker></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="swatches">
+    <h2>Swatches &amp; recent</h2>
+    <p><code>swatches</code> pins a curated palette at the top of the panel. Picked colors are also remembered in
+      <code>localStorage</code> (<code>recent</code>, on by default) and shown in their own row.</p>
+    <div class="docs-demo">
+      <template>
+        <o-colorpicker swatches='["#4f46e5","#dc2626","#15803d","#f59e0b","#0e7490","#db2777","#0f172a","#64748b"]' value="#4f46e5"></o-colorpicker>
+      </template>
+    </div>
+  </section>
+
+  <section id="inline">
+    <h2>Inline</h2>
+    <p><code>inline</code> renders the full panel in place (no trigger, no popup) — useful in a settings page or a
+      dedicated theme editor.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-colorpicker inline value="#0e7490" alpha style="max-width:20rem"></o-colorpicker>
+      </template>
+    </div>
+  </section>
+
+  <section id="eyedropper">
+    <h2>EyeDropper</h2>
+    <p>When the browser supports the <a href="https://developer.mozilla.org/en-US/docs/Web/API/EyeDropper" target="_blank" rel="noopener">EyeDropper API</a>,
+      a pipette button appears in the panel to sample any pixel on the screen. It is omitted automatically in
+      unsupported browsers — no need to feature-detect yourself.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-colorpicker value="#4f46e5"></o-colorpicker>
+      </template>
+    </div>
+  </section>
+
+  <section id="contrast">
+    <h2>Contrast hint</h2>
+    <p>Two chips under the fields show the WCAG contrast ratio of the current color against white and black
+      (<code>Orion.color.contrast</code>), with a pass/fail mark at the 4.5:1 (AA, normal text) threshold. Disable with
+      <code>contrast-hint="false"</code>.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-colorpicker value="#fbbf24"></o-colorpicker>
+      </template>
+    </div>
+  </section>
+
+  <section id="states">
+    <h2>Sizes, disabled &amp; RTL</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-stack o-flex-row" style="gap:1rem;flex-wrap:wrap">
+          <o-colorpicker size="sm" value="#4f46e5"></o-colorpicker>
+          <o-colorpicker size="lg" value="#4f46e5"></o-colorpicker>
+          <o-colorpicker value="#4f46e5" disabled></o-colorpicker>
+          <div dir="rtl"><o-colorpicker value="#4f46e5"></o-colorpicker></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="js-api">
+    <h2>JS API &amp; events</h2>
+    <div class="docs-demo">
+      <template>
+        <o-colorpicker id="cp-js" value="#4f46e5"></o-colorpicker>
+        <div class="o-help o-mt-2" id="cp-js-out">value: —</div>
+        <script>
+          const cpJs = document.getElementById('cp-js');
+          const paint = () => { document.getElementById('cp-js-out').textContent = 'value: ' + cpJs.value; };
+          cpJs.addEventListener('o-change', paint); paint();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>Props / attributes</h2>
+    <table class="docs-api">
+      <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>value</td><td>String</td><td>Any CSS color (hex/rgb/hsl/named); default <code>#4f46e5</code>.</td></tr>
+        <tr><td>format</td><td>String</td><td><code>hex</code> (default) | <code>rgb</code> | <code>hsl</code> — the serialized <code>value</code>/form value.</td></tr>
+        <tr><td>alpha</td><td>Boolean</td><td>Show the alpha slider and RGBA/HSLA output.</td></tr>
+        <tr><td>swatches</td><td>Array&lt;string&gt;</td><td>Curated palette.</td></tr>
+        <tr><td>recent</td><td>Boolean</td><td>Persist and show recently picked colors (default <code>true</code>).</td></tr>
+        <tr><td>inline</td><td>Boolean</td><td>Render the panel in place instead of a popup.</td></tr>
+        <tr><td>eyedropper</td><td>Boolean</td><td>Show the EyeDropper button when the API exists (default <code>true</code>).</td></tr>
+        <tr><td>contrast-hint</td><td>Boolean</td><td>Show the white/black contrast chips (default <code>true</code>).</td></tr>
+        <tr><td>placement</td><td>String</td><td>Popup placement, default <code>bottom-start</code>.</td></tr>
+        <tr><td>size, name, required, disabled, readonly, texts</td><td>—</td><td>Standard.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods &amp; events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.setValue(v) / .open() / .close() / .toggle()</td><td></td></tr>
+        <tr><td>input, change, o-change</td><td><code>{ value }</code></td></tr>
+        <tr><td>o-open / o-close</td><td><code>o-close</code> detail: <code>{ reason }</code> (<code>escape</code> | <code>outside</code> | <code>api</code>).</td></tr>
+      </tbody>
+    </table>
+    <h3>Keyboard</h3>
+    <table class="docs-api">
+      <thead><tr><th>Control</th><th>Keys</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Trigger button</td><td>Enter / Space / ↓</td><td>Open the panel.</td></tr>
+        <tr><td>Saturation/brightness area</td><td>← → ↑ ↓ (Shift ×5), Home / End</td><td>Adjust saturation / brightness; Home/End set saturation to 0/100.</td></tr>
+        <tr><td>Hue slider</td><td>← → (Shift ×10), Home / End</td><td>Adjust hue 0-360.</td></tr>
+        <tr><td>Alpha slider</td><td>← → (Shift ×10), Home / End</td><td>Adjust alpha 0-100%.</td></tr>
+      </tbody>
+    </table>
+    <p class="o-callout">The saturation/hue/alpha canvases are intentionally <strong>not</strong> mirrored in RTL —
+      colors have no reading direction, the same choice native OS and browser color pickers make. Everything else
+      (panel placement, field and button layout) is fully RTL-aware.</p>
+    <h3>JS API</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Orion.color.parse / toHex / toRgb / toHsl</td><td>Parse and convert any CSS color string.</td></tr>
+        <tr><td>Orion.color.contrast(a, b)</td><td>WCAG contrast ratio (1–21), used for the contrast chips.</td></tr>
+        <tr><td>Orion.color.mix / lighten / darken / alpha / palette</td><td>See the theming docs.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Location Picker — Orion Admin</title>
+<meta name="docs:section" content="Maps">
+<meta name="docs:order" content="30">
+<meta name="docs:desc" content="Pick a lat/lng on a map — drag the map or a pin, search an address, use the device location">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Location Picker</h1>
+    <p class="docs-lead"><code>&lt;o-location-picker&gt;</code> combines <a href="maps.html">&lt;o-map&gt;</a> and <a href="address-autocomplete.html">&lt;o-address-input&gt;</a> into one form control for picking a point: drag the map under a fixed centre crosshair (default) or drag a marker, search an address, or use the device location. It reverse-geocodes the chosen point and submits <code>lat,lng</code> plus the address text with the form. Every demo on this page uses offline tiles and the offline mock geocoder by default, so it works with no network connection.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic (crosshair mode)</h2>
+    <p>The default <code>mode="crosshair"</code> keeps a pin fixed at the centre of the map; drag the map underneath it. The coordinates and reverse-geocoded address update as you drag (debounced) and once more when you stop.</p>
+    <div class="docs-demo">
+      <template>
+        <div style="max-width:32rem">
+          <o-location-picker id="lp-basic" lat="3.1390" lng="101.6869" zoom="13"></o-location-picker>
+        </div>
+        <pre class="docs-log" id="lp-basic-log">value: null</pre>
+        <script>
+          document.getElementById('lp-basic').addEventListener('o-change', e => {
+            document.getElementById('lp-basic-log').textContent = 'value: ' + JSON.stringify(e.detail.value, null, 2);
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="marker">
+    <h2>Marker mode</h2>
+    <p><code>mode="marker"</code> shows a draggable pin instead: click anywhere on the map to move it, or drag it directly. <code>radius</code> (metres) draws a circle around the point — useful for "service area" style pickers.</p>
+    <div class="docs-demo">
+      <template>
+        <div style="max-width:32rem">
+          <o-location-picker id="lp-marker" mode="marker" lat="1.2840" lng="103.8512" zoom="12" radius="800"></o-location-picker>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="form">
+    <h2>Form integration &amp; required validation</h2>
+    <p>The submitted value is <code>name="lat,lng"</code> plus <code>&lt;name&gt;-address</code> (or <code>address-name</code>) with the label text. <code>required</code> is enforced like any other form control.</p>
+    <div class="docs-demo">
+      <template>
+        <form class="o-stack" style="--o-gap:.75rem;max-width:32rem" id="lp-form">
+          <div class="o-field">
+            <label class="o-label" for="lp-required">Warehouse location (required)</label>
+            <o-location-picker id="lp-required" name="warehouse" required lat="3.2110" lng="101.6360" zoom="12"></o-location-picker>
+          </div>
+          <button class="o-btn o-btn-primary o-btn-sm" type="submit" style="align-self:flex-start">Save</button>
+        </form>
+        <div class="docs-log" id="lp-form-log"></div>
+        <script>
+          document.getElementById('lp-form').addEventListener('submit', e => {
+            e.preventDefault();
+            const picker = document.getElementById('lp-required');
+            if (!picker.reportValidity()) { docs.log('#lp-form-log', 'Blocked: required field is empty'); return; }
+            const fd = new FormData(e.target);
+            docs.log('#lp-form-log', 'Submitted: ' + JSON.stringify(Object.fromEntries(fd)));
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="programmatic">
+    <h2>Programmatic control &amp; custom dataset</h2>
+    <p><code>setLocation(lat, lng, { address })</code> moves the picker like a user pick (fires <code>o-change</code>). This demo also swaps in the same offline fixture used on the <a href="address-autocomplete.html#fixture">Address Autocomplete</a> page, so the search box and the reverse-geocoded label both come from your own dataset instead of the built-in mock.</p>
+    <div class="docs-demo">
+      <template>
+        <div style="max-width:32rem">
+          <o-location-picker id="lp-prog" lat="1.2840" lng="103.8512" zoom="12"></o-location-picker>
+          <div class="o-cluster o-mt-3">
+            <button class="o-btn o-btn-sm" id="lp-prog-hq">Orion HQ</button>
+            <button class="o-btn o-btn-sm" id="lp-prog-dc">Data Centre</button>
+            <button class="o-btn o-btn-sm o-btn-ghost" id="lp-prog-clear">clear()</button>
+          </div>
+        </div>
+        <script>
+          (async () => {
+            const offices = await (await fetch('../fixtures/geocode/addresses.json')).json();
+            if (!Orion.geocode.providers.fixture) {
+              Orion.geocode.addProvider('fixture', {
+                search: async q => Orion.util.fuzzySearch(offices, q, 'label', 6),
+                reverse: async (lat, lng) => offices[0] ? { ...offices[0], lat, lng } : null,
+              });
+            }
+            const picker = document.getElementById('lp-prog');
+            picker.provider = 'fixture';
+            document.getElementById('lp-prog-hq').onclick = () => picker.setLocation(1.2840, 103.8512, { address: offices[0].label });
+            document.getElementById('lp-prog-dc').onclick = () => picker.setLocation(1.4382, 103.7891, { address: offices[5].label });
+            document.getElementById('lp-prog-clear').onclick = () => picker.clear();
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="geolocation">
+    <h2>Device location</h2>
+    <p>The crosshair button next to the search box calls <code>Orion.geo.current()</code> (wrapping <code>navigator.geolocation</code>) and flies the map there.</p>
+    <div class="docs-demo">
+      <template>
+        <div style="max-width:32rem">
+          <o-location-picker id="lp-geo" lat="3.1390" lng="101.6869" zoom="12"></o-location-picker>
+        </div>
+        <div class="docs-log o-mt-2" id="lp-geo-log"></div>
+        <script>
+          document.getElementById('lp-geo').addEventListener('o-locate-error', () => docs.log('#lp-geo-log', 'Location unavailable in this environment (expected in a headless/sandboxed browser).'));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>&lt;o-location-picker&gt; attributes / properties</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>name</td><td>string</td><td></td><td>Form field name. Submitted as <code>"lat,lng"</code>.</td></tr>
+        <tr><td>value</td><td>object | null</td><td>null</td><td><code>{ lat, lng, address }</code>.</td></tr>
+        <tr><td>lat, lng, zoom</td><td>number</td><td>3.139, 101.6869, 14</td><td>Initial map view.</td></tr>
+        <tr><td>mode</td><td>"crosshair" | "marker"</td><td>crosshair</td><td>Drag the map under a fixed pin, or drag a marker directly.</td></tr>
+        <tr><td>tiles</td><td>same as <code>&lt;o-map&gt;</code></td><td>offline</td><td>Unlike <code>&lt;o-map&gt;</code>, defaults to the offline placeholder tiles.</td></tr>
+        <tr><td>provider</td><td>string</td><td>mock</td><td><code>Orion.geocode</code> provider used for search + reverse geocoding.</td></tr>
+        <tr><td>country-codes, lang, email</td><td>string</td><td></td><td>Forwarded to the geocode provider.</td></tr>
+        <tr><td>radius</td><td>number</td><td>0</td><td>Metres; draws a circle overlay around the point when &gt; 0.</td></tr>
+        <tr><td>reverse-geocode</td><td>boolean</td><td>true</td><td>Set false to skip automatic reverse geocoding (coordinates only).</td></tr>
+        <tr><td>address-name</td><td>string</td><td><code>&lt;name&gt;-address</code></td><td>Form field name for the address text.</td></tr>
+        <tr><td>height</td><td>string</td><td>18rem</td><td>Map height.</td></tr>
+        <tr><td>required, disabled</td><td>boolean</td><td>false</td><td>Standard form-control behaviour.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>setLocation(lat, lng, { address })</td><td>Move the picker programmatically, like a user pick (fires <code>o-change</code>). Omit <code>address</code> to trigger reverse geocoding.</td></tr>
+        <tr><td>clear()</td><td>Reset to an empty value.</td></tr>
+        <tr><td>focus(opts)</td><td>Focus the address search box.</td></tr>
+        <tr><td>checkValidity() / reportValidity()</td><td>Standard <code>FormElement</code> validation.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-change</td><td><code>{ value }</code></td><td><code>value</code> is <code>{ lat, lng, address }</code>; fires after a drag settles, a search pick, <code>setLocation()</code>, or the reverse-geocode lookup resolves.</td></tr>
+        <tr><td>o-locate-error</td><td><code>{ error }</code></td><td>The device-location request failed or was denied.</td></tr>
+      </tbody>
+    </table>
+    <h3>Keyboard &amp; accessibility</h3>
+    <p>The address field and its suggestions follow <a href="address-autocomplete.html">&lt;o-address-input&gt;</a>'s keyboard model. The embedded map is a full <a href="maps.html">&lt;o-map&gt;</a> — arrow keys pan, +/- zoom, and in <code>mode="marker"</code> the pin is a real draggable, focusable button. The coordinates readout is a button that copies <code>lat, lng</code> to the clipboard.</p>
+  </section>
+</main>
+</body>
+</html>

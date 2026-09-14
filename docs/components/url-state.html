@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>URL State &amp; Deep Linking — Orion Admin</title>
+<meta name="docs:section" content="Services &amp; Utilities">
+<meta name="docs:order" content="90">
+<meta name="docs:desc" content="Typed query-string state with history, two-way bindings and shareable deep links">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .us-url { display: flex; align-items: center; gap: .5rem; padding: .5rem .75rem; font: .8125rem/1.5 var(--o-font-mono); background: var(--o-surface-2); border: 1px solid var(--o-border); border-radius: var(--o-radius); overflow-wrap: anywhere; direction: ltr; text-align: start; }
+  .us-url b { color: var(--o-primary-text); font-weight: 600; }
+  .us-filters { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); align-items: end; margin-bottom: .75rem; }
+  .us-filters .o-field { margin: 0; }
+  .us-table { max-height: 18rem; }
+  .us-table th button { all: unset; cursor: pointer; display: inline-flex; gap: .25rem; align-items: center; }
+  .us-table th button:focus-visible { outline: 2px solid var(--o-focus); outline-offset: 2px; border-radius: 2px; }
+  .us-tabs { display: flex; gap: .25rem; border-bottom: 1px solid var(--o-border); margin-bottom: .75rem; overflow-x: auto; }
+  .us-panel { padding: .75rem; background: var(--o-surface-2); border-radius: var(--o-radius); min-height: 4rem; }
+  .us-dialog { width: min(26rem, calc(100vw - 2rem)); padding: 1.25rem; color: var(--o-text); background: var(--o-elevated); border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); box-shadow: var(--o-shadow-xl); }
+  .us-dialog::backdrop { background: var(--o-backdrop); }
+  .us-users li.is-target { background: var(--o-warning-subtle); }
+  .us-get { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); gap: .5rem; font-size: var(--o-fs-sm); }
+  .us-get > div { padding: .5rem .625rem; background: var(--o-surface-2); border-radius: var(--o-radius-sm); }
+  .us-get code { font-size: .8em; }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>URL State &amp; Deep Linking</h1>
+    <p class="docs-lead"><code>Orion.url</code> keeps UI state (filters, pagination, sort, selected tab) in the address bar with types and history, so reloads, the Back button and shared links restore the exact view. <code>Orion.deeplink</code> turns links such as <code>#invite</code> or <code>?open=user:42</code> into actions that open tabs, dialogs and items.</p>
+  </header>
+
+  <section id="get-set">
+    <h2>Read &amp; write</h2>
+    <p><code>set()</code> pushes a history entry (pass <code>{ replace: true }</code> to replace it) and batches every call made in the same tick into one entry. <code>null</code>, <code>''</code> and empty arrays remove the key. Values are typed on the way in and out.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="us-url o-mb-3" aria-live="polite"><span class="o-text-muted">URL</span><span id="us-now"></span></div>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-sm" id="us-a">set({ page: 2, sort: 'name' })</button>
+          <button class="o-btn o-btn-sm" id="us-b">set('tags', ['ui', 'a,b'])</button>
+          <button class="o-btn o-btn-sm" id="us-c">set('range', { from: 1, to: 9 })</button>
+          <button class="o-btn o-btn-sm" id="us-d">set('draft', true, { replace })</button>
+          <button class="o-btn o-btn-sm" id="us-e">set('panel', 'right', { hash })</button>
+          <button class="o-btn o-btn-sm o-btn-outline-danger" id="us-f">remove([…all])</button>
+          <button class="o-btn o-btn-sm o-btn-ghost" onclick="history.back()">← Back</button>
+          <button class="o-btn o-btn-sm o-btn-ghost" onclick="history.forward()">Forward →</button>
+        </div>
+        <div class="us-get" id="us-get"></div>
+        <div class="docs-log" id="us-log"></div>
+        <script>
+          (() => {
+            const U = Orion.url, $ = id => document.getElementById(id), esc = Orion.util.esc;
+            const paint = () => {
+              $('us-now').innerHTML = esc(location.pathname.split('/').pop()) + '<b>' + esc(location.search) + '</b>' + esc(location.hash);
+              const rows = [['get("page", "number")', U.get('page', 'number')], ['get("sort")', U.get('sort')], ['get("tags", "array")', U.get('tags', 'array')], ['get("range", "json")', U.get('range', 'json')], ['get("draft", "boolean", false)', U.get('draft', 'boolean', false)], ['get("panel")', U.get('panel')]];
+              $('us-get').innerHTML = rows.map(([k, v]) => `<div><code>${esc(k)}</code> → <strong>${esc(JSON.stringify(v) ?? 'undefined')}</strong></div>`).join('');
+            };
+            $('us-a').onclick = () => U.set({ page: 2, sort: 'name' });
+            $('us-b').onclick = () => U.set('tags', ['ui', 'a,b']);
+            $('us-c').onclick = () => U.set('range', { from: 1, to: 9 });
+            $('us-d').onclick = () => U.set('draft', true, { replace: true });
+            $('us-e').onclick = () => U.set('panel', 'right', { hash: true });
+            $('us-f').onclick = () => U.remove(['page', 'sort', 'tags', 'range', 'draft', 'panel']);
+            U.onChange(e => { paint(); docs.log('#us-log', `${e.source}: ${e.changed.join(', ')}`); });
+            paint();
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="bind">
+    <h2>Filters bound to the URL</h2>
+    <p>Two-way bindings keep controls and the URL in sync: typing updates the URL (debounced), Back/Forward and shared links update the controls. Values equal to the default are removed for clean URLs. <code>data-o-url="key"</code> binds a form control declaratively; <code>Orion.url.bind(key, { get, set, type })</code> binds anything (here the page number and the sort order).</p>
+    <div class="docs-demo">
+      <template>
+        <div class="us-filters">
+          <div class="o-field"><label class="o-label" for="us-q">Search</label><input class="o-input" id="us-q" type="search" placeholder="Name, email, city…" data-o-url="q"></div>
+          <div class="o-field"><label class="o-label" for="us-status">Status</label><select class="o-select" id="us-status" data-o-url="status"><option value="">Any status</option><option>Active</option><option>Pending</option><option>Inactive</option><option>Suspended</option></select></div>
+          <div class="o-field"><label class="o-label" for="us-dept">Department</label><select class="o-select" id="us-dept" data-o-url="dept"><option value="">All</option><option>Engineering</option><option>Sales</option><option>Marketing</option><option>Finance</option><option>Design</option></select></div>
+          <div class="o-field"><label class="o-switch"><input type="checkbox" id="us-remote" data-o-url="remote"><span>Remote only</span></label></div>
+        </div>
+        <div class="o-table-wrap us-table o-scroll"><table class="o-table o-table-sm"><thead><tr><th scope="col"><button data-sort="name">Name <span aria-hidden="true" data-arrow="name"></span></button></th><th scope="col">Status</th><th scope="col">Department</th><th scope="col"><button data-sort="city">City <span aria-hidden="true" data-arrow="city"></span></button></th></tr></thead><tbody id="us-rows"></tbody></table></div>
+        <div class="o-between o-mt-2 o-flex-wrap">
+          <span class="o-small o-text-muted" id="us-count" aria-live="polite"></span>
+          <div class="o-cluster"><button class="o-btn o-btn-sm" id="us-prev" aria-label="Previous page">‹</button><span class="o-small" id="us-page"></span><button class="o-btn o-btn-sm" id="us-next" aria-label="Next page">›</button>
+            <button class="o-btn o-btn-sm o-btn-ghost" onclick="history.back()">← Back</button><button class="o-btn o-btn-sm o-btn-soft-primary" id="us-share">Copy link</button></div>
+        </div>
+        <script>
+          (() => {
+            const U = Orion.url, $ = id => document.getElementById(id), esc = Orion.util.esc, people = docs.people(60, 11), SIZE = 8;
+            let page = 1, sort = { key: 'name', dir: 'asc' };
+            const pageB = U.bind('p', { type: 'number', default: 1, get: () => page, set: v => { page = v; render(); } });
+            const sortB = U.bind('sort', { type: 'json', default: { key: 'name', dir: 'asc' }, get: () => sort, set: v => { sort = v; render(); } });
+            const filtered = () => {
+              const q = $('us-q').value.trim().toLowerCase(), st = $('us-status').value, dp = $('us-dept').value, rm = $('us-remote').checked;
+              return people.filter(p => (!q || (p.name + ' ' + p.email + ' ' + p.city).toLowerCase().includes(q)) && (!st || p.status === st) && (!dp || p.department === dp) && (!rm || p.tags.includes('remote')))
+                .sort((a, b) => a[sort.key].localeCompare(b[sort.key]) * (sort.dir === 'desc' ? -1 : 1));
+            };
+            function render() {
+              const all = filtered(), pages = Math.max(1, Math.ceil(all.length / SIZE));
+              if (page > pages) page = pages;
+              $('us-rows').innerHTML = all.slice((page - 1) * SIZE, page * SIZE).map(p => `<tr><td>${esc(p.name)}</td><td>${esc(p.status)}</td><td>${esc(p.department)}</td><td>${esc(p.city)}</td></tr>`).join('') || '<tr><td colspan="4" class="o-text-muted">No people match these filters</td></tr>';
+              $('us-count').textContent = `${all.length} people`;
+              $('us-page').textContent = `Page ${page} of ${pages}`;
+              $('us-prev').disabled = page <= 1; $('us-next').disabled = page >= pages;
+              document.querySelectorAll('[data-arrow]').forEach(s => { s.textContent = s.dataset.arrow === sort.key ? (sort.dir === 'asc' ? '▲' : '▼') : ''; s.closest('th').setAttribute('aria-sort', s.dataset.arrow === sort.key ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'); });
+            }
+            // e.oUrl: the value was restored from the URL (Back/Forward, shared link) — just re-render
+            ['us-q', 'us-status', 'us-dept', 'us-remote'].forEach(id => $(id).addEventListener('input', e => { if (!e.oUrl) { page = 1; pageB.update(); } render(); }));
+            $('us-prev').onclick = () => { page--; pageB.update(); render(); };
+            $('us-next').onclick = () => { page++; pageB.update(); render(); };
+            document.querySelectorAll('[data-sort]').forEach(b => b.onclick = () => { const k = b.dataset.sort; sort = { key: k, dir: sort.key === k && sort.dir === 'asc' ? 'desc' : 'asc' }; sortB.update(); render(); });
+            $('us-share').onclick = async () => { const ok = Orion.clipboard ? await Orion.clipboard.copy(location.href) : (await navigator.clipboard.writeText(location.href).then(() => true, () => false)); Orion.clipboard?.feedback($('us-share'), ok); };
+            U.onChange(() => render());
+            render();
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="deeplink">
+    <h2>Deep links</h2>
+    <p>Register handlers by name, or mark elements with <code>data-o-deeplink</code>. On load, <code>hashchange</code> and Back/Forward, links like <code>#tab=billing</code>, <code>#invite</code> or <code>?open=user:3</code> run their handler: triggers are clicked (so <code>data-o-toggle</code> semantics apply), <code>&lt;dialog&gt;</code>/<code>&lt;details&gt;</code>/elements with an <code>open()</code> method are opened, anything else is scrolled into view and highlighted. <code>data-o-deeplink-sync</code> writes the link when the user opens it and removes it on close.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="us-tabs" role="tablist" aria-label="Account">
+          <button class="o-nav-link" role="tab" aria-selected="true" data-tab="profile" data-o-deeplink="tab" data-o-deeplink-value="profile" data-o-deeplink-sync>Profile</button>
+          <button class="o-nav-link" role="tab" aria-selected="false" data-tab="billing" data-o-deeplink="tab" data-o-deeplink-value="billing" data-o-deeplink-sync>Billing</button>
+          <button class="o-nav-link" role="tab" aria-selected="false" data-tab="security" data-o-deeplink="tab" data-o-deeplink-value="security" data-o-deeplink-sync>Security</button>
+        </div>
+        <div class="us-panel" id="us-panel" role="tabpanel" aria-live="polite">Profile settings</div>
+        <div class="o-cluster o-mt-3">
+          <button class="o-btn o-btn-primary" data-o-deeplink="invite" data-o-deeplink-sync data-o-target="#us-invite" id="us-invite-btn">Invite teammate</button>
+          <a class="o-btn" href="#tab=security">Link: #tab=security</a>
+          <a class="o-btn" href="#invite">Link: #invite</a>
+          <button class="o-btn" id="us-open-user">deeplink.open('user', 3)</button>
+        </div>
+        <ul class="o-list o-list-compact o-mt-3 us-users" id="us-users"></ul>
+        <div class="o-field o-mt-3"><label class="o-label" for="us-link">Shareable link — <code>Orion.deeplink.link('tab', 'billing')</code></label><o-copy variant="input" id="us-link" label="link"></o-copy></div>
+        <dialog class="us-dialog" id="us-invite" aria-labelledby="us-invite-t">
+          <h3 id="us-invite-t" class="o-h5">Invite a teammate</h3>
+          <p class="o-small o-text-muted">This dialog opens from <code>#invite</code>. Closing it removes the link from the address bar.</p>
+          <form method="dialog" class="o-cluster" style="justify-content:flex-end"><button class="o-btn">Cancel</button><button class="o-btn o-btn-primary">Send invite</button></form>
+        </dialog>
+        <div class="docs-log" id="us-dl-log"></div>
+        <script>
+          (() => {
+            const $ = id => document.getElementById(id), panels = { profile: 'Profile settings', billing: 'Billing: Pro plan · next invoice 1 Oct', security: 'Security: 2-factor authentication is on' };
+            document.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => {
+              document.querySelectorAll('[data-tab]').forEach(x => { x.setAttribute('aria-selected', String(x === b)); x.classList.toggle('is-active', x === b); });
+              $('us-panel').textContent = panels[b.dataset.tab];
+            }));
+            document.querySelector('[data-tab="profile"]').classList.add('is-active');
+            $('us-invite-btn').addEventListener('click', () => { const d = $('us-invite'); if (!d.open) d.showModal(); });
+            const users = docs.people(5, 3);
+            $('us-users').innerHTML = users.map(u => `<li class="o-list-item" id="us-user-${u.id}"><span class="o-list-content"><span class="o-list-title">${u.name}</span><span class="o-list-sub">${u.email}</span></span><span class="o-list-meta">#${u.id}</span></li>`).join('');
+            Orion.deeplink.register('user', (id, ctx) => {
+              document.querySelectorAll('#us-users li').forEach(li => li.classList.toggle('is-target', li.id === 'us-user-' + id));
+              document.getElementById('us-user-' + id)?.scrollIntoView({ block: 'nearest' });
+              docs.log('#us-dl-log', `user handler: ${id} (${ctx.source})`);
+            });
+            Orion.on('deeplink', e => docs.log('#us-dl-log', `deeplink ${e.name}=${e.value} (${e.source})`));
+            $('us-open-user').onclick = () => Orion.deeplink.open('user', 3);
+            const link = $('us-link');
+            link.value = Orion.deeplink.link('tab', 'billing');
+          })();
+        </script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+      // open an order drawer from  /orders#order=1042  or  /orders?open=order:1042
+      Orion.deeplink.register('order', id => drawer.open(id));
+      const href = Orion.deeplink.link('order', 1042);        // "https://app.example.com/orders#order=1042"
+      Orion.deeplink.link({ tab: 'billing', user: 42 }, { query: true });   // "…?open=tab:billing,user:42"
+      Orion.deeplink.copy('order', 1042);                     // copy to the clipboard
+    </pre>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Orion.url</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>get(key, type?, fallback?)</td><td>Read a query (then hash) parameter as <code>string number boolean array json date</code> or a custom <code>{ parse, stringify }</code>. Arrays default to <code>[]</code>.</td></tr>
+        <tr><td>has(key) · all()</td><td>Presence / every parameter as strings.</td></tr>
+        <tr><td>set(obj | key, value, { replace, hash, type })</td><td>Write; same-tick calls become one history entry. Types are inferred: booleans → <code>1</code>/<code>0</code>, arrays → <code>a,b</code> (commas escaped), objects → JSON, dates → <code>YYYY-MM-DD</code>.</td></tr>
+        <tr><td>remove(keys, opts)</td><td>Delete one key or an array of keys.</td></tr>
+        <tr><td>build(obj, { base, hash, clear })</td><td>Return a URL string without navigating.</td></tr>
+        <tr><td>bind(key, element | options) → { update, pull, unbind, value }</td><td>Two-way binding. Options: <code>el</code>, <code>get</code>, <code>set</code>, <code>type</code>, <code>default</code>, <code>debounce</code>, <code>replace</code>, <code>hash</code>, <code>event</code>.</td></tr>
+        <tr><td>onChange(fn) → off()</td><td><code>fn({ changed, params, search, hash, source, origin })</code>; bus event <code>url:change</code>.</td></tr>
+        <tr><td>flush() · sync()</td><td>Write pending changes now / re-read after a router navigated.</td></tr>
+      </tbody>
+    </table>
+    <h3>data-o-url</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>data-o-url="key"</td><td>Bind an input, select (incl. multiple), checkbox, radio group or Orion form control. Values restored from the URL dispatch <code>input</code>/<code>change</code> with <code>event.oUrl === true</code>, so you can tell them from user edits.</td></tr>
+        <tr><td>data-o-url-type</td><td>Override the inferred type.</td></tr>
+        <tr><td>data-o-url-default</td><td>Value that is kept out of the URL (defaults to the control's initial value).</td></tr>
+        <tr><td>data-o-url-debounce</td><td>Milliseconds (text fields default to 300).</td></tr>
+        <tr><td>data-o-url-replace · data-o-url-hash</td><td>Replace history entries · store in the hash.</td></tr>
+      </tbody>
+    </table>
+    <h3>Orion.deeplink</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>register(name, handler(value, { name, source, params })) → unregister()</td><td>Runs immediately when the current URL targets <code>name</code>, then on every navigation that adds it. <code>value</code> is <code>true</code> for bare links (<code>#invite</code>).</td></tr>
+        <tr><td>link(name, value?, { query, base, merge }) · link(map, opts)</td><td>Absolute shareable URL (<code>#name=value</code> or <code>?open=name:value</code>).</td></tr>
+        <tr><td>open(name, value)</td><td>Push the link and run handlers.</td></tr>
+        <tr><td>set(name, value, { replace }) · remove(name)</td><td>Write / drop the link without running handlers.</td></tr>
+        <tr><td>parse(href?) · current · handle()</td><td><code>[{ name, value, from }]</code> · re-run handlers.</td></tr>
+        <tr><td>copy(name, value)</td><td>Copy the link (uses <code>Orion.clipboard</code> when present).</td></tr>
+      </tbody>
+    </table>
+    <h3>data-o-deeplink</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>data-o-deeplink="name"</td><td>Activate this element for the link <code>name</code>.</td></tr>
+        <tr><td>data-o-deeplink-value</td><td>Only for this value (e.g. one tab of <code>#tab=…</code>).</td></tr>
+        <tr><td>data-o-deeplink-sync</td><td>Write the link when the user activates the element; remove it when the target (<code>data-o-target</code>) fires <code>close</code>/<code>o-close</code>; close the target on Back.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>o-deeplink (on the element)</td><td>{ name, value }</td></tr>
+        <tr><td>bus: deeplink</td><td>{ name, value, from, source }</td></tr>
+        <tr><td>bus: url:change</td><td>Same as <code>onChange</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>Frameworks &amp; routers</h3>
+    <p><code>Orion.url</code> writes with <code>history.pushState/replaceState</code>, preserving <code>history.state</code> so React Router, Vue Router and Angular Router keep working. If your router navigates by itself, call <code>Orion.url.sync()</code> afterwards (automatic in browsers with the Navigation API). On the server, <code>get()</code> returns fallbacks and <code>set()</code> is a no-op.</p>
+  </section>
+</main>
+</body>
+</html>

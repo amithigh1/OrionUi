@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard — Orion Admin</title>
+<script src="../dist/orion.js"></script>
+<link rel="stylesheet" href="assets/shell.css">
+<script>
+  window.PAGE = {
+    id: 'dashboard', title: 'Dashboard', subtitle: 'Welcome back, Aisha — here is what happened today.',
+    breadcrumbs: [{ label: 'Home', href: 'dashboard.html' }, { label: 'Dashboard' }],
+    actions: '<o-daterange id="range" presets style="max-width:16rem"></o-daterange>'
+      + '<button class="o-btn" id="export"><o-icon name="download"></o-icon>Export</button>'
+      + '<button class="o-btn o-btn-primary" id="new-order"><o-icon name="plus"></o-icon>New order</button>',
+  };
+</script>
+<script src="assets/shell.js" defer></script>
+</head>
+<body>
+<div id="app-content">
+
+  <!-- KPI row -->
+  <div class="o-grid-auto o-mb-6" style="--o-min:13.5rem;--o-gap:1rem">
+    <div class="o-card o-card-body"><o-stat label="Revenue" value="84210" format="currency" currency="USD" delta="12.4" period="vs last month" icon="wallet" sparkline="42,48,45,53,58,55,62,68,72,70,78,84"></o-stat></div>
+    <div class="o-card o-card-body"><o-stat label="Orders" value="1284" delta="4.1" period="vs last month" icon="shopping-cart" color="success" sparkline="18,22,21,25,24,28,31,30,34,36,35,39"></o-stat></div>
+    <div class="o-card o-card-body"><o-stat label="New customers" value="312" delta="-2.3" delta-good="up" period="vs last month" icon="user-plus" color="info" sparkline="30,28,31,27,26,24,25,23,22,24,21,20"></o-stat></div>
+    <div class="o-card o-card-body"><o-stat label="Refund rate" value="2.1%" delta="-0.4" delta-good="down" period="vs last month" icon="rotate-ccw" color="warning"></o-stat></div>
+  </div>
+
+  <!-- Charts -->
+  <div class="tpl-two-col o-mb-6">
+    <div class="o-card">
+      <div class="o-card-header">
+        <div><h2 class="o-card-title">Revenue vs costs</h2><p class="o-card-subtitle">Last 12 months · USD</p></div>
+        <div class="o-card-actions"><div class="o-segmented" id="chart-range"><button class="is-active">12M</button><button>6M</button><button>3M</button></div></div>
+      </div>
+      <div class="o-card-body"><o-chart id="revenue" class="tpl-chart"></o-chart></div>
+    </div>
+    <div class="o-card">
+      <div class="o-card-header"><h2 class="o-card-title">Traffic by channel</h2></div>
+      <div class="o-card-body"><o-chart id="channels" class="tpl-chart"></o-chart></div>
+    </div>
+  </div>
+
+  <!-- Table + activity -->
+  <div class="tpl-two-col">
+    <div class="o-card">
+      <div class="o-card-header">
+        <h2 class="o-card-title">Recent orders</h2>
+        <a class="o-btn o-btn-link o-btn-sm o-ms-auto" href="orders.html">View all<o-icon name="chevron-right"></o-icon></a>
+      </div>
+      <o-datatable id="recent" row-key="id" page-size="6"></o-datatable>
+    </div>
+    <div class="o-stack" style="--o-gap:1.25rem">
+      <div class="o-card">
+        <div class="o-card-header"><h2 class="o-card-title">Goal progress</h2></div>
+        <div class="o-card-body o-stack" style="--o-gap:1rem">
+          <div><div class="o-between o-text-sm o-mb-1"><span>Quarterly revenue</span><b>84%</b></div><div class="o-progress"><div class="o-progress-bar" style="--o-value:84%"></div></div></div>
+          <div><div class="o-between o-text-sm o-mb-1"><span>New customers</span><b>62%</b></div><div class="o-progress"><div class="o-progress-bar o-c-info" style="--o-value:62%"></div></div></div>
+          <div><div class="o-between o-text-sm o-mb-1"><span>Support SLA</span><b>97%</b></div><div class="o-progress"><div class="o-progress-bar o-c-success" style="--o-value:97%"></div></div></div>
+        </div>
+      </div>
+      <div class="o-card">
+        <div class="o-card-header"><h2 class="o-card-title">Activity</h2></div>
+        <div class="o-card-body o-py-2"><o-activity-feed id="activity" compact></o-activity-feed></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const F = Orion.format, D = Orion.date;
+
+    /* ---- Demo data. Replace with your API:  const rows = await Orion.http.get('/api/orders?limit=6') ---- */
+    const months = Array.from({ length: 12 }, (_, i) => D.format(D.add(D.startOf(new Date(), 'y'), i, 'M'), 'MMM'));
+    const revenue = [42, 48, 45, 53, 58, 55, 62, 68, 72, 70, 78, 84].map(v => v * 1000);
+    const costs = revenue.map((v, i) => Math.round(v * (0.62 - i * 0.004)));
+
+    Orion.chart?.(document.getElementById('revenue'), {
+      type: 'line', labels: months, curve: 'smooth',
+      series: [{ name: 'Revenue', data: revenue, area: true }, { name: 'Costs', data: costs }],
+      yAxis: { format: 'compact', title: 'USD' }, legend: { show: true },
+    });
+    const channels = [4820, 2410, 1180, 940, 620];
+    Orion.chart?.(document.getElementById('channels'), {
+      type: 'donut', labels: ['Organic', 'Paid', 'Referral', 'Email', 'Social'],
+      series: [{ name: 'Sessions', data: channels }],
+      pie: { center: { value: F.compact(channels.reduce((a, b) => a + b, 0)), label: 'Sessions' } },
+      tooltip: { format: v => F.number(v) + ' sessions' },
+    });
+
+    const STATUS = { Paid: 'success', Pending: 'warning', Refunded: 'danger', Shipped: 'info' };
+    const names = ['Aisha Rahman', 'Ben Tan', 'Chen Wei', 'Diego Silva', 'Elena Ivanova', 'Farid Haddad', 'Grace Kim'];
+    const table = document.getElementById('recent');
+    table.columns = [
+      { key: 'ref', title: 'Order' },
+      { key: 'customer', title: 'Customer', type: 'avatar' },
+      { key: 'status', title: 'Status', type: 'badge', colors: STATUS },
+      { key: 'total', title: 'Total', type: 'currency', align: 'end' },
+    ];
+    table.rows = names.map((customer, i) => ({
+      id: i + 1, ref: '#1023' + (7 - i), customer,
+      status: ['Paid', 'Pending', 'Shipped', 'Paid', 'Refunded', 'Paid', 'Pending'][i],
+      total: [1240, 89.9, 310.5, 2480, 75, 640, 1520][i], date: D.add(new Date(), -i, 'd'),
+    }));
+    table.addEventListener('o-row-click', e => (location.href = 'orders.html'));
+
+    const feed = document.getElementById('activity');
+    if (feed) feed.items = [
+      { id: 1, actor: { name: 'Ben Tan' }, verb: 'shipped order', target: { label: '#10236' }, type: 'status', icon: 'truck', color: 'info', createdAt: Date.now() - 6e5 },
+      { id: 2, actor: { name: 'Aisha Rahman' }, verb: 'refunded', target: { label: '#10232' }, type: 'status', icon: 'rotate-ccw', color: 'danger', createdAt: Date.now() - 36e5 },
+      { id: 3, actor: { name: 'Chen Wei' }, verb: 'added product', target: { label: 'Aurora desk lamp' }, type: 'upload', icon: 'package', color: 'success', createdAt: Date.now() - 9e6 },
+      { id: 4, actor: { name: 'Grace Kim' }, verb: 'commented on', target: { label: 'Q3 report' }, type: 'comment', icon: 'message-square', color: 'primary', createdAt: Date.now() - 864e5 },
+    ];
+
+    document.getElementById('export')?.addEventListener('click', () => {
+      if (Orion.export) Orion.export.csv(table.rows, { columns: table.columns, filename: 'recent-orders.csv' });
+      else Orion.toast?.('Load the data package to export');
+    });
+    document.getElementById('new-order')?.addEventListener('click', () => Orion.toast?.info('Hook this up to your order form'));
+    document.getElementById('chart-range')?.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      [...b.parentElement.children].forEach(x => x.classList.toggle('is-active', x === b));
+      const n = { '12M': 12, '6M': 6, '3M': 3 }[b.textContent];
+      Orion.chart?.(document.getElementById('revenue'), {
+        type: 'line', labels: months.slice(-n), curve: 'smooth',
+        series: [{ name: 'Revenue', data: revenue.slice(-n), area: true }, { name: 'Costs', data: costs.slice(-n) }],
+        yAxis: { format: 'compact' },
+      });
+    });
+  });
+</script>
+</body>
+</html>

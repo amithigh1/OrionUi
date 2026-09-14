@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OTP fixture — Orion Admin</title>
+<script src="../../../dist/orion.js"></script>
+</head>
+<body class="o-container o-py-6">
+<form id="f" class="o-stack" style="max-width:28rem">
+  <o-otp id="o1" name="code" length="6" resend-seconds="5" autofocus></o-otp>
+  <o-otp id="o2" name="code2" length="6" separator="3"></o-otp>
+  <o-otp id="o3" name="code3" length="4" type="alphanumeric" mask></o-otp>
+  <button class="o-btn" type="reset">Reset</button>
+</form>
+</body>
+</html>

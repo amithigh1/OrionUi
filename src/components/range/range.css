@@ -1,0 +1,76 @@
+/* <o-range>: single or dual-thumb slider. Logical insets so RTL and mirroring are automatic. */
+o-range { display: block; min-width: 0; --o-rs-track: .375rem; --o-rs-thumb: 1.125rem; --o-rs-start: 0%; --o-rs-end: 0%; }
+o-range:not(:defined) { visibility: hidden; }
+o-range[size="sm"] { --o-rs-track: .25rem; --o-rs-thumb: .875rem; }
+o-range[size="lg"] { --o-rs-track: .5rem; --o-rs-thumb: 1.375rem; }
+
+.o-rangeslider-track {
+  position: relative; margin-block: calc(var(--o-rs-thumb) / 2 + .875rem) calc(var(--o-rs-thumb) / 2 + .25rem);
+  margin-inline: calc(var(--o-rs-thumb) / 2); height: var(--o-rs-track); border-radius: var(--o-radius-pill);
+  background: var(--o-surface-3); cursor: pointer; touch-action: none;
+}
+o-range.is-disabled .o-rangeslider-track { cursor: not-allowed; opacity: .6; }
+o-range.is-readonly .o-rangeslider-track { cursor: default; }
+
+.o-rangeslider-fill {
+  position: absolute; top: 0; bottom: 0; inset-inline-start: var(--o-rs-start);
+  width: calc(var(--o-rs-end) - var(--o-rs-start)); border-radius: inherit; background: var(--o-c, var(--o-primary));
+}
+
+.o-rangeslider-thumb {
+  position: absolute; top: 50%; inset-inline-start: var(--o-rs-end); transform: translate(-50%, -50%);
+  width: var(--o-rs-thumb); height: var(--o-rs-thumb); border-radius: 50%; background: var(--o-surface);
+  border: 2px solid var(--o-c, var(--o-primary)); box-shadow: var(--o-shadow-sm); cursor: grab; touch-action: none; z-index: 2;
+  transition: box-shadow var(--o-dur-fast) ease, transform var(--o-dur-fast) ease;
+}
+[dir="rtl"] .o-rangeslider-thumb { transform: translate(50%, -50%); }
+.o-rangeslider-thumb:hover { box-shadow: var(--o-shadow); }
+.o-rangeslider-thumb:active, .o-rangeslider-thumb.is-dragging { cursor: grabbing; transform: translate(-50%, -50%) scale(1.12); }
+[dir="rtl"] .o-rangeslider-thumb.is-dragging, [dir="rtl"] .o-rangeslider-thumb:active { transform: translate(50%, -50%) scale(1.12); }
+.o-rangeslider-thumb:focus-visible { outline: none; box-shadow: 0 0 0 var(--o-ring-width) color-mix(in srgb, var(--o-focus) var(--o-ring-alpha), transparent); }
+.o-rangeslider-thumb[hidden] { display: none; }
+o-range.is-disabled .o-rangeslider-thumb { cursor: not-allowed; border-color: var(--o-border-strong); }
+
+.o-rangeslider-tooltip {
+  position: absolute; bottom: calc(100% + .5rem); inset-inline-start: 50%; transform: translateX(-50%) scale(.9);
+  padding: .1875rem .5rem; font-size: var(--o-fs-xs); font-weight: 600; line-height: 1.4; white-space: nowrap;
+  color: var(--o-on-dark, #fff); background: var(--o-text); border-radius: var(--o-radius-sm);
+  opacity: 0; visibility: hidden; pointer-events: none; transition: opacity var(--o-dur-fast) ease, transform var(--o-dur-fast) ease; z-index: 3;
+}
+[dir="rtl"] .o-rangeslider-tooltip { transform: translateX(50%) scale(.9); }
+.o-rangeslider-tooltip:empty { display: none; }
+.o-rangeslider-thumb:hover .o-rangeslider-tooltip, .o-rangeslider-thumb:focus-visible .o-rangeslider-tooltip, .o-rangeslider-thumb.is-dragging .o-rangeslider-tooltip {
+  opacity: 1; visibility: visible; transform: translateX(-50%) scale(1);
+}
+[dir="rtl"] .o-rangeslider-thumb:hover .o-rangeslider-tooltip, [dir="rtl"] .o-rangeslider-thumb:focus-visible .o-rangeslider-tooltip, [dir="rtl"] .o-rangeslider-thumb.is-dragging .o-rangeslider-tooltip { transform: translateX(50%) scale(1); }
+o-range[tooltip="always"] .o-rangeslider-tooltip { opacity: 1; visibility: visible; transform: translateX(-50%) scale(1); }
+o-range[tooltip="never"] .o-rangeslider-tooltip { display: none; }
+
+.o-rangeslider-ticks, .o-rangeslider-marks { position: absolute; inset-inline: 0; top: 0; bottom: 0; }
+.o-rangeslider-tick {
+  position: absolute; top: 50%; inset-inline-start: 0; width: 2px; height: 2px; transform: translate(-50%, -50%);
+  border-radius: 50%; background: var(--o-border-strong);
+}
+.o-rangeslider-mark { position: absolute; top: 50%; inset-inline-start: 0; width: .375rem; height: .375rem; transform: translate(-50%, -50%); border-radius: 50%; background: var(--o-border-strong); }
+.o-rangeslider-mark-label {
+  position: absolute; top: calc(100% + .375rem); inset-inline-start: 50%; transform: translateX(-50%);
+  font-size: var(--o-fs-xs); color: var(--o-text-muted); white-space: nowrap;
+}
+
+/* vertical orientation: block axis instead of inline axis */
+o-range[orientation="vertical"] { display: inline-block; height: 12rem; }
+o-range[orientation="vertical"] .o-rangeslider-track {
+  height: auto; width: var(--o-rs-track); margin-inline: calc(var(--o-rs-thumb) / 2 + .875rem) calc(var(--o-rs-thumb) / 2 + .25rem);
+  margin-block: calc(var(--o-rs-thumb) / 2); position: relative; inset-inline-start: 0;
+}
+o-range[orientation="vertical"] { --o-rs-h: 100%; }
+o-range[orientation="vertical"] .o-rangeslider-track { height: 100%; }
+o-range[orientation="vertical"] .o-rangeslider-fill { inset-inline: 0; top: auto; bottom: var(--o-rs-start); height: calc(var(--o-rs-end) - var(--o-rs-start)); width: auto; }
+o-range[orientation="vertical"] .o-rangeslider-thumb { top: auto; bottom: var(--o-rs-end); inset-inline-start: 50%; transform: translate(-50%, 50%); }
+o-range[orientation="vertical"] .o-rangeslider-thumb.is-dragging, o-range[orientation="vertical"] .o-rangeslider-thumb:active { transform: translate(-50%, 50%) scale(1.12); }
+o-range[orientation="vertical"] .o-rangeslider-tooltip { bottom: auto; inset-inline-start: calc(100% + .5rem); top: 50%; transform: translateY(-50%) scale(.9); }
+o-range[orientation="vertical"] .o-rangeslider-thumb:hover .o-rangeslider-tooltip, o-range[orientation="vertical"] .o-rangeslider-thumb:focus-visible .o-rangeslider-tooltip, o-range[orientation="vertical"] .o-rangeslider-thumb.is-dragging .o-rangeslider-tooltip { transform: translateY(-50%) scale(1); }
+o-range[orientation="vertical"] .o-rangeslider-tick, o-range[orientation="vertical"] .o-rangeslider-mark { top: auto; bottom: 0; inset-inline-start: 50%; }
+o-range[orientation="vertical"] .o-rangeslider-mark-label { top: 50%; inset-inline-start: calc(100% + .375rem); transform: translateY(-50%); }
+
+@media (prefers-reduced-motion: reduce) { .o-rangeslider-thumb, .o-rangeslider-tooltip { transition: none; } }

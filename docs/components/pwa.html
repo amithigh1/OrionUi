@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PWA — Orion Admin</title>
+<meta name="docs:section" content="Services &amp; Utilities">
+<meta name="docs:order" content="40">
+<meta name="docs:desc" content="Service worker registration, update flow, install prompt, browser notifications and caching strategies">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <style>
+    .pwa-state { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: .5rem; margin-block: .75rem; }
+    .pwa-state dt { font-size: var(--o-fs-xs); color: var(--o-text-muted); text-transform: uppercase; letter-spacing: .04em; }
+    .pwa-state dd { margin: 0; font-weight: 600; }
+  </style>
+  <header class="docs-hero">
+    <h1>PWA</h1>
+    <p class="docs-lead"><code>Orion.pwa</code> registers the <strong>orion.js bundle itself</strong> as a service worker (no separate file to ship), watches for updates, captures the install prompt, and drives a manifest — all from one JS API. <code>Orion.notify</code> adds browser notifications with an in-app toast fallback.</p>
+    <div class="o-alert o-alert-warning o-mt-3">
+      <o-icon name="alert-triangle"></o-icon>
+      <div class="o-alert-content"><div class="o-alert-title">Requires HTTPS or localhost</div>Service workers only run on secure origins. This page's demos work here because the docs are served from <code>http://127.0.0.1</code>, which browsers treat as a secure context.</div>
+    </div>
+  </header>
+
+  <section id="register">
+    <h2>Registration</h2>
+    <p>Pass <code>precache</code> (URLs to cache on install), <code>routes</code> (runtime caching per pattern) and an optional <code>offlinePage</code>. The scope defaults to the script's own folder — pass <code>scope</code> to widen it (the page must be served with a <code>Service-Worker-Allowed</code> header reaching that scope; <code>build/serve.mjs</code> already sends one for any URL ending in <code>orion.js</code>).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-cluster">
+          <button class="o-btn o-btn-primary o-btn-sm" id="pwa-reg">Register service worker</button>
+          <button class="o-btn o-btn-sm" id="pwa-check">Check for updates</button>
+          <button class="o-btn o-btn-sm o-btn-ghost" id="pwa-unreg">Unregister</button>
+        </div>
+        <dl class="pwa-state">
+          <div><dt>Supported</dt><dd id="pwa-supported">—</dd></div>
+          <div><dt>Registration</dt><dd id="pwa-reg-state">none</dd></div>
+          <div><dt>Standalone</dt><dd id="pwa-standalone">—</dd></div>
+          <div><dt>Install mode</dt><dd id="pwa-install-mode">—</dd></div>
+        </dl>
+        <div class="docs-log" id="log-pwa"></div>
+        <script>
+          const $s = id => document.getElementById(id);
+          const paintPwa = () => {
+            $s('pwa-supported').textContent = Orion.pwa.supported ? 'yes' : 'no';
+            $s('pwa-reg-state').textContent = Orion.pwa.registration ? (Orion.pwa.registration.active ? 'active' : 'installing') : 'none';
+            $s('pwa-standalone').textContent = Orion.pwa.isStandalone ? 'yes' : 'no';
+            $s('pwa-install-mode').textContent = Orion.pwa.installMode;
+          };
+          $s('pwa-reg').onclick = async () => {
+            try {
+              const reg = await Orion.pwa.register({ scope: './', precache: ['pwa.html'], checkInterval: 0 });
+              docs.log('#log-pwa', reg ? 'registered, scope ' + reg.scope : 'not supported');
+            } catch (e) { docs.log('#log-pwa', 'register failed: ' + e.message); }
+            paintPwa();
+          };
+          $s('pwa-check').onclick = async () => { const r = await Orion.pwa.update(); docs.log('#log-pwa', r ? 'checked for updates' : 'nothing registered'); paintPwa(); };
+          $s('pwa-unreg').onclick = async () => { const ok = await Orion.pwa.unregister(); docs.log('#log-pwa', 'unregister: ' + ok); paintPwa(); };
+          Orion.pwa.onUpdate(() => docs.log('#log-pwa', 'o-sw-update: a new version is waiting'));
+          Orion.pwa.on('registered', () => { docs.log('#log-pwa', 'registered event'); paintPwa(); });
+          Orion.pwa.on('ready', () => docs.log('#log-pwa', 'ready: precache complete, works offline'));
+          paintPwa();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="update">
+    <h2>Update flow</h2>
+    <p>When a new version installs while an old one still controls the page, Orion shows a toast ("A new version is available · Reload") unless <code>toast: false</code>. Listen for <code>onUpdate</code> to build your own banner and call <code>applyUpdate()</code> to activate the waiting worker (the page reloads once it takes control).</p>
+    <pre class="docs-code-block" data-lang="js">
+      await Orion.pwa.register({
+        precache: ['./', './app.css'],
+        offlinePage: './offline.html',
+        routes: [
+          { match: '/api/', strategy: 'network-first', timeout: 4000 },
+          { match: '*.png', strategy: 'cache-first', maxEntries: 60, maxAge: '30d' },
+          { match: '/api/', methods: ['POST', 'PUT', 'PATCH', 'DELETE'], queue: true },
+        ],
+        toast: false,          // build a custom prompt instead
+      });
+      Orion.pwa.onUpdate(({ registration }) => showMyUpdateBanner(() => Orion.pwa.applyUpdate()));
+      document.addEventListener('o-sw-ready', () => console.log('ready to work offline'));
+    </pre>
+  </section>
+
+  <section id="strategies">
+    <h2>Caching strategies</h2>
+    <p>Set per-route with <code>strategy</code> (default <code>network-first</code> for navigations, <code>network-first</code> for other routes unless <code>queue: true</code> which defaults to <code>network-only</code>). Routes also take <code>cache</code> (name), <code>maxEntries</code>, <code>maxAge</code>, <code>methods</code> and <code>timeout</code> (network-first only).</p>
+    <table class="docs-api">
+      <thead><tr><th>Strategy</th><th>Behavior</th></tr></thead>
+      <tbody>
+        <tr><td>network-first</td><td>Try the network; fall back to cache on failure or after <code>timeout</code> ms (default 4000). Best for HTML/API responses that should stay fresh.</td></tr>
+        <tr><td>cache-first</td><td>Serve from cache when present, else fetch and cache. Best for versioned assets (fonts, hashed bundles).</td></tr>
+        <tr><td>stale-while-revalidate</td><td>Serve the cached copy immediately (if any) while refetching in the background for next time.</td></tr>
+        <tr><td>network-only</td><td>Always hit the network (still lets a <code>queue: true</code> route capture failures for offline replay).</td></tr>
+        <tr><td>cache-only</td><td>Only ever serve from cache; 504 when missing.</td></tr>
+      </tbody>
+    </table>
+    <p>See <a href="offline.html">Offline</a> for the mutation queue (<code>queue: true</code> routes) and <code>&lt;o-offline-banner&gt;</code>.</p>
+  </section>
+
+  <section id="install">
+    <h2>Install prompt</h2>
+    <p><code>&lt;o-install-prompt&gt;</code> shows automatically when the browser fires <code>beforeinstallprompt</code> (Chromium) or on iOS Safari (Add to Home Screen instructions), and hides once installed or dismissed. Use <code>force</code> to preview it regardless of browser support, and <code>mode</code> to preview a specific state.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-install-prompt app-name="Orion Admin" description="Install for a full-screen window and offline access." force mode="prompt"></o-install-prompt>
+        <div class="o-cluster o-mt-3">
+          <button class="o-btn o-btn-sm" id="ip-a">Android / Chrome</button>
+          <button class="o-btn o-btn-sm" id="ip-b">iOS Safari</button>
+          <button class="o-btn o-btn-sm o-btn-ghost" id="ip-c">Button variant</button>
+        </div>
+        <script>
+          const ip = document.currentScript.previousElementSibling.previousElementSibling; ip.id = 'ip1';
+          document.getElementById('ip-a').onclick = () => { ip.variant = 'banner'; ip.mode = 'prompt'; ip.reset(); };
+          document.getElementById('ip-b').onclick = () => { ip.variant = 'banner'; ip.mode = 'ios'; ip.reset(); };
+          document.getElementById('ip-c').onclick = () => { ip.variant = 'button'; ip.mode = 'prompt'; ip.reset(); };
+          ip.addEventListener('o-install', e => docs.log('#log-pwa', 'o-install ' + JSON.stringify(e.detail)));
+          ip.addEventListener('o-dismiss', () => docs.log('#log-pwa', 'o-dismiss'));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="notify">
+    <h2>Browser notifications</h2>
+    <p><code>Orion.notify()</code> requests permission on first use (call it from a click handler — browsers require a user gesture), shows a native notification when granted, and falls back to an in-app toast otherwise (denied, unsupported, or <code>fallback</code> forced).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-cluster">
+          <button class="o-btn o-btn-primary o-btn-sm" id="ntf-send">Notify me</button>
+          <span class="o-text-muted o-fs-sm">Permission: <strong id="ntf-perm"></strong></span>
+        </div>
+        <script>
+          const paintPerm = () => document.getElementById('ntf-perm').textContent = Orion.notify.permission;
+          document.getElementById('ntf-send').onclick = async () => {
+            const r = await Orion.notify('Order #1024 shipped', { body: 'Arrives Friday', onClick: () => docs.log('#log-pwa', 'notification clicked') });
+            docs.log('#log-pwa', 'notify via ' + r.via);
+            paintPerm();
+          };
+          paintPerm();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="manifest">
+    <h2>Manifest</h2>
+    <p><code>Orion.pwa.manifest()</code> builds a <code>manifest.json</code> as a blob URL and injects <code>&lt;link rel="manifest"&gt;</code> / <code>&lt;meta name="theme-color"&gt;</code> — no static file needed. A monogram icon is generated when none is supplied.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-sm" id="mf-btn">Generate manifest</button>
+        <pre class="docs-code-block" id="mf-out">// click to generate</pre>
+        <script>
+          document.getElementById('mf-btn').onclick = () => {
+            const { manifest } = Orion.pwa.manifest({ name: 'Orion Admin Demo', short_name: 'Orion', theme_color: '#4f46e5' });
+            document.getElementById('mf-out').textContent = JSON.stringify(manifest, null, 2);
+          };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>register(swUrl?, options) → Promise&lt;Registration&gt;</td><td>Registers orion.js as a service worker. Options: <code>scope, precache, routes, offlinePage, navigation, networkTimeout, toast, checkInterval, updateViaCache, version, debug</code>.</td></tr>
+        <tr><td>update() / applyUpdate() / unregister()</td><td>Check now, activate the waiting worker, or remove the registration.</td></tr>
+        <tr><td>message(data, { timeout }) → Promise</td><td>Round-trip a message to the active worker (<code>GET_VERSION</code>, <code>CLEAR_CACHES</code>, <code>QUEUE_SIZE</code>, <code>REPLAY</code>, …).</td></tr>
+        <tr><td>sync() / queueSize() / clearCaches()</td><td>Shortcuts for the offline mutation queue and SW caches.</td></tr>
+        <tr><td>supported / registration / controller / updateAvailable</td><td>Read-only state getters.</td></tr>
+        <tr><td>canInstall / installMode / isStandalone / isIOS</td><td><code>installMode</code>: <code>'prompt' | 'ios' | 'installed' | 'unavailable'</code>.</td></tr>
+        <tr><td>install() → Promise&lt;{ outcome }&gt;</td><td>Triggers the captured native prompt (outcome: <code>accepted | dismissed | ios | unavailable</code>).</td></tr>
+        <tr><td>manifest(options) → { link, manifest, url }</td><td>Builds and injects a manifest.</td></tr>
+        <tr><td>on / off / onUpdate</td><td>Events: <code>registered, installing, ready, update, redundant, controllerchange, installable, installed, choice, unsupported, message</code>.</td></tr>
+        <tr><td>Orion.notify(title, options) → Promise&lt;{ via, close }&gt;</td><td><code>via</code>: <code>native | sw | toast | none</code>. Options: <code>body, icon, tag, data, url, onClick, onClose, request, fallback, serviceWorker</code>.</td></tr>
+        <tr><td>Orion.notify.permission / .request()</td><td><code>'default' | 'granted' | 'denied' | 'unsupported'</code>; <code>request()</code> asks explicitly.</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-install-prompt&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>app-name / description / icon</td><td>string</td><td>—</td><td>Falls back to <code>&lt;meta name="application-name"&gt;</code> / document title.</td></tr>
+        <tr><td>variant</td><td>string</td><td>banner</td><td><code>banner | card | button</code>.</td></tr>
+        <tr><td>position</td><td>string</td><td>inline</td><td><code>inline | top | bottom</code> (fixed, animated).</td></tr>
+        <tr><td>dismiss-days</td><td>number</td><td>30</td><td>How long a dismissal is remembered.</td></tr>
+        <tr><td>force / mode</td><td>boolean / string</td><td>—</td><td>Preview a state regardless of the real browser signal (<code>auto | prompt | ios | installed | unavailable</code>).</td></tr>
+      </tbody>
+      <tbody>
+        <tr><td colspan="4"><strong>Methods:</strong> <code>install()</code>, <code>dismiss()</code>, <code>reset()</code>. <strong>Events:</strong> <code>o-show</code>, <code>o-install</code> <code>{ outcome }</code>, <code>o-dismiss</code>.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Image Editor — Orion Admin</title>
+<meta name="docs:section" content="Media">
+<meta name="docs:order" content="40">
+<meta name="docs:desc" content="Crop, rotate, flip and compress images in the browser — <o-cropper>, Orion.image and Orion.cropImage()">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .ie-preview { display: grid; place-items: center; width: 8rem; height: 8rem; overflow: hidden; background: var(--o-surface-3); border: 1px solid var(--o-border); border-radius: var(--o-radius); }
+  .ie-preview.is-round { border-radius: 50%; }
+  .ie-preview canvas { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .ie-result { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: .75rem; }
+  .ie-result img { max-width: 9rem; max-height: 9rem; border-radius: var(--o-radius); border: 1px solid var(--o-border); }
+  .ie-compare { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 1rem; margin-top: .75rem; }
+  .ie-compare figure { margin: 0; text-align: center; }
+  .ie-compare img { width: 100%; border-radius: var(--o-radius); border: 1px solid var(--o-border); }
+  .ie-compare figcaption { margin-top: .375rem; font-size: var(--o-fs-xs); color: var(--o-text-muted); }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Image editor</h1>
+    <p class="docs-lead"><code>&lt;o-cropper&gt;</code> is a full crop box (8 handles, aspect presets, round mode, zoom, rotation, flip) with a live preview target, <code>Orion.image</code> is a set of canvas helpers (compress, resize, rotate, flip, crop, filters, EXIF orientation), and <code>Orion.cropImage(file, opts)</code> combines both into a one-line modal editor.</p>
+  </header>
+
+  <section id="cropper">
+    <h2>Crop box</h2>
+    <p>Drag the box or its 8 handles, drag inside to pan, scroll / pinch to zoom, or use the toolbar. The preview on the right updates live from <code>o-crop</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster" style="align-items:flex-start; gap:1.5rem; flex-wrap:wrap">
+          <o-cropper id="crop1" src="../fixtures/media/photo-mountains.jpg" aspect="16/9" style="flex:1 1 26rem; max-width:40rem" preview="#crop1-preview" label="Crop mountains photo"></o-cropper>
+          <div>
+            <div class="ie-preview" id="crop1-preview"></div>
+            <div class="o-cluster o-mt-2">
+              <select class="o-select o-input-sm" id="crop1-aspect" style="width:auto">
+                <option value="free">Free</option>
+                <option value="16/9" selected>16:9</option>
+                <option value="4/3">4:3</option>
+                <option value="1">Square</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <script>
+          document.getElementById('crop1-aspect').onchange = e => { document.getElementById('crop1').setAspect(e.target.value); };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="round">
+    <h2>Round mode (avatar cropper)</h2>
+    <p><code>round</code> clips the crop area (and the output canvas) to an ellipse — perfect for avatars. EXIF orientation in <code>portrait.jpg</code> is corrected automatically.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-cluster" style="align-items:flex-start; gap:1.5rem; flex-wrap:wrap">
+          <o-cropper id="crop2" src="../fixtures/media/portrait.jpg" aspect="1" round coverage="0.92" style="width:20rem" preview="#crop2-preview" label="Crop avatar"></o-cropper>
+          <div class="ie-preview is-round" id="crop2-preview"></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="methods">
+    <h2>Methods &amp; export</h2>
+    <p>Every editing action is a method, and the crop can be exported as a canvas, blob or data URL at any resolution.</p>
+    <div class="docs-demo">
+      <template>
+        <o-cropper id="crop3" src="../fixtures/media/product-coral.jpg" aspect="free" style="max-width:32rem"></o-cropper>
+        <div class="o-cluster o-mt-3">
+          <button class="o-btn o-btn-sm" id="c3-rotate">rotate(90)</button>
+          <button class="o-btn o-btn-sm" id="c3-flip">flip('h')</button>
+          <button class="o-btn o-btn-sm" id="c3-square">setAspect(1)</button>
+          <button class="o-btn o-btn-sm" id="c3-reset">reset()</button>
+          <button class="o-btn o-btn-primary o-btn-sm" id="c3-export">toBlob()</button>
+        </div>
+        <div class="ie-result" id="c3-result"></div>
+        <script>
+          const c3 = document.getElementById('crop3');
+          document.getElementById('c3-rotate').onclick = () => c3.rotate(90);
+          document.getElementById('c3-flip').onclick = () => c3.flip('h');
+          document.getElementById('c3-square').onclick = () => c3.setAspect(1);
+          document.getElementById('c3-reset').onclick = () => c3.reset();
+          document.getElementById('c3-export').onclick = async () => {
+            const blob = await c3.toBlob('image/jpeg', 0.9);
+            const url = URL.createObjectURL(blob);
+            document.getElementById('c3-result').innerHTML = `<img src="${url}" alt="Cropped output"><code>${blob.type}, ${Orion.util.formatBytes(blob.size)}, ${c3.getData().width}×${c3.getData().height}px</code>`;
+          };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="image-helpers">
+    <h2><code>Orion.image</code> helpers</h2>
+    <p>Canvas helpers that accept a File, Blob, URL, <code>&lt;img&gt;</code> or <code>&lt;canvas&gt;</code> and return a Promise. <code>compress()</code> iterates quality (then size) until the result fits <code>maxSizeKB</code>, and reports before/after sizes on <code>.report</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster">
+          <button class="o-btn o-btn-primary o-btn-sm" id="im-compress">Compress to 30 KB</button>
+          <button class="o-btn o-btn-sm" id="im-resize">Resize to 320×213 (cover)</button>
+          <button class="o-btn o-btn-sm" id="im-filter">Grayscale + sepia filter</button>
+          <button class="o-btn o-btn-sm" id="im-rotate">Rotate 15° free</button>
+        </div>
+        <div class="ie-compare" id="im-out"></div>
+        <script>
+          const SRC = '../fixtures/media/photo-mountains.jpg';
+          async function show(label, blob, extra) {
+            const url = URL.createObjectURL(blob);
+            const out = document.getElementById('im-out');
+            const fig = document.createElement('figure');
+            fig.innerHTML = `<img src="${url}" alt="${label}"><figcaption>${label}<br>${extra || Orion.util.formatBytes(blob.size)}</figcaption>`;
+            out.prepend(fig);
+            while (out.children.length > 4) out.lastChild.remove();
+          }
+          document.getElementById('im-compress').onclick = async () => {
+            // compress() only knows the "before" size when given a Blob/File directly (not a bare URL) — fetch it first.
+            const original = await fetch(SRC).then(r => r.blob());
+            const blob = await Orion.image.compress(original, { maxWidth: 1200, maxSizeKB: 30, quality: 0.85 });
+            show('compress()', blob, `${Orion.util.formatBytes(blob.report.before)} → ${Orion.util.formatBytes(blob.report.after)} (saved ${Math.round(blob.report.saved * 100)}%)`);
+          };
+          document.getElementById('im-resize').onclick = async () => { const blob = await Orion.image.resize(SRC, { width: 320, height: 213, fit: 'cover' }); show('resize() cover', blob); };
+          document.getElementById('im-filter').onclick = async () => { const blob = await Orion.image.filter(SRC, { grayscale: 0.6, sepia: 0.4, contrast: 1.1 }); show('filter()', blob); };
+          document.getElementById('im-rotate').onclick = async () => { const blob = await Orion.image.rotate(SRC, 15, { background: '#f4f6fa' }); show('rotate(15)', blob); };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="crop-image">
+    <h2><code>Orion.cropImage(file, opts)</code></h2>
+    <p>A one-line modal cropper for upload flows: opens a dialog around <code>&lt;o-cropper&gt;</code> and resolves the cropped <code>Blob</code> (or <code>null</code> if cancelled). Uses <code>Orion.modal</code> when it is loaded, otherwise its own dialog on the core overlay stack.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-primary" id="ci-open"><o-icon name="crop"></o-icon> Crop a photo…</button>
+        <div class="ie-result" id="ci-result"></div>
+        <script>
+          document.getElementById('ci-open').onclick = async () => {
+            const blob = await Orion.cropImage('../fixtures/media/photo-lake.jpg', { aspect: 1, round: true, maxWidth: 480, maxHeight: 480, type: 'image/png', title: 'Crop profile photo' });
+            const out = document.getElementById('ci-result');
+            out.innerHTML = blob ? `<img src="${URL.createObjectURL(blob)}" alt="Cropped result" style="border-radius:50%"><code>${Orion.util.formatBytes(blob.size)}</code>` : '<span class="o-text-muted">Cancelled</span>';
+          };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3><code>&lt;o-cropper&gt;</code></h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute / property</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>src</td><td>File \| Blob \| url</td><td></td><td>Image to edit (also settable as a property).</td></tr>
+        <tr><td>aspect</td><td>'free' \| number \| '4/3'</td><td>free</td><td>Locked aspect ratio; accepts <code>"w/h"</code> or <code>"w:h"</code> strings.</td></tr>
+        <tr><td>min-width / min-height</td><td>number</td><td>0</td><td>Minimum crop box size in image pixels.</td></tr>
+        <tr><td>round</td><td>boolean</td><td>false</td><td>Elliptical crop area and output.</td></tr>
+        <tr><td>guides</td><td>boolean</td><td>true</td><td>Rule-of-thirds grid while interacting.</td></tr>
+        <tr><td>toolbar</td><td>boolean</td><td>true</td><td>Built-in zoom / rotate / flip / reset bar.</td></tr>
+        <tr><td>preview</td><td>selector \| element(s)</td><td></td><td>Element(s) that get a live <code>&lt;canvas&gt;</code> preview of the crop.</td></tr>
+        <tr><td>max-zoom</td><td>number</td><td>8</td><td>Maximum zoom relative to fit.</td></tr>
+        <tr><td>coverage</td><td>number</td><td>0.86</td><td>Initial crop box size as a fraction of the fitted image.</td></tr>
+        <tr><td>output-type / quality</td><td>string / number</td><td> / 0.92</td><td>Defaults for <code>toBlob()</code> / <code>toDataURL()</code>.</td></tr>
+      </tbody>
+    </table>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>load(src)</td><td>Load a new image (also triggered by setting <code>src</code>).</td></tr>
+        <tr><td>reset()</td><td>Re-fit the image and re-center the crop box.</td></tr>
+        <tr><td>rotate(deg) / rotateTo(deg)</td><td>Rotate by / to an angle (90° multiples snap the aspect; any angle is allowed).</td></tr>
+        <tr><td>zoom(factor) / zoomTo(scale)</td><td>Zoom the image relative to / to an absolute screen-px-per-image-px scale.</td></tr>
+        <tr><td>flip('h' \| 'v')</td><td>Mirror the image.</td></tr>
+        <tr><td>setAspect(a)</td><td>Change the locked aspect ratio (same as the <code>aspect</code> attribute).</td></tr>
+        <tr><td>getData() / setData(data)</td><td><code>{ x, y, width, height, rotate, scaleX, scaleY }</code> in source-image pixels.</td></tr>
+        <tr><td>getCanvas(opts)</td><td><code>{ width, height, maxWidth, maxHeight, fill, round }</code> → <code>&lt;canvas&gt;</code> at the image's native resolution by default.</td></tr>
+        <tr><td>toBlob(type?, quality?, opts?) / toDataURL(...)</td><td>Export the crop.</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Events:</strong> <code>o-ready</code> <code>{ width, height }</code>, <code>o-crop</code> (fires <code>getData()</code> on every change), <code>o-error</code> <code>{ error }</code>.</p>
+
+    <h3><code>Orion.image</code></h3>
+    <table class="docs-api">
+      <thead><tr><th>Function</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>load(src) / fromFile(file)</td><td>→ upright <code>&lt;img&gt;</code> (EXIF orientation corrected even in browsers that don't do it for <code>&lt;img&gt;</code> tags).</td></tr>
+        <tr><td>readExifOrientation(blob)</td><td>→ <code>1</code>–<code>8</code>. <code>exifAuto()</code> → whether the browser already applies EXIF itself.</td></tr>
+        <tr><td>compress(src, { maxWidth, maxHeight, quality, type, maxSizeKB, minQuality, background })</td><td>→ Blob/File with <code>.report = { before, after, saved, width, height, quality, type }</code>; binary-searches quality then downsizes until it fits <code>maxSizeKB</code>.</td></tr>
+        <tr><td>resize(src, { width, height, fit, type, quality })</td><td><code>fit</code>: <code>contain</code> (default) \| <code>cover</code> \| <code>fill</code>.</td></tr>
+        <tr><td>rotate(src, deg, opts) / flip(src, 'h'\|'v', opts)</td><td>Any angle; canvas grows to fit.</td></tr>
+        <tr><td>crop(src, { x, y, width, height }, opts)</td><td>Pixel-rect crop.</td></tr>
+        <tr><td>filter(src, { brightness, contrast, saturation, grayscale, sepia, blur, hue, invert }, opts)</td><td>Uses the native canvas <code>filter</code> when available, a per-pixel fallback otherwise.</td></tr>
+        <tr><td>filterCSS(filters)</td><td>Same filter map → a CSS <code>filter</code> string, for live previews.</td></tr>
+        <tr><td>toCanvas(src, opts) / toBlob(canvas, type, quality) / info(src)</td><td>Lower-level building blocks.</td></tr>
+      </tbody>
+    </table>
+
+    <h3><code>Orion.cropImage(fileOrUrl, opts) → Promise&lt;Blob\|null&gt;</code></h3>
+    <p>Options: <code>aspect, round, minWidth, minHeight, guides, height</code> (cropper viewport, rem) plus <code>type, quality, width, height, maxWidth, maxHeight, fill</code> forwarded to <code>toBlob()</code>, and <code>title, size</code> for the dialog.</p>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key (crop area focused)</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Arrow keys</td><td>Move the crop box (Ctrl = 10px steps).</td></tr>
+        <tr><td>Shift + Arrow keys</td><td>Resize the crop box.</td></tr>
+        <tr><td>+ / −</td><td>Zoom in / out.</td></tr>
+        <tr><td>R / Shift+R</td><td>Rotate 90° clockwise / counter-clockwise.</td></tr>
+        <tr><td>0</td><td>Reset.</td></tr>
+      </tbody>
+    </table>
+    <h3>Frameworks &amp; accessibility</h3>
+    <p>The crop area is a focusable <code>role="application"</code> region with a live-updating accessible label (current size), and every toolbar control has a label and a tooltip. <code>preview</code> accepts any selector so multiple live previews (e.g. an avatar and a banner) can watch the same cropper.</p>
+  </section>
+</main>
+</body>
+</html>

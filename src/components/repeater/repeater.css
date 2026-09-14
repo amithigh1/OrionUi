@@ -1,0 +1,33 @@
+/* <o-repeater> repeatable field groups */
+o-repeater { display: block; container-type: inline-size; }
+o-repeater > template { display: none; }
+.o-repeater-list { display: flex; flex-direction: column; gap: .75rem; }
+.o-repeater-row {
+  position: relative; display: flex; align-items: flex-start; gap: .5rem; padding: 1rem;
+  background: var(--o-surface); border: 1px solid var(--o-border); border-radius: var(--o-radius-lg);
+  transition: border-color var(--o-dur-fast), box-shadow var(--o-dur-fast);
+}
+.o-repeater-row:focus-within { border-color: var(--o-border-strong); }
+.o-repeater-row.is-dragging { z-index: 3; border-color: var(--o-primary-border); box-shadow: var(--o-shadow-lg); transition: none; }
+.o-repeater-body { flex: 1 1 auto; min-width: 0; }
+.o-repeater-body > :last-child, .o-repeater-body > .o-form-grid:last-child > .o-field { margin-bottom: 0; }
+.o-repeater-handle {
+  display: grid; place-items: center; flex-shrink: 0; width: 1.5rem; height: 2rem; margin-inline-start: -.5rem; padding: 0;
+  color: var(--o-text-subtle); background: none; border: 0; border-radius: var(--o-radius-sm); cursor: grab; touch-action: none;
+}
+.o-repeater-handle:hover { color: var(--o-text); background: var(--o-surface-3); }
+.o-repeater-handle:focus-visible { outline: none; color: var(--o-text); box-shadow: 0 0 0 var(--o-ring-width) color-mix(in srgb, var(--o-focus) var(--o-ring-alpha), transparent); }
+.o-repeater-row.is-dragging .o-repeater-handle { cursor: grabbing; }
+.o-repeater-actions { display: flex; align-items: center; gap: .125rem; flex-shrink: 0; margin-top: -.25rem; margin-inline-end: -.5rem; }
+.o-repeater-actions .o-btn { color: var(--o-text-muted); }
+.o-repeater-actions .o-repeater-remove:hover { color: var(--o-danger-text); background: var(--o-danger-subtle); }
+.o-repeater-footer { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-top: .75rem; }
+.o-repeater-hint { font-size: var(--o-fs-xs); color: var(--o-text-muted); }
+.o-repeater-empty { border: 1px dashed var(--o-border-strong); border-radius: var(--o-radius-lg); background: var(--o-surface-2); }
+.o-repeater-row-title { margin: 0 0 .75rem; font-size: var(--o-fs-sm); font-weight: 600; color: var(--o-text-muted); }
+@container (max-width: 32rem) {
+  .o-repeater-row { flex-wrap: wrap; padding: .75rem; }
+  .o-repeater-actions { order: 1; margin-block-start: -.25rem; margin-inline: auto -.25rem; }
+  .o-repeater-handle { order: 0; margin-block-start: -.25rem; margin-inline-start: -.25rem; }
+  .o-repeater-body { order: 2; flex-basis: 100%; }
+}

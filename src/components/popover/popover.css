@@ -1,0 +1,21 @@
+/* Popover: .o-floating.o-popover > .o-popover-arrow + .o-popover-header + .o-popover-body (portaled, position: fixed) */
+o-popover { display: none; }
+.o-popover {
+  --o-popover-max-w: 22rem;
+  position: fixed; top: 0; left: 0; width: max-content; min-width: 10rem; max-width: min(var(--o-popover-max-w), calc(100vw - 16px));
+  font-size: var(--o-fs-sm); line-height: 1.5; text-align: start; border-radius: var(--o-radius-lg); outline: none;
+}
+.o-popover:focus-visible { box-shadow: var(--o-shadow-lg), 0 0 0 var(--o-ring-width) color-mix(in srgb, var(--o-focus) var(--o-ring-alpha), transparent); }
+.o-popover-arrow { position: absolute; width: 10px; height: 10px; background: var(--o-elevated); border: 1px solid var(--o-border); transform: rotate(45deg); }
+.o-popover[data-placement="bottom"] > .o-popover-arrow { top: -6px; border-right: 0; border-bottom: 0; border-top-left-radius: 2px; }
+.o-popover[data-placement="top"] > .o-popover-arrow { bottom: -6px; border-left: 0; border-top: 0; border-bottom-right-radius: 2px; }
+.o-popover[data-placement="left"] > .o-popover-arrow { right: -6px; border-left: 0; border-bottom: 0; border-top-right-radius: 2px; }
+.o-popover[data-placement="right"] > .o-popover-arrow { left: -6px; border-right: 0; border-top: 0; border-bottom-left-radius: 2px; }
+.o-popover-header { position: relative; display: flex; align-items: center; gap: .5rem; padding: .625rem .875rem; border-bottom: 1px solid var(--o-border); }
+.o-popover-title { flex: 1 1 auto; min-width: 0; margin: 0; font-size: var(--o-fs-sm); font-weight: 600; color: var(--o-text); }
+.o-popover-close { margin: -.25rem -.375rem -.25rem auto; }
+.o-popover:not(.has-title) > .o-popover-header { position: absolute; top: .375rem; inset-inline-end: .375rem; z-index: 2; padding: 0; border: 0; }
+.o-popover:not(.has-title) > .o-popover-header:not([hidden]) ~ .o-popover-body { padding-inline-end: 2.25rem; }
+.o-popover-body { position: relative; padding: .75rem .875rem; color: var(--o-text); overflow-wrap: break-word; }
+.o-popover-body > :last-child { margin-bottom: 0; }
+.o-popover-body .o-field:last-child { margin-bottom: 0; }

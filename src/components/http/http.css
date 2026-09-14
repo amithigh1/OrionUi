@@ -1,0 +1,7 @@
+/* HTTP behaviors: data-o-load containers and data-o-ajax forms */
+.o-load-skeleton { display: flex; flex-direction: column; gap: .25rem; padding-block: .25rem; }
+.o-load-skeleton > .o-skeleton-title { width: 40%; }
+[data-o-load].is-loading:not(a):not(button), [data-o-load-target].is-loading { cursor: progress; }
+.o-load-error { padding: 1.25rem 1rem; }
+form[data-o-ajax].is-loading { cursor: progress; }
+form[data-o-ajax] [data-o-ajax-message]:empty { display: none; }

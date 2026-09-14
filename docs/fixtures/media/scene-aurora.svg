@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1067 1600" width="1067" height="1600">
+  <title>Aurora over a lake</title>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#020617"/><stop offset=".5" stop-color="#0f172a"/><stop offset=".72" stop-color="#134e4a"/></linearGradient>
+    <linearGradient id="a1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a78bfa" stop-opacity="0"/><stop offset=".4" stop-color="#5eead4" stop-opacity=".85"/><stop offset="1" stop-color="#22c55e" stop-opacity="0"/></linearGradient>
+    <linearGradient id="a2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0abfc" stop-opacity="0"/><stop offset=".5" stop-color="#4ade80" stop-opacity=".7"/><stop offset="1" stop-color="#14b8a6" stop-opacity="0"/></linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="18"/></filter>
+    <linearGradient id="water" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#134e4a"/><stop offset="1" stop-color="#020617"/></linearGradient>
+    <symbol id="tree" viewBox="0 0 60 200"><path d="M30 0 L48 50 L40 48 L56 100 L44 98 L60 150 L34 146 V200 H26 V146 L0 150 L16 98 L4 100 L20 48 L12 50Z"/></symbol>
+  </defs>
+  <rect width="1067" height="1600" fill="url(#sky)"/>
+  <g fill="#fff">
+    <circle cx="80" cy="60" r="2"/><circle cx="210" cy="140" r="1.4"/><circle cx="340" cy="40" r="1.8"/><circle cx="470" cy="190" r="1.2"/><circle cx="600" cy="80" r="2.2"/><circle cx="730" cy="160" r="1.3"/><circle cx="880" cy="50" r="1.7"/><circle cx="1000" cy="130" r="1.2"/>
+    <circle cx="140" cy="300" r="1.2"/><circle cx="420" cy="330" r="1.6"/><circle cx="820" cy="280" r="1.3"/><circle cx="980" cy="360" r="1.8"/><circle cx="60" cy="440" r="1.4"/><circle cx="660" cy="420" r="1"/><circle cx="300" cy="520" r="1.2"/>
+  </g>
+  <g filter="url(#soft)">
+    <path d="M-60 520 C150 300 330 620 520 420 S860 180 1120 360 L1120 760 C860 600 700 820 520 700 S150 760 -60 860Z" fill="url(#a1)"/>
+    <path d="M-60 300 C200 200 380 420 560 300 S900 120 1120 220 L1120 520 C900 420 740 600 560 520 S200 520 -60 600Z" fill="url(#a2)" opacity=".8"/>
+  </g>
+  <path d="M0 1000 L120 900 L210 950 L330 830 L460 960 L560 880 L680 980 L800 870 L920 960 L1067 900 V1060 H0Z" fill="#0b1b2b"/>
+  <g fill="#020617"><use href="#tree" x="10" y="880" width="70" height="200"/><use href="#tree" x="80" y="920" width="50" height="150"/><use href="#tree" x="880" y="870" width="80" height="220"/><use href="#tree" x="960" y="910" width="60" height="170"/><use href="#tree" x="1010" y="940" width="44" height="130"/></g>
+  <rect y="1060" width="1067" height="540" fill="url(#water)"/>
+  <g transform="translate(0 2120) scale(1 -1)" opacity=".35" filter="url(#soft)">
+    <path d="M-60 520 C150 300 330 620 520 420 S860 180 1120 360 L1120 760 C860 600 700 820 520 700 S150 760 -60 860Z" fill="url(#a1)"/>
+  </g>
+  <g stroke="#5eead4" stroke-opacity=".25" stroke-width="3" stroke-linecap="round"><path d="M80 1120 h160 M420 1150 h120 M700 1110 h200 M200 1230 h140 M600 1260 h180 M860 1300 h120 M120 1380 h200 M520 1420 h160"/></g>
+</svg>

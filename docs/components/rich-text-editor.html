@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rich Text Editor — Orion Admin</title>
+<meta name="docs:section" content="Editors">
+<meta name="docs:order" content="10">
+<meta name="docs:desc" content="A WYSIWYG editor with markdown shortcuts, a slash menu, mentions, tables and images">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Rich Text Editor</h1>
+    <p class="docs-lead">A zero-dependency WYSIWYG editor: formatting, headings, lists, tables, images, links, code blocks, markdown shortcuts, a slash command menu, mentions and an emoji picker — all built on pure DOM/Range operations (no <code>document.execCommand</code>).</p>
+  </header>
+
+  <section id="blog-post">
+    <h2>Blog post editor</h2>
+    <p>A larger example: markdown shortcuts (try <code>#&nbsp;</code>, <code>-&nbsp;</code>, <code>1.&nbsp;</code>, <code>&gt;&nbsp;</code>, <code>```&nbsp;</code>, <code>**bold**</code>, <code>*italic*</code>, <code>`code`</code>), the <kbd>/</kbd> slash menu, <kbd>@</kbd> mentions, and image upload (mocked with data URLs — swap in <code>upload-image</code> for a real backend).</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <o-editor id="ed-blog" label="Post body" placeholder="Start writing… try /, **bold**, # heading, or @mention"></o-editor>
+        <div class="docs-log" id="log-blog"></div>
+        <script>
+          const ed = document.getElementById('ed-blog');
+          const team = [
+            { id: 1, label: 'Ada Lovelace', avatar: null },
+            { id: 2, label: 'Alan Turing', avatar: null },
+            { id: 3, label: 'Grace Hopper', avatar: null },
+            { id: 4, label: 'Katherine Johnson', avatar: null },
+          ];
+          ed.mentions = { source: team };
+          // Mock an upload backend: pretend to upload, resolve with a data URL after a short delay.
+          ed.uploadImage = (file) => new Promise((resolve, reject) => {
+            if (file.size > 5 * 1024 * 1024) return reject(new Error('too large'));
+            const reader = new FileReader();
+            reader.onload = () => setTimeout(() => resolve(reader.result), 400);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+          ed.setMarkdown('# Welcome\n\nThis editor supports **bold**, *italic*, `code`, and [links](https://example.com).\n\n- Bulleted lists\n- With multiple items\n\n1. Numbered lists too\n2. Second item\n\n> A blockquote for emphasis.');
+          ed.addEventListener('o-change', (e) => docs.log('#log-blog', 'o-change: ' + e.detail.value.length + ' chars'));
+          ed.addEventListener('o-image-upload', (e) => docs.log('#log-blog', 'o-image-upload: ' + (e.detail.error ? 'failed' : 'uploaded ' + e.detail.file.name)));
+          ed.addEventListener('o-mention', (e) => docs.log('#log-blog', 'o-mention: ' + e.detail.item.label));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="formatting">
+    <h2>Formatting toolbar</h2>
+    <p>Bold, italic, underline, strike, inline code, superscript/subscript, headings, text color &amp; highlight, alignment, lists (bullet/numbered/checklist with <kbd>Tab</kbd>/<kbd>Shift+Tab</kbd> nesting), blockquote, code blocks, tables, images, links, horizontal rule, emoji, clear formatting, source view and fullscreen.</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <o-editor id="ed-fmt" placeholder="Select text to see the bubble toolbar…"></o-editor>
+        <script>
+          document.getElementById('ed-fmt').setMarkdown('Select **this bold text** or *this italic text* to see the floating selection toolbar. Try a table:\n\n| Feature | Status |\n| --- | --- |\n| Tables | Done |\n| Images | Done |');
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="markdown">
+    <h2>Markdown &amp; HTML output</h2>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <o-editor id="ed-md"></o-editor>
+        <div class="o-btn-toolbar" style="margin-top:.75rem">
+          <button type="button" class="o-btn o-btn-sm" id="md-get">Get Markdown</button>
+          <button type="button" class="o-btn o-btn-sm" id="md-set">Load sample Markdown</button>
+        </div>
+        <pre class="docs-code-block" id="md-out" data-lang="md"> </pre>
+        <script>
+          const edmd = document.getElementById('ed-md');
+          edmd.setMarkdown('## Round-trip demo\n\nEdit this, then click **Get Markdown**.');
+          document.getElementById('md-get').onclick = () => { document.getElementById('md-out').textContent = edmd.getMarkdown(); };
+          document.getElementById('md-set').onclick = () => edmd.setMarkdown('# Sample\n\nA paragraph with `code`, ~~strike~~ and a [link](https://example.com).\n\n- one\n- two');
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="markdown-service">
+    <h2>Standalone Markdown ⇄ HTML — <code>Orion.markdown</code></h2>
+    <p>The same converter that powers <code>getMarkdown()</code>/<code>setMarkdown()</code> is also exposed directly
+      as a service, for converting Markdown/HTML outside of any editor instance (storing Markdown but rendering HTML
+      elsewhere, importing Markdown files, etc). <code>toHTML()</code> returns <strong>unsanitized</strong> HTML — run
+      it through <code>Orion.util.sanitize()</code> before inserting it into the page, exactly like the editor does
+      internally.</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-grid" style="--o-cols:2;gap:1rem">
+          <div>
+            <label class="o-label" for="md-svc-in">Markdown in</label>
+            <textarea class="o-input" id="md-svc-in" rows="6" style="font-family:var(--o-font-mono)">## Round-trip
+
+**Orion.markdown** converts *without* an editor instance.
+
+- toHTML(md)
+- fromHTML(html)</textarea>
+          </div>
+          <div>
+            <label class="o-label">Sanitized HTML preview</label>
+            <div class="o-card"><div class="o-card-body o-prose" id="md-svc-out"></div></div>
+          </div>
+        </div>
+        <div class="o-btn-toolbar o-mt-3">
+          <button type="button" class="o-btn o-btn-sm o-btn-primary" id="md-svc-render">Orion.markdown.toHTML()</button>
+          <button type="button" class="o-btn o-btn-sm" id="md-svc-back">…and back with fromHTML()</button>
+        </div>
+        <pre class="docs-log" id="md-svc-log" style="font-family:var(--o-font-mono);white-space:pre-wrap"> </pre>
+        <script>
+          const mdIn = document.getElementById('md-svc-in'), mdOut = document.getElementById('md-svc-out'), mdLog = document.getElementById('md-svc-log');
+          document.getElementById('md-svc-render').onclick = () => {
+            const html = Orion.markdown.toHTML(mdIn.value);           // unsanitized
+            mdOut.innerHTML = Orion.util.sanitize(html);               // always sanitize before inserting
+          };
+          document.getElementById('md-svc-back').onclick = () => { mdLog.textContent = Orion.markdown.fromHTML(mdOut); };
+          document.getElementById('md-svc-render').click();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="limits">
+    <h2>Character limit &amp; read-only</h2>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <o-editor max-length="120" placeholder="Limited to 120 characters…"></o-editor>
+      </template>
+    </div>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <o-editor readonly value="&lt;p&gt;This editor is &lt;strong&gt;read-only&lt;/strong&gt; — the toolbar is disabled and typing is blocked.&lt;/p&gt;"></o-editor>
+      </template>
+    </div>
+  </section>
+
+  <section id="form">
+    <h2>Form integration</h2>
+    <p><code>&lt;o-editor&gt;</code> is form-associated: it participates in <code>FormData</code>, native validation (<code>required</code>) and resets with the form.</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <form id="ed-form" novalidate>
+          <o-editor name="bio" required placeholder="Tell us about yourself (required)…"></o-editor>
+          <div class="o-form-actions">
+            <button type="reset" class="o-btn o-btn-sm">Reset</button>
+            <button type="submit" class="o-btn o-btn-primary o-btn-sm">Submit</button>
+          </div>
+        </form>
+        <div class="docs-log" id="log-form"></div>
+        <script>
+          document.getElementById('ed-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const fd = new FormData(e.currentTarget);
+            docs.log('#log-form', 'submitted bio: ' + JSON.stringify(fd.get('bio')));
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Properties / attributes</h3>
+    <table class="docs-api">
+      <thead><tr><th>Name</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>value</td><td>String</td><td>''</td><td>Sanitised editor HTML. Setting it reloads the document (ignored while it already matches the live content, so it never fights typing).</td></tr>
+        <tr><td>placeholder</td><td>String</td><td>—</td><td>Shown when the document is empty.</td></tr>
+        <tr><td>label</td><td>String</td><td>—</td><td><code>aria-label</code> for the editable region.</td></tr>
+        <tr><td>toolbar</td><td>Array | false</td><td>null (full toolbar)</td><td>Array of button-id groups to customise the toolbar, or <code>false</code> to hide it.</td></tr>
+        <tr><td>max-length</td><td>Number</td><td>—</td><td>Maximum plain-text character count; input is truncated to fit.</td></tr>
+        <tr><td>mentions</td><td>Array | Object | Function</td><td>—</td><td>An array of users, an <code>Orion.mentions</code> options object (e.g. <code>{ source, triggers }</code>), or an async source function. A <code>:</code> emoji trigger is always added.</td></tr>
+        <tr><td>upload-image</td><td>Function</td><td>—</td><td><code>(file) =&gt; Promise&lt;string&gt;</code> — resolves to the image <code>src</code> to insert. Without it, images are inlined as data URLs.</td></tr>
+        <tr><td>spellcheck</td><td>Boolean</td><td>true</td><td>Native browser spellcheck.</td></tr>
+        <tr><td>name, disabled, required, readonly</td><td>—</td><td>—</td><td>Standard form-associated props (see <code>FormElement</code>).</td></tr>
+        <tr><td>texts</td><td>Object</td><td>—</td><td>Per-instance string overrides (see i18n keys under <code>editor.*</code>).</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>exec(name, value?)</td><td>Run a formatting command (<code>bold</code>, <code>italic</code>, <code>underline</code>, <code>strike</code>, <code>code</code>, <code>superscript</code>, <code>subscript</code>, <code>paragraph</code>, <code>heading</code>, <code>bulletList</code>, <code>orderedList</code>, <code>checkList</code>, <code>indent</code>, <code>outdent</code>, <code>blockquote</code>, <code>codeBlock</code>, <code>align</code>, <code>color</code>, <code>highlight</code>, <code>link</code>, <code>unlink</code>, <code>image</code>, <code>table</code>, <code>hr</code>, <code>clear</code>, and table operations). Returns <code>true</code> if applied.</td></tr>
+        <tr><td>isActive(name)</td><td>Whether a mark/link command is active at the current selection.</td></tr>
+        <tr><td>insertHTML(html)</td><td>Sanitises, normalises and inserts HTML at the caret.</td></tr>
+        <tr><td>insertText(text)</td><td>Inserts plain text (newlines become paragraphs; literal inside code blocks).</td></tr>
+        <tr><td>getMarkdown() / setMarkdown(md)</td><td>Markdown ⇄ HTML conversion.</td></tr>
+        <tr><td>getText()</td><td>Plain-text content.</td></tr>
+        <tr><td>getHTML()</td><td>Same as <code>.value</code>.</td></tr>
+        <tr><td>getSelectionText()</td><td>Current selection as plain text.</td></tr>
+        <tr><td>getMentions()</td><td><code>[{ id, label, trigger }]</code> currently in the document.</td></tr>
+        <tr><td>undo() / redo()</td><td>History navigation (merges rapid typing into one step). <code>canUndo</code> / <code>canRedo</code> getters.</td></tr>
+        <tr><td>toggleFullscreen(force?)</td><td>Expands the editor to fill the viewport.</td></tr>
+        <tr><td>toggleSourceView(force?)</td><td>Shows/hides the raw HTML source editor.</td></tr>
+        <tr><td>clear()</td><td>Empties the document.</td></tr>
+        <tr><td>focus() / blur()</td><td>Focus management.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>detail</th><th>When</th></tr></thead>
+      <tbody>
+        <tr><td>o-input</td><td>{ value }</td><td>On every change, immediately.</td></tr>
+        <tr><td>o-change</td><td>{ value }</td><td>Debounced ~400ms after the user stops editing (plus native <code>change</code>).</td></tr>
+        <tr><td>o-focus / o-blur</td><td>—</td><td>The editable region gains/loses focus.</td></tr>
+        <tr><td>o-image-upload</td><td>{ file, src?, alt?, error? }</td><td>After an uploaded/pasted/dropped image resolves (or fails).</td></tr>
+        <tr><td>o-mention</td><td>{ item, trigger }</td><td>A mention or emoji is inserted via the <code>@</code>/<code>:</code> popup.</td></tr>
+        <tr><td>o-fullscreen / o-fullscreen-exit</td><td>—</td><td>Fullscreen mode toggled.</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS custom properties</h3>
+    <p><code>--o-ed-bg</code> — the editor's background. Everything else is driven by design tokens; see <code>.o-prose</code> for the editable typography and <code>.o-tk-*</code> (from the code-editor package) for code-block token colors.</p>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td><kbd>Ctrl/⌘+B</kbd> / <kbd>I</kbd> / <kbd>U</kbd></td><td>Bold / italic / underline</td></tr>
+        <tr><td><kbd>Ctrl/⌘+Shift+X</kbd></td><td>Strikethrough</td></tr>
+        <tr><td><kbd>Ctrl/⌘+K</kbd></td><td>Insert/edit link</td></tr>
+        <tr><td><kbd>Ctrl/⌘+Shift+7</kbd> / <kbd>8</kbd></td><td>Numbered / bulleted list</td></tr>
+        <tr><td><kbd>Ctrl/⌘+Z</kbd> / <kbd>Shift+Z</kbd> (or <kbd>Y</kbd>)</td><td>Undo / redo</td></tr>
+        <tr><td><kbd>Tab</kbd> / <kbd>Shift+Tab</kbd></td><td>Indent/outdent a list item, or move between table cells</td></tr>
+        <tr><td><kbd>/</kbd> at the start of a line</td><td>Opens the slash command menu</td></tr>
+        <tr><td><kbd>@</kbd></td><td>Opens mentions (when configured)</td></tr>
+        <tr><td><kbd>:</kbd></td><td>Opens the emoji picker</td></tr>
+        <tr><td><kbd>Enter</kbd> on an empty list item</td><td>Exits the list</td></tr>
+        <tr><td><kbd>Escape</kbd></td><td>Closes any open menu/popover, or exits fullscreen</td></tr>
+        <tr><td># / - / * / 1. / &gt; / ``` + space</td><td>Markdown shortcuts for heading/list/quote/code block</td></tr>
+        <tr><td>**bold** / *italic* / ~~strike~~ / `code`</td><td>Inline markdown shortcuts, applied as you finish typing the closing marker</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="frameworks">
+    <h2>Frameworks</h2>
+    <p>Set the <code>mentions</code> and <code>upload-image</code> properties directly (they are not JSON-attribute friendly since they carry functions) — this works the same in React 19, Vue 3 (<code>ref.value.uploadImage = fn</code>) and Angular. Listen for <code>o-change</code> via a ref, e.g. <code>ref.current.addEventListener('o-change', fn)</code>.</p>
+  </section>
+</main>
+</body>
+</html>

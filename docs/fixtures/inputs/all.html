@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>All inputs fixture — Orion Admin</title>
+<script src="../../../dist/orion.js"></script>
+</head>
+<body class="o-container o-py-6">
+<form id="f" class="o-stack" style="max-width:30rem">
+  <input class="o-input" id="a-mask" name="phone_mask" data-o-mask="(999) 999-9999" value="5551234567">
+  <div class="o-input-wrap"><input class="o-input" id="a-pass" name="password" type="password" value="Sup3r$ecret9" data-o-password-toggle></div>
+  <o-phone id="a-phone" name="phone" country="MY" value="+60123456789"></o-phone>
+  <o-number id="a-num" name="amount" currency="USD" value="42.5"></o-number>
+  <input class="o-input" id="a-counter" name="short" data-o-counter maxlength="20" value="hello">
+  <o-otp id="a-otp" name="otp" length="6" value="135790"></o-otp>
+  <o-tags id="a-tags" name="tags" value='["one","two"]'></o-tags>
+  <o-range id="a-range" name="single" min="0" max="100" value="55"></o-range>
+  <o-range id="a-range2" dual name="dual" min="0" max="100" value-start="20" value-end="80"></o-range>
+  <o-rating id="a-rating" name="rating" value="4" max="5"></o-rating>
+  <o-colorpicker id="a-color" name="color" value="#4f46e5"></o-colorpicker>
+  <button class="o-btn o-btn-primary" type="submit">Submit</button>
+</form>
+</body>
+</html>

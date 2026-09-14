@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Barcode — Orion Admin</title>
+<meta name="docs:section" content="Devices &amp; Capture">
+<meta name="docs:order" content="61">
+<meta name="docs:desc" content="Code 128, Code 39, EAN-13/8, UPC-A, ITF/ITF-14 and Codabar generation with checksum validation">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Barcode</h1>
+    <p class="docs-lead"><code>&lt;o-barcode&gt;</code> and <code>Orion.barcode</code> generate eleven 1D symbologies
+      from scratch: <strong>Code 128</strong> (auto subset-switching plus forced A/B/C), <strong>Code 39</strong>,
+      <strong>EAN-13</strong>, <strong>EAN-8</strong>, <strong>UPC-A</strong>, <strong>Interleaved 2 of 5</strong>
+      (plus <strong>ITF-14</strong>) and <strong>Codabar</strong>. Formats with a check digit (EAN/UPC/ITF-14)
+      compute it for you, or verify a supplied one and throw a descriptive error when it is wrong.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic</h2>
+    <p><code>value</code> and <code>format</code> are the only attributes you usually need. <code>show-text</code>
+      (default on) prints the human-readable value under the bars; EAN/UPC formats extend the guard bars and split
+      the digits either side, matching real retail barcodes.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-stack" style="align-items:center;--o-gap:1.25rem">
+          <o-barcode value="ORION-ADMIN-128" format="code128"></o-barcode>
+          <o-barcode value="4006381333931" format="ean13"></o-barcode>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="symbologies">
+    <h2>Every symbology</h2>
+    <p>Set <code>format</code> to any of <code>code128</code>, <code>code128a</code>, <code>code128b</code>,
+      <code>code128c</code> (forced subsets — <code>code128c</code> needs an even number of digits),
+      <code>code39</code>, <code>ean13</code>, <code>ean8</code>, <code>upca</code>, <code>itf</code>,
+      <code>itf14</code> or <code>codabar</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-grid" style="--o-cols:2;--o-gap:1.5rem">
+          <div><p class="o-muted o-mb-1">code39</p><o-barcode value="CODE 39-OK" format="code39" height="60"></o-barcode></div>
+          <div><p class="o-muted o-mb-1">ean8</p><o-barcode value="96385074" format="ean8" height="60"></o-barcode></div>
+          <div><p class="o-muted o-mb-1">upca</p><o-barcode value="036000291452" format="upca" height="60"></o-barcode></div>
+          <div><p class="o-muted o-mb-1">itf (even digit count)</p><o-barcode value="12345674" format="itf" height="60"></o-barcode></div>
+          <div><p class="o-muted o-mb-1">itf14 (shipping cartons)</p><o-barcode value="00012345678905" format="itf14" height="60"></o-barcode></div>
+          <div><p class="o-muted o-mb-1">codabar</p><o-barcode value="A123456A" format="codabar" height="60"></o-barcode></div>
+          <div><p class="o-muted o-mb-1">code128a (forced subset A)</p><o-barcode value="CTRL+A" format="code128a" height="60"></o-barcode></div>
+          <div><p class="o-muted o-mb-1">code128c (digit pairs)</p><o-barcode value="20260912384001" format="code128c" height="60"></o-barcode></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="checksum">
+    <h2>Checksum validation</h2>
+    <p>Supply just the payload digits (11/12 for UPC-A, 12 for EAN-13, 7 for EAN-8, 13 for ITF-14) and the check digit
+      is computed for you. Supply the full length <em>including</em> a check digit and it is verified — a wrong one
+      throws instead of silently drawing a bad code. Try editing the value below.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-stack" style="align-items:center;max-width:26rem;--o-gap:.75rem">
+          <div class="o-field" style="width:100%">
+            <label class="o-label" for="chk-input">EAN-13 value (12 or 13 digits)</label>
+            <input class="o-input" id="chk-input" value="4006381333931">
+          </div>
+          <o-barcode id="chk-code" value="4006381333931" format="ean13"></o-barcode>
+        </div>
+        <script>
+          const chkInput = document.getElementById('chk-input'), chkCode = document.getElementById('chk-code');
+          chkInput.addEventListener('input', () => { chkCode.value = chkInput.value; });
+          chkCode.addEventListener('o-error', e => docs.log && docs.log('#chk-log', e.detail.error.message));
+        </script>
+        <div class="docs-log" id="chk-log"></div>
+      </template>
+    </div>
+    <p>Change the last digit of <code>4006381333931</code> and the element shows
+      "<code>invalid EAN-13 check digit (expected 1, got …)</code>" instead of a barcode — the same error
+      <code>Orion.barcode.encode()</code> throws.</p>
+  </section>
+
+  <section id="styling">
+    <h2>Styling</h2>
+    <p><code>height</code>, <code>module-width</code>, <code>margin</code>, <code>font-size</code>,
+      <code>color</code>/<code>background</code> and <code>guard-bars</code> (EAN/UPC only) control the rendering;
+      <code>download</code> adds a PNG export button, matching <code>&lt;o-qrcode&gt;</code>.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-cluster" style="align-items:flex-end;gap:2rem">
+          <o-barcode value="Thin bars" format="code128" module-width="1" height="50" font-size="11"></o-barcode>
+          <o-barcode value="No text" format="code128" show-text="false" height="60"></o-barcode>
+          <o-barcode value="Brand colour" format="code128" color="var(--o-primary)" height="60" download=""></o-barcode>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="scan-roundtrip">
+    <h2>Generate → scan round trip</h2>
+    <p>Every symbology above can be read back by <a href="scanner.html">&lt;o-scanner&gt;</a>'s pure-JS decoder
+      without a camera. This renders the code to an offscreen canvas and decodes it on click.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-stack" style="align-items:center;--o-gap:1rem">
+          <o-barcode id="rt-code" value="4006381333931" format="ean13"></o-barcode>
+          <button class="o-btn o-btn-primary o-btn-sm" id="rt-btn">Scan it back</button>
+          <div class="docs-log" id="rt-log"></div>
+        </div>
+        <script>
+          document.getElementById('rt-btn').addEventListener('click', async () => {
+            const el = document.getElementById('rt-code');
+            const canvas = Orion.barcode.canvas(el.value, { format: el.format });
+            const [hit] = await Orion.scanner.decodeImage(canvas, { formats: [el.format] });
+            docs.log('#rt-log', hit ? `decoded: "${hit.text}" as ${hit.format} (${hit.text === el.value ? 'matches ✓' : 'MISMATCH'})` : 'no code found');
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="js">
+    <h2>JavaScript API</h2>
+    <pre class="docs-code-block" data-lang="js">
+Orion.barcode.encode(value, format) -&gt; { modules, format, text }   // low-level bar/space bits, no quiet zone
+Orion.barcode.svg(value, opts) -&gt; string
+Orion.barcode.canvas(value, opts) -&gt; HTMLCanvasElement
+Orion.barcode.toDataURL(value, opts) -&gt; string
+Orion.barcode.toBlob(value, opts) -&gt; Promise&lt;Blob&gt;
+
+// opts: format height(px,80) moduleWidth(px,2) margin(px,10) showText(true) fontSize(14)
+//       color background guardBars(true, EAN/UPC only) mime('image/png')
+</pre>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>value</td><td><code>string</code></td><td>Payload; digits-only for EAN/UPC/ITF/Code128C.</td></tr>
+        <tr><td>format</td><td>see above</td><td>Default <code>code128</code>; reflected as an attribute.</td></tr>
+        <tr><td>height</td><td><code>number</code></td><td>Bar height in px (default 80).</td></tr>
+        <tr><td>module-width</td><td><code>number</code></td><td>Width of the narrowest bar in px (default 2).</td></tr>
+        <tr><td>margin</td><td><code>number</code></td><td>Quiet zone in px (default 10).</td></tr>
+        <tr><td>show-text</td><td><code>boolean</code></td><td>Print the human-readable value (default on).</td></tr>
+        <tr><td>font-size</td><td><code>number</code></td><td>Text size in px (default 14).</td></tr>
+        <tr><td>color / background</td><td><code>string</code></td><td>Any CSS colour, including a token.</td></tr>
+        <tr><td>guard-bars</td><td><code>boolean</code></td><td>Extend + split guard bars for EAN/UPC (default on).</td></tr>
+        <tr><td>download</td><td><code>string</code></td><td>Shows a download button; value is the suggested file name.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events &amp; methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-error</td><td><code>{ error }</code> — invalid value for the format (wrong length, bad checksum, disallowed character); an inline message replaces the code.</td></tr>
+        <tr><td>saveAsPNG()</td><td>Triggers the same download the button does, at 2× scale.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="a11y">
+    <h2>Accessibility</h2>
+    <p>The rendered <code>&lt;svg&gt;</code> has <code>role="img"</code> and an <code>aria-label</code> combining
+      the format and value, so screen readers announce e.g. "ean13 4006381333931" even with <code>show-text</code>
+      off. The download button is a standard, keyboard-operable <code>&lt;button&gt;</code>.</p>
+  </section>
+
+  <section id="limitations">
+    <h2>Limitations</h2>
+    <ul>
+      <li>Code 128's automatic planner switches to subset C for runs of 4+ digits and otherwise stays in A/B; it does
+        not search for the globally shortest encoding the way some libraries do (rarely matters — output is always a
+        few bytes, not a scanability issue).</li>
+      <li>Only ASCII 0–127 is supported in Code 128 (A/B); Code 39 supports <code>0-9 A-Z space - . $ / + %</code> only
+        (lowercase is upper-cased automatically).</li>
+      <li>GS1 Application Identifiers (parentheses/FNC1-delimited GS1-128 payloads) are not specially parsed — pass
+        the raw digit/character string you want encoded.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

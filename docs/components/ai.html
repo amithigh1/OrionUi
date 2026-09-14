@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orion.ai — Orion Admin</title>
+<meta name="docs:section" content="AI">
+<meta name="docs:order" content="10">
+<meta name="docs:desc" content="Provider-agnostic AI client: streaming chat, tasks, markdown rendering, adapters, and the security model">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Orion.ai</h1>
+    <p class="docs-lead">A provider-agnostic AI client: one <code>chat()</code>/<code>stream()</code> call that works
+      against your own backend proxy, an OpenAI-compatible endpoint, Anthropic's Messages API, or a built-in
+      <strong>mock provider</strong> — with retries, abort, prompt "tasks", and Markdown rendering of the reply.
+      <code>&lt;o-chatbot&gt;</code>, <code>&lt;o-assistant&gt;</code> and every <a href="ai-tools.html">aitools</a>
+      helper (ghost-text, summarize, fill-form, analyze, AI search) are built on top of this one API.</p>
+  </header>
+
+  <section id="security">
+    <h2>Security model</h2>
+    <p>This is the part the project owner considers <strong>non-negotiable</strong>:</p>
+    <ul>
+      <li>The bundle contains <strong>no third-party code and no API keys</strong>, ever.</li>
+      <li>The documented default is <code>Orion.ai.http({ url: '/api/ai' })</code> — your own backend proxy, which
+        attaches the real key server-side. This is what <code>Orion.ai.openAICompatible()</code> also expects by default.</li>
+      <li>Calling a vendor's API <strong>directly from the browser</strong> — <code>Orion.ai.anthropic()</code> or
+        <code>Orion.ai.openAICompatible()</code> with an <code>apiKey</code> — <strong>throws</strong> unless you also
+        pass <code>dangerouslyAllowBrowser: true</code>, and even then logs a <code>console.warn</code> every time,
+        because every visitor can read the key from the network tab.</li>
+      <li>A built-in <strong>mock provider</strong> (<code>Orion.ai.mock()</code>) streams deterministic canned answers
+        entirely offline, so every demo on this page — and your own tests — never touch the network.</li>
+    </ul>
+    <div class="docs-demo">
+      <template>
+        <div class="o-stack" style="--o-gap:.75rem">
+          <button class="o-btn o-btn-sm" id="sec-run">Try Orion.ai.anthropic({ apiKey }) without the opt-in</button>
+          <div class="docs-log" id="sec-log"></div>
+        </div>
+        <script>
+          document.getElementById('sec-run').onclick = () => {
+            try {
+              Orion.ai.anthropic({ apiKey: 'sk-example-not-real' });
+              docs.log('#sec-log', 'no error thrown (unexpected)');
+            } catch (err) {
+              docs.log('#sec-log', 'threw as documented: ' + err.message);
+            }
+          };
+        </script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+// Recommended default: your own backend proxy (never a key in the browser)
+Orion.ai.configure({ provider: Orion.ai.http({ url: '/api/ai', stream: 'sse' }) });
+
+// Throws: an apiKey without the explicit opt-in
+Orion.ai.anthropic({ apiKey: 'sk-...' });
+
+// Opt-in (dev/demo only) — throws no more, but logs a console.warn every call
+Orion.ai.configure({ provider: Orion.ai.anthropic({ apiKey: 'sk-...', dangerouslyAllowBrowser: true }) });
+
+// Offline, zero-key, used by every demo on this site
+Orion.ai.configure({ provider: Orion.ai.mock() });</pre>
+  </section>
+
+  <section id="mock">
+    <h2>The mock provider &amp; streaming chat</h2>
+    <p><code>Orion.ai.mock({ latency, speed, responses })</code> returns a provider that waits <code>latency</code>ms,
+      then streams the reply token by token (paced by <code>speed</code>). <code>responses</code> can be a function of
+      the last user message, or a map of keyword → reply (plus an optional <code>default</code>). Every demo below
+      configures it once and reuses it for <code>chat()</code>, <code>stream()</code> and the tasks.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-stack" style="--o-gap:.75rem;max-width:32rem">
+          <div class="o-input-group">
+            <input class="o-input" id="chat-in" value="What can you help me with?">
+            <button class="o-btn o-btn-primary" id="chat-send">Send</button>
+            <button class="o-btn o-btn-soft-danger" id="chat-stop">Stop</button>
+          </div>
+          <div class="o-prose" id="chat-out" style="min-height:3rem;padding:.75rem;background:var(--o-surface-2);border-radius:var(--o-radius)"></div>
+        </div>
+        <script>
+          Orion.ai.configure({ provider: Orion.ai.mock({ latency: 150, speed: 12 }) });
+          let stream = null;
+          const out = document.getElementById('chat-out');
+          document.getElementById('chat-send').onclick = () => {
+            stream?.cancel();
+            out.innerHTML = '';
+            stream = Orion.ai.stream([{ role: 'user', content: document.getElementById('chat-in').value }], {
+              onToken: (tok, full) => { out.innerHTML = String(Orion.ai.markdown(full)); },
+            });
+            (async () => { try { for await (const _ of stream) {} } catch (e) { /* aborted */ } })();
+          };
+          document.getElementById('chat-stop').onclick = () => stream?.cancel();
+        </script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+const controller = new AbortController();
+const it = Orion.ai.stream(messages, { onToken: (tok, full) => render(full), signal: controller.signal });
+try { for await (const _tok of it) { /* it.controller / it.cancel() also abort */ } }
+catch (err) { if (err.name !== 'AbortError') showError(err); }
+controller.abort();               // or: it.cancel('user-stop')
+
+const text = await Orion.ai.chat(messages, { system: 'Be concise.' });   // non-streaming
+const one = await Orion.ai.complete('Summarize this page');              // chat() with a single user message</pre>
+  </section>
+
+  <section id="tasks">
+    <h2>Tasks — reusable prompt templates</h2>
+    <p><code>Orion.ai.tasks.{summarize,rewrite,translate,extract,classify}(input, options)</code> return
+      <code>{ system, messages }</code> — pass them straight to <code>chat()</code>/<code>stream()</code>. They are
+      plain overridable functions (<code>Orion.ai.tasks.summarize = myVersion</code> replaces the built-in one), and
+      every <a href="ai-tools.html">aitools</a> helper is built from them.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-stack" style="--o-gap:.75rem;max-width:36rem">
+          <textarea class="o-input" id="task-in" rows="3">Orion Admin ships as one dependency-free file. Every widget is a native custom element, so it works the same in plain HTML, React, Vue, Angular and Svelte. AI features never ship a key — they call your backend or the built-in offline mock.</textarea>
+          <div class="o-cluster">
+            <button class="o-btn o-btn-sm" data-task="summarize">summarize (bullets)</button>
+            <button class="o-btn o-btn-sm" data-task="rewrite">rewrite (formal)</button>
+            <button class="o-btn o-btn-sm" data-task="translate">translate (French)</button>
+            <button class="o-btn o-btn-sm" data-task="classify">classify</button>
+          </div>
+          <div class="o-prose" id="task-out" style="min-height:2.5rem;padding:.75rem;background:var(--o-surface-2);border-radius:var(--o-radius)"></div>
+        </div>
+        <script>
+          const taskOpts = {
+            summarize: { format: 'bullets' }, rewrite: { instruction: 'Make this more formal.' },
+            translate: { to: 'French' }, classify: { labels: ['marketing copy', 'technical documentation', 'legal notice'] },
+          };
+          document.querySelectorAll('[data-task]').forEach(btn => btn.onclick = async () => {
+            const task = btn.dataset.task;
+            const { system, messages } = Orion.ai.tasks[task](document.getElementById('task-in').value, taskOpts[task]);
+            const out = document.getElementById('task-out');
+            out.textContent = 'Working…';
+            out.innerHTML = String(Orion.ai.markdown(await Orion.ai.chat(messages, { system })));
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="adapters">
+    <h2>Adapters</h2>
+    <p>An adapter is just a function <code>(ctx) =&gt; string | AsyncIterable&lt;string&gt;</code> — write your own,
+      or use one of these:</p>
+    <table class="docs-api">
+      <thead><tr><th>Adapter</th><th>Use for</th></tr></thead>
+      <tbody>
+        <tr><td><code>Orion.ai.http({ url, headers, body, parse, stream, streamParse })</code></td><td>Your own backend proxy — any shape. <code>stream</code>: <code>'sse' | 'ndjson' | 'text' | false</code>.</td></tr>
+        <tr><td><code>Orion.ai.openAICompatible({ url, model, headers })</code></td><td><code>/chat/completions</code>-shaped backend (SSE deltas). Needs <code>apiKey</code> + <code>dangerouslyAllowBrowser</code> to call a vendor directly.</td></tr>
+        <tr><td><code>Orion.ai.anthropic({ url, model, headers })</code></td><td>Claude Messages API SSE. Same <code>dangerouslyAllowBrowser</code> gate.</td></tr>
+        <tr><td><code>Orion.ai.mock({ latency, speed, responses })</code></td><td>Offline, deterministic — docs, demos and tests.</td></tr>
+      </tbody>
+    </table>
+    <pre class="docs-code-block" data-lang="js">
+// Your own proxy, NDJSON streaming, custom auth header
+Orion.ai.configure({
+  provider: Orion.ai.http({
+    url: '/api/ai/chat', stream: 'ndjson',
+    headers: () => ({ Authorization: 'Bearer ' + getSessionToken() }),
+    streamParse: (evt) => evt.delta || '',
+  }),
+});
+
+// Canned per-keyword mock responses for a demo
+Orion.ai.configure({
+  provider: Orion.ai.mock({
+    responses: { pricing: 'Plans start at $12/month.', default: (q) => `You asked: "${q}"` },
+  }),
+});</pre>
+  </section>
+
+  <section id="markdown">
+    <h2>Markdown rendering</h2>
+    <p><code>Orion.ai.markdown(text) → SafeHTML</code> renders headings, emphasis, strikethrough, lists (incl. task
+      lists), links, inline/fenced code (with a copy button), tables and blockquotes from AI replies. Every character
+      is escaped before any markup is generated and the result is passed through <code>sanitize()</code>, so HTML or
+      script hidden inside a model's reply is always inert text — safe to insert directly.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-prose" id="md-out"></div>
+        <script>
+          document.getElementById('md-out').innerHTML = String(Orion.ai.markdown(
+            '# Release notes\n\n- **Streaming** works with `onToken`\n- Tables:\n\n| Feature | Status |\n|---|---|\n| Mock provider | ✅ |\n| `<img onerror=alert(1)>` | escaped, not executed |\n\n> Safe by construction.'
+          ));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>configure({ provider, ...defaults })</code> / <code>configure(fn)</code></td><td>Set the active provider (and default call options merged into every call).</td></tr>
+        <tr><td><code>chat(messages, opts) → Promise&lt;string&gt;</code></td><td><code>opts</code>: <code>system, signal, provider, retries, retryDelay, onToken</code> (used by <code>stream</code> internally too).</td></tr>
+        <tr><td><code>stream(messages, opts) → AsyncGenerator&lt;string&gt;</code></td><td>Same opts + <code>onToken(tok, fullSoFar)</code>. Result also has <code>.cancel(reason)</code> and <code>.controller</code>.</td></tr>
+        <tr><td><code>complete(prompt, opts) → Promise&lt;string&gt;</code></td><td><code>chat()</code> with a single user message.</td></tr>
+        <tr><td><code>tasks.summarize/rewrite/translate/extract/classify(input, options)</code></td><td>Return <code>{ system, messages }</code>; overridable.</td></tr>
+        <tr><td><code>markdown(text) → SafeHTML</code></td><td>Sanitized Markdown → HTML for chat bubbles / results.</td></tr>
+        <tr><td><code>http / openAICompatible / anthropic / mock(cfg) → provider</code></td><td>Adapters, see above.</td></tr>
+        <tr><td><code>sseEvents(chunks)</code> / <code>ndjsonEvents(chunks)</code></td><td>Low-level stream parsers for a custom adapter.</td></tr>
+        <tr><td><code>provider</code></td><td>Read-only getter — the currently configured provider function, or <code>null</code>.</td></tr>
+      </tbody>
+    </table>
+    <p>Every call accepts <code>signal</code> (an <code>AbortSignal</code> — merged with an internal controller so
+      either side can cancel), and retries transient failures (<code>429</code>/<code>5xx</code>/network errors) with
+      backoff via <code>retries</code> (default 2) / <code>retryDelay</code> (default 500ms); pass <code>retries: 0</code>
+      to fail fast (used by <a href="ai-tools.html">aitools</a>' ghost-text so a slow request never blocks typing).</p>
+  </section>
+
+  <section id="frameworks">
+    <h2>Frameworks</h2>
+    <p><code>Orion.ai</code> is a plain JS API — call it the same way from a React effect, a Vue composable or an
+      Angular service. <code>&lt;o-chatbot&gt;</code> and <code>&lt;o-assistant&gt;</code> (see <a href="chatbot.html">Chatbot &amp; Assistant</a>)
+      wrap it in a ready-made UI; everything else in <a href="ai-tools.html">aitools</a> works on plain
+      inputs/textareas/forms so it needs no framework-specific glue.</p>
+  </section>
+</main>
+</body>
+</html>

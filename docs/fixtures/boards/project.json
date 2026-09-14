@@ -1,0 +1,33 @@
+{
+  "columns": [
+    { "id": "backlog", "title": "Backlog", "color": "secondary" },
+    { "id": "todo", "title": "To do", "color": "info" },
+    { "id": "doing", "title": "In progress", "color": "primary", "limit": 4 },
+    { "id": "review", "title": "In review", "color": "warning", "limit": 3, "hardLimit": true },
+    { "id": "done", "title": "Done", "color": "success", "done": true }
+  ],
+  "cards": [
+    { "id": 1, "columnId": "backlog", "title": "Research SSO providers", "labels": [{ "text": "Research", "color": "secondary" }], "assignees": [{ "name": "Mei Tan" }], "priority": "low" },
+    { "id": 2, "columnId": "backlog", "title": "Explore multi-currency pricing", "labels": [{ "text": "Feature", "color": "primary" }], "assignees": [{ "name": "Diego Rahman" }], "priority": "medium" },
+    { "id": 3, "columnId": "backlog", "title": "Spike: offline mode for mobile", "labels": [{ "text": "Spike", "color": "info" }], "assignees": [{ "name": "Victor Rossi" }], "priority": "high" },
+    { "id": 4, "columnId": "todo", "title": "Wire up the billing webhook", "labels": [{ "text": "Backend", "color": "info" }], "assignees": [{ "name": "Adam Silva" }], "priority": "medium", "due": "2026-09-20", "progress": 20, "checklist": { "done": 1, "total": 4 } },
+    { "id": 5, "columnId": "todo", "title": "Add CSV export to reports", "labels": [{ "text": "Feature", "color": "primary" }], "assignees": [{ "name": "Jamal Tan" }], "priority": "urgent", "due": "2026-09-14" },
+    { "id": 6, "columnId": "doing", "title": "Design the empty states", "labels": [{ "text": "Design", "color": "info" }], "assignees": [{ "name": "Kavya Silva" }, { "name": "Bella Tan" }], "priority": "high", "due": "2026-09-16", "progress": 55, "comments": 3 },
+    { "id": 7, "columnId": "doing", "title": "Onboarding checklist UI", "labels": [{ "text": "Design", "color": "info" }], "assignees": [{ "name": "Sofia Nowak" }], "priority": "urgent", "checklist": { "done": 2, "total": 5 } },
+    { "id": 8, "columnId": "review", "title": "Accessibility pass on the date picker", "labels": [{ "text": "A11y", "color": "success" }], "assignees": [{ "name": "Jamal Tan" }], "priority": "medium", "progress": 90 },
+    { "id": 9, "columnId": "done", "title": "Set up staging environment", "labels": [{ "text": "Ops", "color": "secondary" }], "assignees": [{ "name": "Bella Tan" }], "progress": 100 },
+    { "id": 10, "columnId": "done", "title": "Ship the new pricing page", "labels": [{ "text": "Feature", "color": "primary" }], "assignees": [{ "name": "Mei Tan" }], "progress": 100 }
+  ],
+  "files": [
+    { "id": "src", "label": "src", "expanded": true, "children": [
+      { "id": "components", "label": "components", "children": [
+        { "id": "kanban", "label": "kanban" },
+        { "id": "tree", "label": "tree" }
+      ] },
+      { "id": "core", "label": "core", "lazy": true },
+      { "id": "app", "label": "app.js" }
+    ] },
+    { "id": "docs", "label": "docs", "children": [{ "id": "readme", "label": "README.md" }] },
+    { "id": "pkg", "label": "package.json" }
+  ]
+}

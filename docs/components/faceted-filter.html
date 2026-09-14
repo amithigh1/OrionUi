@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Faceted Filter — Orion Admin</title>
+<meta name="docs:section" content="Data">
+<meta name="docs:order" content="75">
+<meta name="docs:desc" content="Faceted filter panel: checkbox/radio/range/date-range/search groups, live counts, chips">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .ff-layout { display: grid; gap: 1.25rem; grid-template-columns: 1fr; align-items: start; }
+  @media (min-width: 900px) { .ff-layout { grid-template-columns: 15rem 1fr; } }
+  .ff-grid { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); }
+  .ff-card { padding: .75rem; text-align: center; }
+  .ff-card .ff-emoji { font-size: 1.75rem; }
+  .ff-price { font-weight: 700; }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Faceted Filter</h1>
+    <p class="docs-lead"><code>&lt;o-facets&gt;</code> is a faceted filter panel — checkbox, radio, range,
+    date-range and search groups with live counts — usable standalone (it filters a plain array itself)
+    or bound to an <code>&lt;o-datatable&gt;</code> via <code>for="#table"</code>, driving the table's own
+    <code>filters</code>/<code>facetCounts()</code> instead of re-implementing any filtering.
+    <code>&lt;o-facet-chips&gt;</code> renders the active selections as removable chips.</p>
+  </header>
+
+  <section id="standalone">
+    <h2>Standalone — product catalogue</h2>
+    <p>Reproduces a classic e-commerce sidebar: categories and availability as checkboxes with live
+    counts, price and minimum rating as radio buckets, a "Clear all" and removable chips. Toggle a
+    filter and watch the grid and counts update together.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="ff-layout">
+          <aside class="o-card">
+            <div class="o-card-body">
+              <o-facets id="ff-facets"></o-facets>
+            </div>
+          </aside>
+          <div>
+            <div class="o-d-flex o-justify-between o-align-center o-mb-3">
+              <span class="o-text-muted o-text-sm" id="ff-count" aria-live="polite"></span>
+            </div>
+            <o-facet-chips for="#ff-facets" class="o-mb-3"></o-facet-chips>
+            <div class="ff-grid" id="ff-grid"></div>
+            <div class="o-empty" id="ff-empty" hidden>
+              <div class="o-empty-icon"><o-icon name="package"></o-icon></div>
+              <h4 class="o-empty-title">No products match</h4>
+              <p class="o-empty-text">Try removing a filter.</p>
+            </div>
+          </div>
+        </div>
+        <script>
+          (function () {
+            const CATS = { audio: 'Audio', wearables: 'Wearables', computing: 'Computing', home: 'Smart home' };
+            const EMOJI = { audio: '🎧', wearables: '⌚', computing: '💻', home: '💡' };
+            const NAMES = ['Aurora', 'Nimbus', 'Vertex', 'Lumen', 'Cobalt', 'Zephyr', 'Onyx', 'Halo'];
+            const STATUS = { in: 'In stock', low: 'Low stock', out: 'Out of stock' };
+            const keys = Object.keys(CATS);
+            const DATA = Array.from({ length: 32 }, (_, i) => {
+              const category = keys[i % keys.length];
+              const stock = [0, 3, 24, 61, 0, 8][i % 6];
+              return {
+                id: 'P' + i, category, name: `${NAMES[i % NAMES.length]} ${CATS[category].split(' ')[0]}`,
+                price: 29 + ((i * 37) % 480), rating: 3 + ((i * 7) % 20) / 10,
+                status: stock === 0 ? 'out' : stock < 10 ? 'low' : 'in',
+              };
+            });
+            const facets = document.getElementById('ff-facets');
+            facets.items = DATA;
+            facets.label = 'Filters';
+            facets.groups = [
+              { key: 'category', label: 'Category', type: 'checkbox' },
+              { key: 'status', label: 'Availability', type: 'checkbox' },
+              { key: 'price', label: 'Price', type: 'radio', options: [
+                { value: '0-99', label: 'Under $100', max: 99 },
+                { value: '100-249', label: '$100 – $249', min: 100, max: 249 },
+                { value: '250-', label: '$250 and up', min: 250 },
+              ] },
+              { key: 'rating', label: 'Minimum rating', type: 'radio', options: [
+                { value: '4.5', label: '4.5 and up', min: 4.5 },
+                { value: '4', label: '4.0 and up', min: 4 },
+                { value: '3.5', label: '3.5 and up', min: 3.5 },
+              ] },
+            ];
+            const grid = document.getElementById('ff-grid'), empty = document.getElementById('ff-empty'), count = document.getElementById('ff-count');
+            function render() {
+              const rows = facets.filtered;
+              count.textContent = `${rows.length} of ${DATA.length} products`;
+              empty.hidden = rows.length > 0;
+              grid.innerHTML = rows.map(r => `
+                <div class="o-card ff-card">
+                  <div class="ff-emoji">${EMOJI[r.category]}</div>
+                  <div>${Orion.util.esc(r.name)}</div>
+                  <div class="ff-price">${Orion.format.currency(r.price, 'USD')}</div>
+                  <o-rating value="${r.rating}" readonly size="sm" color="warning"></o-rating>
+                </div>`).join('');
+            }
+            facets.addEventListener('o-change', render);
+            render();
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="bound">
+    <h2>Bound to <code>&lt;o-datatable&gt;</code></h2>
+    <p>With <code>for="#ff-table"</code>, <code>&lt;o-facets&gt;</code> drives the table's own
+    <code>filters</code> property and reads live counts from its <code>facetCounts(key)</code> — toggling a
+    facet updates the table's row count, and the table's own total stays the single source of truth.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="ff-layout">
+          <aside class="o-card"><div class="o-card-body"><o-facets id="ff-facets2" for="#ff-table"></o-facets></div></aside>
+          <div>
+            <o-facet-chips for="#ff-facets2" class="o-mb-3"></o-facet-chips>
+            <o-datatable id="ff-table" row-key="id" page-size="6"
+              columns='[{"key":"name","title":"Product"},{"key":"category","title":"Category","filterable":true},{"key":"price","title":"Price","type":"currency","sortable":true},{"key":"stock","title":"Stock","type":"number","sortable":true}]'
+              rows='[
+                {"id":1,"name":"Aurora Headphones","category":"audio","price":79,"stock":12},
+                {"id":2,"name":"Nimbus Earbuds","category":"audio","price":129,"stock":0},
+                {"id":3,"name":"Vertex Watch","category":"wearables","price":199,"stock":5},
+                {"id":4,"name":"Lumen Band","category":"wearables","price":59,"stock":30},
+                {"id":5,"name":"Cobalt Laptop","category":"computing","price":899,"stock":2},
+                {"id":6,"name":"Zephyr Mouse","category":"computing","price":25,"stock":80},
+                {"id":7,"name":"Onyx Bulb","category":"home","price":19,"stock":0},
+                {"id":8,"name":"Halo Plug","category":"home","price":15,"stock":40}
+              ]'></o-datatable>
+          </div>
+        </div>
+        <script>
+          document.getElementById('ff-facets2').groups = [{ key: 'category', label: 'Category', type: 'checkbox' }];
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="types">
+    <h2>Every group type</h2>
+    <p><code>range</code> (two number inputs), <code>date-range</code> (two date inputs) and
+    <code>search</code> (free text) alongside checkbox/radio.</p>
+    <div class="docs-demo">
+      <template>
+        <o-facets id="ff-facets3" style="max-width:20rem"></o-facets>
+        <div class="docs-log" id="ff-log3"></div>
+        <script>
+          const f3 = document.getElementById('ff-facets3');
+          f3.items = [
+            { id: 1, title: 'Widget A', price: 42, created: '2026-01-10' },
+            { id: 2, title: 'Widget B', price: 120, created: '2026-02-14' },
+            { id: 3, title: 'Gadget C', price: 18, created: '2026-03-02' },
+          ];
+          f3.groups = [
+            { key: 'title', label: 'Search', type: 'search' },
+            { key: 'price', label: 'Price range', type: 'range', step: 1 },
+            { key: 'created', label: 'Created between', type: 'date-range' },
+          ];
+          f3.addEventListener('o-change', e => docs.log('#ff-log3', `o-change → ${e.detail.filtered.length} match(es), value=${JSON.stringify(e.detail.value)}`));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>&lt;o-facets&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>items</td><td><code>object[]</code></td><td>Standalone data.</td></tr>
+        <tr><td>groups</td><td><code>GroupDef[]</code></td><td>Facet group configuration (see README).</td></tr>
+        <tr><td>value</td><td><code>object</code></td><td>Current selections, keyed by group <code>key</code>.</td></tr>
+        <tr><td>for</td><td><code>string</code></td><td>Selector of an <code>&lt;o-datatable&gt;</code> to drive instead of filtering locally.</td></tr>
+        <tr><td>label</td><td><code>string</code></td><td>Panel heading.</td></tr>
+        <tr><td>collapsible</td><td><code>boolean</code></td><td>Default <code>true</code>.</td></tr>
+        <tr><td>urlKey</td><td><code>string</code></td><td>Optional two-way <code>Orion.url</code> binding.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>filter(items?, excludeKey?)</td><td>Returns matching items.</td></tr>
+        <tr><td>filtered</td><td>Getter; <code>filter(items)</code>.</td></tr>
+        <tr><td>remove(key, value?)</td><td>Drop one checkbox value or clear a group.</td></tr>
+        <tr><td>clearGroup(key) / clear()</td><td>Clear one / every selection.</td></tr>
+        <tr><td>refresh()</td><td>Re-render counts.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th></tr></thead>
+      <tbody><tr><td>o-change</td><td><code>{ value, filtered }</code> — <code>filtered</code> is <code>null</code> when bound to a table.</td></tr></tbody>
+    </table>
+    <h3>&lt;o-facet-chips&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody><tr><td>for</td><td><code>string</code></td><td>Selector of the <code>&lt;o-facets&gt;</code> to mirror.</td></tr></tbody>
+    </table>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Tab</td><td>Moves through group headings, options, range/date/search inputs and chip remove buttons — every control is a native element.</td></tr>
+        <tr><td>Space / Enter</td><td>Toggles a group's disclosure button, a checkbox, or a chip's remove button.</td></tr>
+        <tr><td>Arrow keys</td><td>Native radio-group behaviour inside a <code>radio</code> group.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

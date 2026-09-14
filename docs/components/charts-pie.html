@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pie, Donut &amp; Radial — Orion Admin</title>
+<meta name="docs:section" content="Charts">
+<meta name="docs:order" content="20">
+<meta name="docs:desc" content="Pie, donut with center label, radar, polar area and radial bar charts">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Pie, donut &amp; radial</h1>
+    <p class="docs-lead">Part-to-whole and multi-axis comparisons: pie, donut (with a center figure), radar, polar area and radial bars. Slices are separated by a 2px surface gap, labels are placed outside with leader lines when there is room, and small slices fold into "Other" rather than getting a ninth color.</p>
+  </header>
+
+  <section id="overview">
+    <h2>When to use them</h2>
+    <p>Pies and donuts answer "roughly what share?" at a glance — keep them to six or fewer segments and use a bar chart when values are close. Radar compares a few profiles across several axes; radial bars show progress of a handful of items against the same maximum.</p>
+  </section>
+
+  <section id="donut">
+    <h2>Donut with center label</h2>
+    <p>The center shows the total by default; hovering or focusing a slice shows that slice instead. Override it with <code>pie.center: { value, label }</code>.</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-grid" style="--o-cols: 2; --o-gap: 1rem" id="donut-grid">
+          <div class="o-card">
+            <div class="o-card-header"><div><h3 class="o-card-title">Traffic sources</h3><p class="o-card-subtitle">Sessions · last 30 days</p></div></div>
+            <div class="o-card-body"><o-chart id="donut-demo" height="260"></o-chart></div>
+          </div>
+          <div class="o-card">
+            <div class="o-card-header"><div><h3 class="o-card-title">Plan mix</h3><p class="o-card-subtitle">Active subscriptions</p></div></div>
+            <div class="o-card-body"><o-chart id="donut-plans" height="260"></o-chart></div>
+          </div>
+        </div>
+        <script>
+          document.getElementById('donut-demo').config = {
+            type: 'donut',
+            labels: ['Organic search', 'Direct', 'Paid search', 'Referral', 'Social'],
+            series: [{ name: 'Sessions', data: [18420, 9310, 6240, 3180, 1650] }],
+            yAxis: { format: 'compact' },
+          };
+          document.getElementById('donut-plans').config = {
+            type: 'donut',
+            legend: { position: 'bottom' },
+            pie: { center: { value: '4,812', label: 'subscribers' }, labels: 'inside' },
+            labels: ['Starter', 'Team', 'Business', 'Enterprise'],
+            series: [{ data: [2210, 1480, 820, 302] }],
+          };
+        </script>
+        <style>@media (max-width: 760px) { #donut-grid { --o-cols: 1 !important; } }</style>
+      </template>
+    </div>
+  </section>
+
+  <section id="pie">
+    <h2>Pie</h2>
+    <p>Pass <code>labels</code> plus one series, or <code>data: [{ label, value }]</code>. More than eight slices fold the tail into "Other" (disable with <code>fold: false</code>). Legend buttons hide slices; the rest re-flow.</p>
+    <div class="docs-demo">
+      <template>
+        <o-chart type="pie" height="260" config='{
+          "data": [
+            { "label": "Chrome", "value": 64.1 },
+            { "label": "Safari", "value": 18.7 },
+            { "label": "Edge", "value": 5.3 },
+            { "label": "Firefox", "value": 3.1 },
+            { "label": "Samsung Internet", "value": 2.6 },
+            { "label": "Opera", "value": 2.2 },
+            { "label": "UC Browser", "value": 1.4 },
+            { "label": "Brave", "value": 1.2 },
+            { "label": "Others", "value": 1.4 }
+          ]
+        }'></o-chart>
+      </template>
+    </div>
+  </section>
+
+  <section id="radar">
+    <h2>Radar</h2>
+    <p>Each series is a polygon with a 10% wash; hovering snaps to the nearest axis and lists every series. Set <code>radar.max</code> for a fixed scale and <code>radar.grid: 'circle'</code> for round rings.</p>
+    <div class="docs-demo">
+      <template>
+        <o-chart id="radar-demo" height="320"></o-chart>
+        <script>
+          document.getElementById('radar-demo').config = {
+            type: 'radar',
+            radar: { max: 100 },
+            labels: ['Performance', 'Reliability', 'Usability', 'Security', 'Support', 'Price'],
+            series: [
+              { name: 'Orion Cloud', data: [88, 92, 79, 90, 72, 64] },
+              { name: 'Competitor A', data: [74, 81, 86, 70, 80, 78] },
+            ],
+          };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="polar">
+    <h2>Polar area</h2>
+    <p>Equal angles, radius proportional to the square root of the value so that slice <em>area</em> encodes magnitude honestly.</p>
+    <div class="docs-demo">
+      <template>
+        <o-chart id="polar-demo" height="300"></o-chart>
+        <script>
+          document.getElementById('polar-demo').config = {
+            type: 'polar',
+            labels: ['Bugs', 'Feature requests', 'Questions', 'Billing', 'Outages'],
+            series: [{ name: 'Tickets', data: [142, 96, 211, 58, 12] }],
+          };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="radial-bar">
+    <h2>Radial bar</h2>
+    <p>Concentric rings on a 270° sweep; each ring's track is a lighter step of its own hue, and labels sit in the open quadrant. <code>radialBar.max</code> defaults to 100.</p>
+    <div class="docs-demo">
+      <template>
+        <o-chart id="radial-demo" height="280"></o-chart>
+        <script>
+          document.getElementById('radial-demo').config = {
+            type: 'radialBar',
+            yAxis: { suffix: '%' },
+            labels: ['Storage', 'Memory', 'CPU', 'Bandwidth'],
+            series: [{ name: 'Utilisation', data: [81, 64, 47, 29] }],
+          };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>Options</h2>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>type</td><td><code>'pie'</code> <code>'donut'</code> <code>'radar'</code> <code>'polar'</code> <code>'radialBar'</code></td><td>Chart type (aliases: <code>doughnut</code>, <code>polarArea</code>, <code>radial-bar</code>).</td></tr>
+        <tr><td>labels + series[0].data</td><td><code>string[]</code>, <code>number[]</code></td><td>Slice names and values. Alternatively <code>data: [{ label, value, color }]</code>.</td></tr>
+        <tr><td>pie.innerRadius</td><td><code>number</code> (0–1)</td><td>Donut hole as a fraction of the radius (donut default <code>0.64</code>).</td></tr>
+        <tr><td>pie.center</td><td><code>{ value, label }</code></td><td>Donut center figure (default: total).</td></tr>
+        <tr><td>pie.labels</td><td><code>'outside'</code> <code>'inside'</code> <code>false</code></td><td>Outside labels with leader lines when the chart is at least 380px wide; inside labels show percentages that fit.</td></tr>
+        <tr><td>pie.startAngle</td><td><code>number</code> (degrees)</td><td>Rotation of the first slice (0 = 12 o'clock).</td></tr>
+        <tr><td>radar.max / radar.min</td><td><code>number</code></td><td>Fixed scale; default is a nice maximum of the data.</td></tr>
+        <tr><td>radar.grid</td><td><code>'polygon'</code> <code>'circle'</code></td><td>Ring style.</td></tr>
+        <tr><td>radialBar.max / .arc / .innerRadius</td><td><code>number</code></td><td>Maximum (100), sweep in degrees (270), hole fraction (0.3).</td></tr>
+        <tr><td>fold</td><td><code>boolean</code></td><td>Fold slices beyond eight into "Other" (default <code>true</code>).</td></tr>
+      </tbody>
+    </table>
+    <p>Keyboard: focus the chart, then <kbd class="o-kbd">←</kbd> <kbd class="o-kbd">→</kbd> move between slices (radar: axes; <kbd class="o-kbd">↑</kbd> <kbd class="o-kbd">↓</kbd> switch series), <kbd class="o-kbd">Enter</kbd> fires <code>o-point-click</code>.</p>
+  </section>
+</main>
+</body>
+</html>

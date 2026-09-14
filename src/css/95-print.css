@@ -1,0 +1,14 @@
+/* ============================================================================
+ * Print-friendly layout. Hide with .o-print-hide / .o-no-print, show only in print with .o-print-only.
+ * ========================================================================== */
+@media print {
+  :root, .o-theme-dark { color-scheme: light; --o-bg: #fff; --o-surface: #fff; --o-surface-2: #f8fafc; --o-surface-3: #f1f5f9; --o-text: #000; --o-text-muted: #333; --o-border: #d0d7e1; }
+  body { background: #fff !important; color: #000 !important; font-size: 11pt; }
+  .o-card, .o-table-wrap, .o-alert, .o-list { box-shadow: none !important; break-inside: avoid; }
+  .o-btn, .o-btn-close, .o-portal, #o-portal, .o-toasts, .o-topbar, .o-backdrop, .o-fab { display: none !important; }
+  .o-table > thead { display: table-header-group; }
+  .o-table > tbody > tr { break-inside: avoid; }
+  a[href^="http"]:not(.o-btn)::after { content: " (" attr(href) ")"; font-size: .8em; color: #555; }
+  .o-scroll, .o-table-wrap { overflow: visible !important; max-height: none !important; }
+  @page { margin: 14mm; }
+}

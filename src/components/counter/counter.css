@@ -1,0 +1,12 @@
+/* Character counter + textarea autosize */
+.o-counter {
+  margin-top: .3rem; font-size: var(--o-fs-xs); line-height: 1.4; text-align: end; color: var(--o-text-muted);
+  font-variant-numeric: tabular-nums; transition: color var(--o-dur-fast) ease;
+}
+.o-counter.is-warning { color: var(--o-warning-text); }
+.o-counter.is-limit, .o-counter.is-over { color: var(--o-danger-text); font-weight: 600; }
+.o-counter.is-warning::before, .o-counter.is-limit::before, .o-counter.is-over::before {
+  content: ""; display: inline-block; width: .45rem; height: .45rem; margin-inline-end: .35rem; border-radius: 50%;
+  background: currentColor; vertical-align: .05rem;
+}
+textarea.o-autosize { resize: none; overflow-y: hidden; transition: none; }

@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dynamic forms — Orion Admin</title>
+<meta name="docs:section" content="Forms">
+<meta name="docs:order" content="20">
+<meta name="docs:desc" content="Build forms from a JSON schema, show/hide/enable/require fields conditionally, and repeat groups of fields">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Dynamic forms</h1>
+    <p class="docs-lead">Three packages that compose: <code>&lt;o-form&gt;</code> renders a whole form from a JSON schema, <code>data-o-show-if</code>/<code>hide-if</code>/<code>enable-if</code>/<code>require-if</code> make any part of a form conditional on another field's value, and <code>&lt;o-repeater&gt;</code> repeats a group of fields (line items, work experience…). All three integrate automatically with <a href="validation.html">Orion.validate</a>.</p>
+  </header>
+
+  <section id="form-basic">
+    <h2>&lt;o-form&gt; from a JSON schema — profile form</h2>
+    <p>Pass a schema object as the <code>schema</code> property (or JSON in the <code>schema</code> attribute). A <code>computed</code> field recalculates on every change.</p>
+    <div class="docs-demo">
+      <template>
+        <o-form id="profile-form"></o-form>
+        <div class="docs-log" id="profile-log"></div>
+        <script>
+          const profileForm = document.getElementById('profile-form');
+          profileForm.schema = {
+            columns: 2,
+            fields: [
+              { name: 'first', label: 'First name', required: true, col: 6 },
+              { name: 'last', label: 'Last name', required: true, col: 6 },
+              { name: 'fullName', label: 'Display name (computed)', col: 12, computed: v => [v.first, v.last].filter(Boolean).join(' ') },
+              { name: 'email', type: 'email', label: 'Email', required: true, col: 6 },
+              { name: 'role', type: 'select', label: 'Role', col: 6, options: ['Admin', 'Editor', 'Viewer'] },
+              { name: 'startDate', type: 'date', label: 'Start date', col: 6 },
+              { name: 'newsletter', type: 'switch', label: 'Subscribe to the newsletter', col: 6, default: true },
+              { name: 'bio', type: 'textarea', label: 'Bio', help: 'A short introduction.', col: 12 },
+            ],
+          };
+          profileForm.addEventListener('o-submit', e => docs.log('#profile-log', 'submit: ' + JSON.stringify(e.detail.data)));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="field-types">
+    <h2>Field types gallery</h2>
+    <p>Every built-in <code>type</code> renders a native control unless a matching Orion custom element (<code>&lt;o-select&gt;</code>, <code>&lt;o-rating&gt;</code>, <code>&lt;o-tags&gt;</code>…) is registered, in which case it's used automatically. Set <code>native: true</code> on a field to force the native control.</p>
+    <div class="docs-demo">
+      <template>
+        <o-form id="gallery-form"></o-form>
+        <script>
+          document.getElementById('gallery-form').schema = {
+            actions: false,
+            columns: 2,
+            fields: [
+              { name: 'text', type: 'text', label: 'Text', col: 6 },
+              { name: 'textarea', type: 'textarea', label: 'Textarea', col: 6 },
+              { name: 'select', type: 'select', label: 'Select', options: ['One', 'Two', 'Three'], col: 6 },
+              { name: 'multiselect', type: 'multiselect', label: 'Multi-select', options: ['Red', 'Green', 'Blue'], col: 6 },
+              { name: 'radio', type: 'radio', label: 'Radio', options: ['A', 'B'], inline: true, col: 6 },
+              { name: 'checks', type: 'checkboxes', label: 'Checkboxes', options: ['X', 'Y', 'Z'], inline: true, col: 6 },
+              { name: 'agree', type: 'checkbox', label: 'A single checkbox', col: 6 },
+              { name: 'toggle', type: 'switch', label: 'A switch', col: 6 },
+              { name: 'when', type: 'date', label: 'Date', col: 4 },
+              { name: 'amount', type: 'range', label: 'Range', min: 0, max: 100, col: 4 },
+              { name: 'color', type: 'color', label: 'Color', col: 4 },
+              { name: 'stars', type: 'rating', label: 'Rating', max: 5, col: 4 },
+              { name: 'tags', type: 'tags', label: 'Tags', placeholder: 'comma, separated', col: 4 },
+              { name: 'phone', type: 'phone', label: 'Phone', col: 4 },
+              { name: 'price', type: 'currency', label: 'Price', col: 6 },
+              { name: 'notes', type: 'html', col: 12, html: '<p class="o-help">Sanitized static HTML rendered by the <code>html</code> field type.</p>' },
+            ],
+          };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="sections-async">
+    <h2>Sections &amp; async, dependent options</h2>
+    <p>Group fields with <code>layout.sections</code>; a field's <code>options</code> can be an async function, re-run whenever the fields named in <code>dependsOn</code> change.</p>
+    <div class="docs-demo">
+      <template>
+        <o-form id="sections-form"></o-form>
+        <script>
+          const CITIES = { MY: ['Kuala Lumpur', 'Penang', 'Johor Bahru'], SG: ['Singapore'], US: ['New York', 'Austin', 'Seattle'] };
+          document.getElementById('sections-form').schema = {
+            fields: [
+              { name: 'company', label: 'Company' },
+              { name: 'website', type: 'url', label: 'Website' },
+              { name: 'country', type: 'select', label: 'Country', options: ['MY', 'SG', 'US'], default: 'MY' },
+              { name: 'city', type: 'select', label: 'City', dependsOn: ['country'], options: async values => { await new Promise(r => setTimeout(r, 300)); return CITIES[values.country] || []; } },
+            ],
+            layout: { sections: [{ title: 'Company', description: 'Basic company details.', fields: ['company', 'website'], columns: 2 }, { title: 'Location', fields: ['country', 'city'], columns: 2 }] },
+          };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="conditional">
+    <h2>Skip logic: showIf / hideIf / enableIf / requiredIf — conditional billing address</h2>
+    <p>Inside <code>&lt;o-form&gt;</code>, conditions can be a string, an object, or a function (see the table below for operators). The same engine is available directly as <code>data-o-show-if</code> on any element.</p>
+    <div class="docs-demo">
+      <template>
+        <o-form id="billing-form"></o-form>
+        <script>
+          document.getElementById('billing-form').schema = {
+            fields: [
+              { name: 'shippingAddress', label: 'Shipping address', required: true },
+              { name: 'sameAsBilling', type: 'switch', label: 'Billing address is the same as shipping', default: true },
+              { name: 'billingAddress', label: 'Billing address', showIf: 'sameAsBilling=false', requiredIf: 'sameAsBilling=false' },
+              { name: 'plan', type: 'select', label: 'Plan', options: ['Free', 'Pro'], default: 'Free' },
+              { name: 'seats', type: 'number', label: 'Seats', enableIf: 'plan=Pro', help: 'Only editable on the Pro plan.' },
+            ],
+          };
+        </script>
+      </template>
+    </div>
+    <p>The same engine used declaratively, outside <code>&lt;o-form&gt;</code>. Field names resolve against the closest <code>&lt;form&gt;</code> or <code>[data-o-scope]</code> ancestor (falling back to the whole page), so wrap standalone usage in one of those to keep it isolated from same-named fields elsewhere on the page.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-form-grid" data-o-scope>
+          <div class="o-field"><label class="o-label" for="cond-country">Country</label>
+            <select class="o-select" id="cond-country" name="country"><option value="MY">Malaysia</option><option value="US">United States</option><option value="OTHER">Other</option></select></div>
+          <div class="o-field" data-o-show-if="country in:MY,US"><label class="o-label" for="cond-state">State / Province</label><input class="o-input" id="cond-state" name="state"></div>
+          <div class="o-field" data-o-require-if="country=OTHER"><label class="o-label" for="cond-note">Please specify</label><input class="o-input" id="cond-note" name="note"></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="repeater">
+    <h2>&lt;o-repeater&gt; — repeatable work-experience rows</h2>
+    <p>Each control's <code>name</code> inside the <code>&lt;template&gt;</code> is re-indexed automatically: <code>company</code> → <code>experience[0][company]</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <o-repeater id="exp-rep" name="experience" min="1" max="6" add-text="Add work experience" item-label="Position {n}" sortable>
+          <template>
+            <div class="o-form-grid" style="--o-cols:3">
+              <div class="o-field"><label class="o-label" for="exp-company">Company</label><input class="o-input" id="exp-company" name="company" required></div>
+              <div class="o-field"><label class="o-label" for="exp-role">Role</label><input class="o-input" id="exp-role" name="role"></div>
+              <div class="o-field"><label class="o-label" for="exp-years">Years</label><input class="o-input" id="exp-years" name="years" type="number" min="0"></div>
+            </div>
+          </template>
+        </o-repeater>
+        <div class="docs-log" id="exp-log"></div>
+        <script>
+          document.getElementById('exp-rep').addEventListener('o-change', e => docs.log('#exp-log', JSON.stringify(e.detail.value)));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="register-field">
+    <h2>Orion.form.registerField(type, def)</h2>
+    <p>Register a custom field type before creating the form. This one renders a range slider with a live output.</p>
+    <div class="docs-demo">
+      <template>
+        <o-form id="custom-field-form"></o-form>
+        <script>
+          Orion.form.registerField('satisfaction', {
+            render(field, ctx) {
+              const el = document.createElement('input');
+              el.type = 'range'; el.className = 'o-range'; el.min = 0; el.max = 10; el.id = ctx.id; el.name = ctx.name; el.value = field.default ?? 5;
+              const out = document.createElement('output'); out.textContent = el.value; out.style.marginInlineStart = '.75rem';
+              el.addEventListener('input', () => { out.textContent = el.value; });
+              const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.alignItems = 'center'; wrap.append(el, out);
+              return wrap;
+            },
+          });
+          document.getElementById('custom-field-form').schema = { fields: [{ name: 'nps', type: 'satisfaction', label: 'How satisfied are you? (custom field type)', default: 8 }] };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>&lt;o-form&gt; schema</h3>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>fields[]</td><td><code>{ name, type, label, help, options, default, rules, col (1-12), showIf/hideIf/enableIf/requiredIf, computed, attrs, props, native, fields (group/repeater), min/max/addText/itemLabel/sortable (repeater) }</code></td></tr>
+        <tr><td>layout.columns / columns</td><td>Grid column count (default 1).</td></tr>
+        <tr><td>layout.sections[]</td><td><code>{ title, description, fields: [names], columns }</code></td></tr>
+        <tr><td>submitText / resetText / actions</td><td><code>actions: false</code> hides the Submit/Reset row (e.g. when nested inside your own form).</td></tr>
+        <tr><td>live / summary / messages</td><td>Passed straight through to the internal <code>Orion.validate</code> call.</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-form&gt; methods &amp; events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>getData() / setData(obj, opts?)</td><td>Read/write the whole form as a nested object (same shape as <code>Orion.serialize</code>).</td></tr>
+        <tr><td>validate() / reset()</td><td>Runs the internal validator / native reset (+ re-run <code>computed</code> fields, refresh conditions).</td></tr>
+        <tr><td>setSchema(schema) / getField(name)</td><td>Replace the schema; look up a rendered field's cell/control.</td></tr>
+        <tr><td>o-submit { data }</td><td>Cancelable. Or pass <code>onSubmit(data, el)</code> as a property.</td></tr>
+        <tr><td>o-change { name, value, values }</td><td>Fires on every input/change (debounced to one per microtask).</td></tr>
+      </tbody>
+    </table>
+    <h3>Conditional attributes &amp; operators</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Effect</th></tr></thead>
+      <tbody>
+        <tr><td>data-o-show-if / data-o-hide-if</td><td>Shows/hides the element (animated); hidden controls are disabled, so they're excluded from submit and validation.</td></tr>
+        <tr><td>data-o-enable-if</td><td>Toggles <code>disabled</code>/<code>aria-disabled</code> on the controls inside.</td></tr>
+        <tr><td>data-o-require-if</td><td>Toggles the <code>required</code> property.</td></tr>
+      </tbody>
+    </table>
+    <table class="docs-api">
+      <thead><tr><th>Operator</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>= != &gt; &lt; &gt;= &lt;=</td><td><code>country=MY</code> · <code>age&gt;=18</code></td></tr>
+        <tr><td>in: / not in:</td><td><code>country in:MY,SG</code></td></tr>
+        <tr><td>checked / unchecked / empty / notEmpty</td><td><code>agree checked</code></td></tr>
+        <tr><td>&amp;&amp; / || / ! / ( )</td><td><code>type=company &amp;&amp; vat notEmpty || country in:MY,SG</code> (&amp;&amp; binds tighter than ||)</td></tr>
+      </tbody>
+    </table>
+    <p>JS API: <code>Orion.conditional.evaluate(expr, formOrValues)</code>, <code>.test(cond, values)</code>, <code>.watch(el, { showIf, hideIf, enableIf, requireIf }, root)</code>, <code>.refresh(root?)</code>.</p>
+    <h3>&lt;o-repeater&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>name / min / max / initial / sortable / duplicate / addText / emptyText / itemLabel</td><td>Attributes/props.</td></tr>
+        <tr><td>add(data?, index?) / remove(index) / duplicate(index) / move(from, to) / clear()</td><td>Methods.</td></tr>
+        <tr><td>getValue() / setValue(list)</td><td>Read/write the whole list.</td></tr>
+        <tr><td>o-before-add / o-add / o-before-remove / o-remove / o-sort / o-change</td><td>Events (before-* are cancelable).</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Alt + ArrowUp / ArrowDown</td><td>Move the focused repeater row up/down (when <code>sortable</code>).</td></tr>
+        <tr><td>ArrowUp / ArrowDown on the drag handle</td><td>Same, without needing Alt.</td></tr>
+        <tr><td>Tab</td><td>Fields hidden by <code>showIf</code>/<code>hideIf</code> are disabled, so they're skipped automatically.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

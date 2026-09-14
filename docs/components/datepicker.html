@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Date Picker — Orion Admin</title>
+<meta name="docs:section" content="Pickers &amp; Selects">
+<meta name="docs:order" content="30">
+<meta name="docs:desc" content="Date and datetime input with popup or inline calendar, month/year views, ranges of rules and a reusable MonthGrid">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .demo-grid { display: grid; gap: 1rem 1.5rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); width: 100%; }
+  .demo-grid > div { min-width: 0; }
+  .demo-out { margin: 1rem 0 0; padding: .75rem 1rem; font: .75rem/1.6 var(--o-font-mono); background: var(--o-surface-2); border: 1px dashed var(--o-border-strong); border-radius: var(--o-radius); white-space: pre-wrap; color: var(--o-text-muted); }
+  .price-cal { display: inline-block; max-width: 100%; padding: .75rem; background: var(--o-surface); border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); }
+  .price-cal .o-cal-caption { margin-bottom: .25rem; }
+  .price-cal .o-mg { --o-cal-cell: 2.75rem; }
+  .price-cal .o-mg td { height: 3.25rem; vertical-align: top; }
+  .price-cal .o-mg-day { width: 2rem; height: 2rem; margin-top: .125rem; }
+  .price-cal .pc-price { display: block; font-size: .625rem; line-height: 1; color: var(--o-text-muted); font-variant-numeric: tabular-nums; }
+  .price-cal .is-cheap .pc-price { color: var(--o-success-text); font-weight: 600; }
+  .price-cal .is-disabled .pc-price { visibility: hidden; }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Date Picker</h1>
+    <p class="docs-lead"><code>&lt;o-datepicker&gt;</code> is a typed date input with a popup calendar (a bottom sheet on phones) or an <code>inline</code> calendar: min/max, disabled dates, highlighted dates with dots or badges, week numbers, month &amp; year quick-pick views, several months side by side, multiple dates, a datetime mode and locale-aware names — with the month grid exported as <code>Orion.MonthGrid</code> for your own widgets.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic</h2>
+    <p>The value is an ISO date (<code>YYYY-MM-DD</code>); the input shows and parses the locale pattern (<code>Orion.date.localePattern()</code>, e.g. MM/DD/YYYY) and always accepts ISO. Press <kbd class="o-kbd">↓</kbd> in the input to move into the calendar; click the month title to pick a month, then again to pick a year.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="demo-grid">
+          <div>
+            <label class="o-label" for="dp-basic">Due date</label>
+            <o-datepicker id="dp-basic" name="due" value="2026-09-12"></o-datepicker>
+          </div>
+          <div>
+            <label class="o-label" for="dp-empty">Start date</label>
+            <o-datepicker id="dp-empty" name="start" placeholder="Pick a date"></o-datepicker>
+          </div>
+          <div>
+            <label class="o-label" for="dp-two">Two months</label>
+            <o-datepicker id="dp-two" months="2"></o-datepicker>
+          </div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="rules">
+    <h2>Min / max &amp; disabled dates</h2>
+    <p><code>min</code> / <code>max</code> limit navigation and selection. <code>disabled-dates</code> accepts ISO dates, <code>{ "from", "to" }</code> ranges, weekday numbers and the keywords <code>weekends</code> / <code>weekdays</code> — or set a function <code>date =&gt; boolean</code>. Disabled days stay focusable but cannot be chosen, and typing one is reported as invalid.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="demo-grid">
+          <div>
+            <label class="o-label" for="dp-work">Delivery (next 60 days, weekdays only)</label>
+            <o-datepicker id="dp-work" name="delivery" disabled-dates='["weekends"]'></o-datepicker>
+          </div>
+          <div>
+            <label class="o-label" for="dp-fn">Appointment (no Mondays, no public holidays)</label>
+            <o-datepicker id="dp-fn" name="appt"></o-datepicker>
+          </div>
+        </div>
+        <script>{
+          const D = Orion.date, today = D.today();
+          const work = document.getElementById('dp-work');
+          work.min = D.toISODate(today); work.max = D.toISODate(D.add(today, 60));
+          const holidays = new Set([D.add(today, 4), D.add(today, 11), D.add(today, 12)].map(D.toISODate));
+          const fn = document.getElementById('dp-fn');
+          fn.min = D.toISODate(today);
+          fn.disabledDates = d => d.getDay() === 1 || holidays.has(D.toISODate(d));
+          fn.highlighted = [...holidays].map(d => ({ date: d, color: 'danger', label: 'Public holiday' }));
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="inline">
+    <h2>Inline calendar, highlights &amp; week numbers</h2>
+    <p><code>inline</code> renders the calendar in place (still a form control). <code>highlighted</code> marks dates with a dot (<code>color</code> = a semantic name or any CSS colour), a <code>badge</code> (e.g. a count) and a <code>label</code> (tooltip + screen-reader text). <code>week-numbers</code> adds ISO weeks and <code>week-start</code> overrides the locale's first day.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-datepicker id="dp-inline" inline week-numbers week-start="1" name="meeting"></o-datepicker>
+        <o-datepicker id="dp-inline2" inline months="2" name="window"></o-datepicker>
+        <script>{
+          const D = Orion.date, t0 = D.today();
+          const inl = document.getElementById('dp-inline');
+          inl.value = D.toISODate(D.add(t0, 2));
+          inl.highlighted = [
+            { date: D.toISODate(t0), color: 'primary', label: 'Stand-up' },
+            { date: D.toISODate(D.add(t0, 3)), color: 'danger', label: 'Release' },
+            { date: D.toISODate(D.add(t0, 6)), badge: 3, color: 'success', label: '3 meetings' },
+            { date: D.toISODate(D.add(t0, 9)), color: 'warning', label: 'Review' },
+            { date: D.toISODate(D.add(t0, 14)), badge: 12, color: 'info', label: '12 bookings' },
+          ];
+          document.getElementById('dp-inline2').value = D.toISODate(D.add(t0, 20));
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="multiple">
+    <h2>Multiple dates</h2>
+    <p><code>mode="multiple"</code> toggles days on and off; the value is an array (one <code>FormData</code> entry per date) and the input lists the dates.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="demo-grid">
+          <div>
+            <label class="o-label" for="dp-multi">Days off</label>
+            <o-datepicker id="dp-multi" name="daysOff" mode="multiple" value='["2026-09-14","2026-09-15","2026-09-21"]'></o-datepicker>
+          </div>
+          <div>
+            <o-datepicker inline mode="multiple" id="dp-multi-inline" value='["2026-09-03","2026-09-10","2026-09-17"]' today-button="false"></o-datepicker>
+          </div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="datetime">
+    <h2>Date &amp; time</h2>
+    <p><code>time</code> adds scroll-spinner columns (from <a href="timepicker.html">Time Picker</a>) beside the calendar; the value becomes <code>YYYY-MM-DDTHH:mm</code>. The clock follows the locale (12/24 h) unless <code>hour12</code> is set; <code>step</code> sets the minute interval.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="demo-grid">
+          <div>
+            <label class="o-label" for="dp-dt">Publish at (locale clock)</label>
+            <o-datepicker id="dp-dt" name="publishAt" time value="2026-09-12T14:30"></o-datepicker>
+          </div>
+          <div>
+            <label class="o-label" for="dp-dt24">Departure (24 h, 15 min)</label>
+            <o-datepicker id="dp-dt24" name="departure" time hour12="false" step="15" value="2026-09-20T07:45"></o-datepicker>
+          </div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="formats">
+    <h2>Formats &amp; typing</h2>
+    <p><code>format</code> uses <code>Orion.date</code> tokens (<code>YYYY MM M DD D MMM MMMM HH hh h mm A</code>, <code>[literal]</code>). Typed text is parsed with the same format — other separators (<code>.</code> <code>-</code> <code>/</code>) and ISO dates are accepted too; unparsable text marks the field invalid until fixed.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="demo-grid">
+          <div><label class="o-label" for="dp-f1">DD.MM.YYYY</label><o-datepicker id="dp-f1" format="DD.MM.YYYY" value="2026-12-24"></o-datepicker></div>
+          <div><label class="o-label" for="dp-f2">MMM D, YYYY</label><o-datepicker id="dp-f2" format="MMM D, YYYY" value="2026-03-05"></o-datepicker></div>
+          <div><label class="o-label" for="dp-f3">ISO</label><o-datepicker id="dp-f3" format="YYYY-MM-DD" value="2026-07-01" size="sm"></o-datepicker></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="locale">
+    <h2>Localization &amp; RTL</h2>
+    <p>Month and weekday names, digits, the input pattern, the first day of the week and 12/24 h clocks come from <code>Intl</code> for the current locale; component strings come from <code>i18n</code> (<code>datepicker.*</code>) or the <code>texts</code> property. Arrow keys mirror in right-to-left layouts.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster" style="--o-gap:.375rem" id="dp-locales">
+          <button class="o-btn o-btn-sm" type="button" data-loc="en">English (US)</button>
+          <button class="o-btn o-btn-sm" type="button" data-loc="en-GB">English (UK)</button>
+          <button class="o-btn o-btn-sm" type="button" data-loc="de-DE">Deutsch</button>
+          <button class="o-btn o-btn-sm" type="button" data-loc="ja-JP">日本語</button>
+          <button class="o-btn o-btn-sm" type="button" data-loc="ar-EG">العربية</button>
+        </div>
+        <div class="o-mt-3 demo-grid">
+          <div><o-datepicker id="dp-loc" value="2026-09-12" time></o-datepicker></div>
+          <div><o-datepicker inline id="dp-loc-inline" value="2026-09-12"></o-datepicker></div>
+        </div>
+        <script>{
+          Orion.i18n.add('de', { datepicker: { today: 'Heute', now: 'Jetzt', clear: 'Löschen', done: 'Fertig', time: 'Zeit', wk: 'KW' } });
+          Orion.i18n.add('ar', { datepicker: { today: 'اليوم', now: 'الآن', clear: 'مسح', done: 'تم', time: 'الوقت' } });
+          document.querySelectorAll('#dp-locales [data-loc]').forEach(b => b.onclick = () => Orion.i18n.set(b.dataset.loc, { persist: false }));
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="forms">
+    <h2>Forms &amp; validation</h2>
+    <p>Form-associated: <code>name</code>, <code>required</code>, <code>min</code>/<code>max</code> (<code>rangeUnderflow</code> / <code>rangeOverflow</code>), unavailable dates and bad input all feed the browser's constraint validation.</p>
+    <div class="docs-demo">
+      <template>
+        <form id="dp-form" class="o-stack" style="--o-gap:.75rem">
+          <div class="demo-grid">
+            <div><label class="o-label is-required" for="dpf-birth">Date of birth</label><o-datepicker id="dpf-birth" name="birth" required max="2010-12-31" placeholder="Before 2011"></o-datepicker></div>
+            <div><label class="o-label is-required" for="dpf-call">Call back at</label><o-datepicker id="dpf-call" name="callAt" time required></o-datepicker></div>
+            <div><label class="o-label" for="dpf-days">Available days</label><o-datepicker id="dpf-days" name="days" mode="multiple"></o-datepicker></div>
+          </div>
+          <div class="o-cluster"><button class="o-btn o-btn-primary">Submit</button><button class="o-btn" type="reset">Reset</button></div>
+          <pre class="demo-out" id="dp-form-out">Submit to see FormData</pre>
+        </form>
+        <script>{
+          document.getElementById('dp-form').addEventListener('submit', e => { e.preventDefault(); document.getElementById('dp-form-out').textContent = JSON.stringify([...new FormData(e.target)]); });
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="monthgrid">
+    <h2>Reusing the month grid</h2>
+    <p><code>new Orion.MonthGrid(el, options)</code> renders one accessible month (<code>&lt;table role="grid"&gt;</code>) and is what the calendar, booking and scheduling widgets build on. Supply <code>isDisabled</code>, <code>dayState</code> (keys become <code>.is-*</code> classes), <code>renderDay</code> for custom cells and <code>onSelect</code>; <code>Orion.MonthGrid.keyTarget(event, date, { rtl })</code> gives you the standard arrow / Home / End / PageUp / PageDown movement. <code>Orion.Calendar</code> adds captions, month/year views and multi-month keyboard paging on top.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="price-cal">
+          <div class="o-cal-caption">
+            <button class="o-cal-nav" type="button" id="pc-prev" aria-label="Previous month"></button>
+            <strong id="pc-title" aria-live="polite"></strong>
+            <button class="o-cal-nav" type="button" id="pc-next" aria-label="Next month"></button>
+          </div>
+          <div id="pc-grid"></div>
+          <div class="o-text-sm o-text-muted o-mt-2" id="pc-out">Nightly prices — green = under $100.</div>
+        </div>
+        <script>{
+          const D = Orion.date, today = D.today();
+          let view = D.startOf(today, 'M'), picked = null;
+          const price = d => 70 + ((d.getDate() * 37 + d.getMonth() * 13) % 95);
+          const title = document.getElementById('pc-title'), out = document.getElementById('pc-out');
+          document.getElementById('pc-prev').innerHTML = Orion.icon('chevron-left');
+          document.getElementById('pc-next').innerHTML = Orion.icon('chevron-right');
+          const grid = new Orion.MonthGrid(document.getElementById('pc-grid'), {
+            outsideDays: false, fixedWeeks: false, labelledBy: 'pc-title',
+            isDisabled: d => D.isBefore(d, today, 'd'),
+            dayState: d => ({ selected: !!picked && D.isSame(d, picked), cheap: price(d) < 100 }),
+            renderDay: d => `<span class="o-mg-day">${d.getDate()}</span><small class="pc-price">$${price(d)}</small>`,
+            dayLabel: d => D.format(d, 'dddd, MMMM D') + ', $' + price(d),
+            onSelect: d => { picked = d; grid.refresh(); out.textContent = D.format(d, 'dddd, MMM D') + ' — $' + price(d) + ' / night'; },
+          });
+          const show = (focus) => {
+            title.textContent = Orion.format.date(view, { month: 'long', year: 'numeric' });
+            grid.set({ year: view.getFullYear(), month: view.getMonth(), focusDate: focus && D.isSame(focus, view, 'M') ? focus : D.isSame(today, view, 'M') ? today : view }).render();
+          };
+          document.getElementById('pc-prev').onclick = () => { view = D.add(view, -1, 'M'); show(); };
+          document.getElementById('pc-next').onclick = () => { view = D.add(view, 1, 'M'); show(); };
+          grid.table.addEventListener('keydown', e => {
+            const td = e.target.closest('td[data-date]');
+            if (!td) return;
+            const d = D.parse(td.dataset.date);
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (td.getAttribute('aria-disabled') !== 'true') grid.o.onSelect(d); return; }
+            const next = Orion.MonthGrid.keyTarget(e, d, { rtl: Orion.dom.isRTL(td) });
+            if (!next) return;
+            e.preventDefault();
+            if (!D.isSame(next, view, 'M')) view = D.startOf(next, 'M');
+            show(next); grid.focus(next);
+          });
+          show();
+        }</script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">// A 3-month availability overview with the full calendar controller
+const cal = new Orion.Calendar(el, {
+  months: 3, min: new Date(),
+  isDisabled: d =&gt; bookedDays.has(Orion.date.toISODate(d)),
+  highlight: d =&gt; promoDays.has(Orion.date.toISODate(d)) ? { color: 'success', label: 'Promo' } : null,
+  onSelect: d =&gt; console.log(d),
+});
+cal.show(new Date(), { focus: true });</pre>
+  </section>
+
+  <section id="events">
+    <h2>Events</h2>
+    <div class="docs-demo">
+      <template>
+        <div style="max-width:18rem"><o-datepicker id="dp-ev" placeholder="Interact with me"></o-datepicker></div>
+        <div class="docs-log" id="dp-ev-log"></div>
+        <script>{
+          const el = document.getElementById('dp-ev');
+          ['o-change', 'o-open', 'o-close', 'o-view'].forEach(n => el.addEventListener(n, e => docs.log('#dp-ev-log', n + ' ' + JSON.stringify(e.detail ? (e.detail.value ?? e.detail.month ?? e.detail.reason ?? '') : ''))));
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>↓ / Alt+↓ / F4 (input)</td><td>Open the calendar and focus the selected (or today's) date.</td></tr>
+        <tr><td>Enter (input)</td><td>Parse the typed text; close the popup.</td></tr>
+        <tr><td>← / →</td><td>Previous / next day (mirrored in RTL).</td></tr>
+        <tr><td>↑ / ↓</td><td>Same day previous / next week.</td></tr>
+        <tr><td>Home / End</td><td>First / last day of the week.</td></tr>
+        <tr><td>PageUp / PageDown</td><td>Previous / next month (Shift: year).</td></tr>
+        <tr><td>Enter / Space</td><td>Select the focused date (month / year in the quick-pick views).</td></tr>
+        <tr><td>Esc</td><td>Back from the month / year view, otherwise close and return to the input.</td></tr>
+        <tr><td>Tab</td><td>Cycles through the caption, grid, time columns and footer while the popup is open.</td></tr>
+      </tbody>
+    </table>
+    <p>ARIA: the input is a <code>combobox</code> with <code>aria-haspopup="dialog"</code>; the popup is a <code>dialog</code>, each month a <code>grid</code> labelled by its caption with <code>gridcell</code>s carrying full-date labels, <code>aria-selected</code>, <code>aria-disabled</code> and <code>aria-current="date"</code>. Month changes are announced.</p>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Property (attribute)</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>value</td><td>string | Date | string[]</td><td>—</td><td><code>YYYY-MM-DD</code>, <code>YYYY-MM-DDTHH:mm</code> with <code>time</code>, array with <code>mode="multiple"</code>.</td></tr>
+        <tr><td>name, required, disabled, readonly</td><td>—</td><td>—</td><td>Form-control basics.</td></tr>
+        <tr><td>mode</td><td>'single' | 'multiple'</td><td>'single'</td><td>One date or a set of dates.</td></tr>
+        <tr><td>format</td><td>string</td><td>locale pattern</td><td>Display / typing format (<code>Orion.date</code> tokens).</td></tr>
+        <tr><td>min · max</td><td>ISO string | Date</td><td>—</td><td>Selectable range (inclusive).</td></tr>
+        <tr><td>disabled-dates</td><td>Array | (date) =&gt; boolean</td><td>—</td><td>ISO dates, <code>{from, to}</code>, weekday numbers, <code>weekends</code>, <code>weekdays</code>; or a function / global function name.</td></tr>
+        <tr><td>highlighted</td><td>Array | (date) =&gt; mark</td><td>—</td><td>ISO dates or <code>{ date, color, label, badge }</code>.</td></tr>
+        <tr><td>months</td><td>number</td><td>1</td><td>Months side by side (they wrap in narrow containers).</td></tr>
+        <tr><td>week-numbers · week-start</td><td>boolean · 0-6</td><td>false · locale</td><td>ISO week column; first day of the week.</td></tr>
+        <tr><td>outside-days</td><td>boolean</td><td>true for one month</td><td>Show adjacent-month days.</td></tr>
+        <tr><td>time · hour12 · step</td><td>boolean · boolean · number</td><td>false · locale · 5</td><td>Datetime mode, clock type, minute step.</td></tr>
+        <tr><td>inline</td><td>boolean</td><td>false</td><td>Render the calendar in place.</td></tr>
+        <tr><td>today-button · clearable · close-on-select</td><td>boolean</td><td>true</td><td>Footer buttons / clear icon / close after picking.</td></tr>
+        <tr><td>placeholder · size</td><td>string · 'sm' | 'lg'</td><td>pattern</td><td>Presentation.</td></tr>
+        <tr><td>texts</td><td>object</td><td>—</td><td><code>today, now, clear, done, time, dialog, invalid, min, max, unavailable, choose, prevMonth, nextMonth, …</code></td></tr>
+        <tr><td>date · dates · calendar</td><td>read-only</td><td></td><td>Selected Date(s) and the internal <code>Orion.Calendar</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-change</td><td>{ value, date } / { value, dates }</td><td>User changed the value (plus native <code>input</code>/<code>change</code>).</td></tr>
+        <tr><td>o-before-open · o-open · o-close</td><td>— · — · { reason }</td><td>Popup lifecycle (the first is cancelable).</td></tr>
+        <tr><td>o-view</td><td>{ month }</td><td>The displayed month changed (<code>YYYY-MM-01</code>).</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>open(focusCalendar = false) / close() / toggle()</td><td>Control the popup.</td></tr>
+        <tr><td>show(date)</td><td>Navigate the calendar to a month.</td></tr>
+        <tr><td>clear(emit = false) · focus()</td><td>Empty the value · focus the input (inline: the grid).</td></tr>
+      </tbody>
+    </table>
+    <h3>Orion.MonthGrid &amp; Orion.Calendar</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>new MonthGrid(el, opts)</td><td><code>year, month, weekStart, locale, weekNumbers, outsideDays, fixedWeeks, focusDate, labelledBy, isDisabled, dayState, highlight, renderDay, dayLabel, onSelect, onHover, onFocus</code>.</td></tr>
+        <tr><td>grid.set(opts).render() · refresh() · cell(d) · focus(d) · destroy()</td><td>Rebuild, repaint states, find / focus a cell, remove.</td></tr>
+        <tr><td>MonthGrid.keyTarget(e, date, { rtl, weekStart })</td><td>Date a navigation key moves to (or null).</td></tr>
+        <tr><td>new Calendar(el, opts)</td><td>MonthGrid options plus <code>months, min, max, onView</code>.</td></tr>
+        <tr><td>cal.show(d, { focus, force }) · focus(d) · moveFocus(d) · refresh() · render() · isDisabled(d)</td><td>Navigate, focus and repaint.</td></tr>
+      </tbody>
+    </table>
+    <p>CSS: <code>--o-cal-cell</code> (day size), <code>--o-cal-gap</code>; states <code>.is-selected .is-today .is-disabled .is-outside .is-weekend .is-in-range .is-range-start .is-range-end .is-preview .is-highlighted</code>.</p>
+  </section>
+</main>
+</body>
+</html>

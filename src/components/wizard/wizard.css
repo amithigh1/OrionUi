@@ -1,0 +1,31 @@
+/* <o-wizard> multi-step forms */
+o-wizard { display: block; }
+.o-wizard-header { margin-bottom: 1.5rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--o-border); }
+.o-wizard-step { outline: none; }
+.o-wizard-step > :last-child { margin-bottom: 0; }
+.o-wizard-footer { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--o-border); }
+.o-wizard-status { font-size: var(--o-fs-xs); color: var(--o-text-muted); font-variant-numeric: tabular-nums; }
+.o-wizard-back[hidden] + .o-wizard-status { margin-inline-start: 0; }
+.o-wizard-end { display: flex; flex-wrap: wrap; gap: .5rem; margin-inline-start: auto; }
+.o-wizard.is-finished .o-wizard-finish { pointer-events: none; }
+@media (max-width: 479.98px) {
+  .o-wizard-status { display: none; }
+  .o-wizard-footer > .o-wizard-back, .o-wizard-end, .o-wizard-end > .o-btn { flex: 1 1 auto; }
+}
+
+/* vertical layout: steps on the side */
+@media (min-width: 768px) {
+  .o-wizard.is-vertical { display: grid; grid-template-columns: minmax(11rem, 15rem) minmax(0, 1fr); column-gap: 2rem; align-items: start; }
+  .o-wizard.is-vertical > .o-wizard-header { grid-column: 1; grid-row: 1 / span 2; margin: 0; padding: 0; padding-inline-end: 1.5rem; border-bottom: 0; border-inline-end: 1px solid var(--o-border); }
+  .o-wizard.is-vertical > :not(.o-wizard-header) { grid-column: 2; }
+  .o-wizard.is-vertical > .o-wizard-footer { margin-top: 1.5rem; }
+}
+
+/* review step */
+.o-wizard-review { display: grid; gap: .75rem; }
+.o-wizard-review-step { padding: 1rem 1.25rem; background: var(--o-surface-2); border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); }
+.o-wizard-review-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-bottom: .5rem; }
+.o-wizard-review-title { margin: 0; font-size: var(--o-fs-base); font-weight: 600; }
+.o-wizard-review-list { font-size: var(--o-fs-sm); }
+.o-wizard-review-list > dd { overflow-wrap: anywhere; }
+.o-wizard-review-list > dd.is-empty { color: var(--o-text-subtle); font-style: italic; }

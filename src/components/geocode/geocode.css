@@ -1,0 +1,3 @@
+/* <o-address-input> — thin wrapper around <o-autocomplete>; sizing only. */
+.o-address-input { display: block; width: 100%; }
+.o-address-input-ac { width: 100%; }

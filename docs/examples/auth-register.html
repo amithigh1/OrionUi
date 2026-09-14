@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Create your account — Orion Admin</title>
+<script src="../../dist/orion.js"></script>
+</head>
+<body>
+<div class="o-auth-split">
+  <div class="o-auth-cover">
+    <div class="o-auth-cover-brand">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>
+      Orion Admin
+    </div>
+    <div class="o-auth-cover-body">
+      <div class="o-auth-illustration">
+        <svg viewBox="0 0 480 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+          <defs><linearGradient id="cardGrad2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".97"/><stop offset="1" stop-color="#ffffff" stop-opacity=".82"/></linearGradient></defs>
+          <rect x="40" y="40" width="400" height="260" rx="18" fill="url(#cardGrad2)"/>
+          <circle cx="66" cy="66" r="6" fill="#ef4444"/><circle cx="86" cy="66" r="6" fill="#f59e0b"/><circle cx="106" cy="66" r="6" fill="#22c55e"/>
+          <circle cx="120" cy="150" r="34" fill="#e0e7ff"/>
+          <circle cx="120" cy="138" r="14" fill="#818cf8"/>
+          <path d="M92 176c0-16 13-24 28-24s28 8 28 24" fill="#818cf8"/>
+          <rect x="180" y="118" width="180" height="14" rx="7" fill="#c7d2fe"/>
+          <rect x="180" y="142" width="140" height="10" rx="5" fill="#e0e7ff"/>
+          <rect x="180" y="164" width="160" height="10" rx="5" fill="#e0e7ff"/>
+          <rect x="64" y="230" width="352" height="40" rx="10" fill="#4338ca"/>
+          <rect x="180" y="246" width="120" height="10" rx="5" fill="#eef2ff"/>
+        </svg>
+      </div>
+      <h2 class="o-auth-cover-title">Set up your team in minutes.</h2>
+      <p class="o-auth-cover-text">Invite teammates, assign roles and start tracking KPIs today — no credit card required.</p>
+    </div>
+    <div class="o-auth-cover-quote">
+      “Onboarding our whole team took less than an hour.”
+      <b>— Marcus Bello, CTO at Fenwick Labs</b>
+    </div>
+  </div>
+  <div class="o-auth-split-form">
+    <div class="o-auth-card">
+      <o-auth-form type="register" social='["google","github"]' terms-url="#" id="register-form"></o-auth-form>
+    </div>
+  </div>
+</div>
+<script>
+  document.getElementById('register-form').onSubmit = async (data) => {
+    await new Promise(r => setTimeout(r, 700));
+    alert('Account created for ' + data.email + ' (demo)');
+  };
+</script>
+</body>
+</html>

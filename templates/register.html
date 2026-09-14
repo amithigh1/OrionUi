@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Create account — Orion Admin</title>
+<script src="../dist/orion.js"></script>
+<style>
+  body { margin: 0; display: grid; place-items: center; min-height: 100vh; padding: 2rem 1rem;
+    background: radial-gradient(800px 360px at 50% -10%, var(--o-primary-subtle), transparent 70%), var(--o-bg); }
+  .reg { width: 100%; max-width: 30rem; }
+  .reg-logo { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 12px; color: #fff;
+    background: linear-gradient(135deg, var(--o-primary), color-mix(in srgb, var(--o-primary) 50%, var(--o-info))); }
+</style>
+</head>
+<body>
+<div class="reg">
+  <div class="o-hstack o-mb-5"><span class="reg-logo"><o-icon name="sparkles" size="20"></o-icon></span><b class="o-text-lg">Orion Admin</b></div>
+
+  <div class="o-card">
+    <div class="o-card-body">
+      <h1 class="o-h4 o-mb-1">Create your account</h1>
+      <p class="o-text-muted">Start your 14-day trial. No credit card required.</p>
+
+      <form id="reg" class="o-form-grid o-mt-4" data-o-validate novalidate>
+        <div class="o-field"><label class="o-label is-required" for="r-first">First name</label>
+          <input class="o-input" id="r-first" name="first" autocomplete="given-name" data-o-rules="required"><div class="o-error"></div></div>
+        <div class="o-field"><label class="o-label is-required" for="r-last">Last name</label>
+          <input class="o-input" id="r-last" name="last" autocomplete="family-name" data-o-rules="required"><div class="o-error"></div></div>
+        <div class="o-field o-span-full"><label class="o-label is-required" for="r-email">Work email</label>
+          <input class="o-input" id="r-email" name="email" type="email" autocomplete="email" data-o-rules="required|email"><div class="o-error"></div></div>
+        <div class="o-field o-span-full"><label class="o-label is-required" for="r-company">Company</label>
+          <input class="o-input" id="r-company" name="company" autocomplete="organization" data-o-rules="required"><div class="o-error"></div></div>
+        <div class="o-field o-span-full"><label class="o-label is-required" for="r-phone">Phone</label>
+          <o-phone id="r-phone" name="phone" country="MY" required></o-phone><div class="o-error"></div></div>
+        <div class="o-field o-span-full"><label class="o-label is-required" for="r-pass">Password</label>
+          <input class="o-input" id="r-pass" name="password" type="password" autocomplete="new-password" data-o-password-toggle data-o-strength data-o-rules="required|minlength:8"><div class="o-error"></div></div>
+        <label class="o-check o-span-full"><input type="checkbox" name="terms" data-o-rules="accepted">
+          <span>I agree to the <a href="#terms">Terms of Service</a> and <a href="#privacy">Privacy Policy</a></span></label>
+        <div class="o-error o-span-full" id="terms-error"></div>
+        <button class="o-btn o-btn-primary o-btn-block o-btn-lg o-span-full" type="submit">Create account</button>
+      </form>
+
+      <div class="o-divider o-my-4">or</div>
+      <div class="o-grid o-grid-cols-2 o-gap-2">
+        <button class="o-btn"><o-icon name="brand-google"></o-icon>Google</button>
+        <button class="o-btn"><o-icon name="brand-github"></o-icon>GitHub</button>
+      </div>
+    </div>
+  </div>
+  <p class="o-text-center o-text-muted o-mt-4">Already have an account? <a href="login.html">Sign in</a></p>
+</div>
+
+<script>
+  const form = document.getElementById('reg');
+  const v = Orion.validate ? Orion.validate(form, { live: 'blur' }) : null;
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (v && !(await v.validate())) return;
+    const btn = form.querySelector('button[type=submit]');
+    btn.classList.add('is-loading');
+    // Replace with: await Orion.http.post('/api/signup', Orion.serialize(form))
+    setTimeout(() => {
+      btn.classList.remove('is-loading');
+      Orion.toast?.success('Account created — check your inbox to verify your email');
+      setTimeout(() => (location.href = 'dashboard.html'), 900);
+    }, 800);
+  });
+</script>
+</body>
+</html>

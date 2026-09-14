@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bottom Nav — Orion Admin</title>
+<meta name="docs:section" content="Layout &amp; Navigation">
+<meta name="docs:order" content="40">
+<meta name="docs:desc" content="Fixed mobile tab bar with badges, a center action button and hide-on-scroll">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Bottom Nav</h1>
+    <p class="docs-lead"><code>.o-bottom-nav</code> is a fixed mobile tab bar with icons, labels, badges, an active indicator,
+      safe-area insets for notched phones, an optional raised center action button, and a hide-on-scroll option. It only
+      renders on screens narrower than 768px by default (add <code>.o-bottom-nav-always</code> to show it everywhere, e.g.
+      inside the mobile preview below).</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic</h2>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div style="position:relative;height:8rem;border:1px solid var(--o-border);border-radius:var(--o-radius-lg);overflow:hidden">
+          <nav class="o-bottom-nav o-bottom-nav-always" style="position:absolute" aria-label="Primary">
+            <a class="o-bottom-nav-link is-active" href="#" aria-current="page"><o-icon name="dashboard"></o-icon><span>Home</span></a>
+            <a class="o-bottom-nav-link" href="#"><o-icon name="search"></o-icon><span>Search</span></a>
+            <a class="o-bottom-nav-link" href="#"><o-icon name="bell"></o-icon><span>Alerts</span><span class="o-badge o-badge-counter">3</span></a>
+            <a class="o-bottom-nav-link" href="#"><o-icon name="user"></o-icon><span>Profile</span></a>
+          </nav>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="center">
+    <h2>Center action button</h2>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div style="position:relative;height:8rem;border:1px solid var(--o-border);border-radius:var(--o-radius-lg);overflow:hidden">
+          <nav class="o-bottom-nav o-bottom-nav-always" style="position:absolute" aria-label="Primary with center action">
+            <a class="o-bottom-nav-link is-active" href="#" aria-current="page"><o-icon name="dashboard"></o-icon><span>Home</span></a>
+            <a class="o-bottom-nav-link" href="#"><o-icon name="search"></o-icon><span>Search</span></a>
+            <button class="o-bottom-nav-action" aria-label="New" onclick="docs.log('#log-bn','New tapped')"><o-icon name="plus"></o-icon></button>
+            <a class="o-bottom-nav-link" href="#"><o-icon name="bell"></o-icon><span>Alerts</span></a>
+            <a class="o-bottom-nav-link" href="#"><o-icon name="user"></o-icon><span>Profile</span></a>
+          </nav>
+        </div>
+        <div class="docs-log" id="log-bn"></div>
+      </template>
+    </div>
+  </section>
+
+  <section id="autohide">
+    <h2>Auto-detected active link &amp; hide-on-scroll</h2>
+    <p>Active state is detected from <code>href</code> vs. the current URL (like the sidebar) unless
+      <code>data-o-bottom-nav="manual"</code> is set. <code>data-o-bottom-nav-autohide</code> slides the bar away on scroll-down
+      and back on scroll-up. Scroll inside the panel below.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div style="position:relative;height:12rem;overflow:auto;border:1px solid var(--o-border);border-radius:var(--o-radius-lg)">
+          <div style="height:40rem;padding:1rem">
+            <p class="o-text-muted">Scroll down inside this box — the tab bar hides. Scroll up and it reappears.</p>
+          </div>
+          <nav class="o-bottom-nav o-bottom-nav-always" data-o-bottom-nav="manual" data-o-bottom-nav-autohide style="position:sticky;bottom:0" aria-label="Auto-hide example">
+            <a class="o-bottom-nav-link is-active" href="#" aria-current="page"><o-icon name="dashboard"></o-icon><span>Home</span></a>
+            <a class="o-bottom-nav-link" href="#"><o-icon name="settings"></o-icon><span>Settings</span></a>
+          </nav>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Class / attribute</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.o-bottom-nav[data-o-bottom-nav]</td><td>Root, fixed to the bottom of the viewport (hidden ≥768px unless <code>.o-bottom-nav-always</code>).</td></tr>
+        <tr><td>.o-bottom-nav-link</td><td>Icon + label tab; <code>.is-active</code> / <code>aria-current="page"</code> for the current one.</td></tr>
+        <tr><td>.o-bottom-nav-action</td><td>Raised circular center action button.</td></tr>
+        <tr><td>data-o-bottom-nav="manual"</td><td>Disables automatic URL-based active detection.</td></tr>
+        <tr><td>data-o-bottom-nav-autohide</td><td>Hide on scroll-down, show on scroll-up.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody><tr><td>o-navigate</td><td><code>{ href, link }</code></td><td>Dispatched on the nav whenever the active link changes.</td></tr></tbody>
+    </table>
+    <h3>JavaScript API</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Orion.bottomNav.sync(el?)</td><td>Re-run active-link detection.</td></tr>
+        <tr><td>setActive(el, hrefOrLink)</td><td>Mark a tab active programmatically.</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS custom properties</h3>
+    <p><code>--o-bottom-nav-h</code> (bar height, default <code>3.75rem</code>) and <code>--o-bottom-nav-space</code> (auto-computed;
+      add as <code>padding-bottom</code> on your scroll container so content is not hidden behind the bar — already applied to
+      <code>.o-app</code> automatically).</p>
+  </section>
+</main>
+</body>
+</html>

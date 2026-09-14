@@ -1,0 +1,9 @@
+/* Auto save: status indicator + restore banner */
+.o-autosave-status, [data-o-autosave-status] { display: inline-flex; align-items: center; gap: .375rem; min-height: 1.25rem; font-size: var(--o-fs-xs); color: var(--o-text-muted); white-space: nowrap; }
+.o-autosave-status .o-icon { width: .875rem; height: .875rem; }
+.o-autosave-status[data-state="saved"] .o-icon, .o-autosave-status[data-state="restored"] .o-icon { color: var(--o-success-text); }
+.o-autosave-status[data-state="offline"], .o-autosave-status[data-state="retrying"] { color: var(--o-warning-text); }
+.o-autosave-status[data-state="error"] { color: var(--o-danger-text); }
+.o-autosave-banner { flex-wrap: wrap; align-items: center; }
+.o-autosave-banner > .o-alert-content { flex: 1 1 14rem; }
+.o-autosave-actions { display: flex; flex-wrap: wrap; gap: .375rem; }

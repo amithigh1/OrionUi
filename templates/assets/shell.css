@@ -1,0 +1,13 @@
+/* Small additions used by the templates (everything else comes from Orion). */
+.tpl-hero { padding: 1.25rem 1.5rem; border-radius: var(--o-radius-lg); color: #fff;
+  background: linear-gradient(135deg, var(--o-primary), color-mix(in srgb, var(--o-primary) 50%, var(--o-info))); }
+.tpl-hero h2 { color: #fff; margin: 0 0 .25rem; }
+.tpl-hero p { color: rgba(255, 255, 255, .85); margin: 0; }
+.tpl-card-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); }
+.tpl-preview { display: grid; place-items: center; height: 8rem; border-radius: var(--o-radius) var(--o-radius) 0 0;
+  background: var(--o-surface-2); color: var(--o-text-subtle); border-bottom: 1px solid var(--o-border); }
+.tpl-preview .o-icon { width: 2.5rem; height: 2.5rem; }
+.tpl-chart { height: 18rem; }
+.tpl-two-col { display: grid; gap: 1.25rem; grid-template-columns: 1fr; }
+@media (min-width: 992px) { .tpl-two-col { grid-template-columns: 2fr 1fr; } }
+.tpl-full-height { height: calc(100vh - var(--o-header-h) - 4.5rem); min-height: 30rem; }

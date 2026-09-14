@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mega Menu — Orion Admin</title>
+<meta name="docs:section" content="Layout &amp; Navigation">
+<meta name="docs:order" content="35">
+<meta name="docs:desc" content="Full-width multi-column panel opened from a navbar item">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Mega Menu</h1>
+    <p class="docs-lead"><code>.o-megamenu</code> opens a full-width, multi-column panel from a navbar item — hover-intent on
+      desktop, click and full keyboard support everywhere, and an automatic inline accordion fallback on mobile (below
+      992px) so it works inside a collapsed navbar drawer.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic</h2>
+    <p>Hover "Solutions" (or click / focus it and press <kbd class="o-kbd">↓</kbd>). The panel spans the full width of its
+      containing navbar. Try <kbd class="o-kbd">←</kbd>/<kbd class="o-kbd">→</kbd> on the top-level links, and
+      <kbd class="o-kbd">Escape</kbd> to close.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <nav class="o-navbar" aria-label="Main" style="border-radius:var(--o-radius-lg);overflow:visible;position:relative">
+          <div class="o-navbar-inner">
+            <a class="o-navbar-brand" href="#">Orion Admin</a>
+            <div class="o-navbar-collapse">
+              <ul class="o-navbar-nav">
+                <li class="o-navbar-item"><a class="o-navbar-link is-active" href="#" aria-current="page">Dashboard</a></li>
+                <li class="o-navbar-item o-megamenu-item">
+                  <button class="o-navbar-link" type="button" data-o-megamenu-toggle aria-haspopup="true"><span>Solutions</span><o-icon name="chevron-down" class="o-navbar-caret"></o-icon></button>
+                  <div class="o-megamenu">
+                    <div class="o-megamenu-inner">
+                      <div class="o-megamenu-col">
+                        <div class="o-megamenu-heading">Platform</div>
+                        <a class="o-megamenu-link" href="#"><o-icon name="chart-bar"></o-icon><span><strong>Analytics</strong><small>Understand your users</small></span></a>
+                        <a class="o-megamenu-link" href="#"><o-icon name="shield"></o-icon><span><strong>Security</strong><small>SSO, audit logs, roles</small></span></a>
+                        <a class="o-megamenu-link" href="#"><o-icon name="zap"></o-icon><span><strong>Automation</strong><small>Workflows &amp; webhooks</small></span></a>
+                      </div>
+                      <div class="o-megamenu-col">
+                        <div class="o-megamenu-heading">Solutions</div>
+                        <a class="o-megamenu-link" href="#"><o-icon name="briefcase"></o-icon><span><strong>Enterprise</strong><small>For large organizations</small></span></a>
+                        <a class="o-megamenu-link" href="#"><o-icon name="store"></o-icon><span><strong>Retail</strong><small>Inventory &amp; orders</small></span></a>
+                        <a class="o-megamenu-link" href="#"><o-icon name="heart"></o-icon><span><strong>Non-profit</strong><small>Discounted plans</small></span></a>
+                      </div>
+                      <div class="o-megamenu-promo">
+                        <h4>What's new</h4>
+                        <p>Real-time collaboration is here — see changes from your team as they happen.</p>
+                        <a class="o-btn o-btn-primary o-btn-sm" href="#">Read more <o-icon name="arrow-right"></o-icon></a>
+                      </div>
+                    </div>
+                  </div>
+                </li>
+                <li class="o-navbar-item"><a class="o-navbar-link" href="#">Pricing</a></li>
+                <li class="o-navbar-item"><a class="o-navbar-link" href="#">Docs</a></li>
+              </ul>
+            </div>
+          </div>
+        </nav>
+        <div class="docs-log" id="log-mm" style="margin-top:9rem"></div>
+        <script>
+          document.querySelector('[data-o-megamenu-toggle]').addEventListener('o-open', () => docs.log('#log-mm', 'o-open'));
+          document.querySelector('[data-o-megamenu-toggle]').addEventListener('o-close', e => docs.log('#log-mm', `o-close (${e.detail?.reason})`));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="mobile">
+    <h2>Mobile accordion fallback</h2>
+    <p>Below 992px (or inside any container whose <code>--o-megamenu-mode</code> is switched to <code>collapsed</code>), the
+      same markup renders as a plain inline accordion — no overlay, no floating panel. Resize your browser narrower than
+      992px to see the "Solutions" item above switch automatically, or preview it directly at mobile width in the shell
+      examples on the <a href="app-shell.html">App Shell</a> page.</p>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Class / attribute</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.o-megamenu-item</td><td>Wraps the trigger and the panel (usually an <code>&lt;li&gt;</code> inside <code>.o-navbar-nav</code>).</td></tr>
+        <tr><td>data-o-megamenu-toggle</td><td>The trigger; needs <code>aria-haspopup="true"</code>. <code>aria-expanded</code> / <code>aria-controls</code> are managed automatically.</td></tr>
+        <tr><td>.o-megamenu</td><td>The panel — the sibling immediately after the trigger.</td></tr>
+        <tr><td>.o-megamenu-inner</td><td>Centering row (matches <code>--o-container-max</code>).</td></tr>
+        <tr><td>.o-megamenu-col, .o-megamenu-heading, .o-megamenu-link</td><td>A column of links with an icon, title and description.</td></tr>
+        <tr><td>.o-megamenu-promo</td><td>Optional feature/promo card, hidden automatically on the mobile accordion.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events (on the trigger)</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-open</td><td>—</td><td>The panel opened (hover, click or keyboard).</td></tr>
+        <tr><td>o-close</td><td><code>{ reason }</code></td><td><code>toggle｜leave｜escape｜outside｜nav｜resize｜replaced</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>JavaScript API</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody><tr><td>Orion.megamenu.close() / isOpen()</td><td>Close the currently open panel / check state.</td></tr></tbody>
+    </table>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Enter / Space</td><td>Toggle the panel (focuses the first link when opening).</td></tr>
+        <tr><td>↓ (on the trigger)</td><td>Open and focus the first link.</td></tr>
+        <tr><td>↓ / ↑ (inside the panel)</td><td>Move between links in document order.</td></tr>
+        <tr><td>← / → (on a top-level trigger)</td><td>Move to the previous/next navbar item (mirrored in RTL).</td></tr>
+        <tr><td>Escape</td><td>Close and return focus to the trigger.</td></tr>
+        <tr><td>Tab / click outside</td><td>Closes the panel.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Getting started — Orion Admin</title>
+<meta name="docs:section" content="Getting Started">
+<meta name="docs:order" content="10">
+<meta name="docs:desc" content="Install via CDN, npm or download; configure; custom builds">
+<script src="../dist/orion.js"></script>
+<link rel="stylesheet" href="assets/docs.css">
+<script src="assets/nav.js" defer></script>
+<script src="assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Getting started</h1>
+    <p class="docs-lead">Orion Admin is one file: <code>orion.js</code>. It contains every component, the CSS (injected automatically) and the icons. Pick how you want to load it.</p>
+  </header>
+
+  <section id="install">
+    <h2>1. Install</h2>
+    <h3>CDN (fastest way to go live)</h3>
+    <pre class="docs-code-block" data-lang="html">
+      &lt;!-- latest --&gt;
+      &lt;script src="https://cdn.jsdelivr.net/npm/orion-admin/dist/orion.min.js"&gt;&lt;/script&gt;
+      &lt;!-- pinned version (recommended for production) --&gt;
+      &lt;script src="https://cdn.jsdelivr.net/npm/orion-admin@0.1.0/dist/orion.min.js"&gt;&lt;/script&gt;
+      &lt;!-- or unpkg --&gt;
+      &lt;script src="https://unpkg.com/orion-admin@0.1.0/dist/orion.min.js"&gt;&lt;/script&gt;
+    </pre>
+    <h3>npm</h3>
+    <pre class="docs-code-block" data-lang="js">
+      // npm install orion-admin
+      import Orion from 'orion-admin';        // registers every component and injects the CSS
+      Orion.toast.success('Ready!');
+    </pre>
+    <h3>Download / self-host</h3>
+    <p>Copy <code>dist/orion.min.js</code> into your project (for example <code>/assets/orion.min.js</code>) and reference it. Nothing else is needed: no fonts, no images and no other CSS or JS files.</p>
+  </section>
+
+  <section id="first-page">
+    <h2>2. Your first admin page</h2>
+    <p>Put the script in <code>&lt;head&gt;</code> so styles apply before the page renders (no flash of unstyled content).</p>
+    <pre class="docs-code-block" data-lang="html">
+      &lt;!doctype html&gt;
+      &lt;html lang="en" data-theme="auto"&gt;
+      &lt;head&gt;
+        &lt;meta charset="utf-8"&gt;
+        &lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;
+        &lt;title&gt;Dashboard&lt;/title&gt;
+        &lt;script src="orion.min.js"&gt;&lt;/script&gt;
+      &lt;/head&gt;
+      &lt;body class="o-container o-py-6"&gt;
+        &lt;div class="o-page-header"&gt;
+          &lt;h1 class="o-page-title"&gt;Users&lt;/h1&gt;
+          &lt;button class="o-btn o-btn-primary"&gt;&lt;o-icon name="plus"&gt;&lt;/o-icon&gt; New user&lt;/button&gt;
+        &lt;/div&gt;
+        &lt;div class="o-grid o-grid-cols-1 o-grid-cols-md-3 o-mb-6"&gt;
+          &lt;div class="o-card o-card-body"&gt;&lt;div class="o-stat-label"&gt;Active&lt;/div&gt;&lt;div class="o-stat-value"&gt;1,284&lt;/div&gt;&lt;/div&gt;
+          ...
+        &lt;/div&gt;
+        &lt;o-datatable id="users"&gt;&lt;/o-datatable&gt;
+        &lt;script&gt;
+          const table = document.getElementById('users');
+          table.columns = [{ key: 'name', title: 'Name' }, { key: 'email', title: 'Email' }];
+          table.rows = [{ id: 1, name: 'Ada Lovelace', email: 'ada@example.com' }];
+        &lt;/script&gt;
+      &lt;/body&gt;
+      &lt;/html&gt;
+    </pre>
+    <p>Full page templates (dashboard, users, login, calendar, kanban, settings and more) are ready to copy from <a href="../templates/index.html">Templates</a>.</p>
+  </section>
+
+  <section id="how-it-works">
+    <h2>3. How the library is organised</h2>
+    <div class="docs-api-wrap">
+      <table class="docs-api">
+        <thead><tr><th>Layer</th><th>How you use it</th><th>Examples</th></tr></thead>
+        <tbody>
+          <tr><td>CSS classes</td><td><code>class="o-btn o-btn-primary"</code></td><td>grid, buttons, cards, badges, alerts, utilities</td></tr>
+          <tr><td>Behaviors</td><td>Add a <code>data-o-*</code> attribute to normal HTML</td><td><code>data-o-tooltip</code>, <code>data-o-mask</code>, <code>data-o-lazy</code>, <code>data-o-validate</code></td></tr>
+          <tr><td>Actions</td><td><code>data-o-toggle</code> / <code>data-o-action</code> / <code>data-o-dismiss</code></td><td>open a modal, collapse, copy, print, fullscreen, theme</td></tr>
+          <tr><td>Custom elements</td><td><code>&lt;o-select&gt;</code>, <code>&lt;o-datatable&gt;</code>, <code>&lt;o-chart&gt;</code>…</td><td>rich widgets with properties, attributes, events and methods</td></tr>
+          <tr><td>JavaScript API</td><td><code>Orion.toast()</code>, <code>Orion.confirm()</code>, <code>Orion.http.get()</code></td><td>dialogs, toasts, HTTP, storage, shortcuts, theme, i18n</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Behaviors and actions are wired automatically for elements that exist now or appear later, so they also work in markup rendered by React, Vue or Angular.
+      Every component event is prefixed <code>o-</code> (<code>o-change</code>, <code>o-open</code>…) and bubbles.</p>
+  </section>
+
+  <section id="configuration">
+    <h2>4. Configuration</h2>
+    <p>Configure with attributes on the script tag, a global object defined before the script, or at runtime:</p>
+    <pre class="docs-code-block" data-lang="html">
+      &lt;script src="orion.min.js" data-theme="dark" data-locale="ms" data-currency="MYR" data-week-start="1"&gt;&lt;/script&gt;
+
+      &lt;script&gt;
+        window.OrionConfig = {
+          theme: 'auto',                       // 'light' | 'dark' | 'auto'
+          locale: 'en',                        // any BCP-47 tag; RTL languages flip the layout
+          currency: 'USD',
+          tokens: { primary: '#0ea5e9', radius: '6px' },
+          themes: { acme: { primary: '#e11d48', brand: { name: 'ACME', logo: '/acme.svg' } } },
+          tenant: 'acme',                      // multi-tenant theme to apply
+          persist: true,                       // remember theme / locale / font size per browser
+          css: true,                           // inject the embedded CSS (false if you use orion.css)
+          reboot: true,                        // base element styles (body font, headings, links)
+          nonce: 'r4nd0m'                      // CSP nonce for the injected &lt;style&gt;
+        };
+      &lt;/script&gt;
+    </pre>
+    <pre class="docs-code-block" data-lang="js">
+      Orion.init({ theme: 'dark', locale: 'ar' });   // change any option later
+      Orion.on('ready', () => console.log('Orion', Orion.version));
+    </pre>
+  </section>
+
+  <section id="custom-builds">
+    <h2>5. Custom single-file builds</h2>
+    <p>The full file contains everything, all ten language packs included (about 4.7 MB minified, 1.4 MB over gzip). <code>dist/orion.lite.min.js</code>
+      holds the 48 most used components with an English UI at under a third of that (<code>import Orion from 'orion-admin/lite'</code> on npm); add a language
+      with one more script, <code>dist/locales/ms.min.js</code>. To ship exactly the components and languages you use, clone the repository and run:</p>
+    <pre class="docs-code-block" data-lang="js">
+      npm install
+      node build/build.mjs --preset=forms --out=my-build             // presets: full, lite, forms, data (build/presets.json)
+      node build/build.mjs --only=select,datepicker,datatable,modal,toast --out=my-build
+      // -> my-build/orion.js, orion.min.js, orion.esm.js, orion.css (core is always included)
+      node build/build.mjs --exclude=map,chart,diagram --out=my-build  // everything except these (folder names from src/components/)
+      node build/build.mjs --preset=lite --locales=ms,ar --out=my-build // lite + two language packs (--locales=none | all | codes)
+    </pre>
+  </section>
+
+  <section id="css-only">
+    <h2>6. CSS without JavaScript</h2>
+    <p><code>dist/orion.css</code> contains the same styles as a normal stylesheet. Use it for server-rendered pages that need only the CSS layer (grid, buttons, cards, forms, utilities). Custom elements and behaviors need <code>orion.js</code>. If you load <code>orion.css</code> yourself, set <code>data-css="false"</code> on the script.</p>
+  </section>
+
+  <section id="overrides">
+    <h2>7. Customising styles</h2>
+    <p>Orion's styles are injected at the <b>top</b> of <code>&lt;head&gt;</code> with low specificity, so your stylesheet always wins. Change design tokens (CSS variables) for global changes:</p>
+    <pre class="docs-code-block" data-lang="css">
+      :root {
+        --o-primary: #0ea5e9;       /* brand color: buttons, links, focus ring... */
+        --o-radius: 6px;
+        --o-font-sans: "Inter", system-ui, sans-serif;
+        --o-sidebar-w: 17rem;
+      }
+      .o-card { border-radius: 4px; }   /* or override any class */
+    </pre>
+    <p>See <a href="components/theming.html">Theming</a> for dark mode, tenants and white-labelling.</p>
+  </section>
+
+  <section id="browsers">
+    <h2>8. Browser support &amp; environment</h2>
+    <ul>
+      <li>Evergreen browsers: Chrome/Edge 111+, Firefox 113+, Safari 16.4+ (iOS 16.4+). Older browsers are not supported.</li>
+      <li><b>SSR-safe:</b> importing in Node (Next.js, Nuxt, Angular Universal) does not crash; components activate in the browser.</li>
+      <li><b>CSP:</b> no <code>eval</code>. The injected style supports a nonce and falls back to constructable stylesheets.</li>
+      <li><b>Service worker:</b> the same <code>orion.js</code> file can be registered as your PWA service worker (see PWA).</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

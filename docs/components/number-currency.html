@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Number &amp; currency — Orion Admin</title>
+<meta name="docs:section" content="Forms">
+<meta name="docs:order" content="45">
+<meta name="docs:desc" content="Locale-aware number, currency, percent and unit input with a stepper">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Number &amp; currency</h1>
+    <p class="docs-lead"><code>&lt;o-number&gt;</code> groups digits with the correct locale separators while you type,
+      formats currency/percent/unit values, and clamps to <code>min</code>/<code>max</code>/<code>step</code>. A
+      <code>data-o-number</code> behavior does the same formatting for a plain input that submits a clean number.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-form-grid">
+          <div class="o-field"><label class="o-label" for="n-1">Quantity</label><o-number id="n-1" name="qty" value="3" min="0" max="99" step="1"></o-number></div>
+          <div class="o-field"><label class="o-label" for="n-2">Weight (kg)</label><o-number id="n-2" unit="kg" precision="2" value="12.5" controls="none"></o-number></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="currency">
+    <h2>Currency &amp; locale</h2>
+    <p>The grouping and decimal separators, and the currency symbol's position, follow the given <code>locale</code>
+      (or the page locale). Grouping is applied live as you type, not only on blur.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-form-grid">
+          <div class="o-field"><label class="o-label" for="n-usd">USD (en-US)</label><o-number id="n-usd" name="usd" currency="USD" locale="en-US" min="0" value="1999.5"></o-number></div>
+          <div class="o-field"><label class="o-label" for="n-eur">EUR (de-DE)</label><o-number id="n-eur" name="eur" currency="EUR" locale="de-DE" value="1234.5"></o-number></div>
+          <div class="o-field"><label class="o-label" for="n-jpy">JPY (ja-JP, split controls)</label><o-number id="n-jpy" name="jpy" currency="JPY" locale="ja-JP" controls="split" value="15000"></o-number></div>
+          <div class="o-field"><label class="o-label" for="n-myr">MYR (ms-MY)</label><o-number id="n-myr" name="myr" currency="MYR" locale="ms-MY" value="99.9"></o-number></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="percent">
+    <h2>Percent</h2>
+    <div class="docs-demo">
+      <template>
+        <o-number percent max="100" min="0" value="42" style="max-width:12rem"></o-number>
+      </template>
+    </div>
+  </section>
+
+  <section id="stepper">
+    <h2>Stepper styles &amp; wheel</h2>
+    <p><code>controls</code>: <code>stepper</code> (default, one column), <code>split</code> (- / + on each side) or
+      <code>none</code>. <code>wheel</code> lets the mouse wheel step the value while the field is focused. Hold a stepper
+      button to repeat.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-form-grid">
+          <div class="o-field"><label class="o-label" for="n-stepper">Stepper</label><o-number id="n-stepper" value="5" min="0" max="10"></o-number></div>
+          <div class="o-field"><label class="o-label" for="n-split">Split</label><o-number id="n-split" controls="split" value="5" min="0" max="10"></o-number></div>
+          <div class="o-field"><label class="o-label" for="n-wheel">Mouse wheel</label><o-number id="n-wheel" wheel value="5" min="0" max="10"></o-number></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="behavior">
+    <h2>Behavior for plain inputs</h2>
+    <p>When you cannot use a custom element (a third-party form library, server-rendered markup), apply
+      <code>data-o-number</code> to a plain <code>&lt;input&gt;</code>. It formats live and adds a hidden input carrying
+      the clean numeric value when <code>data-o-number-name</code> is set.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-field" style="max-width:16rem">
+          <label class="o-label" for="n-bh">Amount (EUR)</label>
+          <input class="o-input" id="n-bh" data-o-number data-o-number-name="amount" data-o-currency="EUR" data-o-number-locale="de-DE">
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="rtl">
+    <h2>RTL</h2>
+    <div class="docs-demo" dir="rtl">
+      <template>
+        <o-number currency="AED" locale="ar-AE" value="1234.5" style="max-width:14rem"></o-number>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>Props / attributes</h2>
+    <table class="docs-api">
+      <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>value</td><td>Number | null</td><td></td></tr>
+        <tr><td>min, max, step, precision</td><td>Number</td><td><code>precision</code> overrides the locale/currency's default fraction digits.</td></tr>
+        <tr><td>currency, percent, unit</td><td>String | Boolean</td><td>Mutually exclusive display styles; <code>unit</code> must be a valid <a href="https://tc39.es/ecma402/#table-sanctioned-simple-unit-identifiers" target="_blank" rel="noopener">CSS unit identifier</a>.</td></tr>
+        <tr><td>prefix, suffix</td><td>String</td><td>Override the currency/unit affix text.</td></tr>
+        <tr><td>allow-negative</td><td>Boolean</td><td>Negative numbers (implied when <code>min &lt; 0</code>).</td></tr>
+        <tr><td>controls</td><td>String</td><td><code>stepper</code> (default) | <code>split</code> | <code>none</code>.</td></tr>
+        <tr><td>wheel</td><td>Boolean</td><td>Step with the mouse wheel while focused.</td></tr>
+        <tr><td>locale, grouping</td><td>String, Boolean</td><td><code>grouping=false</code> disables thousands separators.</td></tr>
+        <tr><td>placeholder, size, align, name, required, disabled, readonly, texts</td><td>—</td><td>Standard.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods &amp; events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.stepUp(n) / .stepDown(n)</td><td>Step by <code>n</code> steps (default 1).</td></tr>
+        <tr><td>.clear()</td><td>Set the value to <code>null</code>.</td></tr>
+        <tr><td>input, change, o-change { value }</td><td>Fired on commit (blur or Enter); typing fires <code>input</code> continuously.</td></tr>
+      </tbody>
+    </table>
+    <h3>Keyboard</h3>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>↑ / ↓</td><td>±1 step (×10 with Shift).</td></tr>
+        <tr><td>Page Up / Down</td><td>±10 steps.</td></tr>
+        <tr><td>Enter</td><td>Commit (clamp + fire change).</td></tr>
+      </tbody>
+    </table>
+    <h3>JS API</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Orion.number.format(1234.5, { currency, locale, precision, … })</td><td>One-shot formatting.</td></tr>
+        <tr><td>Orion.number.parse('1.234,56', { locale })</td><td>Locale-aware parsing → Number | null.</td></tr>
+        <tr><td>Orion.number.value(input)</td><td>Current numeric value of a <code>data-o-number</code> input.</td></tr>
+        <tr><td>data-o-number-min/-max/-locale/-negative/-grouping</td><td>Options for the plain-input behavior; <code>data-o-number="percent"</code> switches style.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

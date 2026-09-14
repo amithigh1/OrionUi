@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mobile shell — Orion Admin</title>
+<script src="../../dist/orion.js"></script>
+</head>
+<body>
+<div class="o-app o-app-compact" data-o-app="mobile">
+  <a class="o-skip-link" href="#main">Skip to main content</a>
+
+  <aside class="o-app-sidebar o-sidebar" data-o-sidebar aria-label="Main">
+    <a class="o-sidebar-brand" href="#/dashboard"><span class="o-sidebar-brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg></span><span class="o-sidebar-brand-text">Orion Admin</span></a>
+    <nav class="o-sidebar-body">
+      <ul class="o-menu">
+        <li class="o-menu-item"><a class="o-menu-link" href="#/dashboard"><o-icon name="dashboard" class="o-menu-icon"></o-icon><span class="o-menu-label">Dashboard</span></a></li>
+        <li class="o-menu-item has-active">
+          <button class="o-menu-link o-menu-toggle" type="button" aria-expanded="true"><o-icon name="users" class="o-menu-icon"></o-icon><span class="o-menu-label">Users</span></button>
+          <ul class="o-menu-sub">
+            <li class="o-menu-item"><a class="o-menu-link" href="#/users/all">All users</a></li>
+            <li class="o-menu-item has-active">
+              <button class="o-menu-link o-menu-toggle" type="button" aria-expanded="true"><span class="o-menu-label">Roles</span></button>
+              <ul class="o-menu-sub">
+                <li class="o-menu-item"><a class="o-menu-link" href="#/users/roles/admin">Admin role</a></li>
+                <li class="o-menu-item"><a class="o-menu-link is-active" href="#/users/roles/editor" aria-current="page">Editor role</a></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li class="o-menu-item"><a class="o-menu-link" href="#/settings"><o-icon name="settings" class="o-menu-icon"></o-icon><span class="o-menu-label">Settings</span></a></li>
+      </ul>
+    </nav>
+    <div class="o-sidebar-footer">
+      <button class="o-sidebar-user" type="button"><span class="o-avatar o-avatar-sm">SI</span><span class="o-user-info"><span class="o-user-name">Siti Ismail</span><span class="o-user-sub">Editor</span></span></button>
+    </div>
+  </aside>
+
+  <header class="o-app-header">
+    <button class="o-btn o-btn-ghost o-btn-icon o-app-toggle" data-o-toggle="sidebar" aria-label="Toggle sidebar"><o-icon name="menu"></o-icon></button>
+    <o-breadcrumb class="o-app-header-start" auto max="2" separator="dot"></o-breadcrumb>
+    <div class="o-app-header-end">
+      <o-theme-switch variant="toggle"></o-theme-switch>
+      <button class="o-btn o-btn-ghost o-btn-icon" aria-label="Notifications" style="position:relative"><o-icon name="bell"></o-icon><span class="o-badge o-badge-counter">2</span></button>
+    </div>
+  </header>
+
+  <main class="o-app-main" id="main">
+    <div class="o-app-content">
+      <div class="o-page-header"><div><h1 class="o-h4" style="margin:0">Editor role</h1><p class="o-text-muted" style="margin:.25rem 0 0">Permissions granted to the Editor role.</p></div></div>
+      <ul class="o-list">
+        <li class="o-list-item"><span class="o-status o-status-online"></span><div class="o-list-content"><span class="o-list-title">Manage pages</span><span class="o-list-sub">Create, edit and publish content</span></div><span class="o-list-meta">On</span></li>
+        <li class="o-list-item"><span class="o-status o-status-online"></span><div class="o-list-content"><span class="o-list-title">Manage media</span><span class="o-list-sub">Upload and organize files</span></div><span class="o-list-meta">On</span></li>
+        <li class="o-list-item"><span class="o-status o-status-offline"></span><div class="o-list-content"><span class="o-list-title">Manage users</span><span class="o-list-sub">Invite and remove team members</span></div><span class="o-list-meta">Off</span></li>
+        <li class="o-list-item"><span class="o-status o-status-offline"></span><div class="o-list-content"><span class="o-list-title">Billing</span><span class="o-list-sub">View and change the subscription</span></div><span class="o-list-meta">Off</span></li>
+      </ul>
+      <p class="o-text-muted o-mt-4">This page demonstrates the off-canvas sidebar drawer (open the hamburger menu), the auto breadcrumb with overflow collapse, a bottom tab bar with a raised center action and hide-on-scroll, and a logically-positioned plain FAB.</p>
+      <div style="height:70vh"></div>
+      <p class="o-text-muted">End of page — the back-to-top button should be visible now.</p>
+    </div>
+  </main>
+
+  <nav class="o-bottom-nav" aria-label="Primary" data-o-bottom-nav-autohide>
+    <a class="o-bottom-nav-link" href="#/dashboard"><o-icon name="dashboard"></o-icon><span>Home</span></a>
+    <a class="o-bottom-nav-link" href="#/search"><o-icon name="search"></o-icon><span>Search</span></a>
+    <button class="o-bottom-nav-action" aria-label="New"><o-icon name="plus"></o-icon></button>
+    <a class="o-bottom-nav-link" href="#/alerts"><o-icon name="bell"></o-icon><span>Alerts</span><span class="o-badge o-badge-counter">2</span></a>
+    <a class="o-bottom-nav-link is-active" href="#/users/roles/editor" aria-current="page"><o-icon name="user"></o-icon><span>Profile</span></a>
+  </nav>
+</div>
+
+<o-scroll-progress position="bottom"></o-scroll-progress>
+<o-back-to-top threshold="200"></o-back-to-top>
+<button class="o-fab o-fab-mini o-fab-bottom-start" aria-label="Live chat"><o-icon name="message-circle"></o-icon></button>
+</body>
+</html>

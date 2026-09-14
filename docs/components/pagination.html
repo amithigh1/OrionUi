@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pagination — Orion Admin</title>
+<meta name="docs:section" content="Data">
+<meta name="docs:order" content="50">
+<meta name="docs:desc" content="Accessible pager with page sizes, jump box and four variants">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .demo-grid { display: grid; gap: 1.25rem; width: 100%; }
+  .demo-row { display: flex; flex-direction: column; gap: .375rem; min-width: 0; }
+  .demo-row-label { font-size: var(--o-fs-xs); color: var(--o-text-muted); text-transform: uppercase; letter-spacing: .03em; }
+  .demo-align-box { border: 1px dashed var(--o-border-strong); border-radius: var(--o-radius); padding: .75rem; display: flex; }
+  .demo-list { list-style: none; margin: 0 0 .75rem; padding: 0; border: 1px solid var(--o-border); border-radius: var(--o-radius); overflow: hidden; }
+  .demo-list li { display: flex; justify-content: space-between; gap: 1rem; padding: .5rem .75rem; border-block-end: 1px solid var(--o-border); font-size: var(--o-fs-sm); }
+  .demo-list li:last-child { border-block-end: 0; }
+  .demo-list li:nth-child(even) { background: var(--o-surface-2); }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Pagination</h1>
+    <p class="docs-lead"><code>&lt;o-pagination&gt;</code> is a standalone, accessible pager: page number buttons with smart ellipsis, a rows-per-page selector, a "go to page" jump box, first/last edges, four visual variants and full keyboard support. It does not hold any data itself — it just tracks <code>total</code> / <code>page</code> / <code>page-size</code> and tells you when they change, so it can drive a table, a grid, a gallery or anything else.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic</h2>
+    <p>Set <code>total</code> and <code>page-size</code> (or just <code>page-size</code> and let <code>total</code> update as data changes); the page-count is derived. <code>show-total</code> renders the "1–10 of 245" range.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-pagination total="237" page="3" page-size="10" show-total></o-pagination>
+      </template>
+    </div>
+  </section>
+
+  <section id="variants">
+    <h2>Variants</h2>
+    <p><code>variant</code>: <code>default</code> (page numbers with ellipsis), <code>outline</code> (same, outlined active page), <code>simple</code> ("Page 3 of 24" only) and <code>compact</code> (an editable page number / total, ideal for narrow toolbars).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="demo-grid">
+          <div class="demo-row"><span class="demo-row-label">default</span><o-pagination total="237" page="3" page-size="10"></o-pagination></div>
+          <div class="demo-row"><span class="demo-row-label">outline</span><o-pagination total="237" page="3" page-size="10" variant="outline"></o-pagination></div>
+          <div class="demo-row"><span class="demo-row-label">simple</span><o-pagination total="237" page="3" page-size="10" variant="simple"></o-pagination></div>
+          <div class="demo-row"><span class="demo-row-label">compact</span><o-pagination total="237" page="3" page-size="10" variant="compact"></o-pagination></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="sizes">
+    <h2>Sizes, edges &amp; disabled</h2>
+    <p><code>size="sm"</code> shrinks the page links. <code>edges</code> adds first/last (double-chevron) buttons. <code>disabled</code> greys out and disables every control.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="demo-grid">
+          <div class="demo-row"><span class="demo-row-label">size="sm"</span><o-pagination total="500" page="4" page-size="10" size="sm"></o-pagination></div>
+          <div class="demo-row"><span class="demo-row-label">edges</span><o-pagination total="500" page="12" page-size="10" edges></o-pagination></div>
+          <div class="demo-row"><span class="demo-row-label">disabled</span><o-pagination total="500" page="4" page-size="10" disabled></o-pagination></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="pagesize">
+    <h2>Page-size selector</h2>
+    <p><code>page-sizes</code> (comma list or JSON array) shows a "rows per page" select next to the total. Changing it keeps the first visible row on screen by adjusting <code>page</code>.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-pagination id="pg-size" total="1240" page="1" page-size="25" page-sizes="10,25,50,100" show-total></o-pagination>
+        <div class="docs-log" id="pg-size-log"></div>
+        <script>{
+          const el = document.getElementById('pg-size');
+          el.addEventListener('o-change', e => docs.log('#pg-size-log', 'o-change ' + JSON.stringify(e.detail)));
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="jump">
+    <h2>Jump box &amp; alignment</h2>
+    <p><code>show-jump</code> adds a "Go to" number input (Enter to jump). <code>align</code> (<code>start</code> | <code>center</code> | <code>end</code> | <code>between</code>) positions the pager inside its container — <code>between</code> pushes the nav to the far side when combined with a total / page-size (as used above).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="demo-grid">
+          <o-pagination total="960" page="7" page-size="20" show-jump edges></o-pagination>
+          <div class="demo-row">
+            <span class="demo-row-label">align="between" (in a full-width box)</span>
+            <div class="demo-align-box"><o-pagination total="120" page="2" page-size="10" show-total align="between" style="width:100%"></o-pagination></div>
+          </div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="table">
+    <h2>Driving a list</h2>
+    <p><code>&lt;o-pagination&gt;</code> carries no data — listen for <code>o-change</code> (or call <code>go()</code>) and re-render your own rows. This example paginates 97 people entirely on the client.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <ul class="demo-list" id="pg-list"></ul>
+        <o-pagination id="pg-table" total="97" page="1" page-size="8" page-sizes="8,16,32" show-total></o-pagination>
+        <script>{
+          const rows = docs.people(97, 21);
+          const list = document.getElementById('pg-list');
+          const pager = document.getElementById('pg-table');
+          const paint = () => {
+            const { page, pageSize } = pager;
+            const slice = rows.slice((page - 1) * pageSize, page * pageSize);
+            list.innerHTML = slice.map(p => `<li><span>${p.name}</span><span class="o-text-muted">${p.department}</span></li>`).join('');
+          };
+          pager.addEventListener('o-change', paint);
+          paint();
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="events">
+    <h2>Events &amp; methods</h2>
+    <p>Every button click calls <code>go()</code>, which fires a cancelable <code>o-before-change</code> then <code>o-change</code>. Try vetoing a change, or drive the pager programmatically.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="demo-grid">
+          <o-pagination id="pg-ev" total="150" page="1" page-size="10" show-total></o-pagination>
+          <label class="o-switch"><input type="checkbox" id="pg-ev-block"><span>Block navigating past page 5 (veto <code>o-before-change</code>)</span></label>
+          <div class="o-cluster" style="--o-gap:.5rem">
+            <button class="o-btn o-btn-sm" type="button" data-m="prev">prev()</button>
+            <button class="o-btn o-btn-sm" type="button" data-m="next">next()</button>
+            <button class="o-btn o-btn-sm" type="button" data-m="first">go('first')</button>
+            <button class="o-btn o-btn-sm" type="button" data-m="last">go('last')</button>
+            <button class="o-btn o-btn-sm" type="button" data-m="size">setPageSize(25, true)</button>
+          </div>
+          <div class="docs-log" id="pg-ev-log"></div>
+        </div>
+        <script>{
+          const el = document.getElementById('pg-ev');
+          const block = document.getElementById('pg-ev-block');
+          el.addEventListener('o-before-change', e => {
+            if (block.checked && e.detail.page > 5) { e.preventDefault(); docs.log('#pg-ev-log', 'o-before-change veto page ' + e.detail.page); }
+            else docs.log('#pg-ev-log', 'o-before-change ' + JSON.stringify(e.detail));
+          });
+          el.addEventListener('o-change', e => docs.log('#pg-ev-log', 'o-change ' + JSON.stringify(e.detail)));
+          document.querySelectorAll('[data-m]').forEach(b => b.onclick = () => {
+            const m = b.dataset.m;
+            if (m === 'prev') el.prev();
+            else if (m === 'next') el.next();
+            else if (m === 'size') el.setPageSize(25, true);
+            else el.go(m);
+          });
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="i18n">
+    <h2>Text overrides &amp; RTL</h2>
+    <p>Every label goes through <code>t()</code> (i18n keys under <code>pagination.*</code>) and can be overridden per instance with <code>texts</code>. Horizontal arrow keys and the layout follow the ambient <code>dir</code> automatically — toggle RTL with the header button to see the pager mirror.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-pagination total="80" page="2" page-size="10" show-total edges
+          texts='{"rowsPerPage":"Per page","range":"{start}-{end} / {total}"}' page-sizes="10,20"></o-pagination>
+      </template>
+    </div>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Tab</td><td>Moves focus onto the pager; the current page button is the tab stop.</td></tr>
+        <tr><td>→ / ←</td><td>Move focus to the next / previous enabled button (flips with <code>dir="rtl"</code>).</td></tr>
+        <tr><td>Home / End</td><td>Focus the first / last enabled button.</td></tr>
+        <tr><td>Page Down / Page Up</td><td>Go to the next / previous page from anywhere in the pager.</td></tr>
+        <tr><td>Enter</td><td>Activate the focused button; in the jump box or the <code>compact</code> variant's input, navigate to the typed page.</td></tr>
+      </tbody>
+    </table>
+    <p>ARIA: the control is a <code>&lt;nav aria-label="Pagination"&gt;</code> (override with <code>label</code> or <code>texts.label</code>); the current page button has <code>aria-current="page"</code>; every button has a descriptive <code>aria-label</code> ("Page 4", "Next page"...); the total/range text updates live.</p>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Properties / attributes</h3>
+    <table class="docs-api">
+      <thead><tr><th>Property (attribute)</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>total</td><td>number</td><td>0</td><td>Total number of items.</td></tr>
+        <tr><td>page</td><td>number</td><td>1</td><td>Current page (1-based). Clamped to <code>[1, pages]</code> on render; setting it does not fire events (use <code>go()</code> for user-style navigation).</td></tr>
+        <tr><td>pageSize (page-size)</td><td>number</td><td>10</td><td>Items per page.</td></tr>
+        <tr><td>pageSizes (page-sizes)</td><td>number[] (comma list or JSON)</td><td>[]</td><td>Options for the rows-per-page select; hidden when empty. The current <code>pageSize</code> is inserted if missing.</td></tr>
+        <tr><td>siblings</td><td>number</td><td>1</td><td>Page links shown on each side of the current page (default/outline variants).</td></tr>
+        <tr><td>boundaries</td><td>number</td><td>1</td><td>Page links pinned at each end before an ellipsis appears.</td></tr>
+        <tr><td>showTotal (show-total)</td><td>boolean</td><td>false</td><td>Render the "1–10 of 245" range (or a "No results" text when <code>total</code> is 0).</td></tr>
+        <tr><td>showJump (show-jump)</td><td>boolean</td><td>false</td><td>Render a "Go to page" number input. Hidden in the <code>compact</code> variant (which already has an editable page number).</td></tr>
+        <tr><td>edges</td><td>boolean</td><td>false</td><td>Render first/last buttons (hidden in the <code>simple</code> variant).</td></tr>
+        <tr><td>variant</td><td><code>'default' | 'outline' | 'simple' | 'compact'</code> (reflects)</td><td>'default'</td><td>Visual style; see Variants above.</td></tr>
+        <tr><td>size</td><td><code>'' | 'sm'</code></td><td>''</td><td>Compact page-link size.</td></tr>
+        <tr><td>align</td><td><code>'' | 'start' | 'center' | 'end' | 'between'</code></td><td>''</td><td>Sets the host's <code>justify-content</code> (the pager is a flex container).</td></tr>
+        <tr><td>disabled</td><td>boolean (reflects)</td><td>false</td><td>Disables every control.</td></tr>
+        <tr><td>label</td><td>string</td><td>—</td><td>Overrides the <code>&lt;nav aria-label&gt;</code> (falls back to <code>t('pagination.label')</code>).</td></tr>
+        <tr><td>texts</td><td>object</td><td>—</td><td>Per-instance string overrides: <code>label, prev, next, first, last, page, pageOf, range, none, perPage, rowsPerPage, jump, jumpLabel, current</code> (supports <code>{param}</code> placeholders, e.g. <code>range: '{start}-{end} / {total}'</code>).</td></tr>
+        <tr><td>pages</td><td>number (read-only getter)</td><td>—</td><td><code>max(1, ceil(total / pageSize))</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-before-change</td><td><code>{ page, pageSize }</code></td><td>Cancelable; fired before a user-initiated navigation (button, jump box or Enter on the compact input) is applied. <code>preventDefault()</code> to veto.</td></tr>
+        <tr><td>o-change</td><td><code>{ page, pageSize }</code></td><td>Fired after the page (or, via the size selector / <code>setPageSize(n, true)</code>, the page size) changed because of user interaction.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Returns</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>go(page)</td><td>boolean</td><td><code>page</code> is a 1-based number or <code>'prev' | 'next' | 'first' | 'last'</code>. Clamps to range, fires <code>o-before-change</code>/<code>o-change</code>. Returns <code>false</code> when disabled, vetoed or the page did not change.</td></tr>
+        <tr><td>next() / prev()</td><td>boolean</td><td>Shortcuts for <code>go('next')</code> / <code>go('prev')</code>.</td></tr>
+        <tr><td>setPageSize(n, user = false)</td><td>void</td><td>Changes <code>pageSize</code>, adjusting <code>page</code> so the first visible item stays on screen. Pass <code>user: true</code> to also fire <code>o-change</code> (the built-in select does this).</td></tr>
+      </tbody>
+    </table>
+    <h3>JS</h3>
+    <p><code>Orion.pagination.items(page, pages, siblings = 1, boundaries = 1)</code> — the pure function that computes the page-button layout (numbers and <code>'gap'</code> markers) used internally; handy for building a custom pager UI.</p>
+    <h3>CSS classes</h3>
+    <p><code>.o-pagination</code> (the <code>&lt;ul&gt;</code> of page links; add <code>.o-pagination-outline</code> / <code>.o-pagination-sm</code> yourself when styling raw markup), <code>.o-page-link</code> (<code>.is-active</code>), <code>.o-page-ellipsis</code>, <code>.o-pager-nav</code>, <code>.o-pager-total</code>, <code>.o-pager-size</code>, <code>.o-pager-jump</code>, <code>.o-pager-current</code> (the compact variant's input), <code>.o-pager-edge</code> (first/last buttons), state class <code>.is-disabled</code> on the host.</p>
+    <h3>Frameworks</h3>
+    <p>Set <code>total</code>, <code>page</code>, <code>pageSize</code>, <code>pageSizes</code> and <code>texts</code> as properties (React 19, Vue <code>:page-sizes</code>, Angular <code>[pageSizes]</code>); with React 18, arrays/objects may be passed as JSON strings. Listen to <code>o-change</code> (Vue <code>@o-change</code>, Angular <code>(o-change)</code>, React via a ref) rather than watching <code>page</code>, since programmatic changes to the property do not emit events.</p>
+  </section>
+</main>
+</body>
+</html>

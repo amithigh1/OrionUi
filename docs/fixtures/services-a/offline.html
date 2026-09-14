@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Offline — Orion Admin</title>
+<style>
+  :root { color-scheme: light dark; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 1.5rem; text-align: center; background: Canvas; color: CanvasText; }
+  main { max-width: 26rem; }
+  svg { width: 3.5rem; height: 3.5rem; opacity: .6; }
+  h1 { font-size: 1.5rem; margin: .75rem 0 .5rem; }
+  p { opacity: .75; margin: 0 0 1.25rem; line-height: 1.5; }
+  button { font: inherit; padding: .6rem 1.2rem; border-radius: .5rem; border: 1px solid currentColor; background: transparent; color: inherit; cursor: pointer; }
+</style>
+</head>
+<body>
+<main>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M2 8.8a15 15 0 0 1 4.2-2.6M10.7 5.1A15 15 0 0 1 22 8.8M5 12.9a10 10 0 0 1 5.2-2.8M16.9 11.1A10 10 0 0 1 19 12.9M12 20h.01"/></svg>
+  <h1>You are offline</h1>
+  <p>This page was served by the Orion service worker because the network is unavailable. Changes you make are queued and sent when you reconnect.</p>
+  <button type="button" onclick="location.reload()">Try again</button>
+</main>
+</body>
+</html>

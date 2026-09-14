@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project &amp; resourcing — Orion Admin</title>
+<script src="../../dist/orion.js"></script>
+<style>
+  body { margin: 0; background: var(--o-bg); color: var(--o-text); font: var(--o-fs-base)/1.5 var(--o-font-sans); }
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; padding: .875rem 1.25rem; background: var(--o-surface); border-bottom: 1px solid var(--o-border); }
+  header h1 { margin: 0; font-size: var(--o-fs-lg); flex: 1 1 auto; min-width: 12rem; }
+  main { max-width: 76rem; margin: 0 auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 1.5rem; }
+  section h2 { display: flex; align-items: center; gap: .5rem; font-size: var(--o-fs-md); margin: 0 0 .625rem; }
+  section p.hint { margin: -.25rem 0 .75rem; color: var(--o-text-muted); font-size: var(--o-fs-sm); }
+  o-gantt, o-timeline-view { width: 100%; }
+</style>
+</head>
+<body>
+<header>
+  <span class="o-dot o-c-primary" aria-hidden="true"></span>
+  <h1>Portal relaunch — plan &amp; resourcing</h1>
+  <span class="o-badge o-badge-sm o-badge-soft-primary" id="crit-count">…</span>
+  <button class="o-btn o-btn-sm o-btn-primary" type="button" id="focus-team"><o-icon name="users"></o-icon> Who's on this task?</button>
+</header>
+<main>
+  <section aria-labelledby="plan-h">
+    <h2 id="plan-h"><o-icon name="git-branch"></o-icon> Launch plan</h2>
+    <p class="hint">Select a task, then click "Who's on this task?" to jump the team timeline below to the same dates.</p>
+    <o-gantt id="plan" view="week" today-line critical-path height="26rem" label="Portal relaunch plan"></o-gantt>
+  </section>
+  <section aria-labelledby="team-h">
+    <h2 id="team-h"><o-icon name="calendar"></o-icon> Team availability</h2>
+    <p class="hint">Vacations and existing commitments per team member. Drag a vacation bar to reschedule it.</p>
+    <o-timeline-view id="team" editable height="16rem" label="Team availability"></o-timeline-view>
+  </section>
+</main>
+<script>
+(() => {
+  const D = Orion.date, day = n => D.toISODate(D.add(D.today(), n));
+  const plan = document.getElementById('plan'), team = document.getElementById('team'), critCount = document.getElementById('crit-count');
+
+  plan.tasks = Orion.gantt.schedule([
+    { id: 'p1', name: 'Discovery', type: 'project' },
+    { id: 't1', parent: 'p1', name: 'Kick-off', type: 'milestone', start: day(0) },
+    { id: 't2', parent: 'p1', name: 'Requirements', start: day(0), duration: 5, assignees: ['Aisha Rahman'], dependencies: ['t1'] },
+    { id: 'p2', name: 'Design', type: 'project' },
+    { id: 't3', parent: 'p2', name: 'UI design', duration: 8, assignees: ['Mei Lim'], dependencies: ['t2'] },
+    { id: 't4', parent: 'p2', name: 'Design review', type: 'milestone', dependencies: ['t3'] },
+    { id: 'p3', name: 'Build', type: 'project' },
+    { id: 't5', parent: 'p3', name: 'Frontend', duration: 12, assignees: ['Ben Tan', 'Mei Lim'], dependencies: ['t4'] },
+    { id: 't6', parent: 'p3', name: 'Backend', duration: 10, assignees: ['Diego Garcia'], dependencies: ['t4'] },
+    { id: 't7', parent: 'p3', name: 'Feature freeze', type: 'milestone', dependencies: ['t5', 't6'] },
+    { id: 'p4', name: 'Launch', type: 'project' },
+    { id: 't8', parent: 'p4', name: 'QA', duration: 5, assignees: ['Aisha Rahman'], dependencies: ['t7'] },
+    { id: 't9', parent: 'p4', name: 'Go live', type: 'milestone', dependencies: ['t8'] },
+  ], {});
+  const paintCrit = () => { critCount.textContent = `${plan.getCriticalPath().length} tasks on the critical path`; };
+  plan.addEventListener('o-change', paintCrit);
+  paintCrit();
+
+  team.groups = [
+    { id: 'aisha', content: 'Aisha Rahman' },
+    { id: 'mei', content: 'Mei Lim' },
+    { id: 'ben', content: 'Ben Tan' },
+    { id: 'diego', content: 'Diego Garcia' },
+  ];
+  team.items = [
+    { id: 'v1', group: 'aisha', content: 'Vacation', color: 'warning', start: day(6), end: day(9) },
+    { id: 'v2', group: 'mei', content: 'Conference', color: 'info', start: day(10), end: day(12) },
+    { id: 'v3', group: 'ben', content: 'Vacation', color: 'warning', start: day(20), end: day(23) },
+    { id: 'v4', group: 'diego', content: 'On-call', color: 'secondary', start: day(0), end: day(7) },
+    { id: 'v5', group: 'diego', content: 'On-call', color: 'secondary', start: day(14), end: day(21) },
+  ];
+  team.addEventListener('o-item-change', e => Orion.toast(`${e.detail.item.content} moved`, { type: 'success' }));
+
+  document.getElementById('focus-team').addEventListener('click', () => {
+    const t = plan.getSelected();
+    if (!t) { Orion.toast('Select a task in the plan first', { type: 'warning' }); return; }
+    const assignees = (t.assignees || []).map(a => (typeof a === 'string' ? a : a.name));
+    const groupIds = team.getGroups().filter(g => assignees.includes(g.content)).map(g => g.id);
+    team.setSelection(team.getItems().filter(i => groupIds.includes(i.group)).map(i => i.id));
+    team.setWindow(new Date(t.start), D.add(D.parse(t.end), 1));
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Select — Orion Admin</title>
+<meta name="docs:section" content="Pickers &amp; Selects">
+<meta name="docs:order" content="10">
+<meta name="docs:desc" content="Searchable single / multi select with chips, groups, remote data, virtual scrolling and tags">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .demo-grid { display: grid; gap: 1rem 1.5rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); width: 100%; }
+  .demo-grid > div { min-width: 0; }
+  .demo-out { margin: 1rem 0 0; padding: .75rem 1rem; font: .75rem/1.6 var(--o-font-mono); background: var(--o-surface-2); border: 1px dashed var(--o-border-strong); border-radius: var(--o-radius); white-space: pre-wrap; min-height: 2.5rem; color: var(--o-text-muted); }
+  .demo-scroll { height: 13rem; overflow: auto; padding: 1rem; border: 1px solid var(--o-border); border-radius: var(--o-radius); background: var(--o-surface-2); }
+  dialog.demo-dialog { width: min(30rem, calc(100vw - 2rem)); padding: 0; border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); background: var(--o-surface); color: var(--o-text); box-shadow: var(--o-shadow-xl); }
+  dialog.demo-dialog::backdrop { background: var(--o-backdrop); }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Select</h1>
+    <p class="docs-lead"><code>&lt;o-select&gt;</code> replaces the native select with a searchable, keyboard-friendly dropdown: single or multiple values (chips or a count), groups, icons, avatars and descriptions, remote search with infinite scroll, virtual scrolling for 10k+ options, creatable tags, custom templates and native form participation.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic</h2>
+    <p>Options come from <code>&lt;option&gt;</code> / <code>&lt;optgroup&gt;</code> children (read again when they change) or from the <code>options</code> property. The search box appears automatically for more than 8 options (<code>searchable</code> forces it on, <code>searchable="false"</code> off). Type a letter on a closed select to jump to the next matching option.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="demo-grid">
+          <div>
+            <label class="o-label" for="sel-fruit">Fruit</label>
+            <o-select id="sel-fruit" name="fruit" placeholder="Pick a fruit" clearable>
+              <option value="apple">Apple</option>
+              <option value="banana" data-description="Rich in potassium">Banana</option>
+              <option value="cherry" disabled>Cherry (out of season)</option>
+              <optgroup label="Citrus">
+                <option value="lemon">Lemon</option>
+                <option value="lime">Lime</option>
+                <option value="orange" selected>Orange</option>
+              </optgroup>
+            </o-select>
+          </div>
+          <div>
+            <label class="o-label" for="sel-country">Country (searchable)</label>
+            <o-select id="sel-country" placeholder="Choose a country"></o-select>
+          </div>
+        </div>
+        <script>{
+          document.getElementById('sel-country').options = docs.countries.map(c => ({ value: c.code, label: c.name, description: c.city }));
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="multiple">
+    <h2>Multiple</h2>
+    <p>Add <code>multiple</code> for chips (Backspace removes the last one). <code>display="count"</code> shows “3 selected” instead, <code>max</code> caps the selection and the <em>Select all / Clear</em> bar can be hidden with <code>select-all="false"</code>. The form value is submitted as one entry per value.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="demo-grid">
+          <div>
+            <label class="o-label" for="sel-skills">Skills (chips)</label>
+            <o-select id="sel-skills" name="skills" multiple clearable placeholder="Add skills" value='["js","css"]'
+              options='[{"value":"js","label":"JavaScript"},{"value":"ts","label":"TypeScript"},{"value":"css","label":"CSS"},{"value":"html","label":"HTML"},{"value":"py","label":"Python"},{"value":"go","label":"Go"},{"value":"rs","label":"Rust"},{"value":"sql","label":"SQL"},{"value":"k8s","label":"Kubernetes"}]'></o-select>
+          </div>
+          <div>
+            <label class="o-label" for="sel-count">Departments (count display, max 3)</label>
+            <o-select id="sel-count" multiple display="count" max="3" placeholder="Any department"
+              options='["Engineering","Sales","Marketing","Finance","Operations","Design","HR","Legal"]'></o-select>
+          </div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="rich">
+    <h2>Groups, icons, avatars &amp; descriptions</h2>
+    <p>Options are objects <code>{ value, label, description, icon, avatar, disabled, group }</code> (plain strings work too). <code>avatar</code> takes an image URL or a name (initials in a stable colour); <code>icon</code> takes any Orion icon name.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="demo-grid">
+          <div>
+            <label class="o-label" for="sel-status">Status</label>
+            <o-select id="sel-status" value="progress" options='[
+              {"value":"todo","label":"To do","icon":"inbox","group":"Open"},
+              {"value":"progress","label":"In progress","icon":"clock","group":"Open"},
+              {"value":"review","label":"In review","icon":"eye","group":"Open"},
+              {"value":"done","label":"Done","icon":"check-circle","group":"Closed"},
+              {"value":"wontfix","label":"Won’t fix","icon":"x-circle","group":"Closed","disabled":true}]'></o-select>
+          </div>
+          <div>
+            <label class="o-label" for="sel-people">Reviewers</label>
+            <o-select id="sel-people" multiple placeholder="Assign reviewers"></o-select>
+          </div>
+        </div>
+        <script>{
+          document.getElementById('sel-people').options = docs.people(24, 11).map(p => ({ value: p.id, label: p.name, description: p.role + ' · ' + p.department, avatar: p.name, group: p.department }));
+          document.getElementById('sel-people').value = ['2', '5'];
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="virtual">
+    <h2>10,000 options (virtual scrolling)</h2>
+    <p>Lists above <code>virtual-threshold</code> rows (150 by default) render only the visible rows, so 10k+ options open, filter and scroll instantly. Rows must share a height per type (plain / with description / group header).</p>
+    <div class="docs-demo">
+      <template>
+        <div class="demo-grid">
+          <div>
+            <label class="o-label" for="sel-big">Product (10,000 options)</label>
+            <o-select id="sel-big" name="sku" clearable placeholder="Search products…"></o-select>
+          </div>
+          <div>
+            <label class="o-label" for="sel-big-multi">Many products (multiple)</label>
+            <o-select id="sel-big-multi" multiple display="count" placeholder="Select products"></o-select>
+          </div>
+        </div>
+        <script>{
+          const rnd = docs.rand(42), cats = ['Hardware', 'Software', 'Services', 'Accessories', 'Cloud'];
+          const products = Array.from({ length: 10000 }, (_, i) => ({ value: 'SKU-' + (i + 1), label: 'Product ' + (i + 1), description: cats[i % 5] + ' · $' + (5 + Math.floor(rnd() * 995)) }));
+          document.getElementById('sel-big').options = products;
+          document.getElementById('sel-big-multi').options = products.map(p => ({ value: p.value, label: p.label, group: p.description.split(' · ')[0] }));
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="remote">
+    <h2>Remote search &amp; infinite scroll</h2>
+    <p>Set <code>source = async (query, { page, signal }) =&gt; ({ options, hasMore })</code> (or return an array). Requests are debounced (<code>debounce</code>, 250 ms), aborted when the query changes, cached per query, and the next page loads when the list is scrolled to the end. Loading, empty and error states (with Retry) are built in. The example searches 500 users on a fake server with 400 ms latency.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="demo-grid">
+          <div>
+            <label class="o-label" for="sel-remote">Owner</label>
+            <o-select id="sel-remote" name="owner" clearable placeholder="Search 500 users…"></o-select>
+          </div>
+          <div>
+            <label class="o-label" for="sel-remote-multi">Watchers (multiple, min 2 chars)</label>
+            <o-select id="sel-remote-multi" name="watchers" multiple min-chars="2" placeholder="Type a name…"></o-select>
+          </div>
+        </div>
+        <label class="o-switch o-mt-3"><input type="checkbox" id="sel-remote-fail"><span>Simulate network errors</span></label>
+        <div class="docs-log" id="sel-remote-log"></div>
+        <script>{
+          const people = docs.people(500, 3), server = docs.fakeServer(people, { latency: 400 });
+          const fail = document.getElementById('sel-remote-fail');
+          const source = async (query, { page }) => {
+            if (fail.checked) { await new Promise(r => setTimeout(r, 300)); throw new Error('Network error'); }
+            const { rows, total } = await server({ page, pageSize: 20, search: query, sort: [{ key: 'name', dir: 'asc' }] });
+            return { options: rows.map(u => ({ value: u.id, label: u.name, description: u.email, avatar: u.name })), hasMore: page * 20 < total };
+          };
+          for (const id of ['sel-remote', 'sel-remote-multi']) {
+            const el = document.getElementById(id);
+            el.source = source;
+            el.addEventListener('o-load', e => docs.log('#sel-remote-log', `${id} o-load  q="${e.detail.query}" page ${e.detail.page} (+${e.detail.options.length})`));
+            el.addEventListener('o-error', e => docs.log('#sel-remote-log', `${id} o-error ${e.detail.error.message}`));
+            el.addEventListener('o-change', e => docs.log('#sel-remote-log', `${id} o-change ${JSON.stringify(e.detail.value)}`));
+          }
+          // pre-selected values with known labels (e.g. from a saved record)
+          document.getElementById('sel-remote-multi').value = [{ value: people[0].id, label: people[0].name }];
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="url">
+    <h2>Loading from a URL</h2>
+    <p><code>url</code> with a <code>{q}</code> (and optional <code>{page}</code>) placeholder queries the server on every search, e.g. <code>/api/users?q={q}&amp;page={page}</code>. Without <code>{q}</code> the JSON is fetched once — lazily, on first open — and filtered locally. Responses may be an array or <code>{ options | items | results | data | rows, hasMore | total }</code>; map fields with <code>fields</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <label class="o-label" for="sel-url">Country (fetched from ../fixtures/pickers/countries.json)</label>
+        <o-select id="sel-url" name="country" clearable placeholder="Choose a country"
+          url="../fixtures/pickers/countries.json" fields='{"value":"code","label":"name","group":"region"}'></o-select>
+      </template>
+    </div>
+  </section>
+
+  <section id="tags">
+    <h2>Tags &amp; creatable</h2>
+    <p><code>tags</code> turns the control into a free-form tag input (multiple + creatable): Enter, comma or semicolon adds a tag, pasting “a, b, c” adds several and Backspace removes the last. <code>creatable</code> adds an “Add …” option to the search results of a normal select. Both fire a cancelable <code>o-create</code> — listeners may validate or rewrite <code>detail.value</code> / <code>detail.label</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="demo-grid">
+          <div>
+            <label class="o-label" for="sel-tags">Keywords (tags)</label>
+            <o-select id="sel-tags" tags name="keywords" placeholder="Type and press Enter" value='["admin","dashboard"]'
+              options='["admin","analytics","charts","dashboard","forms","tables"]'></o-select>
+          </div>
+          <div>
+            <label class="o-label" for="sel-create">Category (creatable, lowercase only)</label>
+            <o-select id="sel-create" creatable clearable placeholder="Pick or add a category" options='["billing","infrastructure","security"]'></o-select>
+          </div>
+        </div>
+        <div class="docs-log" id="sel-tags-log"></div>
+        <script>{
+          document.getElementById('sel-create').addEventListener('o-create', e => {
+            e.detail.value = e.detail.label = e.detail.label.toLowerCase().replace(/\s+/g, '-');
+            docs.log('#sel-tags-log', 'o-create ' + e.detail.value);
+          });
+          document.getElementById('sel-tags').addEventListener('o-change', e => docs.log('#sel-tags-log', 'tags ' + JSON.stringify(e.detail.value)));
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="templates">
+    <h2>Custom templates</h2>
+    <p><code>renderOption(option, { query, selected, disabled })</code> and <code>renderValue(option, { chip })</code> return an HTML string or a Node. <code>option.raw</code> is your original object. Escape user data (<code>Orion.util.esc</code> / <code>Orion.util.html</code>).</p>
+    <div class="docs-demo">
+      <template>
+        <label class="o-label" for="sel-tpl">Team member</label>
+        <o-select id="sel-tpl" placeholder="Choose a member" clearable></o-select>
+        <script>{
+          const { html, highlight, raw } = Orion.util;
+          const tpl = document.getElementById('sel-tpl');
+          const dot = { Active: 'online', Pending: 'away', Inactive: 'offline', Suspended: 'busy' };
+          tpl.options = docs.people(40, 5).map(p => ({ value: p.id, label: p.name, description: p.email, role: p.role, status: p.status }));
+          tpl.renderOption = (o, { query }) => html`<span class="o-status o-status-${dot[o.raw.status]}" title="${o.raw.status}"></span>
+            <span class="o-listbox-text"><span class="o-listbox-label">${raw(highlight(o.label, query))}</span><span class="o-listbox-desc">${o.description}</span></span>
+            <span class="o-badge o-badge-soft-primary">${o.raw.role}</span>`;
+          tpl.renderValue = o => html`<span class="o-status o-status-${dot[o.raw.status]}"></span><span class="o-select-label">${o.label}</span><span class="o-badge o-badge-sm">${o.raw.role}</span>`;
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="states">
+    <h2>Sizes &amp; states</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="demo-grid">
+          <o-select size="sm" placeholder="Small" options='["One","Two","Three"]'></o-select>
+          <o-select placeholder="Default" options='["One","Two","Three"]'></o-select>
+          <o-select size="lg" placeholder="Large" options='["One","Two","Three"]'></o-select>
+          <o-select disabled value="Two" options='["One","Two","Three"]'></o-select>
+          <o-select readonly multiple value='["One","Three"]' options='["One","Two","Three"]'></o-select>
+          <div class="o-input-group"><span class="o-input-addon">Sort</span><o-select value="new" options='[{"value":"new","label":"Newest first"},{"value":"old","label":"Oldest first"}]'></o-select></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="native">
+    <h2>Enhancing a native select</h2>
+    <p><code>&lt;select data-o-select&gt;</code> renders an <code>&lt;o-select&gt;</code> next to the native element and keeps both in sync — the native select stays in the form, submits the value and shows the browser's validation bubble, so server-rendered forms keep working. A leading empty option becomes the placeholder; options go in the attribute value as JSON or as <code>data-o-select-*</code> attributes.</p>
+    <div class="docs-demo">
+      <template>
+        <form id="native-form" class="o-stack" style="--o-gap:.75rem">
+          <div class="demo-grid">
+            <div>
+              <label class="o-label" for="native-role">Role</label>
+              <select id="native-role" name="role" class="o-select" data-o-select required>
+                <option value="">Choose a role…</option>
+                <option value="admin" data-icon="lock">Admin</option>
+                <option value="editor" data-icon="edit">Editor</option>
+                <option value="viewer" data-icon="eye">Viewer</option>
+              </select>
+            </div>
+            <div>
+              <label class="o-label" for="native-langs">Languages</label>
+              <select id="native-langs" name="langs" multiple data-o-select='{"placeholder":"Any language","clearable":true}'>
+                <option value="en" selected>English</option><option value="ms">Malay</option><option value="zh">Chinese</option><option value="ta">Tamil</option>
+              </select>
+            </div>
+          </div>
+          <div class="o-cluster"><button class="o-btn o-btn-primary">Submit</button><button class="o-btn" type="reset">Reset</button></div>
+          <pre class="demo-out" id="native-out">Submit to see FormData</pre>
+        </form>
+        <script>{
+          document.getElementById('native-form').addEventListener('submit', e => {
+            e.preventDefault();
+            document.getElementById('native-out').textContent = JSON.stringify([...new FormData(e.target)]);
+          });
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="forms">
+    <h2>Forms &amp; validation</h2>
+    <p><code>&lt;o-select&gt;</code> is form-associated: it has a <code>name</code>, participates in <code>FormData</code>, <code>required</code> validation, <code>:invalid</code>, reset and <code>disabled</code> fieldsets. Invalid controls get a red border after the first submit or blur.</p>
+    <div class="docs-demo">
+      <template>
+        <form id="sel-form" class="o-stack" style="--o-gap:.75rem">
+          <div class="demo-grid">
+            <div>
+              <label class="o-label is-required" for="f-plan">Plan</label>
+              <o-select id="f-plan" name="plan" required placeholder="Choose a plan" options='[{"value":"free","label":"Free"},{"value":"pro","label":"Pro","description":"$12 / seat / month"},{"value":"ent","label":"Enterprise","description":"Custom pricing"}]'></o-select>
+            </div>
+            <div>
+              <label class="o-label is-required" for="f-regions">Regions</label>
+              <o-select id="f-regions" name="regions" multiple required placeholder="At least one region" options='["Asia","Europe","Americas","Africa","Oceania"]'></o-select>
+            </div>
+          </div>
+          <div class="o-cluster"><button class="o-btn o-btn-primary">Submit</button><button class="o-btn" type="reset">Reset</button></div>
+          <pre class="demo-out" id="sel-form-out">Submit to see FormData</pre>
+        </form>
+        <script>{
+          document.getElementById('sel-form').addEventListener('submit', e => {
+            e.preventDefault();
+            document.getElementById('sel-form-out').textContent = JSON.stringify([...new FormData(e.target)]);
+          });
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="overlays">
+    <h2>Inside dialogs &amp; scrolling containers</h2>
+    <p>Panels are portaled to <code>&lt;body&gt;</code> (or into the open native <code>&lt;dialog&gt;</code>, so they stay in the top layer), follow their control while scrolling, flip when there is no room below, and close together with their parent overlay. On phones they become bottom sheets.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="demo-grid">
+          <div class="demo-scroll">
+            <p class="o-text-muted o-text-sm">Scroll this box — the open panel follows its control.</p>
+            <o-select placeholder="Inside a scrolling box" options='["Low","Medium","High","Critical"]'></o-select>
+            <div style="height:16rem"></div>
+          </div>
+          <div class="o-stack" style="--o-gap:.5rem;align-items:flex-start">
+            <button class="o-btn" id="sel-dlg-open" type="button">Open native dialog</button>
+            <button class="o-btn" id="sel-modal-open" type="button" hidden>Open Orion.modal</button>
+          </div>
+        </div>
+        <dialog class="demo-dialog" id="sel-dlg">
+          <div class="o-card-header"><h3 class="o-card-title">Assign task</h3><button class="o-btn-close" type="button" aria-label="Close" id="sel-dlg-close"></button></div>
+          <div class="o-card-body o-stack" style="--o-gap:.75rem">
+            <label class="o-label" for="sel-dlg-owner">Owner</label>
+            <o-select id="sel-dlg-owner" clearable placeholder="Choose owner"></o-select>
+            <label class="o-label" for="sel-dlg-labels">Labels</label>
+            <o-select id="sel-dlg-labels" multiple placeholder="Add labels" options='["bug","feature","docs","design","urgent"]'></o-select>
+          </div>
+        </dialog>
+        <script>{
+          const dlg = document.getElementById('sel-dlg');
+          document.getElementById('sel-dlg-owner').options = docs.people(30, 9).map(p => ({ value: p.id, label: p.name, avatar: p.name }));
+          document.getElementById('sel-dlg-open').onclick = () => dlg.showModal();
+          document.getElementById('sel-dlg-close').onclick = () => dlg.close();
+          if (typeof Orion.modal === 'function') {
+            const b = document.getElementById('sel-modal-open');
+            b.hidden = false;
+            b.onclick = () => {
+              const body = document.createElement('div');
+              body.innerHTML = '<o-select placeholder="Pick a priority" options=\'["Low","Medium","High"]\'></o-select>';
+              try { Orion.modal({ title: 'Priority', content: body, body }); } catch (err) { console.warn(err); }
+            };
+          }
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="events">
+    <h2>Events &amp; methods</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster" style="--o-gap:.5rem">
+          <div style="flex:1 1 16rem"><o-select id="sel-ev" multiple creatable placeholder="Interact with me" options='["Alpha","Beta","Gamma","Delta","Epsilon","Zeta","Eta","Theta","Iota"]'></o-select></div>
+          <button class="o-btn o-btn-sm" type="button" data-m="open">open()</button>
+          <button class="o-btn o-btn-sm" type="button" data-m="clear">clear()</button>
+          <button class="o-btn o-btn-sm" type="button" data-m="add">addOption()</button>
+        </div>
+        <div class="docs-log" id="sel-ev-log"></div>
+        <script>{
+          const ev = document.getElementById('sel-ev');
+          ['o-change', 'o-search', 'o-open', 'o-close', 'o-create'].forEach(n => ev.addEventListener(n, e => docs.log('#sel-ev-log', n + ' ' + JSON.stringify(e.detail && (e.detail.value ?? e.detail.query ?? e.detail.reason ?? e.detail.label) || ''))));
+          document.querySelectorAll('[data-m]').forEach(b => b.onclick = () => {
+            if (b.dataset.m === 'open') setTimeout(() => ev.open());
+            if (b.dataset.m === 'clear') ev.clear(true);
+            if (b.dataset.m === 'add') ev.addOption({ value: 'k' + Date.now(), label: 'Kappa ' + new Date().toLocaleTimeString(), icon: 'star' });
+          });
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Enter / Space / ↓ / ↑</td><td>Open the list (closed). Enter / Space pick the active option (open).</td></tr>
+        <tr><td>↓ / ↑ · PageDown / PageUp</td><td>Move the active option (by one / by a page).</td></tr>
+        <tr><td>Home / End</td><td>First / last option.</td></tr>
+        <tr><td>Letters</td><td>Closed, not searchable: select the next option starting with the typed text. Searchable: open and search.</td></tr>
+        <tr><td>Backspace / Delete</td><td>Remove the last chip (multiple) or clear (single with <code>clearable</code>); in the search box only when it is empty.</td></tr>
+        <tr><td>Esc</td><td>Clear the search text, then close.</td></tr>
+        <tr><td>Tab</td><td>Close and move to the next field.</td></tr>
+        <tr><td>Enter · , · ;</td><td>Tags mode: add the typed tag.</td></tr>
+      </tbody>
+    </table>
+    <p>ARIA: the control is a <code>combobox</code> (<code>aria-expanded</code>, <code>aria-controls</code>, <code>aria-activedescendant</code>), the list a <code>listbox</code> (<code>aria-multiselectable</code>) with <code>option</code> rows (<code>aria-selected</code>, <code>aria-disabled</code>, and <code>aria-setsize</code>/<code>aria-posinset</code> when virtualized). Result counts are announced politely.</p>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Properties / attributes</h3>
+    <table class="docs-api">
+      <thead><tr><th>Property (attribute)</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>value</td><td>string | string[] | option objects</td><td>—</td><td>Selected value(s). Arrays for <code>multiple</code> (attribute: JSON or comma list). Objects <code>{ value, label }</code> also register their label.</td></tr>
+        <tr><td>name, required, disabled, readonly</td><td>—</td><td>—</td><td>Standard form-control behaviour.</td></tr>
+        <tr><td>multiple</td><td>boolean</td><td>false</td><td>Allow several values.</td></tr>
+        <tr><td>options</td><td>Array</td><td>[]</td><td><code>{ value, label, description, icon, avatar, disabled, group }</code> or strings. Combined with <code>&lt;option&gt;</code> children.</td></tr>
+        <tr><td>placeholder</td><td>string</td><td>“Select…”</td><td>Text shown when empty.</td></tr>
+        <tr><td>searchable</td><td>boolean | auto</td><td>auto</td><td>Search box in the panel (auto: &gt; 8 options, remote or creatable).</td></tr>
+        <tr><td>display</td><td>'chips' | 'count'</td><td>'chips'</td><td>How multiple values are shown.</td></tr>
+        <tr><td>clearable</td><td>boolean</td><td>false</td><td>Show a clear (×) button.</td></tr>
+        <tr><td>creatable</td><td>boolean</td><td>false</td><td>Offer “Add …” for unknown search text.</td></tr>
+        <tr><td>tags</td><td>boolean</td><td>false</td><td>Free-form tag input (multiple + creatable, inline typing).</td></tr>
+        <tr><td>max</td><td>number</td><td>—</td><td>Maximum number of selected values.</td></tr>
+        <tr><td>select-all</td><td>boolean</td><td>true</td><td>Select all / Clear bar for local multiple lists.</td></tr>
+        <tr><td>hide-selected</td><td>boolean</td><td>false</td><td>Hide chosen options from the list (multiple).</td></tr>
+        <tr><td>close-on-select</td><td>boolean</td><td>single: true, multiple: false</td><td>Close the panel after picking.</td></tr>
+        <tr><td>source</td><td>(query, { page, signal }) =&gt; options | { options, hasMore }</td><td>—</td><td>Async options (remote search, paging).</td></tr>
+        <tr><td>url</td><td>string</td><td>—</td><td>JSON endpoint; <code>{q}</code> / <code>{page}</code> placeholders, or fetched once without <code>{q}</code>.</td></tr>
+        <tr><td>fields</td><td>object</td><td>—</td><td>Map your keys: <code>{ "value": "id", "label": "name", "description": "email", "group": "team" }</code> (dot paths allowed).</td></tr>
+        <tr><td>debounce · min-chars</td><td>number</td><td>250 · 0</td><td>Remote search timing and minimum query length.</td></tr>
+        <tr><td>render-option</td><td>(option, ctx) =&gt; html | Node</td><td>—</td><td>Custom option rows.</td></tr>
+        <tr><td>render-value</td><td>(option, { chip }) =&gt; html | Node</td><td>—</td><td>Custom single value / chip content.</td></tr>
+        <tr><td>size</td><td>'sm' | 'lg'</td><td>—</td><td>Control size.</td></tr>
+        <tr><td>virtual-threshold</td><td>number</td><td>150</td><td>Rows above which the list is virtualized.</td></tr>
+        <tr><td>texts</td><td>object</td><td>—</td><td>Per-instance strings (<code>placeholder, search, noResults, noOptions, loading, loadingMore, error, retry, create, selectAll, clearAll, clear, selected, max, results, minChars</code>).</td></tr>
+        <tr><td>selectedOption / selectedOptions</td><td>read-only</td><td></td><td>Normalized option(s) <code>{ value, label, …, raw }</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-change</td><td>{ value, option } / { value, options }</td><td>User changed the value (also native <code>input</code> + <code>change</code>).</td></tr>
+        <tr><td>o-search</td><td>{ query }</td><td>Search text changed.</td></tr>
+        <tr><td>o-before-open</td><td>—</td><td>Cancelable, before the panel opens.</td></tr>
+        <tr><td>o-open / o-close</td><td>— / { reason }</td><td>Panel opened / closed (<code>escape, outside, tab, api, parent</code>).</td></tr>
+        <tr><td>o-create</td><td>{ value, label }</td><td>Cancelable; rewrite the detail to change the created option.</td></tr>
+        <tr><td>o-load / o-error</td><td>{ query, page, options } / { error, query }</td><td>Remote results arrived / failed.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>open() / close() / toggle()</td><td>Control the panel.</td></tr>
+        <tr><td>clear(emit = false)</td><td>Empty the value (fires events when <code>emit</code> is true).</td></tr>
+        <tr><td>focus()</td><td>Focus the control.</td></tr>
+        <tr><td>setOptions(list) / addOption(opt | list) / removeOption(value)</td><td>Change the option list.</td></tr>
+        <tr><td>getOption(value)</td><td>Normalized option for a value (local, remote or remembered).</td></tr>
+        <tr><td>refresh()</td><td>Re-read children, clear the remote cache and reload.</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS variables &amp; classes</h3>
+    <p><code>--o-select-max-h</code> (list height, 18rem), <code>--o-listbox-row-h</code> (row height). Parts: <code>.o-select-control</code>, <code>.o-select-chip</code>, <code>.o-select-panel</code>, <code>.o-listbox-option</code> (<code>.is-active</code>, <code>.is-selected</code>, <code>.is-disabled</code>), <code>.o-listbox-group</code>.</p>
+    <h3>Frameworks</h3>
+    <p>Set <code>options</code>, <code>value</code>, <code>source</code> and the render functions as properties (React 19, Vue <code>:options</code>, Angular <code>[options]</code>); with React 18 pass arrays as JSON strings. Listen to <code>o-change</code> (Vue <code>@o-change</code>, Angular <code>(o-change)</code>, React via a ref). Children rendered later by a framework are picked up automatically.</p>
+    <pre class="docs-code-block" data-lang="js">// React 19
+&lt;o-select ref={ref} name="owner" options={users} value={owner} clearable /&gt;
+useEffect(() =&gt; { const el = ref.current; const f = e =&gt; setOwner(e.detail.value); el.addEventListener('o-change', f); return () =&gt; el.removeEventListener('o-change', f); }, []);</pre>
+  </section>
+</main>
+</body>
+</html>

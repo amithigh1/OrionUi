@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forgot password — Orion Admin</title>
+<script src="../../dist/orion.js"></script>
+</head>
+<body>
+<div class="o-auth-split">
+  <div class="o-auth-cover">
+    <div class="o-auth-cover-brand">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>
+      Orion Admin
+    </div>
+    <div class="o-auth-cover-body">
+      <div class="o-auth-illustration">
+        <svg viewBox="0 0 480 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+          <defs><linearGradient id="cardGrad3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".97"/><stop offset="1" stop-color="#ffffff" stop-opacity=".82"/></linearGradient></defs>
+          <rect x="90" y="60" width="300" height="240" rx="18" fill="url(#cardGrad3)"/>
+          <rect x="180" y="140" width="120" height="90" rx="14" fill="#e0e7ff"/>
+          <path d="M200 140v-24a40 40 0 0 1 80 0v24" fill="none" stroke="#818cf8" stroke-width="10" stroke-linecap="round"/>
+          <circle cx="240" cy="180" r="12" fill="#4338ca"/>
+          <rect x="234" y="188" width="12" height="22" rx="6" fill="#4338ca"/>
+          <rect x="150" y="250" width="180" height="14" rx="7" fill="#c7d2fe"/>
+        </svg>
+      </div>
+      <h2 class="o-auth-cover-title">Locked out? No problem.</h2>
+      <p class="o-auth-cover-text">We'll email you a secure link to get back into your account in seconds.</p>
+    </div>
+    <div class="o-auth-cover-quote">
+      “Support tickets for password resets dropped to zero.”
+      <b>— Helena Cruz, IT Lead at Bramblewood</b>
+    </div>
+  </div>
+  <div class="o-auth-split-form">
+    <div class="o-auth-card">
+      <o-auth-form type="forgot" id="forgot-form"></o-auth-form>
+    </div>
+  </div>
+</div>
+<script>
+  document.getElementById('forgot-form').onSubmit = async () => { await new Promise(r => setTimeout(r, 600)); };
+</script>
+</body>
+</html>

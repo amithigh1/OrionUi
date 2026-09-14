@@ -1,0 +1,19 @@
+/* Tooltip: <div class="o-tooltip" role="tooltip" data-placement="top|bottom|left|right"> (portaled, position: fixed) */
+.o-tooltip {
+  --o-tooltip-bg: var(--o-text); --o-tooltip-fg: var(--o-surface); --o-tooltip-max-w: 18rem;
+  position: fixed; top: 0; left: 0; max-width: min(var(--o-tooltip-max-w), calc(100vw - 12px)); padding: .375rem .625rem;
+  font-family: var(--o-font-sans); font-size: var(--o-fs-xs); font-weight: 500; line-height: 1.45; text-align: start;
+  white-space: normal; overflow-wrap: break-word; letter-spacing: normal; text-transform: none;
+  color: var(--o-tooltip-fg); background: var(--o-tooltip-bg); border-radius: var(--o-radius-sm); box-shadow: var(--o-shadow);
+  pointer-events: auto; user-select: none; -webkit-user-select: none;
+}
+.o-tooltip-inner { position: relative; z-index: 1; }
+.o-tooltip-inner :is(b, strong) { font-weight: 700; }
+.o-tooltip-inner a { color: inherit; text-decoration: underline; }
+.o-tooltip-inner kbd, .o-tooltip-inner .o-kbd { color: inherit; background: transparent; border-color: color-mix(in srgb, currentColor 40%, transparent); }
+.o-tooltip-arrow { position: absolute; width: 8px; height: 8px; background: var(--o-tooltip-bg); transform: rotate(45deg); border-radius: 1px; }
+.o-tooltip[data-placement="top"] > .o-tooltip-arrow { bottom: -4px; }
+.o-tooltip[data-placement="bottom"] > .o-tooltip-arrow { top: -4px; }
+.o-tooltip[data-placement="left"] > .o-tooltip-arrow { right: -4px; }
+.o-tooltip[data-placement="right"] > .o-tooltip-arrow { left: -4px; }
+@media (forced-colors: active) { .o-tooltip { border: 1px solid CanvasText; } }

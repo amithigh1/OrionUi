@@ -1,0 +1,36 @@
+/* ============================================================================
+ * <o-activity-feed>
+ * Reuses core classes wherever they already fit: `.o-feed` / `.o-feed-item` / `.o-feed-content` /
+ * `.o-feed-time` (src/css/60-content.css), `.o-divider` (day headers), `.o-empty` (empty state) and
+ * `.o-segmented` (filter chips). This file only adds the icon/avatar slots and this component's own
+ * layout — every selector below is scoped under `.o-activity-feed`/`.o-feed-*` new class names so it
+ * never redefines a core rule. Tokens + logical properties throughout so RTL mirrors automatically.
+ * ========================================================================== */
+o-activity-feed:not(:defined) { visibility: hidden; }
+
+.o-activity-feed { display: block; min-width: 0; }
+.o-activity-feed .o-feed-item { align-items: flex-start; }
+.o-activity-feed .o-feed-content { line-height: 1.45; }
+.o-activity-feed .o-feed-time { flex-shrink: 0; padding-top: .125rem; }
+
+.o-feed-icon {
+  display: grid; place-items: center; flex-shrink: 0; width: 1.75rem; height: 1.75rem; margin-top: .0625rem;
+  border-radius: 50%; color: var(--o-c-text, var(--o-text-muted)); background: var(--o-c-subtle, var(--o-surface-3));
+}
+.o-feed-icon .o-icon { width: .9375rem; height: .9375rem; }
+.o-feed-avatar { flex-shrink: 0; }
+.o-feed-avatar .o-avatar, .o-feed-avatar o-avatar { --o-avatar-size: 1.5rem; width: 1.5rem; height: 1.5rem; }
+
+.o-feed-filters { margin-bottom: .75rem; flex-wrap: wrap; }
+.o-feed-more { display: block; margin: .75rem auto 0; }
+.o-feed-sentinel { height: 1px; }
+.o-activity-feed.is-loading .o-feed { opacity: .85; }
+
+/* compact: tighter rows + smaller icon/avatar, still shows everything */
+.o-activity-feed[compact] .o-feed-item { gap: .5rem; padding-block: .5rem; }
+.o-activity-feed[compact] .o-feed-icon { width: 1.5rem; height: 1.5rem; }
+.o-activity-feed[compact] .o-feed-icon .o-icon { width: .8125rem; height: .8125rem; }
+.o-activity-feed[compact] .o-feed-avatar .o-avatar, .o-activity-feed[compact] .o-feed-avatar o-avatar { --o-avatar-size: 1.25rem; width: 1.25rem; height: 1.25rem; }
+.o-activity-feed[compact] .o-feed-content { font-size: var(--o-fs-xs); }
+.o-activity-feed[compact] .o-feed-time { font-size: .6875rem; }
+.o-activity-feed[compact] .o-divider { margin: .5rem 0; }

@@ -1,0 +1,134 @@
+/* ============================================================================
+ * Pickers shared: listbox rows, bottom sheet, backdrop  +  <o-select>
+ * Customise: --o-select-max-h (list height), --o-listbox-row-h
+ * ========================================================================== */
+
+/* ── shared listbox (select, autocomplete, timepicker) ──────────────── */
+.o-listbox { position: relative; overflow-y: auto; overscroll-behavior: contain; padding: .25rem; outline: none; }
+.o-listbox.is-virtual { padding-block: 0; }
+.o-listbox-spacer { width: 1px; }
+.o-listbox.is-virtual > .o-listbox-window { position: absolute; top: 0; inset-inline: .25rem; will-change: transform; }
+.o-listbox-option {
+  display: flex; align-items: center; gap: .625rem; min-height: var(--o-listbox-row-h, 2.25rem); padding: .375rem .625rem;
+  color: var(--o-text); border-radius: var(--o-radius-sm); cursor: pointer; user-select: none; -webkit-user-select: none;
+  line-height: 1.35;
+}
+.o-listbox-option.has-desc { min-height: 3.25rem; }
+.o-listbox-option.is-active { background: var(--o-surface-3); }
+.o-listbox-option.is-selected { color: var(--o-primary-text); }
+.o-listbox-option.is-selected .o-listbox-label { font-weight: 500; }
+.o-listbox-option.is-disabled { opacity: .5; cursor: not-allowed; }
+.o-listbox-option.is-create { color: var(--o-primary-text); font-weight: 500; }
+.o-listbox-text { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; }
+.o-listbox-label, .o-listbox-desc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.o-listbox-desc { font-size: var(--o-fs-xs); color: var(--o-text-muted); }
+.o-listbox-option.is-selected .o-listbox-desc { color: color-mix(in srgb, var(--o-primary-text) 60%, var(--o-text-muted)); }
+.o-listbox .o-mark { background: none; color: var(--o-primary-text); font-weight: 650; }
+.o-listbox-media { flex-shrink: 0; }
+.o-listbox-icon { display: inline-grid; place-items: center; color: var(--o-text-muted); }
+.o-listbox-icon > .o-icon { width: 1.125rem; height: 1.125rem; }
+.o-listbox-option.is-selected .o-listbox-icon, .o-listbox-option.is-create .o-listbox-icon { color: inherit; }
+.o-listbox-option.has-desc .o-avatar { --o-avatar-size: 2rem; }
+.o-listbox-tick { display: inline-grid; place-items: center; flex-shrink: 0; color: var(--o-primary-text); visibility: hidden; }
+.o-listbox-tick > .o-icon { width: 1rem; height: 1rem; }
+.o-listbox-option.is-selected > .o-listbox-tick { visibility: visible; }
+.o-listbox-check {
+  flex-shrink: 0; width: 1rem; height: 1rem; border: 1px solid var(--o-border-strong); border-radius: 4px;
+  background: var(--o-input-bg) no-repeat center / contain; transition: background-color var(--o-dur-fast), border-color var(--o-dur-fast);
+}
+.o-listbox-option.is-selected > .o-listbox-check {
+  background-color: var(--o-primary); border-color: var(--o-primary);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3E%3C/svg%3E");
+}
+.o-listbox-group {
+  display: flex; align-items: flex-end; height: 1.875rem; padding: 0 .625rem .3rem; margin: 0;
+  font-size: .6875rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--o-text-subtle);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.o-listbox-window > .o-listbox-group:first-child { height: 1.625rem; }
+.o-listbox.is-virtual .o-listbox-window > .o-listbox-group:first-child { height: 1.875rem; }
+
+/* ── bottom sheet on small screens + backdrop ─────────────────────── */
+.o-picker-backdrop { position: fixed; inset: 0; background: var(--o-backdrop); }
+.o-floating.is-sheet {
+  max-width: none; max-height: 86vh; border-bottom: 0; border-radius: var(--o-radius-xl) var(--o-radius-xl) 0 0;
+  padding-bottom: env(safe-area-inset-bottom, 0); box-shadow: var(--o-shadow-xl);
+}
+.o-floating.is-sheet::before { content: ""; display: block; flex-shrink: 0; width: 2.5rem; height: 4px; margin: .5rem auto .125rem; border-radius: var(--o-radius-pill); background: var(--o-border-strong); }
+
+/* ── <o-select> ────────────────────────────────────────────────────── */
+o-select { display: block; position: relative; min-width: 0; }
+o-select:not(:defined) { visibility: hidden; }
+o-select > option, o-select > optgroup { display: none; }
+.o-select-control {
+  display: flex; align-items: center; gap: .125rem; height: auto; min-height: var(--o-control-h); padding: 0; padding-inline-end: .375rem;
+  cursor: pointer; text-align: start;
+}
+.o-select-combo {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .25rem; flex: 1 1 auto; min-width: 0; align-self: stretch;
+  min-height: calc(var(--o-control-h) - 2px); max-height: 7.75rem; overflow-y: auto; padding: .1875rem .25rem .1875rem var(--o-control-px);
+  outline: none; border-radius: inherit; scrollbar-width: thin;
+}
+.o-select-control.is-multiple.has-value .o-select-combo { padding-inline-start: .3125rem; }
+.o-select-single { display: flex; align-items: center; gap: .5rem; min-width: 0; max-width: 100%; }
+.o-select-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.o-select-single .o-avatar { --o-avatar-size: 1.375rem; }
+.o-select-single .o-listbox-icon { color: var(--o-text-muted); }
+.o-select-placeholder { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--o-text-subtle); }
+.o-select-chips { display: contents; }
+.o-select-chip { height: 1.5rem; gap: .3125rem; padding-inline: .5rem .375rem; font-size: var(--o-fs-sm); background: var(--o-surface-3); cursor: default; }
+.o-select-chip > .o-listbox-media { margin-inline-start: -.25rem; }
+.o-select-chip .o-avatar { --o-avatar-size: 1.125rem; font-size: .5rem; }
+.o-select-chip .o-listbox-icon > .o-icon { width: .875rem; height: .875rem; }
+.o-select-chip:not(:has(.o-chip-remove)) { padding-inline-end: .5rem; }
+.o-select-inline { flex: 1 0 5rem; min-width: 5rem; height: 1.5rem; padding: 0 .25rem; font: inherit; color: var(--o-text); background: transparent; border: 0; outline: 0; }
+.o-select-inline::placeholder { color: var(--o-text-subtle); }
+.o-select-control.is-tags { cursor: text; }
+.o-select-control.is-tags .o-select-arrow { display: none; }
+.o-select-indicators { display: flex; align-items: center; gap: .125rem; flex-shrink: 0; color: var(--o-text-muted); }
+.o-select-clear {
+  display: inline-grid; place-items: center; width: 1.5rem; height: 1.5rem; padding: 0; border: 0; border-radius: var(--o-radius-sm);
+  color: var(--o-text-subtle); background: transparent; cursor: pointer;
+}
+.o-select-clear:hover { color: var(--o-text); background: var(--o-surface-3); }
+.o-select-clear > .o-icon, .o-select-arrow > .o-icon { width: 1rem; height: 1rem; }
+.o-select-arrow { display: inline-grid; place-items: center; width: 1.25rem; transition: transform var(--o-dur-fast) var(--o-ease); }
+o-select.is-open .o-select-arrow { transform: rotate(180deg); }
+.o-select-spinner { display: none; --o-spinner-size: .875rem; margin-inline: .125rem; }
+o-select.is-loading .o-select-spinner { display: inline-block; }
+.o-select-control.is-disabled { cursor: not-allowed; }
+.o-select-control.is-disabled .o-select-chip { opacity: .8; }
+.o-select-control.is-readonly { background-color: var(--o-surface-2); cursor: default; }
+.o-select-control.is-readonly .o-select-arrow { opacity: .4; }
+.o-select-control.o-control-sm { min-height: var(--o-control-h-sm); height: auto; padding-inline: 0 .25rem; }
+.o-select-control.o-control-sm .o-select-combo { min-height: calc(var(--o-control-h-sm) - 2px); padding-block: .125rem; padding-inline-start: .5rem; }
+.o-select-control.o-control-sm .o-select-chip { height: 1.25rem; font-size: var(--o-fs-xs); }
+.o-select-control.o-control-lg { min-height: var(--o-control-h-lg); height: auto; padding-inline: 0 .5rem; }
+.o-select-control.o-control-lg .o-select-combo { min-height: calc(var(--o-control-h-lg) - 2px); padding-inline-start: 1rem; }
+.o-select-control.o-control-lg .o-select-chip { height: 1.875rem; }
+
+/* panel */
+.o-select-panel { display: flex; flex-direction: column; min-width: 13rem; max-width: min(34rem, calc(100vw - 16px)); padding: 0; overflow: hidden; }
+.o-select-panel-sm { font-size: var(--o-fs-sm); }
+.o-select-search { display: flex; align-items: center; gap: .5rem; flex-shrink: 0; padding: .375rem .75rem; border-bottom: 1px solid var(--o-border); color: var(--o-text-subtle); }
+.o-select-search > .o-icon { width: 1rem; height: 1rem; }
+.o-select-search-input { flex: 1 1 auto; min-width: 0; height: 2rem; padding: 0; font: inherit; color: var(--o-text); background: transparent; border: 0; outline: 0; }
+.o-select-search-input::placeholder { color: var(--o-text-subtle); }
+.o-select-actions { display: flex; align-items: center; gap: .5rem; flex-shrink: 0; padding: .25rem .5rem; border-bottom: 1px solid var(--o-border); background: var(--o-surface-2); }
+.o-select-actions .o-btn { --o-btn-h: 1.5rem; }
+.o-select-count { flex: 1 1 auto; text-align: center; font-size: var(--o-fs-xs); color: var(--o-text-muted); }
+.o-select-list { flex: 1 1 auto; min-height: 0; max-height: var(--o-select-max-h, 18rem); }
+.o-select-list:empty, .o-select-list:not(:has(.o-listbox-option, .o-listbox-group)) { padding: 0; }
+.o-select-status { flex-shrink: 0; }
+.o-select-status.is-footer { border-top: 1px solid var(--o-border); }
+.o-select-msg { display: flex; align-items: center; justify-content: center; gap: .5rem; padding: .75rem 1rem; font-size: var(--o-fs-sm); color: var(--o-text-muted); text-align: center; }
+.o-select-status.is-footer .o-select-msg { padding-block: .5rem; font-size: var(--o-fs-xs); }
+.o-select-msg > .o-icon { width: 1rem; height: 1rem; flex-shrink: 0; }
+.o-select-msg.is-error { color: var(--o-danger-text); }
+.o-select-msg .o-spinner { --o-spinner-size: 1rem; }
+.o-select-panel.is-sheet .o-select-list { max-height: none; }
+.o-select-panel.is-sheet .o-listbox-option { min-height: 2.75rem; }
+.o-select-panel.is-sheet .o-listbox-option.has-desc { min-height: 3.5rem; }
+
+/* native <select data-o-select>: stays in the form (and anchors its validation bubble) but is not shown */
+select.o-select-native { position: absolute; width: 1px; height: 1px; margin: 0; padding: 0; border: 0; opacity: 0; pointer-events: none; overflow: hidden; }

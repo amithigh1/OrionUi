@@ -1,0 +1,35 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "Kuala Lumpur — Zone A (same-day)", "color": "#2a78d6", "popup": "<strong>Zone A</strong><br>Same-day delivery, Kuala Lumpur city centre." },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [101.6650, 3.1750], [101.7300, 3.1750], [101.7300, 3.1200], [101.6650, 3.1200], [101.6650, 3.1750]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Klang Valley — Zone B (next-day)", "color": "#eda100", "popup": "<strong>Zone B</strong><br>Next-day delivery, greater Klang Valley." },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [101.5800, 3.2100], [101.7900, 3.2100], [101.7900, 3.0400], [101.5800, 3.0400], [101.5800, 3.2100]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Singapore — Zone A (same-day)", "color": "#1baf7a", "popup": "<strong>Zone A</strong><br>Same-day delivery, Singapore." },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [103.7000, 1.4200], [103.9700, 1.4200], [103.9700, 1.2350], [103.7000, 1.2350], [103.7000, 1.4200]
+        ]]
+      }
+    }
+  ]
+}

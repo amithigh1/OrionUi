@@ -1,0 +1,62 @@
+/* ============================================================================
+ * Editors kit: popovers, menus, emoji picker (shared by editor / comments / mentions)
+ * ========================================================================== */
+.o-ek-pop { position: fixed; min-width: 10rem; max-width: min(24rem, calc(100vw - 1rem)); padding: .25rem; overflow: auto; font-size: var(--o-fs-sm); outline: none; }
+.o-ek-menu { display: flex; flex-direction: column; gap: 1px; min-width: 11rem; }
+.o-ek-item {
+  display: flex; align-items: center; gap: .625rem; width: 100%; min-height: 2rem; padding: .375rem .625rem; font: inherit; font-size: var(--o-fs-sm);
+  color: var(--o-text); text-align: start; background: transparent; border: 0; border-radius: var(--o-radius-sm); cursor: pointer; white-space: nowrap;
+}
+.o-ek-item:hover, .o-ek-item:focus-visible, .o-ek-item.is-active { background: var(--o-surface-3); outline: none; }
+.o-ek-item:disabled { opacity: .5; cursor: not-allowed; }
+.o-ek-item.is-danger { color: var(--o-danger-text); }
+.o-ek-item.is-checked { color: var(--o-primary-text); background: var(--o-primary-subtle); }
+.o-ek-item > .o-icon { flex: none; width: 1rem; height: 1rem; color: var(--o-text-muted); }
+.o-ek-item.is-checked > .o-icon, .o-ek-item.is-danger > .o-icon { color: inherit; }
+.o-ek-label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.o-ek-hint { margin-inline-start: auto; padding-inline-start: 1rem; font-size: var(--o-fs-xs); color: var(--o-text-subtle); font-family: var(--o-font-mono); }
+.o-ek-sep { height: 1px; margin: .25rem .375rem; background: var(--o-border); }
+
+/* emoji picker */
+.o-ek-emoji-pop { width: min(21rem, calc(100vw - 1rem)); max-width: none; padding: 0; overflow: hidden; }
+.o-ek-emoji-panel { display: flex; flex-direction: column; }
+.o-ek-emoji-search { margin: .5rem .5rem .25rem; width: auto; }
+.o-ek-emoji-tabs { display: flex; gap: 2px; padding: 0 .5rem .25rem; border-bottom: 1px solid var(--o-border); overflow-x: auto; scrollbar-width: none; }
+.o-ek-emoji-tab { flex: none; width: 2rem; height: 2rem; padding: 0; font-size: 1.125rem; line-height: 1; background: none; border: 0; border-radius: var(--o-radius-sm); cursor: pointer; }
+.o-ek-emoji-tab:hover, .o-ek-emoji-tab:focus-visible { background: var(--o-surface-3); outline: none; }
+.o-ek-emoji-grid { height: 15rem; padding: .25rem .5rem .5rem; overflow-y: auto; overscroll-behavior: contain; }
+.o-ek-emoji-cat { position: sticky; top: -.25rem; z-index: 1; padding: .375rem .125rem .25rem; font-size: var(--o-fs-xs); font-weight: 600; color: var(--o-text-muted); background: var(--o-elevated); }
+.o-ek-emoji-set { display: grid; grid-template-columns: repeat(auto-fill, minmax(2.125rem, 1fr)); }
+.o-ek-emoji {
+  display: grid; place-items: center; height: 2.125rem; padding: 0; font-size: 1.3rem; line-height: 1; background: none; border: 0;
+  border-radius: var(--o-radius-sm); cursor: pointer; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", var(--o-font-sans);
+}
+.o-ek-emoji:hover, .o-ek-emoji:focus-visible, .o-ek-emoji.is-active { background: var(--o-surface-3); outline: none; }
+.o-ek-emoji:focus-visible { box-shadow: 0 0 0 2px var(--o-focus); }
+.o-ek-emoji-none { padding: 2rem 1rem; text-align: center; color: var(--o-text-muted); }
+
+/* ============================================================================
+ * Mentions: suggestion list + inline tokens
+ * ========================================================================== */
+.o-mentions { min-width: 14rem; max-width: min(22rem, calc(100vw - 1rem)); padding: .25rem; overflow: hidden; }
+.o-mentions-list { max-height: 16rem; overflow-y: auto; overscroll-behavior: contain; }
+.o-mentions-item {
+  display: flex; align-items: center; gap: .625rem; min-height: 2.25rem; padding: .375rem .5rem; border-radius: var(--o-radius-sm); cursor: pointer;
+  color: var(--o-text);
+}
+.o-mentions-item.is-active { background: var(--o-primary-subtle); }
+.o-mentions-item .o-avatar { --o-avatar-size: 1.625rem; flex: none; }
+.o-mentions-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
+.o-mentions-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.o-mentions-desc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--o-fs-xs); color: var(--o-text-muted); }
+.o-mentions-emoji { display: grid; place-items: center; flex: none; width: 1.625rem; font-size: 1.25rem; line-height: 1; }
+.o-mentions-icon { display: grid; place-items: center; flex: none; width: 2rem; height: 2rem; color: var(--o-text-muted); background: var(--o-surface-2); border: 1px solid var(--o-border); border-radius: var(--o-radius-sm); }
+.o-mentions-hint { margin-inline-start: auto; padding-inline-start: .75rem; font-size: var(--o-fs-xs); color: var(--o-text-subtle); font-family: var(--o-font-mono); white-space: nowrap; }
+.o-mentions-status { display: flex; align-items: center; gap: .5rem; padding: .5rem .625rem; font-size: var(--o-fs-sm); color: var(--o-text-muted); }
+
+.o-mention {
+  display: inline; padding: 0 .2em; font-weight: 500; color: var(--o-primary-text); background: var(--o-primary-subtle);
+  border-radius: var(--o-radius-xs); white-space: nowrap; -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+.o-mention[data-trigger="#"] { color: var(--o-info-text); background: var(--o-info-subtle); }
+.o-mention::selection { background: color-mix(in srgb, var(--o-primary) 30%, transparent); }

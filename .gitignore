@@ -1,0 +1,6 @@
+node_modules/
+.tmp/
+tests/frameworks/out/
+*.log
+.DS_Store
+Thumbs.db

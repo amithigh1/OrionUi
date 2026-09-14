@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workspace Tabs — Orion Admin</title>
+<meta name="docs:section" content="Layout &amp; Navigation">
+<meta name="docs:order" content="65">
+<meta name="docs:desc" content="Browser / IDE-like document tabs: pin, dirty state, context menu, reorder, keep-alive, restore">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <style>
+    .ws-demo { height: 26rem; border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); overflow: hidden; }
+    .ws-doc { display: flex; flex-direction: column; gap: .75rem; height: 100%; }
+    .ws-doc textarea { flex: 1 1 auto; min-height: 8rem; resize: none; font: .875rem/1.6 var(--o-font-mono); }
+    .ws-doc-bar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+    .ws-doc-bar .o-input { flex: 1 1 12rem; font-weight: 600; }
+  </style>
+  <header class="docs-hero">
+    <h1>Workspace tabs</h1>
+    <p class="docs-lead"><code>&lt;o-workspace&gt;</code> is a multi-document tab strip like a browser or IDE: icons, dirty dots, pinned tabs, middle-click close, a context menu (Close, Close others, Close to the right, Close all, Pin, Duplicate), drag reordering, an overflow list, keep-alive panes, confirmation before closing unsaved work and restoring open tabs on reload.</p>
+  </header>
+
+  <section id="documents">
+    <h2>Editing documents</h2>
+    <p>Type in a document to mark it dirty (●); closing it asks for confirmation. Right-click a tab (or press <kbd class="o-kbd">Shift</kbd>+<kbd class="o-kbd">F10</kbd>) for more actions. Switching tabs keeps each pane alive — scroll position, text and iframes are preserved. Reload the page: open tabs come back (<code>persist</code> + <code>resolver</code>).</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-primary o-btn-sm" id="ws-new"><o-icon name="plus"></o-icon> New document</button>
+          <button class="o-btn o-btn-sm" id="ws-inv">Open invoice #1042</button>
+          <button class="o-btn o-btn-sm" id="ws-web">Open page (iframe)</button>
+          <button class="o-btn o-btn-sm o-btn-ghost" id="ws-reset">Reset demo</button>
+        </div>
+        <o-workspace id="ws" class="ws-demo" persist="docs-ws" max="10" label="Documents">
+          <div slot="empty" class="o-empty">
+            <div class="o-empty-icon"><o-icon name="file"></o-icon></div>
+            <p class="o-empty-title">No open documents</p>
+            <p class="o-empty-text">Create one to get started.</p>
+            <div class="o-empty-actions"><button class="o-btn o-btn-primary o-btn-sm" onclick="document.getElementById('ws-new').click()">New document</button></div>
+          </div>
+        </o-workspace>
+        <div class="docs-log" id="log-ws"></div>
+        <script>
+          const ws = document.getElementById('ws');
+          const texts = {
+            readme: '# Orion Admin\n\nA single-file admin UI library.\n\n- Tabs\n- Workspace\n- Dock',
+            'inv-1042': 'Invoice #1042\nCustomer: Acme Sdn Bhd\nAmount: MYR 12,400.00\nDue: 30 days',
+            notes: 'Meeting notes\n\n1. Ship the panels package\n2. Review dark mode\n3. Test RTL',
+          };
+          // builds the editor for a tab (also used to rebuild restored tabs)
+          const editor = tab => {
+            const wrap = document.createElement('div'); wrap.className = 'ws-doc';
+            const bar = document.createElement('div'); bar.className = 'ws-doc-bar';
+            const title = document.createElement('input'); title.className = 'o-input o-input-sm'; title.value = tab.title; title.setAttribute('aria-label', 'Title');
+            const save = document.createElement('button'); save.className = 'o-btn o-btn-sm o-btn-soft-primary'; save.textContent = 'Save';
+            const area = document.createElement('textarea'); area.className = 'o-input'; area.value = texts[tab.id] ?? ''; area.setAttribute('aria-label', 'Content');
+            title.oninput = () => { ws.setTitle(tab.id, title.value || 'Untitled'); ws.setDirty(tab.id, true); };
+            area.oninput = () => ws.setDirty(tab.id, true);
+            save.onclick = () => { texts[tab.id] = area.value; ws.setDirty(tab.id, false); docs.log('#log-ws', 'saved ' + tab.id); };
+            bar.append(title, save); wrap.append(bar, area);
+            return wrap;
+          };
+          ws.resolver = d => (d.url ? { url: d.url } : { render: editor });
+          let n = 1;
+          document.getElementById('ws-new').onclick = () => ws.open({ title: `Untitled-${n++}`, icon: 'edit', render: editor, focus: true });
+          document.getElementById('ws-inv').onclick = () => ws.open({ id: 'inv-1042', title: 'Invoice #1042', icon: 'file', render: editor });
+          document.getElementById('ws-web').onclick = () => ws.open({ id: 'web', title: 'Buttons (docs)', icon: 'external-link', url: 'buttons.html' });
+          document.getElementById('ws-reset').onclick = () => { localStorage.removeItem('orion:workspace:docs-ws'); location.reload(); };
+          ['open', 'close', 'activate', 'reorder'].forEach(t => ws.addEventListener('o-' + t, e => docs.log('#log-ws', `o-${t} ${e.detail.tab?.id ?? e.detail.id}${e.detail.reason ? ' (' + e.detail.reason + ')' : ''}`)));
+          if (!ws.restore()) {
+            ws.open({ id: 'home', title: 'Dashboard', icon: 'home', pinned: true, content: 'Pinned tabs stay at the start and survive "Close others / all".', activate: false });
+            ws.open({ id: 'readme', title: 'README.md', icon: 'file', render: editor });
+            ws.open({ id: 'notes', title: 'Meeting notes', icon: 'edit', render: editor, dirty: true });
+            ws.open({ id: 'inv-1042', title: 'Invoice #1042', icon: 'file', render: editor });
+            ws.activate('readme');
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api-usage">
+    <h2>Opening tabs from code</h2>
+    <p>Descriptors are plain objects. Supply content as a Node or text, trusted <code>html</code>, a lazy <code>render(tab)</code> function (called on first activation) or a <code>url</code> (iframe). Opening an existing <code>id</code> focuses that tab. With <code>persist</code>, only serializable fields are stored (<code>id, title, icon, pinned, url, data</code>); the <code>resolver</code> property rebuilds the content of restored tabs, or listen to <code>o-render</code>.</p>
+    <pre class="docs-code-block" data-lang="js">
+      const ws = document.querySelector('o-workspace');
+      ws.resolver = d => ({ render: () => buildEditor(d.data.fileId) });   // rebuild restored tabs
+      ws.confirm = tab => myDialog.ask(`Discard changes to ${tab.title}?`);  // optional custom confirmation
+      ws.open({ id: 'file-42', title: 'report.md', icon: 'file', data: { fileId: 42 }, render: tab => buildEditor(42) });
+      ws.setDirty('file-42', true);
+      ws.addEventListener('o-close', e => { if (e.detail.reason === 'max') e.preventDefault(); });
+      await ws.close('file-42');           // resolves false when the user keeps the tab
+    </pre>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Attribute / property</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>persist</td><td><code>string</code></td><td>Save open tabs and the active one (<code>orion:workspace:&lt;key&gt;</code>); restored automatically or with <code>restore()</code>.</td></tr>
+        <tr><td>max</td><td><code>number</code></td><td>Maximum open tabs; the least recently used clean, unpinned tab closes first (<code>o-close</code> with <code>reason: 'max'</code>).</td></tr>
+        <tr><td>label</td><td><code>string</code></td><td><code>aria-label</code> of the tab list.</td></tr>
+        <tr><td>resolver</td><td><code>(tab) =&gt; Node | { content, html, render, url }</code></td><td>Rebuilds content for restored tabs.</td></tr>
+        <tr><td>confirm</td><td><code>(tab) =&gt; boolean | Promise&lt;boolean&gt;</code></td><td>Custom confirmation for dirty tabs (default: <code>Orion.confirm</code> when present, else <code>window.confirm</code>).</td></tr>
+        <tr><td>[slot="empty"] child</td><td>—</td><td>Shown when no tab is open (a default empty state otherwise).</td></tr>
+      </tbody>
+    </table>
+    <h3>Tab descriptor</h3>
+    <table class="docs-api">
+      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>id</td><td><code>string</code></td><td>Unique id (generated when omitted).</td></tr>
+        <tr><td>title / icon</td><td><code>string</code></td><td>Tab label (text) and icon name.</td></tr>
+        <tr><td>content / html / render / url</td><td><code>Node | string</code>, <code>string</code>, <code>(tab, pane) =&gt; Node</code>, <code>string</code></td><td>Content source; <code>html</code> is trusted markup.</td></tr>
+        <tr><td>pinned / dirty / closable</td><td><code>boolean</code></td><td>Initial state (<code>closable: false</code> hides the close button).</td></tr>
+        <tr><td>data</td><td><code>any</code> (JSON)</td><td>Your own serializable data, stored with <code>persist</code>.</td></tr>
+        <tr><td>focus</td><td><code>boolean</code></td><td>Move keyboard focus to the tab.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-open</td><td><code>{ tab }</code></td><td>A new tab was created.</td></tr>
+        <tr><td>o-close</td><td><code>{ tab, reason }</code></td><td>Cancelable; <code>reason</code>: <code>user | api | others | right | all | max</code>. Fires after the dirty confirmation.</td></tr>
+        <tr><td>o-activate</td><td><code>{ tab, previous }</code></td><td>The active tab changed.</td></tr>
+        <tr><td>o-render</td><td><code>{ tab, pane }</code></td><td>A pane was rendered for the first time (mount framework content here).</td></tr>
+        <tr><td>o-reorder</td><td><code>{ id, from, to }</code></td><td>A tab was moved.</td></tr>
+        <tr><td>o-change</td><td><code>{ tabs }</code></td><td>Tabs, order or state changed.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>open(descriptor, { activate }) → id</td><td>Open or focus a tab.</td></tr>
+        <tr><td>close(id, { force }) → Promise&lt;boolean&gt;</td><td>Close (asks first when dirty unless <code>force</code>).</td></tr>
+        <tr><td>closeOthers(id) / closeRight(id) / closeAll({ pinned })</td><td>Bulk close; pinned tabs are kept.</td></tr>
+        <tr><td>activate(id, { focus })</td><td>Switch tabs.</td></tr>
+        <tr><td>pin(id, on) / setDirty(id, on) / setTitle(id, title)</td><td>Update a tab.</td></tr>
+        <tr><td>patch(id, { title, icon, dirty, pinned, data })</td><td>Update several fields.</td></tr>
+        <tr><td>duplicate(id) → id</td><td>Open a copy (re-renders, reloads the URL or clones the pane).</td></tr>
+        <tr><td>move(id, index)</td><td>Reorder (pinned tabs stay first).</td></tr>
+        <tr><td>getTabs() / getTab(id) / getPane(id) / activeId</td><td>Read state.</td></tr>
+        <tr><td>restore() → count</td><td>Restore persisted tabs now (runs once).</td></tr>
+        <tr><td>openMenu(id, point?)</td><td>Open the tab's action menu (uses <code>Orion.contextMenu</code> when available).</td></tr>
+      </tbody>
+    </table>
+    <p>CSS custom properties: <code>--o-ws-bar-bg</code>, <code>--o-ws-tab-min</code>, <code>--o-ws-tab-max</code>, <code>--o-ws-accent</code>.</p>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard &amp; mouse</h2>
+    <table class="docs-api">
+      <thead><tr><th>Input</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>← / →, Home / End</td><td>Move between tabs and activate them (RTL mirrored).</td></tr>
+        <tr><td>Delete · middle click · ×</td><td>Close the tab.</td></tr>
+        <tr><td>Shift + F10 · Menu key · right click</td><td>Tab actions menu (↑ ↓ to move, Enter to run, Escape to close).</td></tr>
+        <tr><td>Alt + ← / →, drag (long-press on touch)</td><td>Reorder.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="frameworks">
+    <h2>Frameworks</h2>
+    <p>The workspace owns its tab and pane elements, so drive it through the API: call <code>open()</code> from your router or store, and render framework components into <code>e.detail.pane</code> in <code>o-render</code> (unmount them in <code>o-close</code>). Panes are never moved, so component state survives switching.</p>
+  </section>
+</main>
+</body>
+</html>

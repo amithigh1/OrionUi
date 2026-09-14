@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Form controls — Orion Admin</title>
+<meta name="docs:section" content="Forms">
+<meta name="docs:order" content="5">
+<meta name="docs:desc" content="Inputs, selects, textareas, checkboxes, radios, switches, input groups, floating labels, validation states">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Form controls</h1>
+    <p class="docs-lead">Styles for native form elements. Everything stays a real input, so it works with any backend, framework or form library. Advanced controls (select, date picker, masks, OTP…) are covered in the other Forms pages.</p>
+  </header>
+
+  <section id="inputs">
+    <h2>Inputs, selects &amp; textareas</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-form-grid">
+          <div class="o-field"><label class="o-label is-required" for="fc-name">Full name</label><input class="o-input" id="fc-name" placeholder="Ada Lovelace"><div class="o-help">As it appears on your ID.</div></div>
+          <div class="o-field"><label class="o-label" for="fc-email">Email <span class="o-label-hint">optional</span></label><input class="o-input" id="fc-email" type="email" placeholder="you@company.com"></div>
+          <div class="o-field"><label class="o-label" for="fc-role">Role</label><select class="o-select" id="fc-role"><option>Admin</option><option selected>Editor</option><option>Viewer</option></select></div>
+          <div class="o-field"><label class="o-label" for="fc-date">Start date</label><input class="o-input" id="fc-date" type="date"></div>
+          <div class="o-field o-span-full"><label class="o-label" for="fc-bio">Bio</label><textarea class="o-textarea" id="fc-bio" rows="3" placeholder="Tell us about yourself"></textarea></div>
+          <div class="o-field"><label class="o-label" for="fc-file">Avatar</label><input class="o-input" id="fc-file" type="file"></div>
+          <div class="o-field"><label class="o-label" for="fc-dis">Disabled</label><input class="o-input" id="fc-dis" value="Read only value" disabled></div>
+        </div>
+      </template>
+    </div>
+    <h3>Sizes</h3>
+    <div class="docs-demo">
+      <template>
+        <div class="o-stack" style="--o-gap:.5rem;max-width:22rem">
+          <input class="o-input o-input-sm" placeholder=".o-input-sm">
+          <input class="o-input" placeholder="default">
+          <input class="o-input o-input-lg" placeholder=".o-input-lg">
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="checks">
+    <h2>Checkboxes, radios &amp; switches</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-grid o-grid-cols-1 o-grid-cols-md-3 o-gap-6">
+          <div>
+            <label class="o-check"><input type="checkbox" checked> <span>Email notifications</span></label>
+            <label class="o-check"><input type="checkbox" id="fc-ind"> <span>Indeterminate</span></label>
+            <label class="o-check"><input type="checkbox" disabled> <span>Disabled</span></label>
+            <label class="o-check o-c-success"><input type="checkbox" checked> <span>Colored (.o-c-success)</span></label>
+            <script>document.getElementById('fc-ind').indeterminate = true;</script>
+          </div>
+          <div role="radiogroup" aria-label="Plan">
+            <label class="o-check"><input type="radio" name="plan" checked> <span>Starter<span class="o-check-desc">Up to 5 users</span></span></label>
+            <label class="o-check"><input type="radio" name="plan"> <span>Team<span class="o-check-desc">Up to 50 users</span></span></label>
+            <label class="o-check"><input type="radio" name="plan"> <span>Enterprise<span class="o-check-desc">Unlimited</span></span></label>
+          </div>
+          <div>
+            <label class="o-switch"><input type="checkbox" role="switch" checked> <span>Dark sidebar</span></label>
+            <label class="o-switch o-switch-lg"><input type="checkbox" role="switch"> <span>Large switch</span></label>
+            <label class="o-switch o-switch-sm o-c-danger"><input type="checkbox" role="switch" checked> <span>Small danger</span></label>
+          </div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="groups">
+    <h2>Input groups &amp; icons</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-stack" style="max-width:30rem;--o-gap:.75rem">
+          <div class="o-input-group"><span class="o-input-addon">https://</span><input class="o-input" placeholder="yoursite"><span class="o-input-addon">.com</span></div>
+          <div class="o-input-group"><input class="o-input" placeholder="Search orders"><button class="o-btn o-btn-primary">Search</button></div>
+          <div class="o-input-group"><span class="o-input-addon">RM</span><input class="o-input" type="number" placeholder="0.00"><select class="o-select" style="max-width:7rem"><option>Monthly</option><option>Yearly</option></select></div>
+          <div class="o-input-wrap"><o-icon name="search"></o-icon><input class="o-input" placeholder="Search with leading icon"></div>
+          <div class="o-input-wrap"><input class="o-input" placeholder="With clear action" value="Clear me"><button class="o-input-action" aria-label="Clear" onclick="this.previousElementSibling.value='';this.previousElementSibling.focus()"><o-icon name="x"></o-icon></button></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="floating">
+    <h2>Floating labels</h2>
+    <p>Put the label after the control and give the control <code>placeholder=" "</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-grid o-grid-cols-1 o-grid-cols-md-2 o-gap-4">
+          <div class="o-floating"><input class="o-input" id="fl-email" placeholder=" "><label for="fl-email">Email address</label></div>
+          <div class="o-floating"><select class="o-select" id="fl-country"><option>Malaysia</option><option>Singapore</option></select><label for="fl-country">Country</label></div>
+          <div class="o-floating o-span-full"><textarea class="o-textarea" id="fl-msg" placeholder=" "></textarea><label for="fl-msg">Message</label></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="validation">
+    <h2>Validation states</h2>
+    <p>Put <code>.is-invalid</code> or <code>.is-valid</code> on the control or on <code>.o-field</code>, and messages in <code>.o-error</code> / <code>.o-valid-msg</code> appear. Add <code>.o-validate</code> to a form to style native <code>:user-invalid</code> fields automatically. See <a href="validation.html">Form validation</a> for the full validation engine.</p>
+    <div class="docs-demo">
+      <template>
+        <form class="o-form-grid o-validate" onsubmit="event.preventDefault()">
+          <div class="o-field is-invalid"><label class="o-label" for="v1">Username</label><input class="o-input" id="v1" value="ad" aria-invalid="true" aria-describedby="v1e"><div class="o-error" id="v1e">Must be at least 3 characters</div></div>
+          <div class="o-field is-valid"><label class="o-label" for="v2">Email</label><input class="o-input" id="v2" value="ada@example.com"><div class="o-valid-msg">Looks good!</div></div>
+          <div class="o-field"><label class="o-label" for="v3">Native :user-invalid (type then blur)</label><input class="o-input" id="v3" type="email" required placeholder="not-an-email"></div>
+        </form>
+      </template>
+    </div>
+  </section>
+
+  <section id="layouts">
+    <h2>Form layouts</h2>
+    <div class="docs-demo">
+      <template>
+        <form class="o-form-horizontal" style="max-width:40rem" onsubmit="event.preventDefault()">
+          <div class="o-field"><label class="o-label" for="h1">Company</label><input class="o-input" id="h1" value="Orion Labs"></div>
+          <div class="o-field"><label class="o-label" for="h2">Website</label><input class="o-input" id="h2" type="url" placeholder="https://"></div>
+          <fieldset class="o-fieldset"><legend>Notifications</legend>
+            <label class="o-switch"><input type="checkbox" checked> <span>Weekly summary</span></label>
+            <label class="o-switch"><input type="checkbox"> <span>Product updates</span></label>
+          </fieldset>
+          <div class="o-form-actions"><button class="o-btn" type="reset">Cancel</button><button class="o-btn o-btn-primary">Save</button></div>
+        </form>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>Classes</h2>
+    <table class="docs-api">
+      <thead><tr><th>Class</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.o-field / .o-label / .o-help / .o-error / .o-valid-msg</td><td>Field wrapper and texts. <code>.o-label.is-required</code> adds an asterisk.</td></tr>
+        <tr><td>.o-input / .o-select / .o-textarea</td><td>Controls; sizes <code>.o-input-sm</code>, <code>.o-input-lg</code>; <code>.o-input-plain</code>.</td></tr>
+        <tr><td>.o-control</td><td>Box styling for custom controls (used by Orion components).</td></tr>
+        <tr><td>.o-check / .o-switch</td><td>Checkbox/radio and switch rows; sizes <code>.o-switch-sm/-lg</code>; color with <code>.o-c-*</code>.</td></tr>
+        <tr><td>.o-input-group / .o-input-addon</td><td>Joined controls, addons and buttons.</td></tr>
+        <tr><td>.o-input-wrap / .o-input-action</td><td>Icon inside input / action button inside input (<code>.is-end</code> for trailing icon).</td></tr>
+        <tr><td>.o-floating</td><td>Floating label pattern.</td></tr>
+        <tr><td>.o-form-grid / .o-form-horizontal / .o-fieldset / .o-form-actions</td><td>Layouts.</td></tr>
+        <tr><td>.is-invalid / .is-valid / .o-validate</td><td>Validation states.</td></tr>
+        <tr><td>.o-range</td><td>Styled native range slider (see <a href="range-slider.html">Range slider</a> for dual thumbs).</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

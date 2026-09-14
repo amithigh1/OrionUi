@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Two-factor — Orion Admin</title>
+<meta name="docs:section" content="Auth & Onboarding">
+<meta name="docs:order" content="20">
+<meta name="docs:desc" content="TOTP setup wizard, backup codes and a sign-in verification step">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Two-factor authentication</h1>
+    <p class="docs-lead"><code>Orion.totp</code> (RFC 6238 TOTP over WebCrypto), <code>&lt;o-2fa-setup&gt;</code>
+      (the enrollment wizard) and <code>&lt;o-2fa-verify&gt;</code> (the sign-in-time check).
+      <strong>The code shown here is checked in your browser only for this demo</strong> — a real product must
+      verify it server-side, against the secret the server stored at enrollment.</p>
+  </header>
+
+  <section id="totp-live">
+    <h2>Try <code>Orion.totp</code> live</h2>
+    <p>A fresh secret is generated below; the code refreshes every 30 seconds and updates as you watch —
+      compare it with any authenticator app you scan the QR code with in the next section.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-card" style="max-width:22rem;width:100%">
+          <div class="o-card-body" style="text-align:center">
+            <div class="o-fs-3xl" style="font-family:var(--o-font-mono);letter-spacing:.2em" id="totp-code">------</div>
+            <div class="o-text-muted o-fs-sm o-mt-2">refreshes in <span id="totp-left">30</span>s</div>
+          </div>
+        </div>
+        <script>
+          const secret = Orion.totp.generateSecret();
+          const codeEl = document.getElementById('totp-code'), leftEl = document.getElementById('totp-left');
+          async function tick() {
+            codeEl.textContent = await Orion.totp.generate(secret);
+            leftEl.textContent = 30 - (Math.floor(Date.now() / 1000) % 30);
+          }
+          tick();
+          setInterval(tick, 1000);
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="backup-codes">
+    <h2>Backup codes — <code>Orion.twofa</code></h2>
+    <p><code>Orion.twofa.generateBackupCodes(n)</code> is the small standalone helper <code>&lt;o-2fa-setup&gt;</code>
+      itself uses for its "Backup codes" step — call it directly if you're building your own enrollment UI and just
+      need the codes (each formatted <code>XXXXX-XXXXX</code> from <code>crypto.getRandomValues</code>).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-sm o-btn-primary" id="twofa-gen">Generate 10 backup codes</button>
+        </div>
+        <ul class="o-fs-sm" id="twofa-codes" style="font-family:var(--o-font-mono);columns:2;gap:1rem;max-width:22rem"></ul>
+        <script>
+          const genBtn = document.getElementById('twofa-gen'), listEl = document.getElementById('twofa-codes');
+          const render = () => { listEl.replaceChildren(...Orion.twofa.generateBackupCodes(10).map(c => { const li = document.createElement('li'); li.textContent = c; return li; })); };
+          genBtn.onclick = render;
+          render();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="setup">
+    <h2><code>&lt;o-2fa-setup&gt;</code></h2>
+    <p>Method → set up → verify → backup codes → done. The verify step checks your code against the secret
+      shown above using <code>Orion.totp.verify</code> (the built-in default when <code>onVerify</code> is omitted).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-2fa-setup issuer="Orion Admin" account="ada@example.com" methods="totp" id="demo-2fa-setup" style="width:100%;max-width:24rem"></o-2fa-setup>
+        <script>
+          const setupEl = document.getElementById('demo-2fa-setup');
+          setupEl.addEventListener('o-done', e => docs.log('#tfa-log', 'Enabled — ' + e.detail.backupCodes.length + ' backup codes'));
+          setupEl.addEventListener('o-verified', () => docs.log('#tfa-log', 'Code verified'));
+        </script>
+        <div class="docs-log" id="tfa-log"></div>
+      </template>
+    </div>
+  </section>
+
+  <section id="verify">
+    <h2><code>&lt;o-2fa-verify&gt;</code></h2>
+    <p>The sign-in counterpart. This demo accepts the <em>current</em> TOTP code for the secret generated in
+      the setup demo above (open both on the same page and copy the manual-entry code across, or just type
+      the 6-digit code shown at the top of this page).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-2fa-verify method="totp" trust-device id="demo-2fa-verify" style="width:100%;max-width:24rem"></o-2fa-verify>
+        <script>
+          const verifyEl = document.getElementById('demo-2fa-verify');
+          const localSecret = Orion.totp.generateSecret();
+          verifyEl.onVerify = async (code, { trustDevice }) => {
+            const ok = await Orion.totp.verify(localSecret, code);
+            docs.log('#verify-log', 'code=' + code + ' trustDevice=' + trustDevice + ' -> ' + ok);
+            return ok;
+          };
+          Orion.totp.generate(localSecret).then(c => docs.log('#verify-log', 'Current valid code: ' + c));
+        </script>
+        <div class="docs-log" id="verify-log"></div>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>Orion.totp.generateSecret(bytes=20)</code></td><td>Base32 secret.</td></tr>
+        <tr><td><code>Orion.totp.uri({issuer,account,secret,digits,period,algorithm})</code></td><td><code>otpauth://totp/…</code> URI.</td></tr>
+        <tr><td><code>await Orion.totp.generate(secret, opts)</code></td><td>The current (or <code>opts.time</code>) code.</td></tr>
+        <tr><td><code>await Orion.totp.verify(secret, code, {window})</code></td><td>Boolean; checks ± <code>window</code> steps of clock drift.</td></tr>
+      </tbody>
+    </table>
+    <h3><code>Orion.twofa</code></h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>Orion.twofa.generateBackupCodes(n=10)</code></td><td>Array of <code>n</code> random <code>XXXXX-XXXXX</code> codes. The same helper powers <code>&lt;o-2fa-setup&gt;</code>'s backup-codes step above — a separate small API from <code>Orion.totp</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3><code>&lt;o-2fa-setup&gt;</code></h3>
+    <table class="docs-api">
+      <tbody>
+        <tr><td>Props</td><td><code>issuer account secret methods(="totp") digits(=6) period(=30) backupCodesCount(=10) onVerify texts</code></td></tr>
+        <tr><td>Methods</td><td><code>next() prev() goTo(step) reset() backupCodes()</code></td></tr>
+        <tr><td>Events</td><td><code>o-method o-verified o-error o-done{backupCodes} o-step</code></td></tr>
+      </tbody>
+    </table>
+    <h3><code>&lt;o-2fa-verify&gt;</code></h3>
+    <table class="docs-api">
+      <tbody>
+        <tr><td>Props</td><td><code>method(="totp") maskedDestination length(=6) trustDevice resendSeconds(=30) onVerify texts</code></td></tr>
+        <tr><td>Methods</td><td><code>verify(code?) markValid() markInvalid(msg?) useBackupCode() usePassword() reset() focus()</code></td></tr>
+        <tr><td>Events</td><td><code>o-verify</code> (cancelable) <code>o-verified o-error o-use-backup-code o-resend</code> (cancelable)</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <tbody>
+        <tr><td><kbd>Tab</kbd> / <kbd>Shift+Tab</kbd></td><td>Move between the code boxes (or the fallback input) and buttons.</td></tr>
+        <tr><td><kbd>Enter</kbd></td><td>Verify.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

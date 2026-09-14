@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" width="1200" height="1200">
+  <title>Tropical beach</title>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0284c7"/><stop offset="1" stop-color="#bae6fd"/></linearGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0891b2"/><stop offset=".6" stop-color="#2dd4bf"/><stop offset="1" stop-color="#99f6e4"/></linearGradient>
+    <linearGradient id="sand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#f59e0b"/></linearGradient>
+    <linearGradient id="trunk" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#78350f"/><stop offset="1" stop-color="#a16207"/></linearGradient>
+  </defs>
+  <rect width="1200" height="620" fill="url(#sky)"/>
+  <circle cx="930" cy="180" r="80" fill="#fefce8"/><circle cx="930" cy="180" r="140" fill="#fefce8" opacity=".2"/>
+  <g fill="#fff" opacity=".9"><ellipse cx="260" cy="200" rx="140" ry="36"/><ellipse cx="340" cy="176" rx="90" ry="44"/><ellipse cx="620" cy="300" rx="100" ry="22"/></g>
+  <path d="M0 600 C100 570 180 580 240 560 C300 580 360 575 420 600Z" fill="#047857" opacity=".7"/>
+  <rect y="600" width="1200" height="600" fill="url(#sea)"/>
+  <g stroke="#f0fdfa" stroke-opacity=".6" stroke-width="4" stroke-linecap="round"><path d="M80 680 h120 M400 700 h180 M760 670 h140 M200 780 h160 M640 800 h200"/></g>
+  <path d="M0 930 C240 860 480 900 720 880 S1080 860 1200 900 V1200 H0Z" fill="#ecfeff" opacity=".7"/>
+  <path d="M0 960 C260 900 520 940 760 920 S1080 900 1200 940 V1200 H0Z" fill="url(#sand)"/>
+  <path d="M300 1120 C330 900 380 700 470 520" stroke="url(#trunk)" stroke-width="34" fill="none" stroke-linecap="round"/>
+  <g fill="#15803d">
+    <path d="M470 520 C380 440 260 450 180 520 C280 480 380 490 470 520Z"/><path d="M470 520 C420 400 320 350 220 360 C320 400 400 450 470 520Z"/>
+    <path d="M470 520 C520 400 620 360 720 380 C620 410 540 460 470 520Z"/><path d="M470 520 C570 470 690 490 760 570 C660 520 560 520 470 520Z"/>
+    <path d="M470 520 C450 420 480 330 540 280 C510 360 500 440 470 520Z"/><path d="M470 520 C400 560 340 640 330 720 C370 640 420 580 470 520Z" fill="#166534"/>
+  </g>
+  <g fill="#92400e"><circle cx="460" cy="540" r="16"/><circle cx="486" cy="548" r="14"/><circle cx="470" cy="566" r="13"/></g>
+  <g><path d="M820 1040 a90 90 0 0 1 180 0z" fill="#ef4444"/><path d="M866 1040 a44 90 0 0 1 88 0z" fill="#fef2f2"/><rect x="906" y="1036" width="8" height="120" fill="#78350f"/></g>
+</svg>

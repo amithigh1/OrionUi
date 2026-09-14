@@ -1,0 +1,86 @@
+/* IDE-style dock — regions built on <o-split>, each a tab group with a minimize rail, floating windows and a drop hint.
+ *   <o-dock> needs a height from its container (flex/grid cell, or an explicit height).
+ *   Custom properties: --o-dock-rail (rail thickness, default 2.5rem), --o-dock-tab-h (tab strip height)
+ */
+o-dock { display: flex; flex-direction: column; min-width: 0; min-height: 0; height: 100%; --o-dock-rail: 2.5rem; --o-dock-tab-h: 2.25rem; }
+o-dock:not(:defined) { visibility: hidden; }
+o-dock-panel { display: block; height: 100%; overflow: auto; padding: .75rem; }
+o-dock-panel:focus-visible { outline: 2px solid var(--o-focus); outline-offset: -2px; }
+
+.o-dock-outer, .o-dock-col { min-width: 0; min-height: 0; }
+.o-dock-outer { flex: 1 1 auto; }
+o-dock.is-maximized .o-split-gutter { display: none !important; }
+.o-dock-region.is-max-hidden, .o-dock-col.is-max-hidden { display: none !important; }
+
+.o-dock-region { display: flex; align-items: stretch; min-width: 0; min-height: 0; overflow: hidden; }
+.o-dock-col > .o-dock-region { flex-direction: column; }
+.o-dock-outer > .o-dock-region { flex-direction: row; }
+.o-dock-region[data-collapsed] { overflow: hidden; }
+
+/* rail (minimize target) — rail and group are mutually exclusive (one is always [hidden]), each filling the whole region */
+.o-dock-rail { flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; gap: .125rem; padding-block: .375rem; background: var(--o-surface-2); overflow: auto; }
+.o-dock-col > .o-dock-region > .o-dock-rail { flex-direction: row; padding-inline: .375rem; padding-block: 0; }
+.o-dock-rail-btns { display: flex; flex-direction: column; gap: .125rem; align-items: center; }
+.o-dock-col > .o-dock-region > .o-dock-rail > .o-dock-rail-btns { flex-direction: row; }
+.o-dock-rail-btn.is-active { color: var(--o-primary-text); background: var(--o-primary-subtle); }
+.o-dock-rail-expand { margin-block-start: auto; }
+.o-dock-col > .o-dock-region > .o-dock-rail > .o-dock-rail-expand { margin-block-start: 0; margin-inline-start: auto; }
+
+.o-dock-group { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; min-height: 0; }
+.o-dock-tabstrip { display: flex; align-items: center; gap: .125rem; min-height: var(--o-dock-tab-h); padding-inline-start: .25rem; background: var(--o-surface-2); border-bottom: 1px solid var(--o-border); }
+.o-dock-tabs { display: flex; flex: 1 1 auto; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.o-dock-tabs::-webkit-scrollbar { display: none; }
+.o-dock-tools { display: flex; flex-shrink: 0; align-items: center; gap: 0; padding-inline-end: .25rem; }
+.o-dock-tool { color: var(--o-text-muted); }
+
+.o-dock-tab {
+  display: flex; align-items: center; gap: .375rem; flex-shrink: 0; max-width: 12rem; height: var(--o-dock-tab-h); padding-inline: .625rem;
+  font: inherit; font-size: var(--o-fs-sm); color: var(--o-text-muted); background: none; border: 0; border-inline-end: 1px solid transparent;
+  cursor: pointer; white-space: nowrap;
+}
+.o-dock-tab > .o-icon { width: .9rem; height: .9rem; flex-shrink: 0; }
+.o-dock-tab-label { overflow: hidden; text-overflow: ellipsis; }
+.o-dock-tab-badge { margin-inline-start: -.125rem; }
+.o-dock-tab-close { display: inline-grid; place-items: center; width: 1.125rem; height: 1.125rem; margin-inline-start: .125rem; border-radius: var(--o-radius-xs); opacity: .7; }
+.o-dock-tab-close > .o-icon { width: .75rem; height: .75rem; }
+.o-dock-tab-close:hover { opacity: 1; background: color-mix(in srgb, var(--o-text) 14%, transparent); }
+.o-dock-tab:hover { color: var(--o-text); background: var(--o-surface-3); }
+.o-dock-tab[aria-selected="true"] { color: var(--o-text); background: var(--o-surface); border-bottom-color: transparent; box-shadow: inset 0 2px 0 var(--o-primary); }
+.o-dock-tab.is-focus:focus-visible { outline: 2px solid var(--o-focus); outline-offset: -2px; }
+.o-dock-tab.is-dragging { opacity: .5; }
+o-dock.is-dock-dragging .o-dock-tabs, o-dock.is-dock-dragging .o-dock-panes { cursor: grabbing; }
+
+.o-dock-panes { position: relative; flex: 1 1 auto; min-width: 0; min-height: 0; background: var(--o-surface); }
+.o-dock-panes > o-dock-panel { position: absolute; inset: 0; }
+.o-dock-empty { position: absolute; inset: 0; }
+
+/* floating window */
+.o-dock-float {
+  position: fixed; display: flex; flex-direction: column; overflow: hidden; background: var(--o-elevated); border: 1px solid var(--o-border);
+  border-radius: var(--o-radius); box-shadow: var(--o-shadow-lg); max-width: calc(100vw - 16px); max-height: calc(100vh - 16px);
+}
+.o-dock-float-bar { display: flex; align-items: center; gap: .375rem; flex-shrink: 0; height: 2.25rem; padding-inline: .625rem; background: var(--o-surface-2); border-bottom: 1px solid var(--o-border); cursor: grab; touch-action: none; }
+.o-dock-float.is-dragging .o-dock-float-bar, .o-dock-float.is-dragging { cursor: grabbing; user-select: none; }
+.o-dock-float-icon > .o-icon { width: .9rem; height: .9rem; color: var(--o-text-muted); }
+.o-dock-float-title { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--o-fs-sm); font-weight: 600; }
+.o-dock-float-tools { display: flex; align-items: center; gap: .125rem; flex-shrink: 0; }
+.o-dock-float-body { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; background: var(--o-surface); }
+.o-dock-float-body > o-dock-panel { position: absolute; inset: 0; }
+.o-dock-float-resize { position: absolute; inset-inline-end: 0; bottom: 0; width: 1rem; height: 1rem; cursor: nwse-resize; touch-action: none; }
+.o-dock-float-resize::after { content: ""; position: absolute; inset-inline-end: 3px; bottom: 3px; width: 7px; height: 7px; border-inline-end: 2px solid var(--o-border-strong); border-bottom: 2px solid var(--o-border-strong); }
+[dir="rtl"] .o-dock-float-resize { cursor: nesw-resize; }
+.o-dock-float.is-resizing { user-select: none; }
+
+.o-dock-drop-hint { position: fixed; z-index: var(--o-z-tooltip); pointer-events: none; background: color-mix(in srgb, var(--o-primary) 18%, transparent); border: 2px solid var(--o-primary); border-radius: var(--o-radius-sm); transition: left .08s ease, top .08s ease, width .08s ease, height .08s ease; }
+.o-dock-drop-hint[data-mode="float"] { border-radius: var(--o-radius); }
+
+/* compact (mobile) fallback: every open panel in one strip */
+o-dock > [data-region="compact"] { display: none; flex: 1 1 auto; min-height: 0; }
+o-dock.is-compact > .o-dock-outer { display: none; }
+o-dock.is-compact > [data-region="compact"] { display: flex; flex-direction: column; }
+o-dock.is-compact > [data-region="compact"] > .o-dock-rail { display: none; }
+
+@media (max-width: 480px) {
+  .o-dock-tab { max-width: 8.5rem; }
+  o-dock { --o-dock-rail: 2.125rem; }
+}

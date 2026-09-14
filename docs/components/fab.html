@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FAB — Orion Admin</title>
+<meta name="docs:section" content="Layout &amp; Navigation">
+<meta name="docs:order" content="55">
+<meta name="docs:desc" content="Floating action button: circular, extended, and a keyboard-accessible speed dial">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>FAB</h1>
+    <p class="docs-lead"><code>.o-fab</code> is a plain circular (or extended, or mini) floating action button. For a set of
+      related actions, <code>&lt;o-fab&gt;</code> turns it into a speed dial: click (or <kbd class="o-kbd">↑</kbd>/keyboard) to
+      reveal labelled child actions in a direction of your choice, including a radial fan.</p>
+  </header>
+
+  <section id="plain">
+    <h2>Plain buttons</h2>
+    <div class="docs-demo" data-preview="center bg">
+      <template>
+        <div class="o-cluster" style="align-items:flex-end">
+          <button class="o-fab" style="position:static" aria-label="Compose"><o-icon name="plus"></o-icon></button>
+          <button class="o-fab o-fab-mini" style="position:static" aria-label="Compose"><o-icon name="edit"></o-icon></button>
+          <button class="o-fab o-fab-extended" style="position:static" aria-label="Compose"><o-icon name="plus"></o-icon><span>Compose</span></button>
+        </div>
+        <p class="o-text-muted o-mt-3">In real use, drop the <code>position:static</code> override and add a logical position class: <code>.o-fab-bottom-end</code> (default), <code>-bottom-start</code>, <code>-top-end</code>, <code>-top-start</code>.</p>
+      </template>
+    </div>
+  </section>
+
+  <section id="dial">
+    <h2>Speed dial</h2>
+    <p>Click the button (or focus it and press the arrow key matching <code>direction</code>). Arrow keys move between
+      actions, <kbd class="o-kbd">Home</kbd>/<kbd class="o-kbd">End</kbd> jump to the first/last, <kbd class="o-kbd">Escape</kbd>
+      closes it.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div style="position:relative;height:16rem;border:1px solid var(--o-border);border-radius:var(--o-radius-lg);overflow:hidden">
+          <o-fab id="fab-up" icon="plus" label="Create" direction="up" style="position:absolute">
+            <o-fab-action icon="file-text" label="New document"></o-fab-action>
+            <o-fab-action icon="image" label="Upload image"></o-fab-action>
+            <o-fab-action icon="folder" label="New folder"></o-fab-action>
+          </o-fab>
+        </div>
+        <div class="docs-log" id="log-fab"></div>
+        <script>
+          document.getElementById('fab-up').addEventListener('o-select', e => docs.log('#log-fab', 'selected via bubble'));
+          document.querySelectorAll('#fab-up o-fab-action').forEach(a => a.addEventListener('o-select', () => docs.log('#log-fab', `o-select → ${a.label}`)));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="directions">
+    <h2>Directions &amp; backdrop</h2>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-grid" style="--o-cols:2;--o-gap:1rem">
+          <div style="position:relative;height:12rem;border:1px solid var(--o-border);border-radius:var(--o-radius-lg);overflow:hidden">
+            <o-fab icon="plus" label="Create" direction="start" style="position:absolute;inset-inline-end:1.25rem">
+              <o-fab-action icon="mail" label="Email"></o-fab-action>
+              <o-fab-action icon="phone" label="Call"></o-fab-action>
+            </o-fab>
+          </div>
+          <div style="position:relative;height:12rem;border:1px solid var(--o-border);border-radius:var(--o-radius-lg);overflow:hidden">
+            <o-fab icon="plus" label="Create" direction="radial" backdrop style="position:absolute">
+              <o-fab-action icon="file-text" label="Document"></o-fab-action>
+              <o-fab-action icon="image" label="Image"></o-fab-action>
+              <o-fab-action icon="camera" label="Photo"></o-fab-action>
+            </o-fab>
+          </div>
+        </div>
+        <p class="o-text-muted o-mt-3">Left: <code>direction="start"</code>. Right: <code>direction="radial"</code> with <code>backdrop</code> — click the backdrop to close.</p>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Plain button classes</h3>
+    <table class="docs-api">
+      <thead><tr><th>Class</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.o-fab</td><td>Circular button (3.5rem).</td></tr>
+        <tr><td>.o-fab-mini</td><td>2.5rem.</td></tr>
+        <tr><td>.o-fab-extended</td><td>Pill shape with room for a text label.</td></tr>
+        <tr><td>.o-fab-bottom-end / -bottom-start / -top-end / -top-start</td><td>Fixed logical position.</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-fab&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>icon</td><td>String</td><td>Trigger icon when closed (becomes a close "×" while open). Default <code>plus</code>.</td></tr>
+        <tr><td>label</td><td>String</td><td><code>aria-label</code> for the trigger.</td></tr>
+        <tr><td>direction</td><td><code>up｜down｜start｜end｜radial</code></td><td>Layout of the child actions. Default <code>up</code>.</td></tr>
+        <tr><td>backdrop</td><td>Boolean</td><td>Dim the page and close on click while open.</td></tr>
+        <tr><td>radius</td><td>Number</td><td>Fan radius in px for <code>direction="radial"</code>. Default 88.</td></tr>
+        <tr><td>open</td><td>Boolean</td><td>Reflected; property is <code>isOpen</code> (<code>el.open = true</code> also works).</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-fab-action&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>icon / label</td><td>String</td><td>Icon and text (label also becomes the <code>aria-label</code>).</td></tr>
+        <tr><td>href</td><td>String</td><td>Navigates after the dial closes, unless <code>o-select</code> is prevented.</td></tr>
+        <tr><td>disabled</td><td>Boolean</td><td>Skipped by the keyboard.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>On</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>o-open / o-close</td><td>&lt;o-fab&gt;</td><td><code>{ reason }</code> for <code>o-close</code>.</td></tr>
+        <tr><td>o-select</td><td>&lt;o-fab-action&gt; (bubbles)</td><td>Cancelable — <code>preventDefault()</code> to keep the dial open.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <p><code>fab.open()</code> (focuses the first action), <code>fab.close(refocus?)</code>, <code>fab.toggle()</code>.</p>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Enter / Space (trigger)</td><td>Toggle the dial.</td></tr>
+        <tr><td>Arrow matching direction (trigger)</td><td>Open and focus the first action.</td></tr>
+        <tr><td>Arrows (in the dial)</td><td>Move between actions, wrapping.</td></tr>
+        <tr><td>Home / End</td><td>First / last action.</td></tr>
+        <tr><td>Escape</td><td>Close and return focus to the trigger.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

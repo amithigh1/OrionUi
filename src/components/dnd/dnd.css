@@ -1,0 +1,79 @@
+/* ============================================================================
+ * Drag & drop: ghost (drag preview), placeholder, keyboard grab, handles, drop areas.
+ *   --o-dnd-ghost-rotate, --o-dnd-ghost-scale, --o-dnd-ghost-shadow
+ * ========================================================================== */
+html.o-dnd-dragging, html.o-dnd-dragging * { cursor: grabbing; user-select: none; -webkit-user-select: none; }
+html.o-dnd-dragging iframe { pointer-events: none; }
+
+/* floating preview that follows the pointer */
+.o-dnd-ghost {
+  --o-dnd-ghost-rotate: 1.5deg; --o-dnd-ghost-scale: 1.03;
+  will-change: transform; opacity: .97; list-style: none;
+  box-shadow: var(--o-dnd-ghost-shadow, var(--o-shadow-xl));
+  transition: scale var(--o-dur-fast) var(--o-ease), rotate var(--o-dur-fast) var(--o-ease), box-shadow var(--o-dur-fast) var(--o-ease);
+}
+.o-dnd-ghost.is-lifted { scale: var(--o-dnd-ghost-scale); rotate: var(--o-dnd-ghost-rotate); }
+[dir="rtl"] .o-dnd-ghost.is-lifted, .o-dnd-ghost[dir="rtl"].is-lifted { rotate: calc(var(--o-dnd-ghost-rotate) * -1); }
+.o-sortable-ghost { border-radius: var(--o-radius); background-color: var(--o-elevated); color: var(--o-text); }
+.o-draggable-ghost { border-radius: var(--o-radius); }
+
+/* the dragged item stays in the list as the drop placeholder */
+[class].o-sortable-placeholder {
+  color: transparent; border-color: transparent; box-shadow: none;
+  background: color-mix(in srgb, var(--o-primary) 7%, transparent);
+  outline: 2px dashed var(--o-primary-border); outline-offset: -2px;
+  transition: none;
+}
+[class].o-sortable-placeholder > * { opacity: 0; }
+
+/* keyboard grab */
+[class].o-sortable-drag:not(.o-sortable-placeholder) {
+  position: relative; z-index: 2;
+  outline: 2px solid var(--o-primary); outline-offset: 2px;
+  box-shadow: var(--o-shadow-lg);
+}
+
+/* touch long-press feedback */
+.o-dnd-pressing { scale: .98; transition: scale .2s var(--o-ease); -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; }
+
+/* lists */
+.o-sortable-over:not(.o-sortable-source) { outline: 2px dashed var(--o-primary-border); outline-offset: 3px; border-radius: var(--o-radius); }
+.o-sortable-droppable:not(.o-sortable-over) { outline: 1px dashed var(--o-border-strong); outline-offset: 3px; border-radius: var(--o-radius); }
+
+/* handles: dragging from a handle never scrolls the page, so touch starts immediately */
+.o-dnd-handle { cursor: grab; touch-action: none; }
+.o-drag-handle {
+  display: inline-grid; place-items: center; flex-shrink: 0; width: 1.5rem; height: 1.5rem; padding: 0;
+  color: var(--o-text-subtle); background: transparent; border: 0; border-radius: var(--o-radius-xs); cursor: grab; touch-action: none;
+}
+.o-drag-handle:hover { color: var(--o-text); background: var(--o-surface-3); }
+.o-drag-handle:focus-visible { outline: none; box-shadow: 0 0 0 var(--o-ring-width) color-mix(in srgb, var(--o-focus) var(--o-ring-alpha), transparent); }
+.o-drag-handle > .o-icon { width: 1rem; height: 1rem; }
+
+/* free draggable */
+.o-draggable { touch-action: manipulation; }
+.o-draggable.is-dragging { z-index: 5; box-shadow: var(--o-shadow-lg); }
+.o-draggable:focus-visible { outline: 2px solid var(--o-focus); outline-offset: 2px; }
+
+/* drop area */
+.o-drop-area {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .375rem;
+  min-height: 7rem; padding: 1.25rem; text-align: center; font-size: var(--o-fs-sm); color: var(--o-text-muted);
+  background: var(--o-surface-2); border: 2px dashed var(--o-border-strong); border-radius: var(--o-radius-lg);
+  transition: border-color var(--o-dur-fast), background-color var(--o-dur-fast), color var(--o-dur-fast), scale var(--o-dur-fast);
+}
+.o-drop-area > .o-icon { width: 1.75rem; height: 1.75rem; color: var(--o-text-subtle); }
+.o-drop-area.is-drop-active { border-color: var(--o-primary-border); background: color-mix(in srgb, var(--o-primary) 5%, var(--o-surface-2)); }
+.o-drop-area.is-over { border-color: var(--o-primary); border-style: solid; background: var(--o-primary-subtle); color: var(--o-primary-text); scale: 1.01; }
+.o-drop-area.is-over > .o-icon { color: var(--o-primary-text); }
+.o-drop-area.is-danger.is-over { border-color: var(--o-danger); background: var(--o-danger-subtle); color: var(--o-danger-text); }
+.o-drop-area.is-danger.is-over > .o-icon { color: var(--o-danger-text); }
+
+@media (prefers-reduced-motion: reduce) {
+  .o-dnd-ghost.is-lifted { scale: 1; rotate: 0deg; }
+  .o-dnd-pressing { scale: 1; }
+}
+@media (forced-colors: active) {
+  [class].o-sortable-placeholder { outline-color: Highlight; }
+  .o-dnd-ghost { border: 1px solid CanvasText; }
+}

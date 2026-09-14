@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Players — Orion Admin</title>
+<meta name="docs:section" content="Media">
+<meta name="docs:order" content="50">
+<meta name="docs:desc" content="Custom video and audio players with captions, chapters, speed, playlists and a waveform">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .pl-cards { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(min(14rem, 100%), 1fr)); }
+  .pl-card { position: relative; display: block; aspect-ratio: 16/9; overflow: hidden; border-radius: var(--o-radius-lg); border: 1px solid var(--o-border); color: #fff; text-decoration: none; }
+  .pl-card img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .pl-card-label { position: absolute; inset-inline: 0; bottom: 0; z-index: 1; padding: .5rem .75rem; font-size: var(--o-fs-sm); font-weight: 600; background: linear-gradient(to top, rgba(0,0,0,.7), transparent); }
+  video.pl-card-media, .pl-card .o-video-preview-media { object-fit: cover; }
+  .pl-w28 { max-width: 32rem; }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Players</h1>
+    <p class="docs-lead"><code>&lt;o-video&gt;</code> and <code>&lt;o-audio&gt;</code> are custom controls built on the native <code>&lt;video&gt;</code>/<code>&lt;audio&gt;</code> elements: seek bar with buffered ranges, chapter markers and hover thumbnails, captions and speed menus, picture-in-picture, playlists, and a Web-Audio waveform for audio. <code>data-o-video-preview</code> adds hover-to-play cards.</p>
+  </header>
+
+  <section id="video-basic">
+    <h2>Video, captions &amp; chapters</h2>
+    <p>Two caption tracks, three chapter markers on the seek bar, and scrubbing thumbnails (hover or drag the seek bar). Press <kbd>C</kbd> to cycle captions.</p>
+    <div class="docs-demo">
+      <template>
+        <o-video class="pl-w28" src="../fixtures/media/clip.webm" poster="../fixtures/media/clip-poster.jpg"
+                 chapters="../fixtures/media/clip-chapters.vtt" preview-thumbs="../fixtures/media/clip-thumbs.vtt"
+                 tracks='[{"src":"../fixtures/media/clip-en.vtt","label":"English","srclang":"en","kind":"subtitles","default":true},{"src":"../fixtures/media/clip-es.vtt","label":"Español","srclang":"es","kind":"subtitles"}]'
+                 label="Orion media player demo clip"></o-video>
+      </template>
+    </div>
+  </section>
+
+  <section id="video-playlist">
+    <h2>Playlist</h2>
+    <p><code>playlist</code> swaps <code>src</code> / <code>poster</code> / <code>tracks</code> and shows previous/next buttons; <code>J</code> / <code>L</code> seek ±10s, <code>loop</code> wraps at the ends.</p>
+    <div class="docs-demo">
+      <template>
+        <o-video class="pl-w28" loop label="Clip playlist"
+                 playlist='[{"src":"../fixtures/media/clip.webm","poster":"../fixtures/media/clip-poster.jpg","title":"Part 1 — Sunrise to sunset"},{"src":"../fixtures/media/clip2.webm","poster":"../fixtures/media/clip2-poster.jpg","title":"Part 2 — City timelapse"}]'></o-video>
+      </template>
+    </div>
+  </section>
+
+  <section id="video-api-demo">
+    <h2>Methods &amp; events</h2>
+    <div class="docs-demo">
+      <template>
+        <o-video class="pl-w28" id="v-api" src="../fixtures/media/clip2.webm" poster="../fixtures/media/clip2-poster.jpg" label="Controlled video"></o-video>
+        <div class="o-cluster o-mt-3">
+          <button class="o-btn o-btn-sm" id="v-play">togglePlay()</button>
+          <button class="o-btn o-btn-sm" id="v-skip">skip(5)</button>
+          <button class="o-btn o-btn-sm" id="v-speed">setSpeed(1.5)</button>
+          <button class="o-btn o-btn-sm" id="v-mute">toggleMute()</button>
+        </div>
+        <div class="docs-log" id="v-log"></div>
+        <script>
+          const v = document.getElementById('v-api');
+          document.getElementById('v-play').onclick = () => v.togglePlay();
+          document.getElementById('v-skip').onclick = () => v.skip(5);
+          document.getElementById('v-speed').onclick = () => v.setSpeed(v.playbackRate === 1.5 ? 1 : 1.5);
+          document.getElementById('v-mute').onclick = () => v.toggleMute();
+          let last = 0;
+          v.addEventListener('o-play', () => docs.log('#v-log', 'o-play'));
+          v.addEventListener('o-pause', () => docs.log('#v-log', 'o-pause'));
+          v.addEventListener('o-ended', () => docs.log('#v-log', 'o-ended'));
+          v.addEventListener('o-timeupdate', e => { const s = Math.floor(e.detail.currentTime); if (s !== last) { last = s; docs.log('#v-log', `o-timeupdate ${s}s / ${Math.floor(e.detail.duration)}s`); } });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="audio-wave">
+    <h2>Audio with a waveform</h2>
+    <p>Peaks are computed once with the Web Audio API (<code>decodeAudioData</code>) and drawn on a canvas; click or drag to seek. Falls back to a plain progress bar when the source can't be decoded (CORS, format) or <code>waveform</code> is off.</p>
+    <div class="docs-demo">
+      <template>
+        <o-audio class="pl-w28" src="../fixtures/media/melody.wav" title="Melody in C" artist="Orion Sound Kit" cover="../fixtures/media/cover-melody.svg"></o-audio>
+      </template>
+    </div>
+  </section>
+
+  <section id="audio-playlist">
+    <h2>Audio playlist &amp; download</h2>
+    <div class="docs-demo">
+      <template>
+        <o-audio class="pl-w28" loop
+                 playlist='[{"src":"../fixtures/media/chime.wav","title":"Notification chime","artist":"Orion Sound Kit","cover":"../fixtures/media/cover-chime.svg"},{"src":"../fixtures/media/melody.wav","title":"Melody in C","artist":"Orion Sound Kit","cover":"../fixtures/media/cover-melody.svg"}]'></o-audio>
+      </template>
+    </div>
+  </section>
+
+  <section id="preview-cards">
+    <h2>Hover-to-play cards (<code>data-o-video-preview</code>)</h2>
+    <p>Hover a card (or focus it with the keyboard) — after a short delay a muted, looping preview clip fades in over the poster. Stays on the poster under <code>prefers-reduced-motion</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="pl-cards">
+          <a class="pl-card" href="#" data-o-video-preview data-src="../fixtures/media/clip.webm" data-poster="../fixtures/media/clip-poster.jpg" onclick="return false" aria-label="Sunrise to sunset preview">
+            <img src="../fixtures/media/clip-poster.jpg" alt=""><span class="pl-card-label">Sunrise to sunset</span>
+          </a>
+          <a class="pl-card" href="#" data-o-video-preview data-src="../fixtures/media/clip2.webm" data-poster="../fixtures/media/clip2-poster.jpg" onclick="return false" aria-label="City timelapse preview">
+            <img src="../fixtures/media/clip2-poster.jpg" alt=""><span class="pl-card-label">City timelapse</span>
+          </a>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3><code>&lt;o-video&gt;</code></h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute / property</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>src / poster</td><td>string</td><td>Media source and poster image.</td></tr>
+        <tr><td>tracks</td><td>array</td><td><code>[{ src, label, srclang, kind, default }]</code> — also read from declarative <code>&lt;track&gt;</code> children.</td></tr>
+        <tr><td>chapters</td><td>url</td><td>WebVTT file; cue starts become tick marks on the seek bar (hover for the title).</td></tr>
+        <tr><td>preview-thumbs</td><td>url</td><td>WebVTT file mapping time ranges to a thumbnail (optionally a sprite via <code>#xywh=x,y,w,h</code>), shown while hovering / scrubbing the seek bar.</td></tr>
+        <tr><td>playlist</td><td>array</td><td><code>[{ src, poster, title, tracks, chapters, previewThumbs }]</code>; shows previous/next buttons.</td></tr>
+        <tr><td>index</td><td>number</td><td>Current playlist position (settable).</td></tr>
+        <tr><td>autoplay / loop / muted / controls</td><td>boolean</td><td><code>controls="false"</code> falls back to the native control bar.</td></tr>
+        <tr><td>label</td><td>string</td><td>Accessible name.</td></tr>
+      </tbody>
+    </table>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>play() / pause() / togglePlay()</td><td></td></tr>
+        <tr><td>seek(t) / skip(delta)</td><td>Seconds.</td></tr>
+        <tr><td>setVolume(v) / toggleMute()</td><td><code>v</code> is 0–1.</td></tr>
+        <tr><td>setSpeed(rate) / setCaptions(index \| -1)</td><td><code>-1</code> turns captions off.</td></tr>
+        <tr><td>requestPiP() / toggleFullscreen()</td><td></td></tr>
+        <tr><td>next() / prev()</td><td>Playlist navigation.</td></tr>
+        <tr><td>currentTime, duration, paused, ended, volume, muted, playbackRate, videoElement</td><td>Getters (<code>videoElement</code> is the underlying <code>&lt;video&gt;</code>).</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Events:</strong> <code>o-play, o-pause, o-ended, o-seek { time }, o-timeupdate { currentTime, duration }, o-volumechange { volume, muted }, o-ratechange { rate }, o-error { error }, o-pipchange { active }, o-playlistchange { index, item }, o-loadedmetadata { duration }</code>.</p>
+
+    <h3><code>&lt;o-audio&gt;</code></h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute / property</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>src / title / artist / cover</td><td>string</td><td></td></tr>
+        <tr><td>waveform</td><td>boolean</td><td>Default true; draws peaks on a canvas (falls back to a flat bar).</td></tr>
+        <tr><td>loop</td><td>boolean</td><td></td></tr>
+        <tr><td>playlist / index</td><td>array / number</td><td><code>[{ src, title, artist, cover }]</code>.</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Methods:</strong> <code>play(), pause(), togglePlay(), seek(t), skip(delta), setSpeed(rate), toggleLoop(), toggleMute(), download(), next(), prev()</code>. <strong>Events:</strong> same shape as <code>&lt;o-video&gt;</code> (<code>o-play, o-pause, o-ended, o-timeupdate, o-ratechange, o-error, o-playlistchange</code>).</p>
+
+    <h3><code>data-o-video-preview</code></h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>data-src / data-poster</td><td>Preview clip and poster image.</td></tr>
+        <tr><td>data-o-video-preview-delay</td><td>Hover delay before the clip starts, in ms (default 250).</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard (video focused)</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Space / K</td><td>Play / pause.</td></tr>
+        <tr><td>J / L</td><td>Seek −10s / +10s.</td></tr>
+        <tr><td>← / →</td><td>Seek −5s / +5s.</td></tr>
+        <tr><td>↑ / ↓</td><td>Volume +10% / −10%.</td></tr>
+        <tr><td>Home / End</td><td>Start / end.</td></tr>
+        <tr><td>M</td><td>Mute / unmute.</td></tr>
+        <tr><td>F</td><td>Fullscreen.</td></tr>
+        <tr><td>C</td><td>Cycle captions (including off).</td></tr>
+        <tr><td>0–9</td><td>Seek to that tenth of the duration.</td></tr>
+      </tbody>
+    </table>
+    <p>Controls auto-hide a moment after the pointer stops moving during playback, and reappear on any interaction. The seek bar and volume are real sliders (<code>role="slider"</code> / a native <code>&lt;input type="range"&gt;</code>) with a live <code>aria-valuetext</code>.</p>
+  </section>
+</main>
+</body>
+</html>

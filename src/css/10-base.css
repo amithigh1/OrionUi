@@ -1,0 +1,71 @@
+/* ============================================================================
+ * Base essentials (always included, even without the reboot)
+ * ========================================================================== */
+[hidden] { display: none !important; }
+.o-portal { position: relative; z-index: var(--o-z-popover); }
+o-icon { display: inline-flex; align-items: center; justify-content: center; line-height: 0; vertical-align: middle; flex-shrink: 0; }
+.o-icon { width: var(--o-icon-size, 1.25em); height: var(--o-icon-size, 1.25em); flex-shrink: 0; vertical-align: -.25em; }
+o-icon > .o-icon { vertical-align: 0; }
+.o-icon-spin, .o-spin { animation: o-spin .8s linear infinite; }
+[dir="rtl"] .o-icon-flip, [dir="rtl"] .o-icon-chevron-right, [dir="rtl"] .o-icon-chevron-left,
+[dir="rtl"] .o-icon-arrow-right, [dir="rtl"] .o-icon-arrow-left, [dir="rtl"] .o-icon-chevrons-left,
+[dir="rtl"] .o-icon-chevrons-right, [dir="rtl"] .o-icon-log-out, [dir="rtl"] .o-icon-send { transform: scaleX(-1); }
+
+/* thin, themed scrollbars for scrollable components */
+.o-scroll { overflow: auto; scrollbar-width: thin; scrollbar-color: var(--o-scrollbar) transparent; }
+.o-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.o-scroll::-webkit-scrollbar-thumb { background: var(--o-scrollbar); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+.o-scroll::-webkit-scrollbar-track { background: transparent; }
+.o-no-scrollbar { scrollbar-width: none; }
+.o-no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* elevated floating surface shared by menus, popovers, pickers, panels */
+.o-floating {
+  background: var(--o-elevated);
+  color: var(--o-text);
+  border: 1px solid var(--o-border);
+  border-radius: var(--o-radius);
+  box-shadow: var(--o-shadow-lg);
+  z-index: var(--o-z-popover);
+}
+/* modal backdrop shared by modal / drawer / lightbox */
+.o-backdrop { position: fixed; inset: 0; background: var(--o-backdrop); }
+
+.o-mark, mark.o-mark { background: color-mix(in srgb, var(--o-warning) 38%, transparent); color: inherit; padding: 0; border-radius: 2px; }
+
+/* animations */
+@keyframes o-spin { to { transform: rotate(360deg); } }
+@keyframes o-pulse { 50% { opacity: .5; } }
+@keyframes o-ping { 75%, 100% { transform: scale(2.2); opacity: 0; } }
+@keyframes o-shimmer { 100% { transform: translateX(100%); } }
+@keyframes o-shimmer-rtl { 100% { transform: translateX(-100%); } }
+@keyframes o-fade-in { from { opacity: 0; } }
+@keyframes o-slide-up { from { opacity: 0; transform: translateY(8px); } }
+@keyframes o-zoom-in { from { opacity: 0; transform: scale(.96); } }
+@keyframes o-progress-stripes { from { background-position: 1rem 0; } to { background-position: 0 0; } }
+@keyframes o-indeterminate { 0% { transform: translateX(-100%); } 100% { transform: translateX(250%); } }
+@keyframes o-grow { 0% { transform: scale(0); opacity: .9; } 100% { transform: scale(1); opacity: 0; } }
+@keyframes o-dots { 0%, 80%, 100% { transform: scale(0); opacity: .4; } 40% { transform: scale(1); opacity: 1; } }
+@keyframes o-bars { 0%, 40%, 100% { transform: scaleY(.4); } 20% { transform: scaleY(1); } }
+@keyframes o-shake { 10%, 90% { transform: translateX(-1px); } 20%, 80% { transform: translateX(2px); } 30%, 50%, 70% { transform: translateX(-4px); } 40%, 60% { transform: translateX(4px); } }
+@keyframes o-bounce { 0%, 100% { transform: translateY(-20%); animation-timing-function: cubic-bezier(.8, 0, 1, 1); } 50% { transform: none; animation-timing-function: cubic-bezier(0, 0, .2, 1); } }
+
+.o-animate-spin { animation: o-spin 1s linear infinite; }
+.o-animate-pulse { animation: o-pulse 2s cubic-bezier(.4, 0, .6, 1) infinite; }
+.o-animate-ping { animation: o-ping 1s cubic-bezier(0, 0, .2, 1) infinite; }
+.o-animate-bounce { animation: o-bounce 1s infinite; }
+.o-animate-shake { animation: o-shake .5s both; }
+.o-animate-fade-in { animation: o-fade-in var(--o-dur) var(--o-ease) both; }
+.o-animate-slide-up { animation: o-slide-up var(--o-dur) var(--o-ease) both; }
+.o-animate-zoom-in { animation: o-zoom-in var(--o-dur) var(--o-ease) both; }
+.o-fade-enter-active, .o-fade-leave-active { transition: opacity var(--o-dur) var(--o-ease); }
+.o-fade-enter-from, .o-fade-leave-to { opacity: 0; }
+.o-hover-lift { transition: transform var(--o-dur) var(--o-ease), box-shadow var(--o-dur) var(--o-ease); }
+.o-hover-lift:hover { transform: translateY(-2px); box-shadow: var(--o-shadow-lg); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+@media (forced-colors: active) {
+  .o-btn, .o-input, .o-card, .o-floating, .o-badge { border: 1px solid CanvasText; }
+}

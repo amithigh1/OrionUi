@@ -1,0 +1,13 @@
+/* <o-qrcode> — tokens only; the code itself is drawn with author-supplied colors (color/background props). */
+o-qrcode {
+  display: inline-flex; flex-direction: column; align-items: center; gap: .5rem; max-width: 100%;
+}
+o-qrcode:not(:defined) { visibility: hidden; }
+.o-qrcode-box { display: inline-flex; max-width: 100%; line-height: 0; }
+.o-qrcode-box svg { display: block; max-width: 100%; height: auto; border-radius: var(--o-radius-sm); }
+.o-qrcode[data-empty] .o-qrcode-box { display: grid; place-items: center; width: 100%; min-height: 8rem; color: var(--o-text-subtle); font-size: var(--o-fs-sm); background: var(--o-surface-2); border: 1px dashed var(--o-border); border-radius: var(--o-radius); }
+.o-qrcode[data-empty] .o-qrcode-box::before { content: "No value"; }
+.o-qrcode-error { max-width: 16rem; padding: .75rem 1rem; font-size: var(--o-fs-sm); color: var(--o-danger-text); background: var(--o-danger-subtle); border: 1px solid var(--o-danger-border); border-radius: var(--o-radius); text-align: center; }
+.o-qrcode-label { font-size: var(--o-fs-sm); color: var(--o-text-muted); text-align: center; }
+.o-qrcode-label:empty { display: none; }
+.o-qrcode-actions:empty { display: none; }

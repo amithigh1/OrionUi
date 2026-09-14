@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Facets catalogue example — Orion Admin</title>
+<script src="../../dist/orion.js"></script>
+<style>
+  body { margin: 0; font: 14px/1.5 system-ui, sans-serif; color: var(--o-text); background: var(--o-bg); }
+  .cat-wrap { max-width: 72rem; margin: 0 auto; padding: 1.5rem 1.5rem 6rem; }
+  .cat-layout { display: grid; gap: 1.25rem; grid-template-columns: 1fr; align-items: start; }
+  @media (min-width: 1024px) { .cat-layout { grid-template-columns: 16rem 1fr; } }
+  .cat-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); }
+  .p-card { display: flex; flex-direction: column; overflow: hidden; }
+  .p-thumb { aspect-ratio: 16 / 10; max-height: 8rem; display: grid; place-items: center; font-size: 2rem; background: var(--o-surface-2); border-bottom: 1px solid var(--o-border); }
+  .p-body { padding: .875rem; display: flex; flex-direction: column; gap: .375rem; flex: 1; }
+  .p-name { font-weight: 600; line-height: 1.3; }
+  .p-price { font-variant-numeric: tabular-nums; font-weight: 700; }
+  .p-foot { margin-top: auto; padding-top: .5rem; display: flex; flex-direction: column; gap: .5rem; }
+</style>
+</head>
+<body>
+<div class="cat-wrap">
+  <h1>Product catalogue</h1>
+  <p class="o-text-muted">Faceted filtering (<code>&lt;o-facets&gt;</code> / <code>&lt;o-facet-chips&gt;</code>) combined
+  with compare (<code>&lt;o-compare-tray&gt;</code> / <code>&lt;o-compare-table&gt;</code>) — the same catalogue shape as
+  <code>templates/products.html</code>, built on the two new packages.</p>
+
+  <div class="cat-layout">
+    <aside class="o-card">
+      <div class="o-card-body">
+        <o-facets id="facets" label="Filters"></o-facets>
+      </div>
+    </aside>
+
+    <div>
+      <div class="o-cluster o-mb-3">
+        <span class="o-text-muted o-text-sm" id="count" aria-live="polite"></span>
+        <div class="o-spacer"></div>
+        <select class="o-select" id="sort" aria-label="Sort by" style="width:auto">
+          <option value="name">Name A–Z</option>
+          <option value="price-asc">Price: low to high</option>
+          <option value="price-desc">Price: high to low</option>
+        </select>
+      </div>
+      <o-facet-chips for="#facets" class="o-mb-3"></o-facet-chips>
+      <div id="grid" class="cat-grid"></div>
+      <div class="o-card" id="empty" hidden>
+        <div class="o-empty">
+          <div class="o-empty-icon"><o-icon name="package"></o-icon></div>
+          <h4 class="o-empty-title">No products match</h4>
+          <p class="o-empty-text">Try removing a filter or searching for something else.</p>
+          <div class="o-empty-actions"><button class="o-btn" id="empty-clear" type="button">Clear filters</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<o-compare-tray max="4" target="#compare-panel"></o-compare-tray>
+<o-compare-table id="compare-panel" live hidden style="position:fixed;inset-inline:1.5rem;inset-block-end:5rem;max-width:60rem;margin-inline:auto;z-index:20"
+  attributes='[{"key":"price","label":"Price","numeric":true,"best":"low","unit":"USD"},{"key":"rating","label":"Rating","numeric":true,"best":"high"},{"key":"category","label":"Category"}]'>
+</o-compare-table>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const O = Orion, F = O.format, esc = O.util.esc;
+  const CATS = { audio: 'Audio', wearables: 'Wearables', computing: 'Computing', home: 'Smart home' };
+  const EMOJI = { audio: '🎧', wearables: '⌚', computing: '💻', home: '💡' };
+  const NAMES = ['Aurora', 'Nimbus', 'Vertex', 'Lumen', 'Cobalt', 'Zephyr', 'Onyx', 'Halo', 'Quartz', 'Ember', 'Vela', 'Atlas'];
+  const KINDS = { audio: ['Headphones', 'Earbuds', 'Speaker'], wearables: ['Watch', 'Band', 'Ring'], computing: ['Laptop', 'Keyboard', 'Mouse'], home: ['Bulb', 'Plug', 'Sensor'] };
+  const STATUS = { in: ['success', 'In stock'], low: ['warning', 'Low stock'], out: ['danger', 'Out of stock'] };
+
+  const keys = Object.keys(CATS);
+  const DATA = Array.from({ length: 48 }, (_, i) => {
+    const category = keys[i % keys.length], kind = KINDS[category][i % 3];
+    const stock = [0, 3, 8, 24, 61, 140, 7, 0][i % 8];
+    return {
+      id: 'P' + (1001 + i), category, categoryLabel: CATS[category],
+      title: `${NAMES[i % NAMES.length]} ${kind}`, price: 29 + ((i * 37) % 480),
+      stock, rating: 3 + ((i * 7) % 20) / 10, status: stock === 0 ? 'out' : stock < 10 ? 'low' : 'in',
+    };
+  });
+  DATA.forEach(d => { d.statusLabel = STATUS[d.status][1]; });
+
+  const facets = document.getElementById('facets');
+  facets.items = DATA;
+  facets.groups = [
+    { key: 'category', label: 'Category', type: 'checkbox' },
+    { key: 'status', label: 'Availability', type: 'checkbox' },
+    { key: 'price', label: 'Price', type: 'radio', options: [
+      { value: '0-99', label: 'Under $100', max: 99 },
+      { value: '100-249', label: '$100 – $249', min: 100, max: 249 },
+      { value: '250-', label: '$250 and up', min: 250 },
+    ] },
+    { key: 'rating', label: 'Minimum rating', type: 'radio', options: [
+      { value: '4.5', label: '4.5 and up', min: 4.5 },
+      { value: '4', label: '4.0 and up', min: 4 },
+      { value: '3.5', label: '3.5 and up', min: 3.5 },
+    ] },
+    { key: 'title', label: 'Search', type: 'search' },
+  ];
+
+  let sort = 'name';
+  const grid = document.getElementById('grid'), empty = document.getElementById('empty'), count = document.getElementById('count');
+  const by = { name: (a, b) => a.title.localeCompare(b.title), 'price-asc': (a, b) => a.price - b.price, 'price-desc': (a, b) => b.price - a.price };
+
+  function render() {
+    const rows = facets.filtered.slice().sort(by[sort]);
+    count.textContent = `${rows.length} of ${DATA.length} products`;
+    empty.hidden = rows.length > 0;
+    grid.innerHTML = rows.map(r => `
+      <article class="o-card p-card">
+        <div class="p-thumb" aria-hidden="true">${EMOJI[r.category]}</div>
+        <div class="p-body">
+          <div class="o-between"><span class="o-text-muted o-text-xs">${r.id}</span>
+            <span class="o-badge o-badge-soft-${STATUS[r.status][0]} o-badge-sm">${r.stock} left</span></div>
+          <div class="p-name">${esc(r.title)}</div>
+          <div class="o-hstack o-text-xs o-text-muted"><o-rating value="${r.rating}" readonly size="sm" color="warning"></o-rating>${r.rating.toFixed(1)}</div>
+          <div class="p-foot">
+            <span class="p-price">${F.currency(r.price)}</span>
+            <button type="button" class="o-btn o-btn-sm" data-o-action="compare"
+              data-o-item='${esc(JSON.stringify({ id: r.id, title: r.title, price: r.price, rating: r.rating, category: r.categoryLabel }))}'>
+              Add to compare
+            </button>
+          </div>
+        </div>
+      </article>`).join('');
+  }
+  facets.addEventListener('o-change', render);
+  document.getElementById('sort').addEventListener('change', e => { sort = e.target.value; render(); });
+  document.getElementById('empty-clear').addEventListener('click', () => facets.clear());
+  render();
+});
+</script>
+</body>
+</html>

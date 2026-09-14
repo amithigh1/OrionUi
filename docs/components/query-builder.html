@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Query Builder — Orion Admin</title>
+<meta name="docs:section" content="Search &amp; Commands">
+<meta name="docs:order" content="30">
+<meta name="docs:desc" content="Nested AND/OR/NOT rule builder with SQL, Mongo, predicate and sentence output">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Query Builder</h1>
+    <p class="docs-lead"><code>&lt;o-query-builder&gt;</code> builds nested AND/OR/NOT rule trees with type-aware
+    operators and value editors, then exports them as a parameterized SQL fragment, a MongoDB query object, a
+    human sentence, or a JS predicate you can run against plain arrays. A compact search-bar mode parses a
+    small query language (<code>status:active age&gt;30 "exact phrase" -excluded</code>) into the same tree.</p>
+  </header>
+
+  <section id="live">
+    <h2>Filtering a live table</h2>
+    <p>Build a query below — every change filters the table instantly via <code>toPredicate()</code>, and the
+    generated SQL / Mongo / sentence update live. Click <strong>+ Add group</strong> to nest an OR group inside
+    the AND root, drag a rule by its grip handle (or focus the grip and press <kbd class="o-kbd">Alt</kbd>+<kbd class="o-kbd">↑</kbd>/<kbd class="o-kbd">↓</kbd>) to reorder it.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-p-3">
+          <o-query-builder id="qb-demo"></o-query-builder>
+        </div>
+        <div class="o-p-3" style="border-block:1px solid var(--o-border);display:grid;gap:.75rem">
+          <div><strong>Sentence:</strong> <span id="qb-sentence" class="o-text-sm o-muted"></span></div>
+          <div><strong>SQL:</strong> <code id="qb-sql" class="o-text-sm"></code></div>
+          <div><strong>Mongo:</strong> <code id="qb-mongo" class="o-text-sm"></code></div>
+        </div>
+        <o-datatable id="qb-table" page-size="6" toolbar="false"></o-datatable>
+        <script>{
+          const qb = document.getElementById('qb-demo');
+          const dt = document.getElementById('qb-table');
+          qb.fields = [
+            { key: 'name', label: 'Name', type: 'text' },
+            { key: 'department', label: 'Department', type: 'select', options: ['Engineering', 'Sales', 'Marketing', 'Finance', 'Operations', 'Design', 'HR', 'Legal'] },
+            { key: 'status', label: 'Status', type: 'select', options: ['Active', 'Pending', 'Inactive', 'Suspended'] },
+            { key: 'salary', label: 'Salary', type: 'number', min: 0, step: 100 },
+            { key: 'rating', label: 'Rating', type: 'number', min: 0, max: 5, step: 0.1 },
+            { key: 'joined', label: 'Joined', type: 'date' },
+            { key: 'remote', label: 'Remote', type: 'boolean' },
+            { key: 'tags', label: 'Tags', type: 'array', options: ['vip', 'new', 'remote', 'onsite', 'trial', 'beta'] },
+          ];
+          const people = docs.people(300).map(p => ({ ...p, remote: p.tags.includes('remote'), joined: Orion.date.toISODate(p.joined) }));
+          dt.columns = [
+            { key: 'name', title: 'Name' }, { key: 'department', title: 'Department' },
+            { key: 'status', title: 'Status', type: 'badge', colors: { Active: 'success', Pending: 'warning', Inactive: 'secondary', Suspended: 'danger' } },
+            { key: 'salary', title: 'Salary', type: 'currency', format: { maximumFractionDigits: 0 } },
+            { key: 'rating', title: 'Rating', type: 'number', format: 1 },
+          ];
+          qb.value = {
+            type: 'group', op: 'and', children: [
+              { type: 'rule', field: 'status', operator: 'in', value: ['Active'] },
+              { type: 'rule', field: 'salary', operator: 'gte', value: 60000 },
+            ],
+          };
+          function refresh() {
+            dt.rows = people.filter(qb.toPredicate());
+            document.getElementById('qb-sentence').textContent = qb.toString() || '(empty)';
+            document.getElementById('qb-sql').textContent = JSON.stringify(qb.toSQL());
+            document.getElementById('qb-mongo').textContent = JSON.stringify(qb.toMongo());
+          }
+          qb.addEventListener('o-change', refresh);
+          refresh();
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="operators">
+    <h2>Type-aware operators</h2>
+    <p>Each field's <code>type</code> (<code>text</code>, <code>number</code>, <code>date</code>, <code>boolean</code>,
+    <code>select</code>, <code>array</code>) drives which operators and value editor appear — dates and multi-selects
+    use the Orion date picker / select when those packages are loaded, else a native <code>&lt;input&gt;</code>.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-p-3">
+          <o-query-builder id="qb-types" max-depth="3"></o-query-builder>
+        </div>
+        <script>{
+          const qb = document.getElementById('qb-types');
+          qb.fields = [
+            { key: 'title', label: 'Title', type: 'text' },
+            { key: 'price', label: 'Price', type: 'number', min: 0 },
+            { key: 'releaseDate', label: 'Release date', type: 'date' },
+            { key: 'inStock', label: 'In stock', type: 'boolean' },
+            { key: 'category', label: 'Category', type: 'select', options: ['Books', 'Electronics', 'Toys'] },
+            { key: 'labels', label: 'Labels', type: 'array', options: ['sale', 'new', 'clearance'] },
+          ];
+          qb.value = { type: 'group', op: 'or', children: [
+            { type: 'rule', field: 'category', operator: 'in', value: ['Books'] },
+            { type: 'group', op: 'and', children: [
+              { type: 'rule', field: 'price', operator: 'lt', value: 20 },
+              { type: 'rule', field: 'inStock', operator: 'isTrue' },
+            ] },
+          ] };
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="bar">
+    <h2>Search-bar mode</h2>
+    <p>Click <strong>Switch to search bar</strong> (or set <code>mode="bar"</code>) for a compact, typed alternative
+    that parses into the exact same tree — switch back to <em>builder</em> at any time to see (and keep editing) the
+    parsed rules.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-p-3">
+          <o-query-builder id="qb-bar" mode="bar"></o-query-builder>
+        </div>
+        <script>{
+          const qb = document.getElementById('qb-bar');
+          qb.fields = [
+            { key: 'status', label: 'Status', type: 'select', options: ['active', 'closed'] },
+            { key: 'age', label: 'Age', type: 'number' },
+          ];
+          // Pre-fill via the tree (equivalent to typing the query below) so bar mode renders it immediately.
+          qb.value = Orion.qb.parseToTree('status:active age>30 "exact phrase" -excluded', qb.fields);
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>Properties</h2>
+    <table class="docs-api">
+      <thead><tr><th>Prop</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>value</code></td><td><code>Group</code></td><td>an empty AND group</td><td>The tree. Array/Object props accept JSON in attributes; a plain object property is normalized (ids filled in) automatically.</td></tr>
+        <tr><td><code>fields</code></td><td><code>FieldDef[]</code></td><td><code>[]</code></td><td></td></tr>
+        <tr><td><code>maxDepth</code></td><td>number</td><td><code>5</code></td><td>Hides "Add group" once reached.</td></tr>
+        <tr><td><code>mode</code></td><td><code>'builder' | 'bar'</code></td><td><code>'builder'</code></td><td>Reflected attribute.</td></tr>
+        <tr><td><code>dialect</code></td><td><code>'ansi' | 'postgres' | 'mysql'</code></td><td><code>'ansi'</code></td><td>Default for <code>toSQL()</code> (placeholder style + identifier quoting).</td></tr>
+        <tr><td><code>name</code>, <code>disabled</code>, <code>required</code>, <code>readonly</code></td><td></td><td></td><td>Form participation (it's a <code>FormElement</code>) — <code>required</code> means at least one rule.</td></tr>
+      </tbody>
+    </table>
+    <h3>Field definition</h3>
+    <pre class="docs-code-block" data-lang="js">
+      interface FieldDef {
+        key: string; label?: string; type: 'text' | 'number' | 'date' | 'boolean' | 'select' | 'array';
+        options?: Array&lt;string | { value, label }&gt;;    // select / array
+        min?: number; max?: number; step?: number;         // number
+        placeholder?: string;
+      }
+    </pre>
+    <h2>Methods</h2>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Returns</th><th></th></tr></thead>
+      <tbody>
+        <tr><td><code>toSQL({ dialect? })</code></td><td><code>{ sql, params }</code></td><td>Always parameterized — values are bound, never concatenated.</td></tr>
+        <tr><td><code>toMongo()</code></td><td><code>object</code></td><td>A MongoDB query filter document.</td></tr>
+        <tr><td><code>toString()</code></td><td><code>string</code></td><td>A human sentence, e.g. <code>status is any of "active" and age &gt; 30</code>.</td></tr>
+        <tr><td><code>toPredicate()</code></td><td><code>(row) =&gt; boolean</code></td><td>For client-side filtering of plain arrays.</td></tr>
+        <tr><td><code>fromJSON(json)</code></td><td><code>this</code></td><td>Accepts an object or a JSON string.</td></tr>
+      </tbody>
+    </table>
+    <h2>Events</h2>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th><code>detail</code></th></tr></thead>
+      <tbody><tr><td><code>o-change</code></td><td><code>{ value }</code> — also native <code>input</code>/<code>change</code> fire on the host (see <a href="../../ARCHITECTURE.md">FormElement</a>).</td></tr></tbody>
+    </table>
+    <h2>Query language (search-bar mode)</h2>
+    <pre class="docs-code-block" data-lang="js">
+      Orion.qb.parseQueryString('status:active age>30 "exact phrase" -excluded');
+      // -> [{field:'status',op:':',value:'active',not:false}, {field:'age',op:'>',value:'30',not:false},
+      //     {field:'_text',op:':',value:'exact phrase',not:false}, {field:'_text',op:':',value:'excluded',not:true}]
+      Orion.qb.parseToTree(text, fields);          // -> the same Group/Rule tree shape as `value`
+      Orion.qb.treeToQueryString(tree, fields);    // best-effort inverse for a flat AND-of-rules tree
+    </pre>
+    <p><code>key:value</code>, <code>key:"quoted value"</code>, <code>key&gt;value</code>, <code>key&gt;=value</code>,
+    <code>key&lt;value</code>, <code>key&lt;=value</code> and <code>key!=value</code> target a field (the operator
+    is resolved from that field's <code>type</code> when <code>fields</code> is passed in); a bare word or
+    <code>"quoted phrase"</code> becomes a free-text <code>contains</code> rule (searched across every declared
+    <code>text</code>-type field, or the whole row if none are declared); a leading <code>-</code> negates any token.</p>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td><kbd class="o-kbd">Alt</kbd>+<kbd class="o-kbd">↑</kbd>/<kbd class="o-kbd">↓</kbd></td><td>While a rule/group's grip handle is focused, moves it among its siblings.</td></tr>
+        <tr><td><kbd class="o-kbd">Tab</kbd></td><td>Moves through NOT, AND/OR, field, operator, value and action controls in order.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="frameworks">
+    <h2>Frameworks</h2>
+    <p>Set <code>fields</code> and <code>value</code> as properties (both accept JSON in attributes too). Listen for
+    <code>o-change</code> to read <code>event.target.value</code> or call any of the export methods.</p>
+    <pre class="docs-code-block" data-lang="js">
+      &lt;o-query-builder ref={ref} fields={fields} value={value} /&gt;
+      useEffect(() => { const el = ref.current; const f = e => setValue(el.value); el.addEventListener('o-change', f); return () => el.removeEventListener('o-change', f); }, []);
+    </pre>
+  </section>
+</main>
+</body>
+</html>

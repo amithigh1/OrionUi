@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Toast — Orion Admin</title>
+<meta name="docs:section" content="Overlays &amp; Feedback">
+<meta name="docs:order" content="30">
+<meta name="docs:desc" content="Stacked, swipeable notifications: positions, types, actions, promises and updates">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Toast</h1>
+    <p class="docs-lead">Non-blocking notifications with <code>Orion.toast()</code>: six logical positions, stacked cards that expand on hover/focus, timers that pause automatically, swipe to dismiss on touch, and in-place updates by id. Toasts stay usable above open modals.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic &amp; types</h2>
+    <p>A plain string, or <code>Orion.toast.success/error/warning/info/loading()</code> for a typed toast.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn" id="demo-basic">Default</button>
+        <button class="o-btn o-btn-soft-success" id="demo-success">Success</button>
+        <button class="o-btn o-btn-soft-danger" id="demo-error">Error</button>
+        <button class="o-btn o-btn-soft-warning" id="demo-warning">Warning</button>
+        <button class="o-btn o-btn-soft-info" id="demo-info">Info</button>
+        <script>
+          document.getElementById('demo-basic').addEventListener('click', () => Orion.toast('Saved.'));
+          document.getElementById('demo-success').addEventListener('click', () => Orion.toast.success('Profile updated.', { title: 'Done' }));
+          document.getElementById('demo-error').addEventListener('click', () => Orion.toast.error('Could not reach the server.', { title: 'Upload failed' }));
+          document.getElementById('demo-warning').addEventListener('click', () => Orion.toast.warning('Your session expires in 5 minutes.'));
+          document.getElementById('demo-info').addEventListener('click', () => Orion.toast.info('A new version of this page is available.'));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="positions">
+    <h2>Positions</h2>
+    <p>Six logical positions (<code>start</code>/<code>end</code> follow text direction — try the RTL toggle in the header).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-sm" data-pos="top-start">Top start</button>
+        <button class="o-btn o-btn-sm" data-pos="top-center">Top center</button>
+        <button class="o-btn o-btn-sm" data-pos="top-end">Top end</button>
+        <button class="o-btn o-btn-sm" data-pos="bottom-start">Bottom start</button>
+        <button class="o-btn o-btn-sm" data-pos="bottom-center">Bottom center</button>
+        <button class="o-btn o-btn-sm" data-pos="bottom-end">Bottom end</button>
+        <script>
+          document.querySelectorAll('[data-pos]').forEach(b => b.addEventListener('click', () => Orion.toast({ text: 'Toast at ' + b.dataset.pos, position: b.dataset.pos })));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="action">
+    <h2>Title, action &amp; progress</h2>
+    <p>An optional title, an action button (closes the toast unless <code>onClick</code> returns <code>false</code>), a countdown progress bar, and a custom duration (<code>0</code> = sticky).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn" id="demo-action">Archive with undo</button>
+        <button class="o-btn" id="demo-progress">Progress bar</button>
+        <button class="o-btn" id="demo-sticky">Sticky (duration 0)</button>
+        <div class="docs-log" id="demo-action-log" style="width:100%"></div>
+        <script>
+          document.getElementById('demo-action').addEventListener('click', () => {
+            Orion.toast({ title: 'Message archived', text: 'Moved to the Archive folder.', action: { text: 'Undo', onClick: () => docs.log('#demo-action-log', 'restored') } });
+          });
+          document.getElementById('demo-progress').addEventListener('click', () => Orion.toast({ text: 'Auto-closing in a few seconds…', progress: true, duration: 5000 }));
+          document.getElementById('demo-sticky').addEventListener('click', () => Orion.toast({ title: 'Sticky notice', text: 'This toast stays until you close it.', duration: 0 }));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="update">
+    <h2>Update in place &amp; stacking</h2>
+    <p>Toasts with the same <code>id</code> update instead of duplicating. Fire several at once to see the collapsed stack — hover or focus it to expand.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-primary" id="demo-update">Simulate upload</button>
+        <button class="o-btn" id="demo-stack">Fire 5 toasts</button>
+        <button class="o-btn o-btn-ghost" id="demo-clear">Clear all</button>
+        <script>
+          document.getElementById('demo-update').addEventListener('click', () => {
+            const t = Orion.toast({ id: 'upload-demo', type: 'loading', text: 'Uploading photo.jpg…' });
+            setTimeout(() => t.update({ type: 'success', text: 'photo.jpg uploaded.', duration: 3000 }), 1600);
+          });
+          document.getElementById('demo-stack').addEventListener('click', () => {
+            ['First', 'Second', 'Third', 'Fourth', 'Fifth'].forEach((n, i) => setTimeout(() => Orion.toast(n + ' notification'), i * 120));
+          });
+          document.getElementById('demo-clear').addEventListener('click', () => Orion.toast.clear());
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="promise">
+    <h2>Promise tracking</h2>
+    <p><code>Orion.toast.promise()</code> shows a loading toast and updates it when the promise settles. Messages may be strings, option objects, or functions of the result/error.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-primary" id="demo-promise-ok">Save (succeeds)</button>
+        <button class="o-btn o-btn-danger" id="demo-promise-fail">Save (fails)</button>
+        <script>
+          const fakeSave = ok => new Promise((res, rej) => setTimeout(() => ok ? res({ name: 'Q3 report.xlsx' }) : rej(new Error('Network timeout')), 1400));
+          document.getElementById('demo-promise-ok').addEventListener('click', () => {
+            Orion.toast.promise(fakeSave(true), { loading: 'Saving…', success: r => `Saved ${r.name}`, error: e => e.message });
+          });
+          document.getElementById('demo-promise-fail').addEventListener('click', () => {
+            Orion.toast.promise(fakeSave(false), { loading: 'Saving…', success: r => `Saved ${r.name}`, error: e => e.message }).catch(() => {});
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="rich">
+    <h2>Rich content &amp; config</h2>
+    <p><code>html</code> (sanitized), a custom icon, and <code>Orion.toast.config()</code> to change the defaults for every future toast.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn" id="demo-html">Rich HTML</button>
+        <button class="o-btn" id="demo-icon">Custom icon</button>
+        <label class="o-check" style="display:inline-flex;align-items:center;gap:.375rem">
+          <input type="checkbox" id="demo-expand-toggle"> <span>Always expand the stack</span>
+        </label>
+        <script>
+          document.getElementById('demo-html').addEventListener('click', () => Orion.toast({ html: 'Read the <a href="#">release notes</a> for what changed.' }));
+          document.getElementById('demo-icon').addEventListener('click', () => Orion.toast({ text: 'You earned a badge!', icon: 'star' }));
+          document.getElementById('demo-expand-toggle').addEventListener('change', e => Orion.toast.config({ expand: e.target.checked }));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Orion.toast(text | options, extraOptions?) → handle</h3>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>text</td><td>string｜Node</td><td>—</td><td>Message (text, escaped).</td></tr>
+        <tr><td>html</td><td>string</td><td>—</td><td>Rich message, sanitized with <code>Orion.sanitize</code>.</td></tr>
+        <tr><td>title</td><td>string</td><td>—</td><td>Bold first line.</td></tr>
+        <tr><td>type</td><td>success｜error｜warning｜info｜loading｜default</td><td>default</td><td>Icon, color and politeness (<code>error</code> → <code>role="alert"</code>, assertive).</td></tr>
+        <tr><td>duration</td><td>number (ms)</td><td>config (4000; errors ×1.5)</td><td><code>0</code> = sticky. <code>loading</code> is sticky by default.</td></tr>
+        <tr><td>position</td><td>top-start｜top-center｜top-end｜bottom-start｜bottom-center｜bottom-end</td><td>config (top-end)</td><td>Logical: start/end follow the text direction.</td></tr>
+        <tr><td>action</td><td>{ text, onClick(handle, event) }</td><td>—</td><td>Button; closes the toast after the click unless <code>onClick</code> returns <code>false</code>.</td></tr>
+        <tr><td>closable</td><td>boolean</td><td>true (false for loading)</td><td>Close button.</td></tr>
+        <tr><td>progress</td><td>boolean</td><td>false</td><td>Countdown bar (pauses with the timer).</td></tr>
+        <tr><td>icon</td><td>string｜false</td><td>per type</td><td>Icon name, raw <code>&lt;svg&gt;</code> string, or <code>false</code>.</td></tr>
+        <tr><td>id</td><td>string</td><td>auto</td><td>A toast with the same id is updated instead of duplicated.</td></tr>
+        <tr><td>className</td><td>string</td><td>—</td><td>Extra class on <code>.o-toast</code>.</td></tr>
+        <tr><td>onClose(reason)</td><td>function</td><td>—</td><td>reason: timeout｜close｜action｜swipe｜escape｜overflow｜api｜clear.</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Handle</strong>: <code>{ id, el, update(options), close() }</code>. <code>update()</code> merges options, re-renders in place and restarts the timer.</p>
+    <h3>Shortcuts &amp; helpers</h3>
+    <table class="docs-api">
+      <thead><tr><th>Function</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>toast.success/error/warning/info/loading(text, opts)</td><td>Typed toasts.</td></tr>
+        <tr><td>toast.promise(promiseOrFn, { loading, success, error }, opts?) → Promise</td><td>Loading toast updated on settle. Messages are strings, option objects or functions of the result/error (return <code>null</code> to close). Returns the original promise.</td></tr>
+        <tr><td>toast.close(id)</td><td>Close by id.</td></tr>
+        <tr><td>toast.clear()</td><td>Close every toast.</td></tr>
+        <tr><td>toast.config({ position, max, duration, expand, gap, visible })</td><td>Defaults: top-end, max 5 kept per position, duration 4000, expand false, gap 10px, visible 3 cards in the collapsed stack. Returns the config.</td></tr>
+      </tbody>
+    </table>
+    <h3>Keyboard &amp; accessibility</h3>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Alt+T</td><td>Focus the newest toast.</td></tr>
+        <tr><td>Tab</td><td>Move through toast buttons (the stack expands while focused).</td></tr>
+        <tr><td>Escape</td><td>Close the focused toast.</td></tr>
+      </tbody>
+    </table>
+    <p>Each toast has <code>role="status"</code> (<code>role="alert"</code> for errors) inside a labelled region. Timers pause while hovered, focused, or when the page is hidden. Swipe left/right on touch to dismiss.</p>
+    <h3>CSS variables</h3>
+    <p><code>--o-toast-w</code> (width, 22rem), <code>--o-toast-offset</code> (edge distance, 1rem). Classes: <code>.o-toasts .o-toasts-{position}</code>, <code>.o-toast .o-toast-{type}</code>, <code>.o-toast-icon .o-toast-content .o-toast-title .o-toast-text .o-toast-action .o-toast-close .o-toast-progress</code>.</p>
+  </section>
+</main>
+</body>
+</html>

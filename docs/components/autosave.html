@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Autosave — Orion Admin</title>
+<meta name="docs:section" content="Forms">
+<meta name="docs:order" content="85">
+<meta name="docs:desc" content="Draft/auto-save for any form: debounced saves, a restore banner, a dirty-unload warning and a status indicator">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Autosave</h1>
+    <p class="docs-lead"><code>Orion.autosave(form, options)</code> (or <code>data-o-autosave="key"</code>) saves a form's values automatically as the visitor types, restores drafts on return, and gives you a status indicator and an unload warning — with zero server required (local/session storage or IndexedDB), or wire <code>onSave</code> to send drafts to your backend.</p>
+  </header>
+
+  <section id="profile">
+    <h2>Realistic example: profile form with autosave</h2>
+    <p>Type into any field — the status indicator below the form updates after a short (500ms) debounce. Reload this page and you'll see the restore banner (a draft was pre-seeded for this demo).</p>
+    <div class="docs-demo">
+      <template>
+        <form class="o-form-grid" id="auto-form" onsubmit="event.preventDefault()">
+          <div class="o-field"><label class="o-label" for="auto-name">Display name</label><input class="o-input" id="auto-name" name="name" value="Ada Lovelace"></div>
+          <div class="o-field"><label class="o-label" for="auto-title">Job title</label><input class="o-input" id="auto-title" name="title" placeholder="e.g. Senior Engineer"></div>
+          <div class="o-field o-span-full"><label class="o-label" for="auto-bio">Bio</label><textarea class="o-textarea" id="auto-bio" name="bio" rows="3" placeholder="Tell us about yourself…"></textarea></div>
+          <div class="o-form-actions o-span-full" style="justify-content:space-between;align-items:center">
+            <span data-o-autosave-status="profile-demo" class="o-autosave-status"></span>
+            <button class="o-btn o-btn-sm" type="button" data-o-action="save-draft" data-o-target="#auto-form">Save draft now</button>
+          </div>
+        </form>
+        <script>
+          try { localStorage.setItem('orion:autosave:profile-demo', JSON.stringify({ v: 1, t: Date.now() - 6 * 60000, data: { name: 'Ada Lovelace', title: 'Principal Engineer (draft)', bio: 'Restored from a previous session — click Restore to load it, or Discard to dismiss.' } })); } catch (e) {}
+          Orion.autosave('#auto-form', { key: 'profile-demo', delay: 500, restore: 'prompt' });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="storage">
+    <h2>Storage backends &amp; excluding fields</h2>
+    <p><code>storage: 'session'</code> keeps the draft only for the current tab session; <code>exclude</code> keeps sensitive fields out of the saved draft entirely (password and file inputs are always excluded automatically).</p>
+    <div class="docs-demo">
+      <template>
+        <form class="o-form-grid" id="sess-form" onsubmit="event.preventDefault()">
+          <div class="o-field"><label class="o-label" for="sess-card">Card holder</label><input class="o-input" id="sess-card" name="cardHolder"></div>
+          <div class="o-field"><label class="o-label" for="sess-cvv">CVV (never saved)</label><input class="o-input" id="sess-cvv" name="cvv"></div>
+          <div class="o-form-actions o-span-full"><span data-o-autosave-status class="o-autosave-status"></span></div>
+        </form>
+        <script>
+          Orion.autosave('#sess-form', { key: 'session-demo', storage: 'session', delay: 400, restore: 'auto', exclude: ['cvv'] });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="unload">
+    <h2>Unload warning</h2>
+    <p>Pass <code>warn: true</code> (or the <code>data-o-autosave-warn</code> attribute) to prompt the browser's native "leave site?" dialog while there are unsaved changes. It isn't demoed live on this page (it would interrupt browsing the docs) — wire it exactly like the other options:</p>
+    <pre class="docs-code-block" data-lang="html">&lt;form data-o-autosave="checkout" data-o-autosave-warn&gt;…&lt;/form&gt;</pre>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>key</td><td>Storage key suffix (defaults to the form's <code>id</code>/<code>name</code>/the page path).</td></tr>
+        <tr><td>storage</td><td><code>'local'</code> (default) · <code>'session'</code> · <code>'idb'</code> (falls back to local if IndexedDB is unavailable).</td></tr>
+        <tr><td>delay</td><td>Debounce in ms, default 800.</td></tr>
+        <tr><td>restore</td><td><code>'prompt'</code> (default, shows a banner) · <code>'auto'</code> · <code>false</code>.</td></tr>
+        <tr><td>exclude</td><td>Array of field names to never persist.</td></tr>
+        <tr><td>warn</td><td><code>beforeunload</code> warning while dirty, default <code>false</code>.</td></tr>
+        <tr><td>maxAge</td><td>Milliseconds; a draft older than this found on load is discarded.</td></tr>
+        <tr><td>onSave(data, form)</td><td>Makes saves remote; retried with backoff and offline-aware.</td></tr>
+        <tr><td>onRestore(data, meta) / onDiscard()</td><td>Callbacks for the restore banner's actions.</td></tr>
+      </tbody>
+    </table>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>save(opts?) / restore(record?) / discard()</td><td>Manual control; <code>save({ force, manual })</code>.</td></tr>
+        <tr><td>clear()</td><td>Forgets the draft and treats the current values as the new baseline (called automatically after a successful submit or reset).</td></tr>
+        <tr><td>isDirty / lastSaved / draft</td><td>Getters.</td></tr>
+        <tr><td>destroy()</td><td>Removes listeners.</td></tr>
+        <tr><td>o-autosave / o-restore / o-discard / o-autosave-error</td><td>Events fired on the form.</td></tr>
+      </tbody>
+    </table>
+    <p>Declarative attributes: <code>data-o-autosave="key"</code>, <code>data-o-autosave-storage</code>, <code>data-o-autosave-delay</code>, <code>data-o-autosave-restore</code>, <code>data-o-autosave-warn</code>, <code>data-o-autosave-exclude="a,b"</code>, <code>data-o-autosave-onsave="globalFnName"</code>, a status element via <code>[data-o-autosave-status]</code> (optionally scoped to one key: <code>data-o-autosave-status="key"</code>), and a manual save button via <code>data-o-action="save-draft"</code>.</p>
+  </section>
+</main>
+</body>
+</html>

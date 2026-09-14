@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Colorpicker fixture — Orion Admin</title>
+<script src="../../../dist/orion.js"></script>
+</head>
+<body class="o-container o-py-6">
+<form id="f" class="o-stack" style="max-width:28rem;gap:1.5rem;display:flex;flex-direction:column">
+  <o-colorpicker id="c1" name="brand" value="#4f46e5"></o-colorpicker>
+  <o-colorpicker id="c2" name="accent" value="rgba(220,38,38,.6)" alpha format="rgb" swatches='["#4f46e5","#dc2626","#15803d","#f59e0b"]'></o-colorpicker>
+  <o-colorpicker id="c3" inline value="#15803d" format="hsl"></o-colorpicker>
+  <button class="o-btn" type="reset">Reset</button>
+</form>
+</body>
+</html>

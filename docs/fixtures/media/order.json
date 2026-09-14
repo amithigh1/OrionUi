@@ -1,0 +1,21 @@
+{
+  "id": "ORD-2026-00481",
+  "status": "shipped",
+  "createdAt": "2026-09-01T10:24:00Z",
+  "customer": {
+    "id": 1042,
+    "name": "Aisha Rahman",
+    "email": "aisha.rahman@example.com",
+    "vip": true,
+    "address": { "line1": "12 Jalan Ampang", "city": "Kuala Lumpur", "postcode": "50450", "country": "MY" }
+  },
+  "items": [
+    { "sku": "HP-AUR-MID", "name": "Aurora headphones — Midnight", "qty": 1, "price": 249.0 },
+    { "sku": "HP-AUR-CRL", "name": "Aurora headphones — Coral", "qty": 2, "price": 249.0 },
+    { "sku": "CASE-01", "name": "Travel case", "qty": 1, "price": 29.9, "gift": { "wrap": true, "message": "Happy birthday!" } }
+  ],
+  "totals": { "subtotal": 776.9, "tax": 46.61, "shipping": 0, "grand": 823.51, "currency": "USD" },
+  "shipping": { "carrier": "DHL", "tracking": "JD014600003SG", "eta": "2026-09-05", "insured": false },
+  "tags": ["priority", "gift", "repeat-customer"],
+  "coupon": null
+}

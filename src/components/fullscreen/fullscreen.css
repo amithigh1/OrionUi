@@ -1,0 +1,11 @@
+/* fullscreen: native :fullscreen surface + CSS pseudo-fullscreen fallback (.o-is-fullscreen) */
+.o-is-fullscreen:fullscreen { overflow: auto; background: var(--o-bg); color: var(--o-text); }
+.o-is-fullscreen:not(:root)::backdrop { background: var(--o-bg); }
+.o-pseudo-fullscreen.o-is-fullscreen {
+  position: fixed; inset: 0; width: auto; height: auto; max-width: none; max-height: none; margin: 0;
+  overflow: auto; background: var(--o-bg); color: var(--o-text); border-radius: 0; box-shadow: none;
+  padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
+}
+.o-pseudo-fullscreen.o-is-fullscreen:focus { outline: none; }
+[data-o-action="fullscreen"] > .o-icon, [data-o-action="fullscreen"] > o-icon { transition: transform var(--o-dur-fast) var(--o-ease); }
+[data-o-action="fullscreen"]:hover > .o-icon, [data-o-action="fullscreen"]:hover > o-icon { transform: scale(1.1); }

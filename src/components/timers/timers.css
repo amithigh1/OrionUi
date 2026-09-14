@@ -1,0 +1,65 @@
+/* ============================================================================
+ * <o-countdown> and <o-stopwatch> — tokens only; logical properties for RTL.
+ * ========================================================================== */
+o-countdown:not(:defined), o-stopwatch:not(:defined) { display: block; visibility: hidden; min-height: 4rem; }
+
+/* ── countdown ───────────────────────────────────────────────────────── */
+.o-countdown { display: block; }
+.o-countdown-units { display: flex; flex-wrap: wrap; gap: .75rem; align-items: stretch; }
+.o-countdown-unit { display: flex; flex-direction: column; align-items: center; gap: .375rem; min-width: 3.5rem; }
+.o-countdown-label { font-size: var(--o-fs-xs); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--o-text-muted); }
+
+/* tiles (default) */
+.o-countdown.is-tiles .o-countdown-val {
+  display: flex; align-items: center; justify-content: center; width: 100%; height: 4rem; padding-inline: .5rem;
+  font-size: var(--o-fs-3xl); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1;
+  color: var(--o-c-text, var(--o-text)); background: var(--o-c-subtle, var(--o-surface-2)); border: 1px solid var(--o-c-border, var(--o-border)); border-radius: var(--o-radius-lg);
+}
+
+/* inline */
+.o-countdown.is-inline .o-countdown-text { font-size: var(--o-fs-xl); font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+
+/* flip */
+.o-countdown.is-flip .o-countdown-val {
+  display: flex; align-items: center; justify-content: center; width: 100%; height: 4.25rem; padding-inline: .5rem;
+  font-size: var(--o-fs-3xl); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; perspective: 240px;
+  color: var(--o-on-dark); background: linear-gradient(var(--o-dark) 0 49%, var(--o-dark-hover) 51% 100%); border-radius: var(--o-radius);
+  box-shadow: var(--o-shadow-sm);
+}
+.o-countdown.is-flip .o-countdown-val::after { content: ""; position: absolute; inset-inline: 0; top: 50%; height: 1px; background: rgba(0, 0, 0, .35); }
+.o-countdown.is-flip .o-countdown-unit { position: relative; }
+
+/* ring (the largest unit has no natural cycle length, e.g. hours in "hms" can exceed 24 -> plain number) */
+.o-countdown.is-ring .o-countdown-unit { min-width: 4.5rem; }
+.o-countdown-ring { --size: 4rem; --thickness: .3125rem; }
+.o-countdown-ring .o-countdown-val { font-size: var(--o-fs-md); font-weight: 700; font-variant-numeric: tabular-nums; color: var(--o-text); }
+.o-countdown.is-ring .o-countdown-unit.is-plain .o-countdown-val { display: flex; align-items: center; justify-content: center; width: 4rem; height: 4rem; font-size: var(--o-fs-2xl); font-weight: 700; font-variant-numeric: tabular-nums; color: var(--o-c-text, var(--o-text)); }
+
+.o-countdown-done { padding: 1rem 1.25rem; font-size: var(--o-fs-lg); font-weight: 700; color: var(--o-text); text-align: center; }
+
+/* ── stopwatch ───────────────────────────────────────────────────────── */
+.o-stopwatch { display: flex; flex-direction: column; align-items: center; gap: 1.25rem; padding: 1.5rem; background: var(--o-surface); border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); }
+.o-stopwatch:focus-visible { outline: 2px solid var(--o-focus); outline-offset: 2px; }
+.o-stopwatch-time { display: flex; align-items: baseline; font-variant-numeric: tabular-nums; color: var(--o-text); }
+.o-stopwatch-main { font-size: clamp(2.25rem, 6vw, 3rem); font-weight: 700; letter-spacing: -.01em; }
+.o-stopwatch-cs { font-size: 1.25rem; font-weight: 600; color: var(--o-text-muted); min-width: 2.25ch; }
+.o-stopwatch.is-running .o-stopwatch-time { color: var(--o-success-text); }
+.o-stopwatch-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: .625rem; }
+.o-stopwatch-controls .o-btn { min-width: 6.5rem; }
+.o-stopwatch-laps-wrap { width: 100%; max-height: 14rem; overflow: auto; }
+.o-stopwatch-laps { width: 100%; border-collapse: collapse; font-size: var(--o-fs-sm); font-variant-numeric: tabular-nums; }
+.o-stopwatch-laps th { position: sticky; top: 0; padding: .5rem .625rem; font-size: var(--o-fs-xs); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; color: var(--o-text-muted); text-align: start; background: var(--o-surface); border-bottom: 1px solid var(--o-border); }
+.o-stopwatch-laps td { padding: .5rem .625rem; border-bottom: 1px solid var(--o-border); text-align: start; }
+.o-stopwatch-laps td:first-child, .o-stopwatch-laps th:first-child { color: var(--o-text-muted); width: 2.5rem; }
+.o-stopwatch-laps tr.is-best td { color: var(--o-success-text); font-weight: 600; }
+.o-stopwatch-laps tr.is-worst td { color: var(--o-danger-text); }
+
+@media (max-width: 400px) {
+  .o-countdown-units { gap: .5rem; }
+  .o-countdown-unit { min-width: 2.75rem; }
+  .o-countdown.is-tiles .o-countdown-val, .o-countdown.is-flip .o-countdown-val { height: 3.25rem; font-size: var(--o-fs-2xl); }
+  .o-stopwatch-controls .o-btn { min-width: 0; flex: 1 1 6rem; }
+}
+@media print {
+  .o-stopwatch-controls { display: none; }
+}

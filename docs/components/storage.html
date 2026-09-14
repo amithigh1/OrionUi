@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Storage — Orion Admin</title>
+<meta name="docs:section" content="Services &amp; Utilities">
+<meta name="docs:order" content="30">
+<meta name="docs:desc" content="Namespaced local/session storage with TTL, IndexedDB, Cache API helpers, quota and a storage inspector">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Storage</h1>
+    <p class="docs-lead">Namespaced Web Storage with JSON values, expiry and cross-tab change events, a promise-based IndexedDB wrapper with a ready-made key-value store, Cache API helpers, quota and persistence, and <code>&lt;o-storage-inspector&gt;</code> for managing it all during development.</p>
+  </header>
+
+  <section id="overview">
+    <h2>Overview</h2>
+    <p>These helpers never throw because storage is unavailable. When the browser blocks storage (private mode, sandboxed iframes, a full quota), <code>Orion.store</code> falls back to memory and reports <code>persistent: false</code>, and <code>Orion.idb.kv</code> falls back to memory too. Real failures such as constraint violations or quota errors reject with an <code>Orion.StorageError</code> that carries a <code>code</code> of <code>EQUOTA | ECONSTRAINT | EVERSION | EBLOCKED | EUNSUPPORTED | EIDB | ECACHE</code>.</p>
+    <table class="docs-api">
+      <thead><tr><th>Use</th><th>For</th></tr></thead>
+      <tbody>
+        <tr><td>Orion.store / Orion.session</td><td>Small settings, UI state and filters (synchronous, about 5 MB, strings as JSON).</td></tr>
+        <tr><td>Orion.idb</td><td>Records, offline data and files. Large, asynchronous, indexed, and stores Blobs.</td></tr>
+        <tr><td>Orion.cache</td><td>HTTP responses and assets (Cache Storage, shared with service workers). Needs HTTPS or localhost.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="web-storage">
+    <h2>Local &amp; session storage</h2>
+    <p>Keys are stored as <code>&lt;namespace&gt;:&lt;key&gt;</code>. The default namespace is <code>orion:store</code>, and <code>Orion.store.namespace('myapp')</code> creates another one. Values go through JSON. Items with a <code>ttl</code> expire on read. <code>onChange(key | '*', fn)</code> fires for changes in this tab (<code>source: 'local'</code>) and in other tabs through the <code>storage</code> event (<code>source: 'remote'</code>). Open this page in two tabs to see it.</p>
+    <div class="docs-demo">
+      <template>
+        <form class="o-form-grid" id="st-form" style="--o-cols:2">
+          <div class="o-field"><label class="o-label" for="st-key">Key</label><input class="o-input" id="st-key" value="filters" required></div>
+          <div class="o-field"><label class="o-label" for="st-val">Value (JSON or text)</label><input class="o-input" id="st-val" value='{"status":"active","page":2}'></div>
+          <div class="o-field"><label class="o-label" for="st-ttl">Expires</label><select class="o-select" id="st-ttl"><option value="">Never</option><option value="10s">in 10 seconds</option><option value="1m">in 1 minute</option><option value="1d">in 1 day</option></select></div>
+          <div class="o-field"><label class="o-label" for="st-area">Area</label><select class="o-select" id="st-area"><option value="local">Orion.store (localStorage)</option><option value="session">Orion.session (sessionStorage)</option></select></div>
+          <div class="o-form-actions o-span-full"><button class="o-btn" type="button" id="st-clear">Clear namespace</button><button class="o-btn o-btn-primary" type="submit">Save</button></div>
+        </form>
+        <div class="o-table-wrap o-mt-3">
+          <table class="o-table o-table-sm">
+            <thead><tr><th>Area</th><th>Key</th><th>Value</th><th>Expires</th><th class="o-shrink"><span class="o-sr-only">Actions</span></th></tr></thead>
+            <tbody id="st-rows"></tbody>
+          </table>
+        </div>
+        <div class="docs-log" id="st-log"></div>
+        <script>
+          {
+            const areas = { local: Orion.store.namespace('orion:docs'), session: Orion.session.namespace('orion:docs') };
+            const rows = document.getElementById('st-rows'), h = Orion.h;
+            const render = () => {
+              const list = Object.entries(areas).flatMap(([a, s]) => s.keys().map(k => ({ a, s, k })));
+              rows.replaceChildren(...(list.length ? list.map(({ a, s, k }) => {
+                const ttl = s.ttl(k), del = h('button', { type: 'button', class: 'o-btn o-btn-ghost o-btn-sm', 'aria-label': 'Delete ' + k }, Orion.icon('trash'));
+                del.onclick = () => { s.remove(k); render(); };
+                return h('tr', h('td', h('span', { class: 'o-badge o-badge-soft-secondary' }, a)), h('td', h('code', k)), h('td', { class: 'o-truncate', style: 'max-width:14rem' }, JSON.stringify(s.get(k))), h('td', ttl === Infinity ? 'Never' : Orion.format.relative(Date.now() + ttl)), h('td', del));
+              }) : [h('tr', h('td', { colspan: 5, class: 'o-muted' }, 'Nothing stored yet'))]));
+            };
+            for (const [a, s] of Object.entries(areas)) s.onChange('*', (v, old, info) => { docs.log('#st-log', `${a} ${info.source}: ${info.key} = ${JSON.stringify(v)}`); render(); });
+            document.getElementById('st-form').onsubmit = e => {
+              e.preventDefault();
+              const raw = document.getElementById('st-val').value, value = Orion.util.parseJSON(raw, raw);
+              areas[document.getElementById('st-area').value].set(document.getElementById('st-key').value.trim(), value, { ttl: document.getElementById('st-ttl').value });
+            };
+            document.getElementById('st-clear').onclick = () => { for (const s of Object.values(areas)) s.clear(); render(); };
+            if (!areas.local.has('theme-density')) { areas.local.set('theme-density', 'compact'); areas.session.set('wizard-step', 3, { ttl: '1h' }); }
+            render();
+            setInterval(render, 5000);
+          }
+        </script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+      Orion.store.set('filters', { status: 'active' }, { ttl: '7d' });   // ttl: ms | '30s' | '10m' | '2h' | '7d'
+      Orion.store.get('filters', {});                                     // default when missing or expired
+      Orion.store.update('recent', list =&gt; [id, ...list].slice(0, 10), []);
+      const off = Orion.store.onChange('filters', (value, old, { source }) =&gt; table.setFilters(value));
+      const app = Orion.store.namespace('acme');  app.keys();  app.clear('draft:');  app.size();
+    </pre>
+  </section>
+
+  <section id="indexeddb">
+    <h2>IndexedDB</h2>
+    <p><code>Orion.idb.open(name, { stores })</code> creates any missing object stores and indexes. When you don't pass <code>version</code>, it bumps the database version for you when the schema changes. Every method returns a promise. <code>tx(stores, mode, fn)</code> runs several operations in one transaction, commits when <code>fn</code> resolves and rolls back when it throws. Only await IndexedDB requests inside <code>fn</code>, because the transaction closes when it has nothing left to do.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster">
+          <button class="o-btn o-btn-primary" id="db-add" type="button">Add 3 contacts</button>
+          <label class="o-sr-only" for="db-role">Role</label>
+          <select class="o-select" id="db-role" style="width:auto"><option value="">All roles</option><option>Admin</option><option>Editor</option><option>Viewer</option><option>Manager</option><option>Support</option></select>
+          <button class="o-btn" id="db-tx" type="button">Transaction demo</button>
+          <button class="o-btn o-btn-soft-danger" id="db-clear" type="button">Clear store</button>
+          <span class="o-badge o-badge-soft-primary" id="db-count">0 records</span>
+        </div>
+        <div class="o-table-wrap o-mt-3" style="max-height:16rem">
+          <table class="o-table o-table-sm">
+            <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th></tr></thead>
+            <tbody id="db-rows"></tbody>
+          </table>
+        </div>
+        <div class="docs-log" id="db-log"></div>
+        <script>
+          (async () => {
+            const log = m => docs.log('#db-log', m), h = Orion.h, rows = document.getElementById('db-rows'), role = document.getElementById('db-role');
+            const db = await Orion.idb.open('orion-docs', { stores: { contacts: { keyPath: 'id', autoIncrement: true, indexes: ['email', 'role'] }, audit: { autoIncrement: true } } });
+            const render = async () => {
+              const list = role.value ? await db.index('contacts', 'role').getAll(role.value) : await db.getAll('contacts');
+              rows.replaceChildren(...(list.length ? list.slice(-50).map(c => h('tr', h('td', String(c.id)), h('td', c.name), h('td', c.email), h('td', c.role))) : [h('tr', h('td', { colspan: 4, class: 'o-muted' }, 'No contacts'))]));
+              document.getElementById('db-count').textContent = `${await db.count('contacts')} records`;
+            };
+            document.getElementById('db-add').onclick = async () => {
+              const people = docs.people(3, Date.now() % 1000).map(({ name, email, role }) => ({ name, email: email.replace('@', '+' + Date.now() % 10000 + '@'), role }));
+              const keys = [];
+              for (const p of people) keys.push(await db.add('contacts', p));
+              log(`added ids ${keys.join(', ')}`); render();
+            };
+            document.getElementById('db-tx').onclick = async () => {
+              try {
+                await db.tx(['contacts', 'audit'], 'readwrite', async t => {
+                  await t.store('contacts').add({ name: 'Rollback Test', email: 'rollback@example.com', role: 'Viewer' });
+                  await t.store('audit').add({ at: Date.now(), action: 'insert' });
+                  throw new Error('validation failed');                     // everything above is rolled back
+                });
+              } catch (e) { log(`transaction aborted (${e.message}); audit rows: ${await db.count('audit')}`); }
+              render();
+            };
+            document.getElementById('db-clear').onclick = async () => { await db.clear('contacts'); log('store cleared'); render(); };
+            role.onchange = render;
+            if (!(await db.count('contacts'))) for (const p of docs.people(5, 11)) await db.add('contacts', { name: p.name, email: p.email, role: p.role });
+            render();
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="kv">
+    <h2>Key-value store</h2>
+    <p><code>Orion.idb.kv</code> is a ready-made store with no schema, useful for drafts, offline snapshots and larger settings. It uses the <code>orion-kv</code> database and falls back to memory when IndexedDB is unavailable.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-field">
+          <label class="o-label" for="kv-draft">Draft note <span class="o-label-hint" id="kv-state">…</span></label>
+          <textarea class="o-textarea" id="kv-draft" rows="3" placeholder="Type, reload the page, and the text is still here"></textarea>
+        </div>
+        <script>
+          (async () => {
+            const ta = document.getElementById('kv-draft'), state = document.getElementById('kv-state');
+            ta.value = await Orion.idb.kv.get('docs:draft', 'Quarterly review notes: revenue up 12%, churn down.');
+            state.textContent = (await Orion.idb.kv.persistent()) ? 'Saved in IndexedDB' : 'Memory fallback';
+            ta.addEventListener('input', Orion.util.debounce(async () => { await Orion.idb.kv.set('docs:draft', ta.value); state.textContent = 'Saved ' + Orion.format.time(Date.now(), 'medium'); }, 400));
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="cache">
+    <h2>Cache management</h2>
+    <p><code>Orion.cache</code> wraps the Cache Storage API. <code>put()</code> accepts a <code>Response</code>, a Blob, a string or any JSON value, and an optional <code>ttl</code>. <code>match()</code> returns the parsed data, or <code>undefined</code> when the entry is missing or expired. Service-worker caches (<code>orion-sw-*</code>) live in the same storage and show up in the inspector.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster">
+          <button class="o-btn o-btn-primary" id="c-json" type="button">Cache JSON (1 min TTL)</button>
+          <button class="o-btn" id="c-fixture" type="button">Cache users.json response</button>
+          <button class="o-btn" id="c-match" type="button">match('/api/profile')</button>
+          <button class="o-btn o-btn-soft-danger" id="c-clear" type="button">clear('orion-data')</button>
+        </div>
+        <ul class="o-list o-list-compact o-mt-3" id="c-list"></ul>
+        <div class="docs-log" id="c-log"></div>
+        <script>
+          (async () => {
+            const log = m => docs.log('#c-log', m), list = document.getElementById('c-list'), h = Orion.h;
+            if (!Orion.cache.supported) { list.replaceChildren(h('li', { class: 'o-list-item o-muted' }, 'Cache Storage needs HTTPS or localhost.')); return; }
+            const render = async () => {
+              const keys = await Orion.cache.keys();
+              list.replaceChildren(...(keys.length ? keys.map(u => h('li', { class: 'o-list-item' }, h('code', { class: 'o-truncate' }, new URL(u).pathname), h('span', { class: 'o-list-meta' }, 'orion-data'))) : [h('li', { class: 'o-list-item o-muted' }, 'Cache is empty')]));
+              log(`${keys.length} entries, ${Orion.format.bytes(await Orion.cache.size('orion-data'))}`);
+            };
+            document.getElementById('c-json').onclick = async () => { await Orion.cache.put('/api/profile', { name: 'Ada Lovelace', plan: 'Pro' }, { ttl: '1m' }); render(); };
+            document.getElementById('c-fixture').onclick = async () => { const url = '../fixtures/services-a/users.json'; await Orion.cache.put(url, await fetch(url)); render(); };
+            document.getElementById('c-match').onclick = async () => log('match → ' + JSON.stringify(await Orion.cache.match('/api/profile')));
+            document.getElementById('c-clear').onclick = async () => { log(`deleted ${await Orion.cache.clear('orion-data')} cache`); render(); };
+            if (!(await Orion.cache.keys()).length) await Orion.cache.put('/api/profile', { name: 'Ada Lovelace', plan: 'Pro' }, { ttl: '1h' });
+            render();
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="quota">
+    <h2>Quota &amp; persistence</h2>
+    <p>Browsers may evict best-effort storage under pressure. <code>Orion.storage.persist()</code> asks for persistent storage. Chrome grants it automatically to installed or frequently used sites, and Firefox asks the user. <code>estimate()</code> returns usage and quota for the whole origin.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-stack" style="--o-gap:.625rem">
+          <div class="o-between o-flex-wrap"><strong id="q-text">Estimating…</strong><span class="o-badge" id="q-badge"></span></div>
+          <div class="o-progress" role="progressbar" aria-label="Storage usage" aria-valuemin="0" aria-valuemax="100" id="q-bar"><div class="o-progress-bar" style="--o-value:0%"></div></div>
+          <div><button class="o-btn o-btn-sm" id="q-persist" type="button">Request persistent storage</button></div>
+        </div>
+        <script>
+          (async () => {
+            const paint = async () => {
+              const e = await Orion.storage.estimate(), p = await Orion.storage.persisted(), b = document.getElementById('q-badge');
+              document.getElementById('q-text').textContent = e ? `${Orion.format.bytes(e.usage)} of ${Orion.format.bytes(e.quota)} used (${Orion.format.percent(e.percent, 3)})` : 'Estimate not supported';
+              document.getElementById('q-bar').firstElementChild.style.setProperty('--o-value', Math.max(1, (e?.percent || 0) * 100) + '%');
+              document.getElementById('q-bar').setAttribute('aria-valuenow', Math.round((e?.percent || 0) * 100));
+              b.textContent = p ? 'Persistent' : 'Best effort'; b.className = 'o-badge ' + (p ? 'o-badge-soft-success' : 'o-badge-soft-secondary');
+            };
+            document.getElementById('q-persist').onclick = async () => { await Orion.storage.persist(); paint(); };
+            paint();
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="inspector">
+    <h2>Storage inspector</h2>
+    <p><code>&lt;o-storage-inspector&gt;</code> is a development widget. It lists localStorage and sessionStorage keys (size, expiry, value), IndexedDB databases and Cache Storage caches (entries, bytes), and shows the quota. Destructive buttons ask for a second click ("Confirm?") instead of opening a blocking dialog. Use <code>prefix</code> to show only your keys and <code>readonly</code> to hide the delete buttons.</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <o-storage-inspector></o-storage-inspector>
+      </template>
+    </div>
+    <h3>Keyboard</h3>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Tab / Shift+Tab</td><td>Moves between section headers and buttons.</td></tr>
+        <tr><td>Enter / Space on a section header</td><td>Expands or collapses the section (native <code>&lt;details&gt;</code>).</td></tr>
+        <tr><td>Enter / Space on Delete twice</td><td>The first press arms the button ("Confirm?" for 3 s) and the second deletes.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Orion.store / Orion.session</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>get(key, default)</td><td>Parsed value, or the default when the key is missing or expired.</td></tr>
+        <tr><td>set(key, value, { ttl }) → boolean</td><td>Returns <code>false</code> when the value can't be stored even after expired entries are pruned. <code>undefined</code> removes the key.</td></tr>
+        <tr><td>has / remove(del) / update(key, fn, default, opts) / ttl(key)</td><td>Helpers. <code>ttl()</code> returns the remaining ms, or <code>Infinity</code> when the key has no expiry.</td></tr>
+        <tr><td>keys() / entries() / clear(prefix) → count / size() / prune()</td><td>Operate on this namespace only.</td></tr>
+        <tr><td>onChange(key | '*', fn(value, old, { key, source })) → off</td><td>Same tab and cross-tab.</td></tr>
+        <tr><td>namespace(ns) / persistent / backend</td><td>Other namespace. <code>persistent</code> is false when the memory fallback is in use.</td></tr>
+      </tbody>
+    </table>
+    <h3>Orion.idb</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>open(name, { version, stores, upgrade(db, oldV, newV, tx), prune, blockedTimeout })</td><td><code>stores: { name: { keyPath, autoIncrement, indexes: ['field', { name, keyPath, unique, multiEntry }] } | null }</code>. Resolves with a Database.</td></tr>
+        <tr><td>db.get / put / add / delete / clear(store, …)</td><td>Single operations. <code>put</code> and <code>add</code> resolve with the key.</td></tr>
+        <tr><td>db.getAll(store, query | filterFn, count) / keys / count</td><td><code>query</code> is a key or an <code>IDBKeyRange</code> (<code>Orion.idb.range.bound(a, b)</code>).</td></tr>
+        <tr><td>db.index(store, name).get / getAll / keys / count</td><td>Index queries.</td></tr>
+        <tr><td>db.tx(stores, mode, fn(t))</td><td><code>t.store(name)</code> returns the same methods inside one transaction. Throwing aborts it.</td></tr>
+        <tr><td>db.bulkPut / iterate(store, fn, { index, query, direction }) / close() / destroy()</td><td>Batch writes and cursors. <code>iterate</code> stops when <code>fn</code> returns false.</td></tr>
+        <tr><td>kv.get / set / del / has / keys / entries / clear / persistent()</td><td>Default key-value store.</td></tr>
+        <tr><td>databases() / deleteDatabase(name) / supported / range</td><td>Utilities.</td></tr>
+      </tbody>
+    </table>
+    <h3>Orion.cache &amp; Orion.storage</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>cache.put(url, value, { cache, ttl, headers })</td><td>Stores a Response, Blob, string or JSON value (default cache <code>orion-data</code>).</td></tr>
+        <tr><td>cache.match(url, { cache, as: 'auto' | 'json' | 'text' | 'blob' | 'response', ignoreSearch, any })</td><td>Data, or <code>undefined</code> when missing or expired.</td></tr>
+        <tr><td>cache.has / delete / keys(name) / names() / clear(prefix = 'orion') / size(name) / stats()</td><td>Management. <code>clear('')</code> deletes every cache of the origin.</td></tr>
+        <tr><td>storage.estimate() → { usage, quota, percent, details } | null</td><td>StorageManager estimate.</td></tr>
+        <tr><td>storage.persist() / storage.persisted()</td><td>Persistent storage request and status.</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-storage-inspector&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute / member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>sections</td><td>Comma list or JSON array: <code>local, session, idb, cache</code> (all by default).</td></tr>
+        <tr><td>prefix</td><td>Only show Web Storage keys that start with this prefix.</td></tr>
+        <tr><td>readonly / max-rows</td><td>Hide delete buttons. Maximum rows per table (100).</td></tr>
+        <tr><td>refresh()</td><td>Re-reads everything. It also refreshes on storage events.</td></tr>
+        <tr><td>o-refresh / o-delete / o-clear</td><td>Events. Delete and clear are cancelable, with <code>detail: { kind, name }</code>.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

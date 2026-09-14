@@ -1,0 +1,83 @@
+/* ============================================================================
+ * <o-email-preview>
+ * The widget's own chrome (toolbar, frame bezel, panels) follows the page's theme/direction and uses
+ * tokens only. The simulated EMAIL inside the iframe is a separate, deliberately fixed-light document
+ * (its own generated <style>, not this stylesheet) — see emailpreview/00-helpers.js and README.md.
+ * ========================================================================== */
+o-email-preview { display: block; }
+o-email-preview:not(:defined) { visibility: hidden; min-height: 8rem; }
+
+.o-email-preview {
+  --o-ep-w-desktop: 640px;
+  --o-ep-w-tablet: 480px;
+  --o-ep-w-mobile: 375px;
+  display: block;
+  background: var(--o-surface);
+  border: 1px solid var(--o-border);
+  border-radius: var(--o-radius-lg);
+  overflow: hidden;
+}
+/* every panel/row this component toggles uses the `hidden` attribute — guarantee it always wins,
+ * even where a rule below also sets `display` on the same element. */
+.o-email-preview [hidden] { display: none; }
+
+/* ── toolbar ─────────────────────────────────────────────────────────── */
+.o-ep-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; padding: .5rem .625rem; background: var(--o-surface-2); border-block-end: 1px solid var(--o-border); }
+.o-ep-tools { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+/* the view switch (4 icon+text buttons) is the widest single group — let it wrap onto two rows inside its
+ * own pill instead of being clipped by the component's overflow:hidden at narrow (~360px) widths. */
+.o-ep-toolbar > .o-segmented { flex-wrap: wrap; row-gap: 2px; }
+.o-ep-toggle[aria-pressed="true"] o-icon, .o-ep-toggle[aria-pressed="true"] .o-icon { color: var(--o-primary-text); }
+
+/* ── meta line ───────────────────────────────────────────────────────── */
+.o-ep-meta { padding: .625rem .875rem; border-block-end: 1px solid var(--o-border); }
+.o-ep-subject { font-weight: 600; color: var(--o-text); }
+.o-ep-preheader { color: var(--o-text-subtle); }
+
+/* ── body & panels ───────────────────────────────────────────────────── */
+.o-ep-body { background: var(--o-surface-3); }
+.o-ep-panel-preview { padding: 1rem; display: flex; justify-content: center; }
+.o-ep-panel-text, .o-ep-panel-source { padding: 1rem; }
+.o-ep-panel-inbox { padding: 0; }
+.o-ep-text { white-space: pre-wrap; word-break: break-word; margin: 0; max-height: 32rem; }
+.o-ep-source { margin: 0; max-height: 32rem; }
+
+/* ── device frame ────────────────────────────────────────────────────── */
+.o-ep-frame-wrap {
+  width: 100%; max-width: var(--o-ep-w-desktop);
+  background: var(--o-surface); border: 1px solid var(--o-border); border-radius: var(--o-radius);
+  box-shadow: var(--o-shadow-sm); overflow: hidden; transition: max-width var(--o-dur) var(--o-ease);
+}
+.o-ep-frame-wrap[data-device="tablet"] { max-width: var(--o-ep-w-tablet); }
+.o-ep-frame-wrap[data-device="mobile"] { max-width: var(--o-ep-w-mobile); }
+.o-ep-frame-wrap.is-dark { background: var(--o-dark); }
+.o-ep-frame { display: block; width: 100%; height: min(560px, 70vh); min-height: 280px; border: 0; background: #fff; }
+
+/* ── inbox-row panel ─────────────────────────────────────────────────── */
+.o-ep-inbox-row { display: flex; align-items: center; gap: .75rem; padding: .75rem .875rem; }
+.o-ep-inbox-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: .125rem; }
+.o-ep-inbox-from { font-weight: 600; color: var(--o-text); }
+.o-ep-inbox-line { display: flex; align-items: baseline; gap: .375rem; min-width: 0; font-size: var(--o-fs-sm); }
+.o-ep-inbox-subject { flex-shrink: 1; max-width: 60%; color: var(--o-text); }
+.o-ep-inbox-sep { flex-shrink: 0; color: var(--o-text-subtle); }
+.o-ep-inbox-preheader { flex: 1 1 auto; }
+
+/* stacking several rows to look like a real inbox list (docs demo) */
+.o-ep-inbox-row + .o-ep-inbox-row, .o-email-preview + .o-email-preview.o-ep-inbox-list-item { border-block-start: 1px solid var(--o-border); }
+
+/* ── standalone "send test" popover (fallback when Orion.prompt is not loaded) ──────────────────── */
+.o-ep-sendtest { padding: .75rem; min-width: 15rem; }
+.o-ep-sendtest-body > .o-label { margin-bottom: .25rem; }
+.o-ep-sendtest-actions { display: flex; justify-content: flex-end; gap: .5rem; margin-top: .625rem; }
+
+/* ── Orion.emailPreview() modal ──────────────────────────────────────── */
+.o-ep-modal { position: fixed; inset: 0; z-index: var(--o-z-modal); display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.o-ep-modal-panel { position: relative; width: min(94vw, 760px); max-height: 88vh; display: flex; flex-direction: column; overflow: hidden; }
+.o-ep-modal-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .75rem 1rem; border-block-end: 1px solid var(--o-border); }
+.o-ep-modal-title { margin: 0; font-size: var(--o-fs-lg); font-weight: 600; }
+.o-ep-modal-body { flex: 1 1 auto; overflow: auto; }
+.o-ep-modal-body > o-email-preview { border: 0; border-radius: 0; }
+
+@media (max-width: 480px) {
+  .o-ep-inbox-subject { max-width: 45%; }
+}

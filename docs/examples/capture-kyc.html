@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KYC onboarding — Orion Admin</title>
+<script src="../../dist/orion.js"></script>
+<style>
+  body { margin: 0; min-height: 100vh; background: var(--o-bg); color: var(--o-text); font: var(--o-fs-base)/1.5 var(--o-font-sans); }
+  header { display: flex; align-items: center; gap: .75rem; padding: .875rem 1.25rem; background: var(--o-surface); border-bottom: 1px solid var(--o-border); }
+  header h1 { margin: 0; font-size: var(--o-fs-lg); }
+  main { display: grid; grid-template-columns: repeat(3, 1fr) .9fr; gap: 1.25rem; padding: 1.25rem; max-width: 80rem; margin: 0 auto; align-items: start; }
+  @media (max-width: 1100px) { main { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 640px) { main { grid-template-columns: 1fr; } }
+  .card { background: var(--o-surface); border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); padding: 1.125rem; display: flex; flex-direction: column; gap: .625rem; }
+  .card h2 { margin: 0; font-size: var(--o-fs-md); display: flex; align-items: center; gap: .5rem; }
+  .card .step-num { display: inline-grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--o-surface-3); color: var(--o-text-muted); font-size: var(--o-fs-xs); font-weight: 700; }
+  .card.is-done .step-num { background: var(--o-success); color: var(--o-on-success); }
+  .card .hint { margin: 0; color: var(--o-text-muted); font-size: var(--o-fs-sm); }
+  .thumb-row { display: flex; align-items: center; gap: .75rem; }
+  .thumb-row img, .thumb-row canvas { width: 3.5rem; height: 3.5rem; object-fit: cover; border-radius: var(--o-radius); border: 1px solid var(--o-border); background: var(--o-surface-2); }
+  #summary-list { display: flex; flex-direction: column; gap: .625rem; }
+  #summary-list .row { display: flex; align-items: center; gap: .625rem; padding: .5rem; border-radius: var(--o-radius); background: var(--o-surface-2); font-size: var(--o-fs-sm); }
+  #summary-list .row .o-icon { color: var(--o-text-subtle); flex-shrink: 0; }
+  #summary-list .row.is-done .o-icon { color: var(--o-success); }
+  #submitted { display: none; text-align: center; padding: 1rem; }
+  #submitted.is-shown { display: block; }
+</style>
+</head>
+<body>
+<header>
+  <span class="o-dot o-c-primary" aria-hidden="true"></span>
+  <h1>Account verification (KYC)</h1>
+</header>
+<main>
+  <section class="card" id="card-photo">
+    <h2><span class="step-num">1</span> ID photo</h2>
+    <p class="hint">Take a selfie for identity verification. No camera? Use the demo feed.</p>
+    <o-camera id="kyc-camera" mode="face" aspect="1/1" review="false"></o-camera>
+    <button class="o-btn o-btn-ghost o-btn-sm" id="photo-demo-btn">Use demo camera feed</button>
+  </section>
+
+  <section class="card" id="card-doc">
+    <h2><span class="step-num">2</span> ID document</h2>
+    <p class="hint">Scan or upload a photo ID. Corners auto-detect; drag to adjust before adding the page.</p>
+    <o-doc-scanner id="kyc-scanner"></o-doc-scanner>
+    <button class="o-btn o-btn-ghost o-btn-sm" id="doc-demo-btn">Use a demo document photo</button>
+  </section>
+
+  <section class="card" id="card-sign">
+    <h2><span class="step-num">3</span> Consent signature</h2>
+    <p class="hint">Sign to confirm the details above are accurate.</p>
+    <o-signature id="kyc-sig" name="consent" required></o-signature>
+  </section>
+
+  <section class="card">
+    <h2>Summary</h2>
+    <div id="summary-list">
+      <div class="row" id="summary-photo"><span class="o-icon">●</span><span>ID photo — not captured</span></div>
+      <div class="row" id="summary-doc"><span class="o-icon">●</span><span>ID document — not scanned</span></div>
+      <div class="row" id="summary-sig"><span class="o-icon">●</span><span>Signature — not signed</span></div>
+    </div>
+    <button class="o-btn o-btn-primary" id="submit-btn" disabled>Submit verification</button>
+    <div id="submitted"><span class="o-icon" style="color:var(--o-success)">✓</span><p>Verification submitted.</p></div>
+  </section>
+</main>
+
+<script>
+  const state = { photo: null, doc: null };
+
+  function markDone(cardId, rowId, label) {
+    document.getElementById(cardId).classList.add('is-done');
+    const row = document.getElementById(rowId);
+    row.classList.add('is-done');
+    row.lastElementChild.textContent = label;
+  }
+  function syncSubmit() {
+    const sig = document.getElementById('kyc-sig');
+    document.getElementById('submit-btn').disabled = !(state.photo && state.doc && !sig.isEmpty());
+  }
+
+  // --- Step 1: photo ---
+  const kycCamera = document.getElementById('kyc-camera');
+  kycCamera.addEventListener('o-capture', e => {
+    state.photo = e.detail.file;
+    markDone('card-photo', 'summary-photo', `ID photo — captured (${Math.round(e.detail.file.size / 1024)} KB)`);
+    syncSubmit();
+  });
+  function paintDemoFace(ctx) {
+    ctx.fillStyle = '#dfe3ea'; ctx.fillRect(0, 0, 320, 320);
+    ctx.fillStyle = '#c2c9d6'; ctx.beginPath(); ctx.arc(160, 130, 70, 0, Math.PI * 2); ctx.fill(); // head
+    ctx.beginPath(); ctx.ellipse(160, 280, 110, 90, 0, Math.PI, 0); ctx.fill(); // shoulders
+  }
+  document.getElementById('photo-demo-btn').addEventListener('click', () => {
+    const c = document.createElement('canvas'); c.width = 320; c.height = 320;
+    paintDemoFace(c.getContext('2d'));
+    kycCamera.source = c;
+    kycCamera.start().then(() => kycCamera.capture());
+  });
+
+  // --- Step 2: document ---
+  const kycScanner = document.getElementById('kyc-scanner');
+  kycScanner.addEventListener('o-scan', e => {
+    state.doc = e.detail.pages;
+    markDone('card-doc', 'summary-doc', `ID document — ${e.detail.pages.length} page(s) scanned`);
+    syncSubmit();
+  });
+  function fixtureIdCard() {
+    const c = document.createElement('canvas'); c.width = 480; c.height = 320;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#33363d'; ctx.fillRect(0, 0, 480, 320);
+    ctx.save(); ctx.translate(240, 160); ctx.rotate(-4 * Math.PI / 180);
+    ctx.fillStyle = '#eef1f6'; ctx.fillRect(-170, -100, 340, 200);
+    ctx.fillStyle = '#556'; for (let i = 0; i < 4; i++) ctx.fillRect(-150, -60 + i * 26, 220 - (i % 2) * 40, 8);
+    ctx.restore();
+    return c;
+  }
+  document.getElementById('doc-demo-btn').addEventListener('click', () => kycScanner.loadImage(fixtureIdCard()));
+
+  // --- Step 3: signature ---
+  const kycSig = document.getElementById('kyc-sig');
+  kycSig.addEventListener('o-change', () => {
+    if (!kycSig.isEmpty()) markDone('card-sign', 'summary-sig', 'Signature — signed');
+    syncSubmit();
+  });
+
+  document.getElementById('submit-btn').addEventListener('click', () => {
+    document.getElementById('submitted').classList.add('is-shown');
+  });
+</script>
+</body>
+</html>

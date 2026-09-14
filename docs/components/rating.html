@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rating — Orion Admin</title>
+<meta name="docs:section" content="Forms">
+<meta name="docs:order" content="65">
+<meta name="docs:desc" content="Star, heart or thumb rating with fractional precision and hover preview">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Rating</h1>
+    <p class="docs-lead"><code>&lt;o-rating&gt;</code> is a form-associated star (or heart/thumb/custom icon) rating with
+      keyboard support, hover preview, and optional half-star (or finer) precision.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic</h2>
+    <div class="docs-demo">
+      <template>
+        <o-rating name="score" value="3" max="5" color="warning"></o-rating>
+      </template>
+    </div>
+  </section>
+
+  <section id="precision">
+    <h2>Fractional precision</h2>
+    <p><code>precision="0.5"</code> lets the user (and the display) land on half-stars; any finer value like
+      <code>0.1</code> also works. A readonly rating can always display an arbitrary fractional average regardless of the
+      interactive precision.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-stack" style="gap:.75rem">
+          <o-rating value="3.5" precision="0.5" max="5" color="warning"></o-rating>
+          <div class="o-d-flex o-items-center o-gap-2"><o-rating value="4.3" max="5" color="warning" readonly></o-rating><span class="o-text-muted o-text-sm">4.3 average (238 reviews)</span></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="icons">
+    <h2>Icons &amp; color</h2>
+    <p><code>icon</code>: <code>star</code> (default), <code>heart</code>, <code>thumb</code>, or <code>custom</code>
+      with your own <code>icon-on</code>/<code>icon-off</code> SVG markup. <code>color</code> accepts a semantic name or
+      any CSS color.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-stack" style="gap:.75rem">
+          <o-rating icon="star" color="warning" value="4" max="5"></o-rating>
+          <o-rating icon="heart" color="danger" value="3" max="5"></o-rating>
+          <o-rating icon="thumb" color="success" value="1" max="1"></o-rating>
+          <o-rating icon="custom" icon-on="&lt;path fill=&quot;currentColor&quot; d=&quot;M12 2 2 22h20z&quot;/&gt;" icon-off="&lt;path fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.6&quot; d=&quot;M12 2 2 22h20z&quot;/&gt;" color="info" value="2" max="5"></o-rating>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="labels">
+    <h2>Labels &amp; clearable</h2>
+    <p><code>item-labels</code> gives each whole level a name, shown next to the stars while hovering/focused.
+      <code>clearable</code> lets clicking the current value reset it to no rating (also Home with no value floors at 0).</p>
+    <div class="docs-demo">
+      <template>
+        <o-rating item-labels='["Terrible","Bad","Okay","Good","Great"]' color="warning" clearable value="0" max="5"></o-rating>
+      </template>
+    </div>
+  </section>
+
+  <section id="sizes">
+    <h2>Sizes, readonly, disabled &amp; RTL</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-stack" style="gap:.75rem">
+          <o-rating size="sm" value="3" color="warning"></o-rating>
+          <o-rating size="lg" value="3" color="warning"></o-rating>
+          <o-rating value="4" color="warning" readonly></o-rating>
+          <o-rating value="2" color="warning" disabled></o-rating>
+          <div dir="rtl"><o-rating value="3" color="warning"></o-rating></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="form">
+    <h2>Example: product rating in a review form</h2>
+    <div class="docs-demo">
+      <template>
+        <form class="o-form-grid" style="max-width:26rem" onsubmit="event.preventDefault(); docs.log('#rating-form-log', Object.fromEntries(new FormData(this)))">
+          <div class="o-field o-span-full">
+            <label class="o-label is-required">Overall rating</label>
+            <o-rating name="rating" required color="warning" max="5"></o-rating>
+          </div>
+          <div class="o-field o-span-full"><label class="o-label" for="rating-comment">Comment</label><textarea class="o-textarea" id="rating-comment" name="comment" rows="3" data-o-counter maxlength="300"></textarea></div>
+          <div class="o-form-actions o-span-full"><button class="o-btn o-btn-primary" type="submit">Submit review</button></div>
+        </form>
+        <div class="docs-log" id="rating-form-log"></div>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>Props / attributes</h2>
+    <table class="docs-api">
+      <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>value</td><td>Number</td><td>0 means "not rated".</td></tr>
+        <tr><td>max</td><td>Number</td><td>Default 5.</td></tr>
+        <tr><td>precision</td><td>Number</td><td>Smallest selectable step, e.g. <code>0.5</code> (default 1).</td></tr>
+        <tr><td>icon</td><td>String</td><td><code>star</code> (default) | <code>heart</code> | <code>thumb</code> | <code>custom</code> | any core icon name.</td></tr>
+        <tr><td>icon-on, icon-off</td><td>String</td><td>Raw SVG inner markup, used when <code>icon="custom"</code>.</td></tr>
+        <tr><td>color</td><td>String</td><td>Semantic name (<code>warning</code>, <code>danger</code>, …) or any CSS color. Default follows the ambient <code>--o-c</code> color context (primary).</td></tr>
+        <tr><td>size</td><td>String</td><td><code>sm</code> | <code>md</code> (default) | <code>lg</code>.</td></tr>
+        <tr><td>clearable</td><td>Boolean</td><td>Clicking the current value (or Home) resets to 0.</td></tr>
+        <tr><td>item-labels</td><td>Array&lt;string&gt;</td><td>One label per whole level.</td></tr>
+        <tr><td>format</td><td>Function</td><td><code>(value, el) =&gt; string</code>; overrides the caption/live-region text.</td></tr>
+        <tr><td>name, required, disabled, readonly, texts</td><td>—</td><td>Standard.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods &amp; events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.setValue(v) / .clear()</td><td></td></tr>
+        <tr><td>input, change, o-change</td><td><code>{ value }</code></td></tr>
+        <tr><td>o-hover</td><td><code>{ value }</code> while previewing on hover/drag; <code>value: null</code> on leave.</td></tr>
+      </tbody>
+    </table>
+    <h3>Keyboard</h3>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>→ / ↑</td><td>+precision (← / → follow RTL).</td></tr>
+        <tr><td>← / ↓</td><td>-precision.</td></tr>
+        <tr><td>Home / End</td><td>Lowest selectable value (0 if clearable) / max.</td></tr>
+        <tr><td>Space / Enter</td><td>Select the focused level fully.</td></tr>
+      </tbody>
+    </table>
+    <p>Host: <code>role="radiogroup"</code>; each level: <code>role="radio"</code> with roving <code>tabindex</code> and
+      <code>aria-checked</code> on the level matching the current value. A visually-hidden live region announces the
+      precise (including fractional) value.</p>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QR Code — Orion Admin</title>
+<meta name="docs:section" content="Devices &amp; Capture">
+<meta name="docs:order" content="60">
+<meta name="docs:desc" content="Spec-compliant QR code generation with logos, presets and multiple render targets">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>QR Code</h1>
+    <p class="docs-lead"><code>&lt;o-qrcode&gt;</code> and <code>Orion.qr</code> are a from-scratch ISO/IEC 18004 QR
+      encoder: versions 1–40, all four error-correction levels, numeric/alphanumeric/byte(UTF-8) modes with automatic
+      segment planning, penalty-based mask selection, SVG/canvas/PNG output, logo overlays and payload presets
+      (URL, Wi-Fi, vCard, email, SMS, geo). Pair it with <a href="scanner.html">&lt;o-scanner&gt;</a> to read codes
+      back — the two are tested against each other end to end.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic</h2>
+    <p><code>value</code> is the only required attribute. <code>ecc</code> (<code>L | M | Q | H</code>, default <code>M</code>)
+      trades data redundancy for density — higher levels survive more damage (and are required once you add a <code>logo</code>).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-cluster" style="align-items:flex-start;gap:2rem">
+          <o-qrcode value="https://orion-admin.dev" size="180" label="Default (M)"></o-qrcode>
+          <o-qrcode value="https://orion-admin.dev" size="180" ecc="L" label="ecc=L"></o-qrcode>
+          <o-qrcode value="https://orion-admin.dev" size="180" ecc="H" label="ecc=H"></o-qrcode>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="styles">
+    <h2>Module &amp; finder styles, colours</h2>
+    <p><code>module-style</code> (<code>square | dots | rounded</code>) and <code>finder-style</code>
+      (<code>square | dot | rounded</code>) restyle the code purely with SVG paths — no images. <code>color</code> and
+      <code>background</code> accept any CSS colour, <strong>including a token</strong> such as
+      <code>var(--o-primary)</code>, so a code can follow the current theme; keep enough contrast between the two for
+      the code to stay scannable, and prefer a fixed light/dark pair (not a token that flips in dark mode) for codes
+      meant to be scanned by a phone rather than just viewed on screen.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-cluster" style="align-items:flex-start;gap:2rem">
+          <o-qrcode value="Rounded modules" size="160" module-style="rounded" finder-style="rounded" label="rounded"></o-qrcode>
+          <o-qrcode value="Dot modules" size="160" module-style="dots" finder-style="dot" label="dots"></o-qrcode>
+          <o-qrcode value="Brand colours" size="160" color="var(--o-primary)" background="var(--o-surface)" label="color=var(--o-primary)"></o-qrcode>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="logo">
+    <h2>Logo overlay</h2>
+    <p>A <code>logo</code> object (<code>{ src, size, padding, round }</code>) draws a light backing plate and the
+      image over the centre of the code. <code>size</code> is a fraction of the code's width (default <code>0.22</code>).
+      Use a high <code>ecc</code> (<code>Q</code> or <code>H</code>) so the obscured modules stay recoverable —
+      <code>&lt;o-qrcode&gt;</code> forces <code>ecc="H"</code> internally when a logo is set and no explicit ECC
+      would beat it.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-cluster" style="align-items:flex-start;gap:2rem">
+          <o-qrcode id="logo-square" value="https://orion-admin.dev" size="180" ecc="H" label="square backing"></o-qrcode>
+          <o-qrcode id="logo-round" value="https://orion-admin.dev" size="180" ecc="H" label="round backing"></o-qrcode>
+        </div>
+        <script>
+          const mark = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="#4f46e5"/><text x="12" y="16.5" font-size="13" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">O</text></svg>';
+          const src = 'data:image/svg+xml;base64,' + btoa(mark);
+          document.getElementById('logo-square').logo = { src, size: 0.24 };
+          document.getElementById('logo-round').logo = { src, size: 0.24, round: true };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="download">
+    <h2>Download button</h2>
+    <p>Setting <code>download</code> (the suggested file name; an empty string uses <code>qrcode.png</code>) adds a
+      button that exports a 2×-scaled PNG via <code>Orion.qr.toBlob()</code>.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-qrcode value="Save me as a PNG" size="180" download="orion-qr.png" label="Click Download below"></o-qrcode>
+      </template>
+    </div>
+  </section>
+
+  <section id="payloads">
+    <h2>Payload presets</h2>
+    <p><code>Orion.qr</code> builds the exact payload string for common actions — the code itself is always plain
+      text, so any of these can go straight into <code>value</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-grid" style="--o-cols:2;--o-gap:1.5rem;max-width:44rem">
+          <div><h4 class="o-h6">Wi-Fi (<code>Orion.qr.wifi</code>)</h4><o-qrcode id="pl-wifi" size="150" ecc="Q"></o-qrcode></div>
+          <div><h4 class="o-h6">vCard (<code>Orion.qr.vcard</code>)</h4><o-qrcode id="pl-vcard" size="150" ecc="Q"></o-qrcode></div>
+          <div><h4 class="o-h6">Email (<code>Orion.qr.email</code>)</h4><o-qrcode id="pl-email" size="150" ecc="Q"></o-qrcode></div>
+          <div><h4 class="o-h6">Geo (<code>Orion.qr.geo</code>)</h4><o-qrcode id="pl-geo" size="150" ecc="Q"></o-qrcode></div>
+        </div>
+        <script>
+          document.getElementById('pl-wifi').value = Orion.qr.wifi({ ssid: 'Orion-Guest', password: 'sunflower42', encryption: 'WPA' });
+          document.getElementById('pl-vcard').value = Orion.qr.vcard({ firstName: 'Ada', lastName: 'Lovelace', org: 'Orion Admin', email: 'ada@orion-admin.dev', phone: '+1-555-0100' });
+          document.getElementById('pl-email').value = Orion.qr.email({ to: 'hello@orion-admin.dev', subject: 'Hi from a QR code' });
+          document.getElementById('pl-geo').value = Orion.qr.geo({ lat: 3.139, lng: 101.6869 });
+        </script>
+        <pre class="docs-code-block" data-lang="js">
+Orion.qr.wifi({ ssid, password, encryption: 'WPA'|'WEP'|'none', hidden })  // -&gt; "WIFI:T:WPA;S:...;P:...;;"
+Orion.qr.vcard({ firstName, lastName, org, title, phone, email, url, address, note })
+Orion.qr.email({ to, subject, body })   Orion.qr.sms({ to, body })   Orion.qr.geo({ lat, lng } | { query })
+Orion.qr.url(text)                      // adds "https://" when the string has no scheme
+        </pre>
+      </template>
+    </div>
+  </section>
+
+  <section id="scan-roundtrip">
+    <h2>Generate → scan round trip</h2>
+    <p>Because <code>&lt;o-qrcode&gt;</code> and <code>&lt;o-scanner&gt;</code> share the same test suite, a code
+      generated here can be read straight back with the pure-JS decoder — no camera required. Click "Scan it back"
+      to render this code to an offscreen canvas and decode it with <code>Orion.scanner.decodeImage()</code>.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-stack" style="align-items:center;--o-gap:1rem">
+          <o-qrcode id="rt-code" value="Round-tripped without a camera" size="180" ecc="Q"></o-qrcode>
+          <button class="o-btn o-btn-primary o-btn-sm" id="rt-btn">Scan it back</button>
+          <div class="docs-log" id="rt-log"></div>
+        </div>
+        <script>
+          document.getElementById('rt-btn').addEventListener('click', async () => {
+            const el = document.getElementById('rt-code');
+            const canvas = Orion.qr.canvas(el.value, { size: 400, ecc: el.ecc });
+            const [hit] = await Orion.scanner.decodeImage(canvas, { formats: ['qr_code'] });
+            docs.log('#rt-log', hit ? `decoded: "${hit.text}" (${hit.text === el.value ? 'matches ✓' : 'MISMATCH'})` : 'no code found');
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="js">
+    <h2>JavaScript API</h2>
+    <pre class="docs-code-block" data-lang="js">
+Orion.qr.encode(text, { ecc, version, mode, mask }) -&gt; { size, modules, version, ecc, mask }
+Orion.qr.svg(textOrEncoded, opts) -&gt; string                 // standalone &lt;svg&gt;...&lt;/svg&gt;
+Orion.qr.canvas(textOrEncoded, opts) -&gt; HTMLCanvasElement    // sync; logo image is drawn in once loaded
+Orion.qr.toDataURL(textOrEncoded, opts) -&gt; Promise&lt;string&gt;
+Orion.qr.toBlob(textOrEncoded, opts) -&gt; Promise&lt;Blob&gt;
+
+// opts: size(px, default 256) margin(modules, default 4) color background(null/'transparent' for none)
+//       moduleStyle('square'|'dots'|'rounded') finderStyle('square'|'dot'|'rounded')
+//       logo({src,size,padding,round}) ecc('L'|'M'|'Q'|'H') version(1-40|'auto') mode('numeric'|'alphanumeric'|'byte'|'auto') mask(0-7|'auto')
+</pre>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>value</td><td><code>string</code></td><td>The text to encode. Empty shows a placeholder, not an error.</td></tr>
+        <tr><td>size</td><td><code>number</code></td><td>Rendered width/height in px (default 200).</td></tr>
+        <tr><td>ecc</td><td><code>L | M | Q | H</code></td><td>Error-correction level (default <code>M</code>); reflected as an attribute.</td></tr>
+        <tr><td>color / background</td><td><code>string</code></td><td>Any CSS colour (including <code>var(--token)</code>); <code>background="transparent"</code> removes the backing rect.</td></tr>
+        <tr><td>margin</td><td><code>number</code></td><td>Quiet zone in modules (default 2).</td></tr>
+        <tr><td>module-style</td><td><code>square | dots | rounded</code></td><td>Shape of individual dark modules.</td></tr>
+        <tr><td>finder-style</td><td><code>square | dot | rounded</code></td><td>Shape of the three corner "eyes".</td></tr>
+        <tr><td>logo</td><td><code>{ src, size, padding, round }</code></td><td>Property only. <code>size</code> is a 0.1–0.35 fraction of the code width.</td></tr>
+        <tr><td>label</td><td><code>string</code></td><td>Caption shown under the code (also used as the image's <code>aria-label</code> when set).</td></tr>
+        <tr><td>download</td><td><code>string</code></td><td>Shows a download button; the attribute value is the suggested file name.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events &amp; methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-error</td><td><code>{ error }</code> — fired when <code>value</code> cannot be encoded (e.g. too long for version 40 at the current ECC); an inline message replaces the code.</td></tr>
+        <tr><td>saveAsPNG()</td><td>Triggers the same download the button does, at 2× <code>size</code>.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="a11y">
+    <h2>Accessibility</h2>
+    <p>The rendered <code>&lt;svg&gt;</code> gets <code>role="img"</code> and an <code>aria-label</code> (the
+      <code>label</code> prop, or a generic "QR code" fallback) — screen reader users get a description, not the raw
+      payload. The optional download button is a normal, keyboard-operable <code>&lt;button&gt;</code>.</p>
+  </section>
+
+  <section id="limitations">
+    <h2>Limitations</h2>
+    <ul>
+      <li>Kanji mode is not implemented — non-Latin/CJK text is encoded as UTF-8 byte mode, which is spec-legal but
+        less space-efficient than Kanji mode for long Japanese text.</li>
+      <li>Structured Append (splitting one payload across multiple QR symbols) is not supported.</li>
+      <li><code>color</code>/<code>background</code> are trusted CSS colour strings (not user text), rendered as SVG
+        attributes; they are not sanitised beyond normal attribute escaping.</li>
+    </ul>
+  </section>
+
+  <section id="frameworks">
+    <h2>Frameworks</h2>
+    <p>Set <code>logo</code> as a property (frameworks that pass objects as attributes will JSON-stringify them,
+      which also works since it is declared as an Object prop). All other attributes are plain strings/numbers.</p>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Products — Orion Admin</title>
+<script src="../dist/orion.js"></script>
+<link rel="stylesheet" href="assets/shell.css">
+<style>
+  .cat-layout { display: grid; gap: 1.25rem; grid-template-columns: 1fr; align-items: start; }
+  @media (min-width: 1024px) { .cat-layout { grid-template-columns: 16rem 1fr; } }
+  /* Filters: a plain <details> that collapses on phones; the desktop layout keeps it open (JS syncs the `open` attribute). */
+  .cat-filters summary { list-style: none; cursor: pointer; }
+  .cat-filters summary::-webkit-details-marker { display: none; }
+  .cat-filters-chev { transition: transform .15s; }
+  .cat-filters[open] .cat-filters-chev { transform: rotate(180deg); }
+  @media (max-width: 1023px) { .cat-layout > aside { position: static; } }
+  @media (min-width: 1024px) { .cat-filters summary { pointer-events: none; } .cat-filters summary .o-btn { pointer-events: auto; } .cat-filters-chev { display: none; } }
+  .facet + .facet { border-top: 1px solid var(--o-border); margin-top: .875rem; padding-top: .875rem; }
+  .facet-title { font-size: var(--o-fs-xs); font-weight: 650; text-transform: uppercase; letter-spacing: .04em; color: var(--o-text-muted); margin: 0 0 .5rem; }
+  .facet .o-check { display: flex; justify-content: space-between; margin: .125rem 0; }
+  .facet .o-check small { color: var(--o-text-muted); }
+  .cat-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); }
+  .p-card { display: flex; flex-direction: column; overflow: hidden; }
+  .p-thumb { aspect-ratio: 16 / 10; max-height: 10rem; display: grid; place-items: center; font-size: 2rem; background: var(--o-bg-subtle); border-bottom: 1px solid var(--o-border); }
+  .p-body { padding: .875rem; display: flex; flex-direction: column; gap: .375rem; flex: 1; }
+  .p-name { font-weight: 600; line-height: 1.3; }
+  .p-price { font-variant-numeric: tabular-nums; font-weight: 700; }
+  .p-foot { margin-top: auto; padding-top: .5rem; }
+</style>
+<script>
+  window.PAGE = {
+    id: 'products', title: 'Products', subtitle: 'Catalogue, stock levels and pricing',
+    breadcrumbs: [{ label: 'Home', href: 'dashboard.html' }, { label: 'Commerce' }, { label: 'Products' }],
+    actions: '<button class="o-btn" id="p-export"><o-icon name="download"></o-icon>Export</button>'
+      + '<button class="o-btn o-btn-primary" id="p-new"><o-icon name="plus"></o-icon>New product</button>',
+  };
+</script>
+<script src="assets/shell.js" defer></script>
+</head>
+<body>
+<div id="app-content">
+  <div class="cat-layout">
+    <!-- Faceted filters: plain form controls, read on every change -->
+    <aside class="o-card o-sticky-top">
+      <details class="cat-filters" id="p-filters" open>
+        <summary class="o-card-header o-between"><b>Filters</b>
+          <span class="o-cluster"><button class="o-btn o-btn-xs o-btn-ghost" id="p-clear" type="button">Clear</button><o-icon name="chevron-down" class="cat-filters-chev"></o-icon></span></summary>
+        <form class="o-card-body" id="p-facets">
+        <div class="facet" id="facet-category"><p class="facet-title">Category</p></div>
+        <div class="facet" id="facet-status"><p class="facet-title">Availability</p></div>
+        <div class="facet"><p class="facet-title">Price</p>
+          <label class="o-check"><span><input type="radio" name="price" value="" checked> <span>Any price</span></span></label>
+          <label class="o-check"><span><input type="radio" name="price" value="0-99"> <span>Under $100</span></span></label>
+          <label class="o-check"><span><input type="radio" name="price" value="100-249"> <span>$100 – $249</span></span></label>
+          <label class="o-check"><span><input type="radio" name="price" value="250-"> <span>$250 and up</span></span></label>
+        </div>
+        <div class="facet"><p class="facet-title">Minimum rating</p>
+          <label class="o-check"><span><input type="radio" name="rating" value="" checked> <span>Any rating</span></span></label>
+          <label class="o-check"><span><input type="radio" name="rating" value="4.5"> <span>4.5 and up</span></span></label>
+          <label class="o-check"><span><input type="radio" name="rating" value="4"> <span>4.0 and up</span></span></label>
+          <label class="o-check"><span><input type="radio" name="rating" value="3.5"> <span>3.5 and up</span></span></label>
+        </div>
+        <div class="facet"><p class="facet-title">Storefront</p>
+          <label class="o-check"><span><input type="checkbox" name="active" value="true"> <span>Visible</span></span></label>
+          <label class="o-check"><span><input type="checkbox" name="active" value="false"> <span>Hidden</span></span></label>
+        </div>
+        </form>
+      </details>
+    </aside>
+
+    <div>
+      <div class="o-cluster o-mb-4">
+        <div class="o-input-wrap" style="flex:1 1 14rem;max-width:22rem">
+          <o-icon name="search"></o-icon>
+          <input class="o-input" id="p-search" type="search" placeholder="Search products, SKU…" aria-label="Search products">
+        </div>
+        <div class="o-spacer"></div>
+        <span class="o-text-muted o-text-sm" id="p-count" aria-live="polite"></span>
+        <div class="o-segmented" role="group" aria-label="View mode" id="p-view">
+          <button type="button" data-view="grid" aria-pressed="true" title="Grid"><o-icon name="grid"></o-icon></button>
+          <button type="button" data-view="table" aria-pressed="false" title="Table"><o-icon name="list"></o-icon></button>
+        </div>
+        <select class="o-select" id="p-sort" aria-label="Sort by" style="width:auto">
+          <option value="name">Name A–Z</option>
+          <option value="price-asc">Price: low to high</option>
+          <option value="price-desc">Price: high to low</option>
+          <option value="stock">Stock: low first</option>
+        </select>
+      </div>
+
+      <div id="p-chips" class="o-cluster o-mb-3" hidden></div>
+
+      <div id="p-grid" class="cat-grid"></div>
+      <div id="p-table" hidden><o-datatable id="p-dt" row-key="id" page-size="12" responsive="stack" searchable="false"></o-datatable></div>
+      <div class="o-card" id="p-empty" hidden><div class="o-empty">
+        <div class="o-empty-icon"><o-icon name="package"></o-icon></div>
+        <h4 class="o-empty-title">No products match</h4>
+        <p class="o-empty-text">Try removing a filter or searching for something else.</p>
+        <div class="o-empty-actions"><button class="o-btn" id="p-empty-clear" type="button">Clear filters</button></div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Product editor -->
+<o-modal id="p-modal" title="New product" size="lg">
+  <form id="p-form" class="o-form-grid" novalidate>
+    <div class="o-field o-span-full"><label class="o-label is-required" for="pf-name">Name</label>
+      <input class="o-input" id="pf-name" name="name" data-o-rules="required"><div class="o-error"></div></div>
+    <div class="o-field"><label class="o-label is-required" for="pf-sku">SKU</label>
+      <input class="o-input" id="pf-sku" name="sku" data-o-rules="required" placeholder="ABC-1234" data-o-mask="aaa-9999" data-o-mask-case="upper">
+      <div class="o-help">Three letters, dash, four digits</div><div class="o-error"></div></div>
+    <div class="o-field"><label class="o-label is-required" for="pf-cat">Category</label>
+      <o-select id="pf-cat" name="category" placeholder="Choose…" required
+        options='[{"value":"audio","label":"Audio"},{"value":"wearables","label":"Wearables"},{"value":"computing","label":"Computing"},{"value":"home","label":"Smart home"}]'></o-select>
+      <div class="o-error"></div></div>
+    <div class="o-field"><label class="o-label is-required" for="pf-price">Price</label>
+      <o-number id="pf-price" name="price" currency="USD" min="0" required></o-number><div class="o-error"></div></div>
+    <div class="o-field"><label class="o-label" for="pf-stock">Stock on hand</label>
+      <o-number id="pf-stock" name="stock" min="0" step="1" value="0"></o-number></div>
+    <div class="o-field o-span-full"><label class="o-label" for="pf-tags">Tags</label>
+      <o-tags id="pf-tags" name="tags" placeholder="Add a tag and press Enter" suggestions='["new","sale","bundle","limited"]'></o-tags></div>
+    <div class="o-field o-span-full"><label class="o-label" for="pf-desc">Description</label>
+      <textarea class="o-textarea" id="pf-desc" name="description" rows="3" data-o-autosize data-o-counter maxlength="300"></textarea></div>
+    <div class="o-field o-span-full"><label class="o-label">Images</label>
+      <o-upload id="pf-img" accept="image/*" multiple max-size="5mb"></o-upload></div>
+    <label class="o-switch o-span-full"><input type="checkbox" name="active" checked><span>Visible in storefront</span></label>
+  </form>
+  <div slot="footer">
+    <button class="o-btn" type="button" data-o-dismiss="modal">Cancel</button>
+    <button class="o-btn o-btn-primary" type="button" id="p-save">Save product</button>
+  </div>
+</o-modal>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const O = Orion, F = O.format, esc = O.util.esc;
+  const CATS = { audio: 'Audio', wearables: 'Wearables', computing: 'Computing', home: 'Smart home' };
+  const EMOJI = { audio: '🎧', wearables: '⌚', computing: '💻', home: '💡' };
+  const NAMES = ['Aurora', 'Nimbus', 'Vertex', 'Lumen', 'Cobalt', 'Zephyr', 'Onyx', 'Halo', 'Quartz', 'Ember', 'Vela', 'Atlas'];
+  const KINDS = { audio: ['Headphones', 'Earbuds', 'Speaker'], wearables: ['Watch', 'Band', 'Ring'], computing: ['Laptop', 'Keyboard', 'Mouse'], home: ['Bulb', 'Plug', 'Sensor'] };
+  const STATUS = { in: ['success', 'In stock'], low: ['warning', 'Low stock'], out: ['danger', 'Out of stock'] };
+
+  const keys = Object.keys(CATS);
+  const DATA = Array.from({ length: 48 }, (_, i) => {
+    const category = keys[i % keys.length], kind = KINDS[category][i % 3];
+    const stock = [0, 3, 8, 24, 61, 140, 7, 0][i % 8];
+    return { id: 'P' + (1001 + i), sku: category.slice(0, 3).toUpperCase() + '-' + (1000 + i),
+      name: `${NAMES[i % NAMES.length]} ${kind}`, category, categoryLabel: CATS[category], price: 29 + ((i * 37) % 480),
+      stock, rating: 3 + ((i * 7) % 20) / 10, active: i % 11 !== 0,
+      status: stock === 0 ? 'out' : stock < 10 ? 'low' : 'in' };
+  });
+  DATA.forEach(d => { d.statusLabel = STATUS[d.status][1]; });
+
+  // ---- Facet controls with live counts ----
+  const facets = document.getElementById('p-facets');
+  const count = (field, value) => DATA.filter(d => d[field] === value).length;
+  const box = (name, value, label, n) => `<label class="o-check"><span><input type="checkbox" name="${name}" value="${value}"> <span>${esc(label)}</span></span><small>${n}</small></label>`;
+  document.getElementById('facet-category').insertAdjacentHTML('beforeend', keys.map(k => box('category', k, CATS[k], count('category', k))).join(''));
+  document.getElementById('facet-status').insertAdjacentHTML('beforeend', Object.keys(STATUS).map(k => box('status', k, STATUS[k][1], count('status', k))).join(''));
+
+  const state = { q: '', sort: 'name' };
+  const readFacets = () => {
+    const fd = new FormData(facets);
+    return { category: fd.getAll('category'), status: fd.getAll('status'), active: fd.getAll('active'),
+      price: fd.get('price') || '', rating: fd.get('rating') || '' };
+  };
+  facets.addEventListener('change', render);
+  // Desktop always shows the filters; phones get a collapsed panel that remembers nothing across reloads.
+  const wide = matchMedia('(min-width: 1024px)'), filtersBox = document.getElementById('p-filters');
+  const syncFilters = () => { filtersBox.open = wide.matches; };
+  wide.addEventListener('change', syncFilters); syncFilters();
+  const clearAll = () => { facets.reset(); render(); };
+  document.getElementById('p-clear').addEventListener('click', clearAll);
+  document.getElementById('p-empty-clear').addEventListener('click', clearAll);
+
+  function visible() {
+    const f = readFacets(), q = state.q.trim().toLowerCase();
+    const [lo, hi] = f.price ? f.price.split('-').map(v => (v === '' ? null : +v)) : [null, null];
+    const rows = DATA.filter(d => {
+      if (q && !(d.name + ' ' + d.sku).toLowerCase().includes(q)) return false;
+      if (f.category.length && !f.category.includes(d.category)) return false;
+      if (f.status.length && !f.status.includes(d.status)) return false;
+      if (f.active.length && !f.active.includes(String(d.active))) return false;
+      if (f.rating && d.rating < +f.rating) return false;
+      if (lo != null && d.price < lo) return false;
+      if (hi != null && d.price > hi) return false;
+      return true;
+    });
+    const by = { name: (a, b) => a.name.localeCompare(b.name), 'price-asc': (a, b) => a.price - b.price,
+      'price-desc': (a, b) => b.price - a.price, stock: (a, b) => a.stock - b.stock };
+    return rows.sort(by[state.sort]);
+  }
+
+  // ---- Table view ----
+  const dt = document.getElementById('p-dt');
+  dt.columns = [
+    { key: 'name', title: 'Product', subtitle: 'sku', sortable: true },
+    { key: 'categoryLabel', title: 'Category', sortable: true },
+    { key: 'price', title: 'Price', type: 'currency', sortable: true },
+    { key: 'stock', title: 'Stock', type: 'number', sortable: true },
+    { key: 'statusLabel', title: 'Availability', type: 'badge', colors: { 'In stock': 'success', 'Low stock': 'warning', 'Out of stock': 'danger' } },
+    { key: 'rating', title: 'Rating', type: 'number', sortable: true },
+  ];
+
+  // ---- Render ----
+  const grid = document.getElementById('p-grid'), tableWrap = document.getElementById('p-table'), empty = document.getElementById('p-empty');
+  function render() {
+    const rows = visible();
+    document.getElementById('p-count').textContent = `${rows.length} of ${DATA.length} products`;
+    renderChips();
+    empty.hidden = rows.length > 0;
+    grid.innerHTML = rows.map(r => `
+      <article class="o-card p-card">
+        <div class="p-thumb" aria-hidden="true">${EMOJI[r.category]}</div>
+        <div class="p-body">
+          <div class="o-between"><span class="o-text-muted o-text-xs">${r.sku}</span>
+            ${r.active ? '' : '<span class="o-badge o-badge-soft-secondary o-badge-sm">Hidden</span>'}</div>
+          <div class="p-name">${esc(r.name)}</div>
+          <div class="o-hstack o-text-xs o-text-muted"><o-rating value="${r.rating}" readonly size="sm" color="warning"></o-rating>${r.rating.toFixed(1)}</div>
+          <div class="o-between p-foot">
+            <span class="p-price">${F.currency(r.price)}</span>
+            <span class="o-badge o-badge-soft-${STATUS[r.status][0]} o-badge-sm">${r.stock} left</span>
+          </div>
+        </div>
+      </article>`).join('');
+    dt.rows = rows;
+  }
+
+  function renderChips() {
+    const f = readFacets(), chips = [];
+    f.category.forEach(v => chips.push(['category', v, CATS[v]]));
+    f.status.forEach(v => chips.push(['status', v, STATUS[v][1]]));
+    f.active.forEach(v => chips.push(['active', v, v === 'true' ? 'Visible' : 'Hidden']));
+    if (f.rating) chips.push(['rating', f.rating, `${f.rating}★ and up`]);
+    if (f.price) chips.push(['price', f.price, facets.querySelector(`[name=price][value="${f.price}"]`).parentElement.textContent.trim()]);
+    const host = document.getElementById('p-chips');
+    host.innerHTML = chips.map(([k, v, label]) =>
+      `<span class="o-chip"><span>${esc(label)}</span><button type="button" class="o-chip-remove" data-key="${k}" data-value="${esc(v)}" aria-label="Remove ${esc(label)}"></button></span>`).join('');
+    host.hidden = !chips.length;
+  }
+  document.getElementById('p-chips').addEventListener('click', e => {
+    const btn = e.target.closest('.o-chip-remove'); if (!btn) return;
+    const { key, value } = btn.dataset;
+    const input = facets.querySelector(`[name="${key}"][value="${CSS.escape(value)}"]`);
+    if (!input) return;
+    if (input.type === 'radio') facets.querySelector(`[name="${key}"][value=""]`).checked = true; else input.checked = false;
+    render();
+  });
+
+  document.getElementById('p-search').addEventListener('input', O.util.debounce(e => { state.q = e.target.value; render(); }, 180));
+  document.getElementById('p-sort').addEventListener('change', e => { state.sort = e.target.value; render(); });
+  document.getElementById('p-view').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-view]'); if (!btn) return;
+    const table = btn.dataset.view === 'table';
+    btn.parentElement.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b === btn));
+    grid.hidden = table; tableWrap.hidden = !table;
+  });
+
+  // ---- Editor ----
+  const modal = document.getElementById('p-modal'), form = document.getElementById('p-form');
+  const v = O.validate(form, { live: 'blur' });
+  document.getElementById('p-new').addEventListener('click', () => { form.reset(); v.reset(); modal.open(); });
+  document.getElementById('p-save').addEventListener('click', async () => {
+    if (!(await v.validate())) return;
+    const data = O.serialize(form);
+    const stock = +data.stock || 0, status = stock > 9 ? 'in' : stock > 0 ? 'low' : 'out';
+    DATA.unshift({ id: 'P' + Date.now(), sku: data.sku, name: data.name, category: data.category, categoryLabel: CATS[data.category] || data.category,
+      price: +data.price || 0, stock, rating: 0, active: !!data.active, status, statusLabel: STATUS[status][1] });
+    modal.close(); render();
+    O.toast.success(`${data.name} added to the catalogue`);
+  });
+  document.getElementById('p-export').addEventListener('click', () =>
+    O.export.csv(visible(), { filename: 'products.csv', columns: dt.columns }));
+
+  render();
+});
+</script>
+</body>
+</html>

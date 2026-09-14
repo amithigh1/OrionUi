@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1200" width="900" height="1200">
+  <title>Portrait illustration</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset=".55" stop-color="#fb7185"/><stop offset="1" stop-color="#7c3aed"/></linearGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2c4a0"/><stop offset="1" stop-color="#d9976f"/></linearGradient>
+    <linearGradient id="shirt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0ea5e9"/><stop offset="1" stop-color="#0369a1"/></linearGradient>
+    <linearGradient id="hair" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f2a1d"/><stop offset="1" stop-color="#1c120c"/></linearGradient>
+  </defs>
+  <rect width="900" height="1200" fill="url(#bg)"/>
+  <circle cx="150" cy="180" r="90" fill="#fff" opacity=".18"/><circle cx="780" cy="300" r="140" fill="#fff" opacity=".12"/><circle cx="700" cy="1000" r="200" fill="#1e1b4b" opacity=".12"/>
+  <path d="M150 1200 C160 960 290 860 450 860 S740 960 750 1200Z" fill="url(#shirt)"/>
+  <path d="M380 820 h140 v90 c0 40 -140 40 -140 0z" fill="#d9976f"/>
+  <path d="M390 900 c20 34 100 34 120 0 l20 30 c-40 50 -120 50 -160 0z" fill="#e0f2fe"/>
+  <path d="M250 520 C240 330 340 250 450 250 S660 330 650 520 C660 600 640 680 610 700 L290 700 C260 680 240 600 250 520Z" fill="url(#hair)"/>
+  <ellipse cx="450" cy="560" rx="170" ry="220" fill="url(#skin)"/>
+  <ellipse cx="282" cy="580" rx="26" ry="44" fill="#e3a47c"/><ellipse cx="618" cy="580" rx="26" ry="44" fill="#e3a47c"/>
+  <path d="M280 470 C300 330 420 300 520 330 C600 350 640 420 624 500 C570 420 470 400 380 430 C340 440 300 460 280 470Z" fill="url(#hair)"/>
+  <g fill="#1c120c"><ellipse cx="385" cy="560" rx="16" ry="20"/><ellipse cx="515" cy="560" rx="16" ry="20"/></g>
+  <g fill="#fff"><circle cx="390" cy="553" r="5"/><circle cx="520" cy="553" r="5"/></g>
+  <path d="M350 515 q35 -22 70 -4 M480 511 q35 -18 70 4" stroke="#3f2a1d" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <path d="M450 580 q-14 50 -4 70 q10 6 22 -2" stroke="#b9775a" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M395 690 q55 42 110 0" stroke="#9f1239" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <g fill="#fb7185" opacity=".35"><ellipse cx="350" cy="640" rx="36" ry="20"/><ellipse cx="550" cy="640" rx="36" ry="20"/></g>
+</svg>

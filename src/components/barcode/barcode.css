@@ -1,0 +1,9 @@
+/* <o-barcode> — tokens only for chrome; the symbol itself uses author-supplied colors. */
+o-barcode { display: inline-flex; flex-direction: column; align-items: center; gap: .5rem; max-width: 100%; }
+o-barcode:not(:defined) { visibility: hidden; }
+.o-barcode-box { display: inline-flex; max-width: 100%; line-height: 0; background: #fff; padding: .5rem; border-radius: var(--o-radius-sm); }
+.o-barcode-box svg { display: block; max-width: 100%; height: auto; }
+.o-barcode[data-empty] .o-barcode-box { display: grid; place-items: center; width: 100%; min-height: 6rem; color: var(--o-text-subtle); font-size: var(--o-fs-sm); background: var(--o-surface-2); border: 1px dashed var(--o-border); border-radius: var(--o-radius); }
+.o-barcode[data-empty] .o-barcode-box::before { content: "No value"; }
+.o-barcode-error { max-width: 20rem; padding: .75rem 1rem; font-size: var(--o-fs-sm); color: var(--o-danger-text); background: var(--o-danger-subtle); border: 1px solid var(--o-danger-border); border-radius: var(--o-radius); text-align: center; }
+.o-barcode-actions:empty { display: none; }

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timeline &amp; stats — Orion Admin</title>
+<meta name="docs:section" content="Foundation">
+<meta name="docs:order" content="28">
+<meta name="docs:title" content="Timeline &amp; Stats">
+<meta name="docs:desc" content="Vertical/horizontal timelines, activity feeds, KPI stat blocks and trend indicators (CSS)">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Timeline &amp; Stats</h1>
+    <p class="docs-lead">CSS building blocks for timelines, activity feeds and KPI numbers. For data-driven widgets see <a href="stats.html">Statistics cards</a>, <a href="presence-activity.html">Activity feed</a> and <a href="timeline-view.html">Timeline view</a>.</p>
+  </header>
+
+  <section id="timeline">
+    <h2>Timeline</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-grid o-grid-cols-1 o-grid-cols-md-2 o-gap-6">
+          <ol class="o-timeline">
+            <li class="o-timeline-item"><span class="o-timeline-marker is-filled o-c-success"></span><p class="o-timeline-title">Order delivered</p><span class="o-timeline-time">Today, 10:24</span><p class="o-timeline-body">Signed by Aisha R.</p></li>
+            <li class="o-timeline-item"><span class="o-timeline-marker"></span><p class="o-timeline-title">Out for delivery</p><span class="o-timeline-time">Today, 08:02</span></li>
+            <li class="o-timeline-item"><span class="o-timeline-marker"></span><p class="o-timeline-title">Shipped</p><span class="o-timeline-time">Yesterday, 17:45</span></li>
+            <li class="o-timeline-item"><span class="o-timeline-marker o-c-secondary"></span><p class="o-timeline-title">Order placed</p><span class="o-timeline-time">Mon, 09:12</span></li>
+          </ol>
+          <ol class="o-timeline">
+            <li class="o-timeline-item"><span class="o-timeline-marker is-icon o-c-primary"><o-icon name="edit"></o-icon></span><p class="o-timeline-title">Ben edited the proposal</p><span class="o-timeline-time">5 min ago</span></li>
+            <li class="o-timeline-item"><span class="o-timeline-marker is-icon o-c-success"><o-icon name="check"></o-icon></span><p class="o-timeline-title">Invoice #2031 paid</p><span class="o-timeline-time">1 hour ago</span></li>
+            <li class="o-timeline-item"><span class="o-timeline-marker is-icon o-c-danger"><o-icon name="alert-triangle"></o-icon></span><p class="o-timeline-title">Deployment failed</p><span class="o-timeline-time">3 hours ago</span><p class="o-timeline-body">Build #482 exited with code 1.</p></li>
+          </ol>
+        </div>
+      </template>
+    </div>
+    <h3>Horizontal</h3>
+    <div class="docs-demo">
+      <template>
+        <ol class="o-timeline o-timeline-horizontal">
+          <li class="o-timeline-item"><span class="o-timeline-marker is-filled"></span><p class="o-timeline-title">Kick-off</p><span class="o-timeline-time">Jan</span></li>
+          <li class="o-timeline-item"><span class="o-timeline-marker is-filled"></span><p class="o-timeline-title">Design</p><span class="o-timeline-time">Feb</span></li>
+          <li class="o-timeline-item"><span class="o-timeline-marker"></span><p class="o-timeline-title">Build</p><span class="o-timeline-time">Mar–May</span></li>
+          <li class="o-timeline-item"><span class="o-timeline-marker"></span><p class="o-timeline-title">Launch</p><span class="o-timeline-time">Jun</span></li>
+        </ol>
+      </template>
+    </div>
+  </section>
+
+  <section id="feed">
+    <h2>Activity feed</h2>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-card"><div class="o-card-header"><h3 class="o-card-title">Activity</h3></div><div class="o-card-body o-py-1">
+          <ul class="o-feed">
+            <li class="o-feed-item"><o-avatar name="Mei Lin" size="sm"></o-avatar><div class="o-feed-content"><b>Mei Lin</b> commented on <a href="#feed">Website redesign</a><div class="o-text-muted">"Looks great — ship it!"</div></div><span class="o-feed-time">2m</span></li>
+            <li class="o-feed-item"><o-avatar name="Omar Haddad" size="sm"></o-avatar><div class="o-feed-content"><b>Omar Haddad</b> uploaded <b>Q3-report.pdf</b></div><span class="o-feed-time">1h</span></li>
+            <li class="o-feed-item"><o-avatar name="Sofia Costa" size="sm"></o-avatar><div class="o-feed-content"><b>Sofia Costa</b> moved <b>API docs</b> to <span class="o-badge o-badge-soft-success">Done</span></div><span class="o-feed-time">3h</span></li>
+          </ul>
+        </div></div>
+      </template>
+    </div>
+  </section>
+
+  <section id="stats">
+    <h2>Stat blocks</h2>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-grid o-grid-cols-1 o-grid-cols-sm-2 o-grid-cols-xl-4 o-gap-4">
+          <div class="o-card o-card-body o-hstack" style="align-items:flex-start"><div class="o-stat o-flex-1"><span class="o-stat-label">Revenue</span><span class="o-stat-value">$48,294</span><span class="o-stat-meta"><span class="o-trend is-up">12.4%</span> vs last month</span></div><span class="o-stat-icon"><o-icon name="trending-up"></o-icon></span></div>
+          <div class="o-card o-card-body o-hstack" style="align-items:flex-start"><div class="o-stat o-flex-1"><span class="o-stat-label">New users</span><span class="o-stat-value">1,284</span><span class="o-stat-meta"><span class="o-trend is-up">3.1%</span> vs last month</span></div><span class="o-stat-icon o-c-success"><o-icon name="user"></o-icon></span></div>
+          <div class="o-card o-card-body o-hstack" style="align-items:flex-start"><div class="o-stat o-flex-1"><span class="o-stat-label">Refunds</span><span class="o-stat-value">$1,020</span><span class="o-stat-meta"><span class="o-trend is-down">8.0%</span> vs last month</span></div><span class="o-stat-icon o-c-danger"><o-icon name="refresh"></o-icon></span></div>
+          <div class="o-card o-card-body o-hstack" style="align-items:flex-start"><div class="o-stat o-flex-1"><span class="o-stat-label">Avg. response</span><span class="o-stat-value">1.8h</span><span class="o-stat-meta"><span class="o-trend is-flat">0%</span> no change</span></div><span class="o-stat-icon o-c-info"><o-icon name="clock"></o-icon></span></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>Classes</h2>
+    <table class="docs-api">
+      <thead><tr><th>Class</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.o-timeline / -item / -marker (.is-filled .is-icon) / -title / -time / -body</td><td>Vertical timeline; color markers with <code>.o-c-*</code>.</td></tr>
+        <tr><td>.o-timeline-horizontal</td><td>Horizontal milestones (scrolls on small screens).</td></tr>
+        <tr><td>.o-feed / -item / -content / -time</td><td>Activity feed rows.</td></tr>
+        <tr><td>.o-stat / -label / -value / -meta / -icon</td><td>KPI number block.</td></tr>
+        <tr><td>.o-trend.is-up / .is-down / .is-flat</td><td>Trend with arrow (not color alone).</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Undo / Redo — Orion Admin</title>
+<meta name="docs:section" content="Services &amp; Utilities">
+<meta name="docs:order" content="80">
+<meta name="docs:desc" content="Command-based undo manager, undoable forms and undo/redo controls with history">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .ur-editor { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr) minmax(0, 15rem); }
+  @media (max-width: 767.98px) { .ur-editor { grid-template-columns: minmax(0, 1fr); } }
+  .ur-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-bottom: .75rem; }
+  .ur-tasks { margin: 0; padding: 0; list-style: none; border: 1px solid var(--o-border); border-radius: var(--o-radius); background: var(--o-surface); min-height: 8rem; }
+  .ur-tasks li { display: flex; align-items: center; gap: .5rem; padding: .375rem .5rem .375rem .75rem; border-bottom: 1px solid var(--o-border); }
+  .ur-tasks li:last-child { border-bottom: 0; }
+  .ur-tasks li.is-done span { color: var(--o-text-muted); text-decoration: line-through; }
+  .ur-tasks li span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .ur-tasks .ur-empty { justify-content: center; color: var(--o-text-subtle); padding: 2rem 1rem; border: 0; }
+  .ur-hist { margin: 0; padding: 0; list-style: none; font-size: var(--o-fs-sm); }
+  .ur-hist button { display: flex; width: 100%; gap: .375rem; align-items: center; padding: .25rem .5rem; font: inherit; color: var(--o-text); text-align: start; background: none; border: 0; border-radius: var(--o-radius-sm); cursor: pointer; }
+  .ur-hist button:hover { background: var(--o-surface-3); }
+  .ur-hist button[aria-current="true"] { background: var(--o-primary-subtle); color: var(--o-primary-text); font-weight: 600; }
+  .ur-hist button.is-undone { color: var(--o-text-subtle); }
+  .ur-swatch { width: 1.5rem; height: 1.5rem; border-radius: 50%; background: hsl(var(--ur-hue, 245) 70% 55%); box-shadow: inset 0 0 0 1px rgba(0,0,0,.1); flex-shrink: 0; }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Undo / Redo</h1>
+    <p class="docs-lead"><code>Orion.UndoManager</code> records commands (<code>do</code> / <code>undo</code>) with merging of rapid edits, batching into single steps, a size limit and <kbd class="o-kbd">Ctrl</kbd> <kbd class="o-kbd">Z</kbd> bindings. <code>Orion.undoable(form)</code> makes any form undoable and <code>&lt;o-undo-controls&gt;</code> adds buttons with a history menu.</p>
+  </header>
+
+  <section id="editor">
+    <h2>A small editor</h2>
+    <p>Every change goes through <code>execute()</code>. “Add 3 samples” is one <code>batch()</code>; dragging the hue slider is merged into one step (<code>merge: true</code> within <code>mergeWindow</code>). Press <kbd class="o-kbd">Ctrl</kbd> <kbd class="o-kbd">Z</kbd> / <kbd class="o-kbd">Ctrl</kbd> <kbd class="o-kbd">Y</kbd> (<kbd class="o-kbd">⌘</kbd> <kbd class="o-kbd">Z</kbd> / <kbd class="o-kbd">⌘</kbd> <kbd class="o-kbd">⇧</kbd> <kbd class="o-kbd">Z</kbd> on Mac) inside the editor.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="ur-editor" id="ur-editor">
+          <div>
+            <div class="ur-toolbar">
+              <o-undo-controls for="doc-editor" labels></o-undo-controls>
+              <form class="o-input-group" id="ur-add" style="flex:1 1 14rem;max-width:22rem">
+                <input class="o-input o-input-sm" name="t" placeholder="New task" aria-label="New task" autocomplete="off">
+                <button class="o-btn o-btn-sm o-btn-primary">Add</button>
+              </form>
+            </div>
+            <div class="ur-toolbar">
+              <button class="o-btn o-btn-sm" id="ur-samples">Add 3 samples</button>
+              <button class="o-btn o-btn-sm" id="ur-sort">Sort A→Z</button>
+              <button class="o-btn o-btn-sm o-btn-outline-danger" id="ur-clear">Clear all</button>
+              <label class="o-hstack o-small" style="--o-gap:.5rem;margin-inline-start:auto">Accent <input type="range" class="o-range" id="ur-hue" min="0" max="360" value="245" style="width:7rem" aria-label="Accent hue"><span class="ur-swatch" id="ur-swatch"></span></label>
+            </div>
+            <ul class="ur-tasks" id="ur-tasks" aria-label="Tasks"></ul>
+          </div>
+          <div>
+            <div class="o-small o-fw-semibold o-mb-1">History</div>
+            <ol class="ur-hist" id="ur-hist"></ol>
+          </div>
+        </div>
+        <script>
+          (() => {
+            const um = new Orion.UndoManager({ id: 'doc-editor', limit: 50, mergeWindow: 800 });
+            const box = document.getElementById('ur-editor'), list = document.getElementById('ur-tasks'), hueEl = document.getElementById('ur-hue');
+            let tasks = [{ id: 1, text: 'Write release notes', done: false }, { id: 2, text: 'Review pull requests', done: true }], seq = 3, hue = 245;
+            const esc = Orion.util.esc;
+            const render = () => {
+              list.innerHTML = tasks.length ? tasks.map(t => `<li class="${t.done ? 'is-done' : ''}" data-id="${t.id}"><input type="checkbox" class="o-check-input" ${t.done ? 'checked' : ''} aria-label="Done: ${esc(t.text)}"><span>${esc(t.text)}</span><button class="o-btn o-btn-ghost o-btn-icon o-btn-sm" aria-label="Delete ${esc(t.text)}">${Orion.icon('trash')}</button></li>`).join('') : '<li class="ur-empty">No tasks — add one or undo</li>';
+              box.style.setProperty('--ur-hue', hue); hueEl.value = hue;
+              const h = um.history;
+              document.getElementById('ur-hist').innerHTML = `<li><button data-i="-1" aria-current="${um.pointer === -1}">Initial state</button></li>` + h.map(e => `<li><button data-i="${e.index}" class="${e.done ? '' : 'is-undone'}" aria-current="${e.current}">${e.index + 1}. ${esc(e.label)}${e.count > 1 ? ` <span class="o-badge o-badge-sm">${e.count}</span>` : ''}</button></li>`).join('');
+            };
+            const add = text => { const t = { id: seq++, text, done: false }; um.execute({ label: `Add “${text}”`, do: () => { tasks = [...tasks, t]; render(); }, undo: () => { tasks = tasks.filter(x => x !== t); render(); } }); };
+            document.getElementById('ur-add').addEventListener('submit', e => { e.preventDefault(); const v = e.target.t.value.trim(); if (v) { add(v); e.target.t.value = ''; } });
+            document.getElementById('ur-samples').onclick = () => um.batch('Add 3 samples', () => ['Plan sprint', 'Update docs', 'Ship it'].forEach(add));
+            document.getElementById('ur-sort').onclick = () => { const before = tasks; um.execute({ label: 'Sort A→Z', do: () => { tasks = [...before].sort((a, b) => a.text.localeCompare(b.text)); render(); }, undo: () => { tasks = before; render(); } }); };
+            document.getElementById('ur-clear').onclick = () => { const before = tasks; if (!before.length) return; um.execute({ label: `Clear ${before.length} tasks`, do: () => { tasks = []; render(); }, undo: () => { tasks = before; render(); } }); };
+            list.addEventListener('change', e => { const id = +e.target.closest('li').dataset.id, t = tasks.find(x => x.id === id), v = e.target.checked; um.execute({ label: `${v ? 'Complete' : 'Reopen'} “${t.text}”`, do: () => { t.done = v; render(); }, undo: () => { t.done = !v; render(); } }); });
+            list.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const id = +b.closest('li').dataset.id, i = tasks.findIndex(x => x.id === id), t = tasks[i]; um.execute({ label: `Delete “${t.text}”`, do: () => { tasks = tasks.filter(x => x !== t); render(); }, undo: () => { tasks = [...tasks.slice(0, i), t, ...tasks.slice(i)]; render(); } }); });
+            hueEl.addEventListener('input', () => { const from = hue, to = +hueEl.value; hue = to; box.style.setProperty('--ur-hue', to); um.push({ label: 'Change accent', mergeKey: 'hue', merge: true, undo: () => { hue = from; render(); }, do: () => { hue = to; render(); } }); });
+            document.getElementById('ur-hist').addEventListener('click', e => { const b = e.target.closest('button'); if (b) um.goto(+b.dataset.i); });
+            um.on('change', render);
+            um.bind(box);
+            render();
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="forms">
+    <h2>Undoable forms</h2>
+    <p><code>Orion.undoable(form)</code> tracks text fields (typing grouped per field), selects, checkboxes, radio groups, <code>contenteditable</code> and Orion form controls. Resetting the form is a single undoable step. The form's <code>id</code> registers the manager, so <code>&lt;o-undo-controls for="profile"&gt;</code> just works.</p>
+    <div class="docs-demo">
+      <template>
+        <form id="profile" class="o-form-grid" style="max-width:40rem">
+          <div class="o-field"><label class="o-label" for="pf-name">Full name</label><input class="o-input" id="pf-name" value="Aisha Rahman"></div>
+          <div class="o-field"><label class="o-label" for="pf-email">Email</label><input class="o-input" id="pf-email" type="email" value="aisha@example.com"></div>
+          <div class="o-field"><label class="o-label" for="pf-role">Role</label><select class="o-select" id="pf-role"><option>Viewer</option><option selected>Editor</option><option>Admin</option></select></div>
+          <div class="o-field"><span class="o-label" id="pf-plan-l">Plan</span>
+            <div role="radiogroup" aria-labelledby="pf-plan-l"><label class="o-check o-check-inline"><input type="radio" name="plan" value="free" checked><span>Free</span></label><label class="o-check o-check-inline"><input type="radio" name="plan" value="pro"><span>Pro</span></label><label class="o-check o-check-inline"><input type="radio" name="plan" value="team"><span>Team</span></label></div></div>
+          <div class="o-field o-span-full"><label class="o-label" for="pf-bio">Bio</label><textarea class="o-textarea" id="pf-bio" rows="2">Product designer.</textarea></div>
+          <div class="o-field o-span-full"><label class="o-switch"><input type="checkbox" id="pf-news" checked><span>Email me product news</span></label></div>
+          <div class="o-cluster o-span-full"><o-undo-controls for="profile" labels></o-undo-controls><button type="reset" class="o-btn o-btn-sm">Reset form</button><span class="o-small o-text-muted" id="pf-status"></span></div>
+        </form>
+        <script>
+          (() => {
+            const um = Orion.undoable('#profile');
+            const st = document.getElementById('pf-status');
+            um.on('change', e => { st.textContent = e.action + (e.label ? ': ' + e.label : '') + ` · ${e.pointer + 1}/${e.size}`; });
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="commands">
+    <h2>Commands, merging &amp; batches</h2>
+    <pre class="docs-code-block" data-lang="js">
+      const um = new Orion.UndoManager({ id: 'canvas', limit: 100, mergeWindow: 800, onChange: ({ canUndo, canRedo }) => toolbar.update(canUndo, canRedo) });
+
+      // execute() runs do() and records the command
+      um.execute({ label: 'Add shape', do: () => shapes.add(s), undo: () => shapes.delete(s) });
+
+      // push() records something that already happened (e.g. a drag that just ended)
+      um.push({ label: 'Move shape', undo: () => s.moveTo(from), do: () => s.moveTo(to) });
+
+      // merge rapid commands: compose (true) or absorb into the previous command (function)
+      um.push({ label: 'Resize', mergeKey: 'resize:' + s.id, merge: true, undo, do });
+      um.push({ el, from, to, merge(prev) { if (prev.el !== this.el) return false; prev.to = this.to; return true; }, undo() { … }, do() { … } });
+
+      // batch: many commands -> one history entry (async works; errors roll back)
+      await um.batch('Paste 12 shapes', async () => { for (const s of pasted) um.execute(addCmd(s)); });
+      const end = um.batch('Drag'); /* … */ end();
+
+      um.undo(); um.redo(); um.goto(3); um.canUndo; um.history; um.clear();
+      const unbind = um.bind(document);   // mod+Z · mod+Shift+Z · mod+Y
+    </pre>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Ctrl+Z / ⌘Z</td><td>Undo (inside the bound element; <code>bind(document)</code> leaves native undo alone in text fields unless <code>allowInInputs</code>).</td></tr>
+        <tr><td>Ctrl+Y · Ctrl+Shift+Z / ⌘⇧Z</td><td>Redo.</td></tr>
+        <tr><td>History menu: ↑ ↓ Home End · Enter</td><td>Move and jump to a history state; Escape closes.</td></tr>
+      </tbody>
+    </table>
+    <p>Undo and redo are announced to screen readers (“Undone: Add ‘Plan sprint’”). Buttons use <code>aria-disabled</code> so focus is never lost when the last step is undone.</p>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>new Orion.UndoManager(options)</h3>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>id</td><td>null</td><td>Registers the manager for <code>Orion.UndoManager.get(id)</code> and <code>&lt;o-undo-controls for&gt;</code>.</td></tr>
+        <tr><td>limit</td><td>100</td><td>Maximum history entries (oldest dropped).</td></tr>
+        <tr><td>mergeWindow</td><td>800</td><td>Milliseconds within which mergeable commands join the previous entry.</td></tr>
+        <tr><td>onChange(detail)</td><td>—</td><td>Same detail as the <code>change</code> event.</td></tr>
+      </tbody>
+    </table>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>execute(cmd)</td><td>Run <code>cmd.do()</code>, record it, return its result.</td></tr>
+        <tr><td>push(cmd)</td><td>Record an applied command. Ignored while undo/redo is running (so side effects don't create history).</td></tr>
+        <tr><td>undo() · redo()</td><td>Returns <code>true</code>, <code>false</code> (nothing to do) or a Promise when a command is async.</td></tr>
+        <tr><td>goto(index)</td><td>Undo/redo to a history entry (<code>-1</code> = initial state).</td></tr>
+        <tr><td>batch(fn) · batch(label, fn) · batch(label) → end()</td><td>Group commands into one entry.</td></tr>
+        <tr><td>seal()</td><td>Force the next command into a new entry.</td></tr>
+        <tr><td>clear() · destroy()</td><td>Empty history / also unregister.</td></tr>
+        <tr><td>bind(target, { allowInInputs }) → unbind()</td><td>Keyboard shortcuts.</td></tr>
+        <tr><td>canUndo · canRedo · pointer · size · history · undoLabel · redoLabel · applying</td><td>State. <code>history</code> = <code>[{ index, label, time, count, done, current }]</code>.</td></tr>
+        <tr><td>on('change', fn)</td><td>Emitter events.</td></tr>
+      </tbody>
+    </table>
+    <h3>Command</h3>
+    <table class="docs-api">
+      <thead><tr><th>Field</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>undo()</td><td>Required. Revert the change (may return a Promise).</td></tr>
+        <tr><td>do() · redo()</td><td>Apply the change; <code>redo</code> falls back to <code>do</code>.</td></tr>
+        <tr><td>label</td><td>Shown in menus, tooltips and announcements.</td></tr>
+        <tr><td>merge · mergeKey</td><td><code>true</code> composes with the previous command of the same <code>mergeKey</code> (or label); a function <code>(prev) =&gt; boolean</code> absorbs this command into <code>prev</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>Orion.undoable(formOrField, options) → UndoManager</h3>
+    <p>Options are UndoManager options plus <code>manager</code> (use an existing one), <code>bind</code> (default <code>true</code>) and <code>id</code> (defaults to the element id). Add <code>data-o-undo-ignore</code> to skip a field. The returned manager gains <code>untrack()</code>; <code>destroy()</code> also stops tracking.</p>
+    <h3>&lt;o-undo-controls&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute / property</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>for</td><td>—</td><td>Manager id, element id with <code>.undoManager</code>, or global variable name.</td></tr>
+        <tr><td>manager (property)</td><td>—</td><td>An UndoManager instance (frameworks).</td></tr>
+        <tr><td>labels</td><td>false</td><td>Show “Undo” / “Redo” text next to the icons.</td></tr>
+        <tr><td>size</td><td>sm</td><td><code>sm</code> or <code>md</code>.</td></tr>
+        <tr><td>no-history</td><td>false</td><td>Hide the history menu button.</td></tr>
+        <tr><td>texts</td><td>—</td><td>String overrides (<code>undo redo history initial clear …</code>).</td></tr>
+        <tr><td>undo() · redo() · openHistory() · closeHistory() · undoManager</td><td></td><td>Methods / resolved manager.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>change (manager)</td><td>{ action, label, canUndo, canRedo, pointer, size, manager }</td><td><code>action</code>: <code>push merge batch undo redo clear settled</code>.</td></tr>
+        <tr><td>o-undo · o-redo</td><td>{ label }</td><td>From <code>&lt;o-undo-controls&gt;</code>.</td></tr>
+        <tr><td>o-goto</td><td>{ index }</td><td>A history entry was picked.</td></tr>
+      </tbody>
+    </table>
+    <h3>i18n keys</h3>
+    <p><code>undo.undo · redo · undoLabel · redoLabel · history · initial · untitled · typing · change · typingAny · changeAny · reset · clear · undone · redone · group</code></p>
+  </section>
+</main>
+</body>
+</html>

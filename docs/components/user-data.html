@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>User Data — Orion Admin</title>
+<meta name="docs:section" content="Services &amp; Utilities">
+<meta name="docs:order" content="100">
+<meta name="docs:desc" content="Recent items, favorites, search history, recently viewed, saved views and preferences">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <style>
+    .ud-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; }
+    .ud-card { border: 1px solid var(--o-border); border-radius: var(--o-radius); padding: .75rem; }
+    .ud-card h4 { margin: 0 0 .5rem; font-size: var(--o-fs-sm); text-transform: uppercase; letter-spacing: .04em; color: var(--o-text-muted); }
+  </style>
+  <header class="docs-hero">
+    <h1>User data</h1>
+    <p class="docs-lead">Per-user, persisted, cross-tab-synced stores for the small bits of state every admin app needs: <code>Orion.recent</code>, <code>Orion.favorites</code>, <code>Orion.searchHistory</code>, <code>Orion.viewed</code>, <code>Orion.views</code> (saved filters) and <code>Orion.prefs</code>, plus the widgets that display them. Everything lives under <code>Orion.userdata.setUser(id)</code>'s namespace so switching users switches the data too.</p>
+  </header>
+
+  <section id="recent-favorites">
+    <h2>Recent items &amp; favorites</h2>
+    <p><code>Orion.recent.add(item)</code> records the last-opened items (deduped, newest first); <code>&lt;o-favorite-button&gt;</code> toggles <code>Orion.favorites</code> for one item and <code>&lt;o-recent-list&gt;</code> / <code>&lt;o-favorites-list&gt;</code> render a store as a list (favorites are drag- and <kbd class="o-kbd">Alt</kbd>+arrow-reorderable).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="ud-cols">
+          <div class="ud-card">
+            <h4>Reports</h4>
+            <ul class="o-list o-list-compact" id="ud-reports">
+              <li class="o-list-item"><a href="#r1" class="o-list-content" data-item='{"id":"r1","title":"Q3 revenue","url":"#r1","type":"report"}'>Q3 revenue</a><o-favorite-button item='{"id":"r1","title":"Q3 revenue","url":"#r1","type":"report"}'></o-favorite-button></li>
+              <li class="o-list-item"><a href="#r2" class="o-list-content" data-item='{"id":"r2","title":"Churn analysis","url":"#r2","type":"report"}'>Churn analysis</a><o-favorite-button item='{"id":"r2","title":"Churn analysis","url":"#r2","type":"report"}'></o-favorite-button></li>
+              <li class="o-list-item"><a href="#r3" class="o-list-content" data-item='{"id":"r3","title":"Headcount plan","url":"#r3","type":"report"}'>Headcount plan</a><o-favorite-button item='{"id":"r3","title":"Headcount plan","url":"#r3","type":"report"}'></o-favorite-button></li>
+            </ul>
+          </div>
+          <div class="ud-card"><h4>Recent</h4><o-recent-list limit="5" clearable empty-text="Open a report to see it here."></o-recent-list></div>
+          <div class="ud-card"><h4>Favorites</h4><o-favorites-list empty-text="Star a report to pin it here."></o-favorites-list></div>
+        </div>
+        <script>
+          document.querySelectorAll('#ud-reports [data-item]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); Orion.recent.add(JSON.parse(a.dataset.item)); }));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="search-history">
+    <h2>Search history</h2>
+    <p><code>Orion.searchHistory.add(query, scope)</code> remembers recent searches per scope (default 10, newest first, deduped case-insensitively).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-input-wrap"><o-icon name="search"></o-icon><input class="o-input" id="ud-search" placeholder="Search and press Enter…"></div>
+        <ul class="off-list o-mt-2" id="ud-search-list" style="list-style:none;padding:0;margin:0;font-size:var(--o-fs-sm)"></ul>
+        <script>
+          const paintHistory = () => { document.getElementById('ud-search-list').innerHTML = Orion.searchHistory.list('docs-demo').map(x => `<li>${x.query}</li>`).join('') || '<li class="o-text-muted">No searches yet.</li>'; };
+          document.getElementById('ud-search').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.value.trim()) { Orion.searchHistory.add(e.target.value, 'docs-demo'); e.target.value = ''; paintHistory(); } });
+          paintHistory();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="track-view">
+    <h2>Recently viewed — <code>data-o-track-view</code></h2>
+    <p>Mark any element <code>data-o-track-view='{"id":…,"title":…}'</code> (or a bare id string) and it records
+      itself into <code>Orion.viewed</code> the first time it's at least 50% visible for
+      <code>data-o-track-view-delay</code> ms (default 0 — scroll it out before the delay elapses and it won't
+      record). It fires once per element and dispatches <code>o-track-view</code> with the recorded item. Scroll the
+      card below into view and hold for a moment.</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-card" style="height:12rem;overflow:auto" id="ud-track-scroll">
+          <div style="height:13rem;display:flex;align-items:center;justify-content:center;color:var(--o-text-muted)">Scroll down ↓</div>
+          <div class="o-card-body" data-o-track-view='{"id":"prod-42","title":"Aurora Desk Lamp","url":"#prod-42"}' data-o-track-view-delay="600" id="ud-track-target">
+            <h4 class="o-mt-0">Aurora Desk Lamp</h4>
+            <p class="o-text-muted o-mb-0">Recorded via <code>Orion.viewed.track()</code> once this card has been ≥50% visible for 600ms.</p>
+          </div>
+        </div>
+        <div class="docs-log" id="ud-track-log"></div>
+        <script>
+          document.getElementById('ud-track-target').addEventListener('o-track-view', e => docs.log('#ud-track-log', 'o-track-view: ' + JSON.stringify(e.detail.item)));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="saved-views">
+    <h2>Saved views / filters</h2>
+    <p><code>&lt;o-saved-views&gt;</code> saves and reapplies arbitrary state (filters, sort, columns) per <code>scope</code>. Provide <code>getState()</code> to describe what "current state" means, and listen for <code>o-apply</code> to restore it.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-cluster">
+          <select class="o-select o-input-sm" id="ud-status"><option value="">Any status</option><option value="active">Active</option><option value="pending">Pending</option></select>
+          <select class="o-select o-input-sm" id="ud-role"><option value="">Any role</option><option value="admin">Admin</option><option value="editor">Editor</option></select>
+          <o-saved-views scope="docs-users" id="ud-views"></o-saved-views>
+        </div>
+        <pre class="docs-code-block" id="ud-state-out">// current filter state</pre>
+        <script>
+          const views = document.getElementById('ud-views');
+          const state = () => ({ status: document.getElementById('ud-status').value, role: document.getElementById('ud-role').value });
+          const paint = () => document.getElementById('ud-state-out').textContent = JSON.stringify(state(), null, 2);
+          views.getState = state;
+          views.addEventListener('o-apply', e => { document.getElementById('ud-status').value = e.detail.state.status || ''; document.getElementById('ud-role').value = e.detail.state.role || ''; paint(); });
+          ['ud-status', 'ud-role'].forEach(id => document.getElementById(id).addEventListener('change', paint));
+          paint();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="prefs">
+    <h2>Preferences</h2>
+    <p><code>Orion.prefs</code> is a flat key/value store, synced across tabs, with change notifications per key.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <label class="o-check"><input type="checkbox" id="ud-compact"><span>Compact tables</span></label>
+        <p class="o-text-muted o-fs-sm o-mt-2" id="ud-pref-out"></p>
+        <script>
+          const cb = document.getElementById('ud-compact');
+          const paintPref = v => document.getElementById('ud-pref-out').textContent = 'Orion.prefs.get("compactTables") → ' + v;
+          cb.checked = Orion.prefs.get('compactTables', false);
+          paintPref(cb.checked);
+          cb.addEventListener('change', () => Orion.prefs.set('compactTables', cb.checked));
+          Orion.prefs.on('compactTables', paintPref);
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Namespace</th><th>Members</th></tr></thead>
+      <tbody>
+        <tr><td><code>Orion.userdata</code></td><td><code>user</code>, <code>setUser(id, { auto })</code>, <code>configure({ storage })</code>, <code>export()</code>, <code>import(data)</code>, <code>clear()</code>, <code>onChange(fn({store,user,source}))</code>. Follows <code>Orion.auth.setUser()</code> automatically unless <code>setUser</code> was called explicitly.</td></tr>
+        <tr><td><code>Orion.recent</code> / <code>Orion.viewed</code></td><td><code>add(item)</code> (id/url required), <code>list({ type, limit })</code>, <code>get(id)</code>, <code>remove(id)</code>, <code>clear(type?)</code>, <code>onChange(fn)</code>. <code>viewed.track(item)</code> is an alias of <code>add</code>; max 20 / 50 entries.</td></tr>
+        <tr><td><code>Orion.favorites</code></td><td><code>list()</code>, <code>has(id)</code>, <code>get(id)</code>, <code>add(item)</code>, <code>remove(id)</code>, <code>toggle(item) → boolean</code>, <code>update(id, patch)</code>, <code>reorder(ids)</code>, <code>move(id, delta) → index</code>, <code>clear()</code>, <code>onChange(fn)</code>.</td></tr>
+        <tr><td><code>Orion.searchHistory</code></td><td><code>add(query, scope = 'global')</code>, <code>list(scope, limit?)</code>, <code>remove(query, scope)</code>, <code>clear(scope?)</code>, <code>onChange(fn)</code>. Max 10 per scope.</td></tr>
+        <tr><td><code>Orion.views</code></td><td><code>save(scope, name, state, { isDefault, id }) → view</code>, <code>list(scope)</code>, <code>get(scope, idOrName)</code>, <code>rename</code>, <code>remove</code>, <code>setDefault(scope, idOrName|null)</code>, <code>getDefault(scope)</code>, <code>clear(scope?)</code>, <code>onChange(fn)</code>.</td></tr>
+        <tr><td><code>Orion.prefs</code></td><td><code>get(key, def)</code>, <code>set(key, value)</code> or <code>set({...})</code>, <code>toggle(key)</code>, <code>on(key|'*', fn(value, old, key))</code>, <code>all()</code>, <code>reset(key?)</code>, <code>onChange(fn)</code>.</td></tr>
+      </tbody>
+    </table>
+    <p>Every store's item shape is free-form but conventionally includes <code>id</code>, <code>title</code> (or <code>name</code>), <code>url</code>, <code>icon</code>, <code>type</code> and <code>meta</code>. Storage keys: <code>orion:ud:&lt;user&gt;:&lt;store&gt;</code>. Bus event: <code>userdata:change</code> <code>{ store, user, source }</code> (<code>source</code>: <code>local | remote | user</code>).</p>
+    <h3>Elements</h3>
+    <table class="docs-api">
+      <thead><tr><th>Element</th><th>Attributes</th><th>Events</th></tr></thead>
+      <tbody>
+        <tr><td>&lt;o-favorite-button&gt;</td><td><code>item</code> (JSON), <code>label</code>, <code>size</code></td><td><code>o-before-change</code> (cancelable) / <code>o-change</code> <code>{ favorite, item }</code></td></tr>
+        <tr><td>&lt;o-recent-list&gt;</td><td><code>type</code>, <code>limit</code> (8), <code>store</code> (<code>recent|viewed</code>), <code>empty-text</code>, <code>clearable</code></td><td><code>o-select</code> (cancelable) <code>{ item }</code></td></tr>
+        <tr><td>&lt;o-favorites-list&gt;</td><td><code>limit</code>, <code>empty-text</code>, <code>clearable</code></td><td><code>o-select</code>, <code>o-reorder</code> <code>{ ids }</code></td></tr>
+        <tr><td>&lt;o-saved-views&gt;</td><td><code>scope</code> (default), <code>value</code> (active id), <code>state</code> / <code>get-state</code> (fn), <code>apply-default</code>, <code>placement</code></td><td><code>o-before-apply</code>/<code>o-before-save</code>/<code>o-before-delete</code> (cancelable), <code>o-apply</code> <code>{ view, state }</code>, <code>o-save</code> <code>{ view }</code>, <code>o-delete</code> <code>{ view }</code>, <code>o-open</code>, <code>o-close</code></td></tr>
+      </tbody>
+    </table>
+    <h3>Behaviors</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>data-o-track-view='{"id":…,"title":…}'</code></td><td>Any element. Value is JSON, or a bare id string (defaults to <code>location.pathname + search</code>). Records once, via <code>viewed.track()</code>, the first time the element is ≥50% visible for <code>data-o-track-view-delay</code> ms (default 0); dispatches <code>o-track-view {item}</code>.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

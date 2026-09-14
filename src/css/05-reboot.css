@@ -1,0 +1,61 @@
+/* ============================================================================
+ * Reboot — zero-specificity base styles (:where) so your CSS always wins.
+ * Disable with <script src="orion.js" data-reboot="false">.
+ * ========================================================================== */
+*, *::before, *::after { box-sizing: border-box; }
+:where(html) {
+  font-size: calc(100% * var(--o-font-scale, 1));
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+:where(body) {
+  margin: 0;
+  font-family: var(--o-font-sans);
+  font-size: var(--o-fs-base);
+  line-height: var(--o-lh);
+  color: var(--o-text);
+  background-color: var(--o-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+:where(h1, h2, h3, h4, h5, h6) { margin: 0 0 .5rem; font-weight: 600; line-height: var(--o-lh-tight); color: var(--o-heading, var(--o-text)); letter-spacing: -.01em; }
+:where(h1) { font-size: var(--o-fs-3xl); }
+:where(h2) { font-size: var(--o-fs-2xl); }
+:where(h3) { font-size: var(--o-fs-xl); }
+:where(h4) { font-size: var(--o-fs-lg); }
+:where(h5) { font-size: var(--o-fs-md); }
+:where(h6) { font-size: var(--o-fs-base); }
+:where(p) { margin: 0 0 1rem; }
+:where(a) { color: var(--o-link); text-decoration: none; }
+:where(a:hover) { text-decoration: underline; }
+:where(ul, ol) { margin: 0 0 1rem; padding-inline-start: 1.5rem; }
+:where(ul ul, ol ol, ul ol, ol ul) { margin-bottom: 0; }
+:where(dl) { margin: 0 0 1rem; }
+:where(dt) { font-weight: 600; }
+:where(dd) { margin: 0 0 .5rem; }
+:where(blockquote, figure) { margin: 0 0 1rem; }
+:where(hr) { margin: 1rem 0; border: 0; border-top: 1px solid var(--o-border); }
+:where(b, strong) { font-weight: 600; }
+:where(small) { font-size: .875em; }
+:where(sub, sup) { position: relative; font-size: .75em; line-height: 0; vertical-align: baseline; }
+:where(sub) { bottom: -.25em; }
+:where(sup) { top: -.5em; }
+:where(code, kbd, pre, samp) { font-family: var(--o-font-mono); font-size: .875em; }
+:where(pre) { margin: 0 0 1rem; overflow: auto; }
+:where(img, svg, video, canvas, audio, iframe, embed, object) { vertical-align: middle; }
+:where(img, video) { max-width: 100%; height: auto; }
+:where(table) { border-collapse: collapse; caption-side: bottom; }
+:where(th) { text-align: inherit; font-weight: 600; }
+:where(button, input, select, optgroup, textarea) { margin: 0; font-family: inherit; font-size: inherit; line-height: inherit; color: inherit; }
+:where(button, select) { text-transform: none; }
+:where(button, [type="button"], [type="reset"], [type="submit"]):not(:disabled) { cursor: pointer; }
+:where(textarea) { resize: vertical; }
+:where(fieldset) { min-width: 0; margin: 0; padding: 0; border: 0; }
+:where(legend) { padding: 0; font-weight: 600; }
+:where(summary) { cursor: pointer; }
+:where(mark) { padding: 0 .15em; background: color-mix(in srgb, var(--o-warning) 35%, transparent); color: inherit; border-radius: 2px; }
+:where(abbr[title]) { text-decoration: underline dotted; cursor: help; }
+:where(:focus-visible) { outline: 2px solid var(--o-focus); outline-offset: 2px; }
+::selection { background: color-mix(in srgb, var(--o-primary) 24%, transparent); }

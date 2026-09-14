@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard — Orion Admin</title>
+<meta name="docs:section" content="Dashboard">
+<meta name="docs:order" content="10">
+<meta name="docs:desc" content="A dynamic, customizable dashboard grid: draggable and resizable widgets, a catalog to add more, and persisted layouts">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Dashboard</h1>
+    <p class="docs-lead"><code>&lt;o-dashboard&gt;</code> and <code>&lt;o-widget&gt;</code> build a customizable analytics grid: drag widgets by their header, resize from any edge or corner, add more from a searchable catalog, and persist the whole layout to <code>localStorage</code> — all with plain CSS grid underneath (RTL mirrors for free) and full keyboard support.</p>
+  </header>
+
+  <section id="overview">
+    <h2>Overview</h2>
+    <p>Turn on <b>Edit layout</b>, then drag a widget by its header, resize it from the bottom-right corner, collapse the revenue chart, or open the catalog to add a widget. Reload the page — the layout, added widgets and collapsed state are all remembered (<code>persist="demo-analytics"</code>). <b>Reset</b> clears that and restores the original layout.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div style="padding:1.5rem">
+          <div class="o-toolbar o-mb-3" style="display:flex;gap:.5rem;flex-wrap:wrap">
+            <button class="o-btn o-btn-sm o-btn-primary" type="button" data-o-action="dashboard" data-o-value="edit" data-o-target="#dash-demo" aria-pressed="false">
+              <o-icon name="edit-3"></o-icon> Edit layout
+            </button>
+            <button class="o-btn o-btn-sm" type="button" data-o-action="dashboard" data-o-value="catalog" data-o-target="#dash-demo"><o-icon name="plus"></o-icon> Add widget</button>
+            <button class="o-btn o-btn-sm o-btn-ghost" type="button" data-o-action="dashboard" data-o-value="compact" data-o-target="#dash-demo">Compact</button>
+            <button class="o-btn o-btn-sm o-btn-ghost" type="button" data-o-action="dashboard" data-o-value="reset" data-o-target="#dash-demo">Reset</button>
+          </div>
+
+          <o-dashboard id="dash-demo" editable persist="demo-analytics" columns="12" row-height="72" gap="16" label="Analytics dashboard">
+            <o-widget id="kpis" heading="This month" icon="trending-up" x="0" y="0" w="12" h="2" locked headerless>
+              <o-stat-group id="dash-kpis" min="11rem"></o-stat-group>
+            </o-widget>
+
+            <o-widget id="revenue" heading="Revenue vs costs" icon="bar-chart-2" subtitle="Last 12 months" x="0" y="2" w="8" h="4"
+                      collapsible refreshable fullscreen removable>
+              <o-chart id="dash-revenue-chart" height="100%"></o-chart>
+            </o-widget>
+
+            <o-widget id="sources" heading="Traffic sources" icon="pie-chart" x="8" y="2" w="4" h="4" collapsible removable duplicate>
+              <o-chart id="dash-sources-chart" height="100%"></o-chart>
+            </o-widget>
+
+            <o-widget id="activity" heading="Recent activity" icon="activity" x="8" y="6" w="4" h="4" collapsible removable refreshable flush>
+              <div class="o-list o-list-flush" id="dash-activity"></div>
+            </o-widget>
+
+            <o-widget id="table" heading="Top accounts" icon="table" x="0" y="6" w="8" h="4" collapsible removable settings flush>
+              <o-datatable id="dash-table" flush pagination="false" toolbar="false"></o-datatable>
+            </o-widget>
+
+            <o-widget id="todo" heading="To-do" icon="check-square" x="0" y="10" w="4" h="3" collapsible removable>
+              <div id="dash-todo"></div>
+            </o-widget>
+          </o-dashboard>
+        </div>
+        <script>
+          {
+            const dash = document.getElementById('dash-demo');
+
+            // KPI row
+            const kpis = document.getElementById('dash-kpis');
+            kpis.innerHTML = `
+              <o-stat label="Revenue" value="128450" format="currency" compact delta="8.4" icon="dollar-sign" sparkline="[86,91,95,90,101,110,108,116,121,119,124,128]" countup></o-stat>
+              <o-stat label="New customers" value="342" delta="-2.1" delta-good="up" icon="user-plus" color="info" sparkline="[52,48,55,50,44,41,38,36,33,30,28,342]" sparkline-type="bar"></o-stat>
+              <o-stat label="Churn" value="1.8" format="percent" delta="-0.3" delta-good="down" icon="trending-down" color="warning"></o-stat>
+              <o-stat label="Support load" value="64" format="percent" icon="life-buoy" color="success" goal="80"></o-stat>`;
+
+            // charts
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            document.getElementById('dash-revenue-chart').config = {
+              type: 'line', labels: months, yAxis: { format: 'currency' },
+              series: [{ name: 'Revenue', data: [86, 91, 95, 90, 101, 110, 108, 116, 121, 119, 124, 128].map(v => v * 1000) },
+                       { name: 'Costs', data: [61, 63, 66, 64, 70, 74, 73, 78, 80, 79, 82, 85].map(v => v * 1000) }],
+            };
+            document.getElementById('dash-sources-chart').config = {
+              type: 'donut', labels: ['Organic', 'Referral', 'Paid', 'Social', 'Direct'], series: [{ data: [38, 22, 18, 14, 8] }],
+            };
+
+            // activity list
+            const acts = docs.people(6).map((p, i) => ({ p, verb: ['updated the plan', 'closed a deal', 'invited a teammate', 'left a comment', 'uploaded a file', 'created a report'][i] }));
+            document.getElementById('dash-activity').innerHTML = acts.map(({ p, verb }) => `
+              <div class="o-list-item"><span class="o-avatar o-avatar-sm">${p.first[0]}${p.last[0]}</span>
+                <span class="o-list-content"><span class="o-list-title">${p.name} ${verb}</span><span class="o-list-sub">${Orion.format.relative(new Date(Date.now() - Math.random() * 6e6))}</span></span></div>`).join('');
+
+            // table widget
+            const table = document.getElementById('dash-table');
+            table.columns = [
+              { key: 'name', title: 'Account', type: 'avatar', subtitle: 'email' },
+              { key: 'salary', title: 'MRR', type: 'currency', format: { maximumFractionDigits: 0 } },
+              { key: 'status', title: 'Status', type: 'badge', colors: { Active: 'success', Pending: 'warning', Inactive: 'secondary', Suspended: 'danger' } },
+            ];
+            table.rows = docs.people(8);
+
+            // to-do widget
+            const todos = ['Review Q3 targets', 'Approve new hires', 'Ship pricing page', 'Renew SSO certificate'];
+            document.getElementById('dash-todo').innerHTML = '<div class="o-check-list">' + todos.map((t, i) => `
+              <label class="o-check"><input type="checkbox" class="o-checkbox"${i === 0 ? ' checked' : ''}><span>${t}</span></label>`).join('') + '</div>';
+
+            // widget catalog: pick from these to add new widgets
+            dash.catalog = [
+              { type: 'kpi', title: 'KPI tile', icon: 'hash', description: 'A single statistic with a sparkline', w: 3, h: 2, removable: true,
+                renderer: body => { const s = document.createElement('o-stat'); s.label = 'New metric'; s.value = Math.round(Math.random() * 9000); s.icon = 'activity'; s.delta = Math.round((Math.random() * 20 - 10) * 10) / 10; body.replaceChildren(s); } },
+              { type: 'notes', title: 'Notes', icon: 'file-text', description: 'A free-form text card', w: 4, h: 3, removable: true,
+                renderer: body => { body.innerHTML = '<textarea class="o-textarea" style="height:100%;resize:none" placeholder="Write something…"></textarea>'; } },
+              { type: 'chart', title: 'Mini chart', icon: 'trending-up', description: 'A small line chart', w: 4, h: 3, removable: true, refreshable: true,
+                renderer: body => { const c = document.createElement('o-chart'); c.height = '100%'; c.config = { type: 'area', labels: months, series: [{ data: months.map(() => 40 + Math.random() * 60) }] }; body.replaceChildren(c); } },
+            ];
+
+            // toggle the "Edit layout" button's pressed state and label to match the dashboard
+            dash.addEventListener('o-edit-change', e => {
+              const btn = document.querySelector('[data-o-value="edit"]');
+              btn.setAttribute('aria-pressed', String(e.detail.editable));
+              btn.classList.toggle('o-btn-primary', e.detail.editable);
+              btn.classList.toggle('o-btn-soft-primary', !e.detail.editable);
+            });
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="widget-chrome">
+    <h2>Widget chrome</h2>
+    <p>Every widget can offer <code>refreshable</code> (fires <code>o-widget-refresh</code>; call <code>detail.waitUntil(promise)</code> to show a spinner), <code>fullscreen</code>, <code>collapsible</code>, <code>settings</code> (fires <code>o-widget-settings</code> — wire up your own panel) and <code>removable</code> from its header menu. Content renders lazily the first time a widget scrolls into view (<code>lazy</code>, on by default) and is a real DOM subtree — moved in, not cloned or re-rendered — so framework-mounted content survives.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-dashboard editable columns="6" row-height="90" style="width:100%;max-width:32rem">
+          <o-widget id="chrome-demo" heading="Live clock" icon="clock" subtitle="Refreshes on demand" x="0" y="0" w="6" h="2"
+                    collapsible refreshable fullscreen settings removable>
+            <div id="chrome-demo-body" style="font:600 1.5rem var(--o-font-mono)"></div>
+          </o-widget>
+        </o-dashboard>
+        <div class="docs-log" id="chrome-log"></div>
+        <script>
+          {
+            const paint = () => { document.getElementById('chrome-demo-body').textContent = new Date().toLocaleTimeString(); };
+            paint();
+            const w = document.getElementById('chrome-demo');
+            w.addEventListener('o-widget-refresh', e => { docs.log('#chrome-log', 'o-widget-refresh'); e.detail.waitUntil(new Promise(r => setTimeout(() => { paint(); r(); }, 600))); });
+            w.addEventListener('o-widget-collapse', e => docs.log('#chrome-log', 'o-widget-collapse ' + e.detail.collapsed));
+            w.addEventListener('o-widget-fullscreen', e => docs.log('#chrome-log', 'o-widget-fullscreen ' + e.detail.fullscreen));
+            w.addEventListener('o-widget-settings', () => docs.log('#chrome-log', 'o-widget-settings — open your own panel here'));
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="js-api">
+    <h2>JS API &amp; events</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster" style="--o-gap:.5rem">
+          <button class="o-btn o-btn-sm" type="button" data-m="get">getLayout()</button>
+          <button class="o-btn o-btn-sm" type="button" data-m="set">setLayout(shuffled)</button>
+          <button class="o-btn o-btn-sm" type="button" data-m="add">addWidget('kpi')</button>
+        </div>
+        <div class="docs-log" id="api-log"></div>
+        <script>
+          {
+            const dash = document.getElementById('dash-demo');
+            document.querySelector('[data-m="get"]').onclick = () => docs.log('#api-log', JSON.stringify(dash.getLayout()));
+            document.querySelector('[data-m="set"]').onclick = () => {
+              const l = dash.getLayout().map(i => ({ ...i, y: Math.round(Math.random() * 4) }));
+              dash.setLayout(l);
+              docs.log('#api-log', 'setLayout ' + JSON.stringify(l));
+            };
+            document.querySelector('[data-m="add"]').onclick = () => { dash.editable = true; dash.addWidget('kpi'); docs.log('#api-log', 'addWidget("kpi")'); };
+            dash.addEventListener('o-layout-change', e => docs.log('#api-log', `o-layout-change (${e.detail.reason}) breakpoint=${e.detail.breakpoint}`));
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="grid-layout">
+    <h2>Grid math: <code>Orion.gridLayout</code></h2>
+    <p>The collision/compaction/breakpoint math that powers <code>&lt;o-dashboard&gt;</code> is exposed as plain functions over layout-item arrays (<code>{ id, x, y, w, h, minW, minH, maxW, maxH, locked }</code>), reusable outside the component — for example to validate a layout on the server before saving it. Every function <b>mutates the items it is given</b>; pass a clone if you need to keep the original.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div style="padding:1.5rem">
+          <div class="o-cluster" style="--o-gap:.5rem">
+            <button class="o-btn o-btn-sm" type="button" data-gl="free">freeSpot(2×2)</button>
+            <button class="o-btn o-btn-sm" type="button" data-gl="move">move('b', 0, 0)</button>
+            <button class="o-btn o-btn-sm" type="button" data-gl="valid">valid()</button>
+          </div>
+          <div class="docs-log" id="gl-log"></div>
+        </div>
+        <script>
+          {
+            const cols = 4;
+            let items = [{ id: 'a', x: 0, y: 0, w: 2, h: 1 }, { id: 'b', x: 2, y: 0, w: 2, h: 2 }, { id: 'c', x: 0, y: 1, w: 2, h: 1 }];
+            docs.log('#gl-log', 'start: ' + JSON.stringify(items));
+            document.querySelector('[data-gl="free"]').onclick = () => docs.log('#gl-log', 'freeSpot(2,2) -> ' + JSON.stringify(Orion.gridLayout.freeSpot(items, 2, 2, cols)));
+            document.querySelector('[data-gl="move"]').onclick = () => { items = Orion.gridLayout.move(Orion.gridLayout.clone(items), 'b', 0, 0, 'vertical', cols); docs.log('#gl-log', 'move -> ' + JSON.stringify(items)); };
+            document.querySelector('[data-gl="valid"]').onclick = () => docs.log('#gl-log', 'valid(items, ' + cols + ') -> ' + Orion.gridLayout.valid(items, cols));
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Tab</td><td>Focus the next widget (in edit mode) or its controls.</td></tr>
+        <tr><td>Arrow keys</td><td>A focused widget: move it by one column/row (respects RTL).</td></tr>
+        <tr><td>Shift + Arrow keys</td><td>Resize the focused widget by one column/row.</td></tr>
+        <tr><td>Delete / Backspace</td><td>Remove the focused widget (with confirmation, unless <code>confirm-remove="false"</code>).</td></tr>
+        <tr><td>Escape</td><td>Cancel an in-progress keyboard or pointer move/resize; exit a maximized widget.</td></tr>
+        <tr><td>↓ / ↑ on the menu button</td><td>Open the widget's action menu.</td></tr>
+      </tbody>
+    </table>
+    <p>Every move/resize/collapse is announced to screen readers, and the whole grid, each widget (<code>role="region"</code>, labelled by its heading) and the action menu (<code>role="menu"</code>) carry correct ARIA.</p>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>&lt;o-dashboard&gt; properties / attributes</h3>
+    <table class="docs-api">
+      <thead><tr><th>Property (attribute)</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>columns</td><td>number</td><td>12</td><td>Columns at the widest breakpoint.</td></tr>
+        <tr><td>rowHeight (row-height)</td><td>number</td><td>80</td><td>Row height in px.</td></tr>
+        <tr><td>gap</td><td>number</td><td>16</td><td>Grid gap in px (both axes).</td></tr>
+        <tr><td>editable</td><td>boolean</td><td>false</td><td>Enables drag, resize, the catalog and the remove/duplicate actions.</td></tr>
+        <tr><td>locked</td><td>boolean</td><td>false</td><td>Freezes the layout even while <code>editable</code> — for a "view only" mode without leaving edit mode.</td></tr>
+        <tr><td>persist</td><td>string</td><td>—</td><td>A key; when set, the layout, added/removed widgets and collapsed state are saved to <code>localStorage</code> under <code>orion:dashboard:&lt;persist&gt;</code>.</td></tr>
+        <tr><td>breakpoints</td><td>object</td><td>auto (lg/md/sm/xs from <code>columns</code>)</td><td><code>{ lg: 12, md: { cols: 8, width: 900 }, sm: 4, xs: 1 }</code> — column count (and optional min width) per named breakpoint.</td></tr>
+        <tr><td>compact</td><td>'vertical' | 'none'</td><td>'vertical'</td><td>Whether other widgets float up to fill gaps left behind by a move/remove.</td></tr>
+        <tr><td>float</td><td>boolean</td><td>false</td><td>Alias for <code>compact="none"</code>.</td></tr>
+        <tr><td>layout</td><td>array</td><td>—</td><td>Declare widgets from data instead of markup: <code>[{ id, x, y, w, h, heading, type, renderer }]</code>.</td></tr>
+        <tr><td>layouts</td><td>object</td><td>—</td><td>Initial per-breakpoint layouts: <code>{ lg: [...], md: [...] }</code> (merged under anything restored from <code>persist</code>).</td></tr>
+        <tr><td>catalog</td><td>array</td><td>—</td><td><code>[{ type, title, icon, description, w, h, renderer, ...widget props }]</code> — entries offered by <code>openCatalog()</code> / <code>addWidget(type)</code>.</td></tr>
+        <tr><td>confirmRemove (confirm-remove)</td><td>boolean | (widget) =&gt; Promise&lt;boolean&gt;</td><td>true</td><td>Confirmation before removing a widget; pass a function for your own dialog.</td></tr>
+        <tr><td>label</td><td>string</td><td>"Dashboard"</td><td><code>aria-label</code> for the grid.</td></tr>
+        <tr><td>widgets</td><td>read-only</td><td>—</td><td>Live array of the current (non-removed) <code>&lt;o-widget&gt;</code> elements.</td></tr>
+        <tr><td>breakpoint / cols</td><td>read-only</td><td>—</td><td>Name and column count of the currently active breakpoint.</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-dashboard&gt; methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>toggleEdit(force?)</td><td>Enter/exit edit mode; returns the new state (false if <code>locked</code>).</td></tr>
+        <tr><td>getLayout(breakpoint?) / getLayouts()</td><td>Current (or a specific) breakpoint's layout as <code>[{ id, x, y, w, h, collapsed? }]</code>; every breakpoint's layout.</td></tr>
+        <tr><td>setLayout(layout, { breakpoint, silent })  / setLayouts(map)</td><td>Apply a layout you computed or loaded from your backend.</td></tr>
+        <tr><td>getState() / setState(state)</td><td>Full persisted shape (layouts + added/removed/collapsed) — save this to your own backend instead of <code>persist</code>.</td></tr>
+        <tr><td>save() / reset()</td><td>Write to <code>localStorage</code> now (normally debounced); forget all user changes and reload the original layout.</td></tr>
+        <tr><td>compactLayout()</td><td>Re-run vertical compaction over the current layout.</td></tr>
+        <tr><td>addWidget(type | spec, opts?)</td><td>Add a catalog widget (by <code>type</code>) or an ad-hoc spec; returns the new <code>&lt;o-widget&gt;</code>.</td></tr>
+        <tr><td>duplicateWidget(id) / removeWidget(id, { confirm })</td><td>For widgets with a <code>type</code> or <code>renderer</code>; remove resolves <code>false</code> if the user cancels.</td></tr>
+        <tr><td>getWidget(id) / refreshAll()</td><td>Look up a widget; call <code>refresh()</code> on every widget.</td></tr>
+        <tr><td>openCatalog(trigger?) / closeCatalog() / catalogOpen</td><td>Control the "Add widget" panel.</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-dashboard&gt; events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-layout-change</td><td>{ reason, id?, breakpoint, layout, layouts }</td><td><code>reason</code>: move, resize, add, remove, collapse, compact, reset or api.</td></tr>
+        <tr><td>o-edit-change</td><td>{ editable }</td><td>Edit mode toggled.</td></tr>
+        <tr><td>o-breakpoint-change</td><td>{ breakpoint, previous, columns }</td><td>The active breakpoint changed (container resize).</td></tr>
+        <tr><td>o-drag-start / o-drag-end</td><td>{ id, widget } / { id, widget, changed, cancelled }</td><td>A pointer or keyboard move.</td></tr>
+        <tr><td>o-resize-start / o-resize-end</td><td>same shape</td><td>A pointer or keyboard resize.</td></tr>
+        <tr><td>o-before-widget-add / o-widget-add</td><td>{ item } / { id, widget }</td><td>Cancelable before / after a widget is added.</td></tr>
+        <tr><td>o-before-widget-remove / o-widget-remove</td><td>{ id, widget }</td><td>Cancelable before / after a widget is removed.</td></tr>
+        <tr><td>o-catalog-open / o-catalog-close / o-catalog-select</td><td>— / — / { type, widget }</td><td>The catalog panel.</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-widget&gt; properties / attributes</h3>
+    <table class="docs-api">
+      <thead><tr><th>Property (attribute)</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>heading, subtitle, icon</td><td>string</td><td>—</td><td>Header content.</td></tr>
+        <tr><td>type</td><td>string</td><td>—</td><td>Matches a <code>catalog</code> entry; enables <code>duplicateWidget()</code> and re-adding after removal via the catalog.</td></tr>
+        <tr><td>x, y, w, h</td><td>number</td><td>auto / 3 / 2</td><td>Initial grid position/size at the base (widest) breakpoint; omit <code>x</code>/<code>y</code> to auto-place.</td></tr>
+        <tr><td>minW, minH, maxW, maxH</td><td>number</td><td>—</td><td>Resize constraints, in grid units.</td></tr>
+        <tr><td>collapsible, removable, refreshable, fullscreen, settings</td><td>boolean</td><td>false</td><td>Which actions appear in the header menu.</td></tr>
+        <tr><td>headerless</td><td>boolean</td><td>false</td><td>Small floating toolbar instead of a full header row (shown on hover/focus or while editing).</td></tr>
+        <tr><td>flushed (attribute: flush)</td><td>boolean</td><td>false</td><td>No padding on the body — for a table or chart that should fill the tile.</td></tr>
+        <tr><td>locked</td><td>boolean</td><td>false</td><td>Can't be moved, resized or removed (but can still be interacted with).</td></tr>
+        <tr><td>collapsed</td><td>boolean</td><td>false</td><td>Shows only the header.</td></tr>
+        <tr><td>loading</td><td>boolean</td><td>false</td><td>Sets <code>aria-busy</code> and shows a header spinner.</td></tr>
+        <tr><td>lazy</td><td>boolean</td><td>true</td><td>Defer rendering <code>renderer</code>/the <code>&lt;template&gt;</code> child until the widget scrolls into view.</td></tr>
+        <tr><td>renderer</td><td>(body, widget) =&gt; Node | string | Promise</td><td>—</td><td>Lazy content; a returned promise shows the loading state until it resolves.</td></tr>
+        <tr><td>data</td><td>any</td><td>—</td><td>Free-form payload for your own <code>renderer</code>/catalog logic.</td></tr>
+        <tr><td>dashboard</td><td>read-only</td><td>—</td><td>The owning <code>&lt;o-dashboard&gt;</code>, or <code>null</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-widget&gt; methods &amp; events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>refresh()</td><td>Fires <code>o-widget-refresh</code> (call <code>detail.waitUntil(promise)</code>) and re-runs <code>renderer</code>.</td></tr>
+        <tr><td>toggleCollapse(force?) / maximize(force?)</td><td>Programmatic collapse / full-screen.</td></tr>
+        <tr><td>runAction(id)</td><td>Run a header-menu action by id: refresh, fullscreen, collapse, settings, duplicate, remove.</td></tr>
+        <tr><td>o-widget-refresh / o-widget-collapse / o-widget-fullscreen</td><td>{ id, widget, waitUntil? } / { id, collapsed } / { id, fullscreen }</td></tr>
+        <tr><td>o-widget-settings / o-widget-resize / o-widget-visible</td><td>{ id, widget } / { id, w, h, width, height, live } / { id }</td></tr>
+        <tr><td>o-before-widget-collapse</td><td>{ id, collapsed } — cancelable.</td></tr>
+      </tbody>
+    </table>
+    <h3>Orion.dashboard() &amp; declarative actions</h3>
+    <p><code>Orion.dashboard(el, options)</code> creates (or configures) an <code>&lt;o-dashboard&gt;</code> from any props plus <code>on: { 'layout-change': fn }</code>. <code>&lt;button data-o-action="dashboard" data-o-value="edit|catalog|reset|save|compact" data-o-target="#dash"&gt;</code> wires the toolbar buttons above with no JS.</p>
+    <h3>Orion.gridLayout</h3>
+    <p>Pure functions over plain layout-item arrays — the same math <code>&lt;o-dashboard&gt;</code> is built on (see the demo above). Every function mutates the items it is given; call <code>Orion.gridLayout.clone(list)</code> first if you need to keep the original.</p>
+    <table class="docs-api">
+      <thead><tr><th>Function</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>clone(list)</td><td>Shallow-per-item copy so callers can mutate safely.</td></tr>
+        <tr><td>collides(a, b)</td><td><code>true</code> when two items overlap (also <code>false</code> for the same id).</td></tr>
+        <tr><td>compact(list, mode, pinId?)</td><td>Resolve overlaps; <code>mode: 'vertical'</code> floats every unlocked item up. <code>pinId</code> anchors one more item in place for this pass (used right after a drag/resize).</td></tr>
+        <tr><td>move(list, id, x, y, mode, cols)</td><td>Move an item — colliding neighbours first try to swap above it, otherwise are pushed down — then compact.</td></tr>
+        <tr><td>resize(list, id, w, h, mode, cols)</td><td>Resize an item (clamped to its min/max), pushing colliding items down, then compact.</td></tr>
+        <tr><td>freeSpot(list, w, h, cols)</td><td>First free <code>{ x, y }</code> for a <code>w</code>×<code>h</code> item (top-to-bottom, inline-start to inline-end).</td></tr>
+        <tr><td>derive(src, srcCols, cols, mode?)</td><td>Scale a layout designed for <code>srcCols</code> columns to <code>cols</code> columns — used for breakpoints that have no explicit <code>layouts[bp]</code> override.</td></tr>
+        <tr><td>valid(list, cols)</td><td><code>true</code> when no two items overlap and all are inside <code>[0, cols)</code>.</td></tr>
+        <tr><td>bottom(list)</td><td>Highest occupied row + 1.</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS variables &amp; classes</h3>
+    <p><code>--o-dash-row</code>, <code>--o-dash-gap</code> (also settable via the <code>row-height</code>/<code>gap</code> props). Parts: <code>.o-widget-header</code>, <code>.o-widget-body</code>, <code>.o-widget-handle</code>, <code>.o-widget-resize</code>, <code>.o-widget-actions</code>, <code>.o-dash-catalog</code>, <code>.o-dash-menu</code>. State classes: <code>.is-editing</code>, <code>.is-locked</code>, <code>.is-dragging</code>, <code>.is-resizing</code>, <code>.is-maximized</code>.</p>
+  </section>
+</main>
+</body>
+</html>

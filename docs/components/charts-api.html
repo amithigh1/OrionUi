@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chart API — Orion Admin</title>
+<meta name="docs:section" content="Charts">
+<meta name="docs:order" content="70">
+<meta name="docs:desc" content="Chart configuration reference, methods, events, streaming, export, theming and accessibility">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Chart API</h1>
+    <p class="docs-lead">Everything the chart engine exposes: the configuration object, the <code>&lt;o-chart&gt;</code> element, instance methods, events, live updates and streaming, SVG/PNG/CSV export, theming tokens and the accessibility model.</p>
+  </header>
+
+  <section id="create">
+    <h2>Creating a chart</h2>
+    <p>Use the element (frameworks set the <code>config</code> property; plain HTML can use a JSON attribute) or the factory, which accepts any element or selector and returns the <code>Chart</code> instance. Functions (formatters) can only be passed through properties.</p>
+    <pre class="docs-code-block" data-lang="html">
+      &lt;o-chart id="sales" type="line" height="280"
+        config='{"labels":["Q1","Q2","Q3"],"series":[{"name":"Sales","data":[12,19,15]}]}'&gt;&lt;/o-chart&gt;
+
+      &lt;script&gt;
+        // or from JS: returns the Chart instance
+        const chart = Orion.chart('#panel', {
+          type: 'column',
+          labels: ['Q1', 'Q2', 'Q3'],
+          series: [{ name: 'Sales', data: [12, 19, 15] }],
+          yAxis: { format: v =&gt; '$' + v + 'K' },
+        });
+        document.getElementById('sales').chart;   // instance behind an element
+      &lt;/script&gt;
+    </pre>
+    <h3>Frameworks</h3>
+    <pre class="docs-code-block" data-lang="js">
+      // React 19 (sets properties)
+      &lt;o-chart config={cfg} ref={ref} /&gt;   // events: ref.current.addEventListener('o-point-click', fn)
+      // React 18 (sets attributes)
+      &lt;o-chart config={JSON.stringify(cfg)} /&gt;
+      // Vue 3 — compilerOptions.isCustomElement = t =&gt; t.startsWith('o-')
+      &lt;o-chart :config="cfg" @o-point-click="onPoint" /&gt;
+      // Angular — schemas: [CUSTOM_ELEMENTS_SCHEMA]
+      &lt;o-chart [config]="cfg" (o-point-click)="onPoint($event)"&gt;&lt;/o-chart&gt;
+      // A new config object animates from the previous state; cleanup happens when the element leaves the DOM.
+    </pre>
+  </section>
+
+  <section id="config">
+    <h2>Configuration</h2>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>type</td><td><code>string</code></td><td><code>'line'</code></td><td><code>line</code> <code>area</code> <code>column</code> <code>bar</code> <code>mixed</code> <code>scatter</code> <code>bubble</code> <code>candlestick</code> <code>ohlc</code> <code>boxplot</code> <code>pie</code> <code>donut</code> <code>radar</code> <code>polar</code> <code>radialBar</code> <code>gauge</code> <code>progress</code> <code>heatmap</code> <code>calendar</code> <code>treemap</code> <code>funnel</code> <code>choropleth</code> <code>bubbleMap</code> <code>geo</code></td></tr>
+        <tr><td>labels</td><td><code>(string</code> <code>number</code> <code>Date)[]</code></td><td></td><td>Categories (or dates → time axis for line/area).</td></tr>
+        <tr><td>series</td><td><code>Series[]</code></td><td></td><td>See below. Shorthands: <code>series: [1, 2, 3]</code> or <code>data: [...]</code> for one series.</td></tr>
+        <tr><td>title / subtitle / description</td><td><code>string</code></td><td></td><td>Shown in the chart head; all three feed the accessible name.</td></tr>
+        <tr><td>height</td><td><code>number</code> <code>string</code> <code>'fill'</code></td><td>type-specific</td><td>Plot height in px, including the axes. <code>'fill'</code> / <code>'100%'</code> fills a sized parent. Heatmaps, calendars, funnels, gauges and maps size themselves when omitted.</td></tr>
+        <tr><td>xAxis</td><td><code>Axis</code></td><td></td><td>Category / x axis.</td></tr>
+        <tr><td>yAxis</td><td><code>Axis</code></td><td></td><td>Value axis (also the value format for tooltips, tables and labels). One axis only — by design.</td></tr>
+        <tr><td>stacked</td><td><code>boolean</code> <code>'percent'</code></td><td><code>false</code></td><td>Stack columns/areas; <code>'percent'</code> normalises to 100%.</td></tr>
+        <tr><td>horizontal</td><td><code>boolean</code></td><td><code>false</code></td><td>Horizontal bars (same as <code>type: 'bar'</code>).</td></tr>
+        <tr><td>curve</td><td><code>'linear'</code> <code>'smooth'</code> <code>'step'</code></td><td><code>'linear'</code></td><td>Line interpolation (smooth is monotone: no overshoot).</td></tr>
+        <tr><td>markers</td><td><code>'auto' | boolean</code></td><td><code>'auto'</code></td><td>Dots on every line point.</td></tr>
+        <tr><td>dataLabels</td><td><code>'auto'</code> <code>boolean</code> <code>'end'</code></td><td><code>'auto'</code></td><td>Selective direct labels: line ends (≤ 4 series), single-series bar tips, stacked segments that fit.</td></tr>
+        <tr><td>annotations</td><td><code>Annotation[]</code></td><td><code>[]</code></td><td>Target lines and bands.</td></tr>
+        <tr><td>legend</td><td><code>{ show, position }</code> · <code>false</code></td><td><code>{ position: 'top' }</code></td><td>Shown for ≥ 2 series. <code>position: top</code> <code>bottom</code> <code>start</code> <code>end</code>.</td></tr>
+        <tr><td>tooltip</td><td><code>{ shared, format }</code> · <code>false</code></td><td></td><td><code>shared: true</code> lists every series on bar charts too; <code>format(v)</code> overrides tooltip values.</td></tr>
+        <tr><td>toolbar</td><td><code>{ table, download }</code> · <code>false</code></td><td><code>{ table: true }</code></td><td>Corner buttons: "View as table", download menu (PNG/SVG/CSV), reset zoom.</td></tr>
+        <tr><td>zoom</td><td><code>{ x: true }</code> <code>true</code></td><td></td><td>Brush-zoom along x (cartesian); maps always zoom.</td></tr>
+        <tr><td>animate</td><td><code>boolean | number</code></td><td><code>true</code></td><td>Entry and update transitions (ms scale when a number). Off under <code>prefers-reduced-motion</code>.</td></tr>
+        <tr><td>colors</td><td><code>(number</code> <code>string)[]</code></td><td></td><td>Per-series override: slot number (1–8), token name (<code>status-good</code>, <code>seq-400</code>, <code>--my-var</code>) or CSS color.</td></tr>
+        <tr><td>fold</td><td><code>boolean</code></td><td><code>true</code></td><td>Past eight series/slices, fold the tail into "Other" instead of inventing colors.</td></tr>
+        <tr><td>maxPoints</td><td><code>number</code></td><td><code>0</code></td><td>Default window for <code>append()</code>.</td></tr>
+        <tr><td>locale / texts</td><td><code>string</code>, <code>object</code></td><td></td><td>Formatting locale override; per-instance strings (<code>{ viewTable: 'Tabelle' }</code>).</td></tr>
+        <tr><td>barWidth</td><td><code>number</code></td><td><code>24</code></td><td>Maximum bar thickness.</td></tr>
+        <tr><td>pie, radar, radialBar, gauge, progress, heatmap, calendar, treemap, funnel, geo</td><td><code>object</code></td><td></td><td>Type options — see each chart page.</td></tr>
+      </tbody>
+    </table>
+    <h3>Series</h3>
+    <table class="docs-api">
+      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>name</td><td><code>string</code></td><td>Legend, tooltip and table label (inserted as text, never HTML).</td></tr>
+        <tr><td>data</td><td><code>number[]</code> <code>{ x, y }[]</code> <code>[x, y][]</code></td><td>Values aligned to <code>labels</code>, or points. <code>null</code> leaves a gap. Type-specific shapes: <code>{ o, h, l, c }</code>, <code>{ x, y, z }</code>, samples for box plots…</td></tr>
+        <tr><td>type</td><td><code>'column'</code> <code>'line'</code> <code>'area'</code> …</td><td>Per-series type for mixed charts.</td></tr>
+        <tr><td>color</td><td>slot · token · CSS</td><td>Override the slot (fixed order otherwise: series <em>i</em> → <code>--o-chart-(i+1)</code>).</td></tr>
+        <tr><td>stack</td><td><code>string</code></td><td>Stack group id (several stacks side by side).</td></tr>
+        <tr><td>dashed · curve · area · markers</td><td></td><td>Line styling per series.</td></tr>
+      </tbody>
+    </table>
+    <h3>Axis</h3>
+    <table class="docs-api">
+      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>type</td><td><code>'category'</code> <code>'time'</code> <code>'linear'</code> <code>'log'</code></td><td>Inferred from data when omitted (dates → time).</td></tr>
+        <tr><td>title</td><td><code>string</code></td><td>Axis title.</td></tr>
+        <tr><td>format</td><td><code>'number'</code> <code>'integer'</code> <code>'currency'</code> <code>'currency-compact'</code> <code>'percent'</code> <code>'compact'</code> <code>'bytes'</code> · Intl options · fn</td><td>Value formatting via <code>Orion.format</code> (locale aware). <code>percent</code> expects ratios (0.42 → 42%). x axis on dates: a token string (<code>'MMM D'</code>) or fn.</td></tr>
+        <tr><td>currency · decimals · prefix · suffix</td><td></td><td>Formatting details (<code>currency</code> defaults to <code>Orion.config.currency</code>).</td></tr>
+        <tr><td>min · max</td><td><code>number | Date</code></td><td>Fix the domain (ticks stay nice inside it).</td></tr>
+        <tr><td>beginAtZero</td><td><code>boolean</code></td><td>Always on for bars and areas; automatic for lines.</td></tr>
+        <tr><td>ticks</td><td><code>number</code></td><td>Target tick count (default from the available pixels).</td></tr>
+        <tr><td>grid · rotate</td><td><code>boolean</code></td><td>Gridlines (value axis on by default); rotate long category labels (auto).</td></tr>
+      </tbody>
+    </table>
+    <h3>Annotation</h3>
+    <table class="docs-api">
+      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>type</td><td><code>'line' | 'band'</code></td><td>Dashed reference line, or a shaded range.</td></tr>
+        <tr><td>axis</td><td><code>'y' | 'x'</code></td><td>Default <code>'y'</code>.</td></tr>
+        <tr><td>value · from / to</td><td><code>number</code> <code>Date</code> <code>category</code></td><td>Position.</td></tr>
+        <tr><td>label · status · color · dashed</td><td></td><td>Label text (text tokens), status color (<code>good</code> <code>warning</code> <code>serious</code> <code>critical</code>).</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="element">
+    <h2>&lt;o-chart&gt; element</h2>
+    <table class="docs-api">
+      <thead><tr><th>Property / attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>config / config</td><td><code>object</code> / JSON</td><td>The whole configuration (replaces the previous one, animating between them).</td></tr>
+        <tr><td>type / type</td><td><code>string</code></td><td>Chart type; overrides <code>config.type</code>.</td></tr>
+        <tr><td>series, labels, data / JSON</td><td><code>array</code></td><td>Data props; changing one animates.</td></tr>
+        <tr><td>options / options</td><td><code>object</code> / JSON</td><td>Merged over <code>config</code> (handy for shared defaults).</td></tr>
+        <tr><td>height / height</td><td><code>string | number</code></td><td>Plot height.</td></tr>
+        <tr><td>texts</td><td><code>object</code></td><td>Per-instance strings.</td></tr>
+        <tr><td>chart</td><td><code>Chart</code> (read-only)</td><td>The instance; all its methods are also proxied on the element.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="methods">
+    <h2>Methods</h2>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Returns</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>update(config | series[], { animate })</td><td><code>Chart</code></td><td>Merge a config patch (or replace series) and tween values, axes and slices.</td></tr>
+        <tr><td>setData(series, { animate, labels })</td><td><code>Chart</code></td><td>Replace the series (numbers array = one series).</td></tr>
+        <tr><td>append(values, { max, label })</td><td><code>Chart</code></td><td>Streaming: one point per series (<code>number</code> <code>{x,y}</code> <code>[x,y]</code>) or <code>{ label, values }</code>; drops the oldest past <code>max</code>.</td></tr>
+        <tr><td>setOptions(options)</td><td><code>Chart</code></td><td>Same as <code>update()</code> for non-data options.</td></tr>
+        <tr><td>highlight(index | null)</td><td><code>Chart</code></td><td>Emphasise one series (others gray).</td></tr>
+        <tr><td>toggleSeries(index, force?)</td><td><code>Chart</code></td><td>Hide / show a series or slice (the last visible one stays).</td></tr>
+        <tr><td>zoom(min, max) · resetZoom()</td><td><code>Chart</code></td><td>Programmatic zoom (data units; category indices).</td></tr>
+        <tr><td>toggleTable(force?)</td><td><code>Chart</code></td><td>Show the data table under the chart.</td></tr>
+        <tr><td>exportSVG({ legend, background })</td><td><code>string</code></td><td>Standalone SVG with colors inlined (and the legend).</td></tr>
+        <tr><td>exportPNG({ scale })</td><td><code>Promise&lt;Blob&gt;</code></td><td>Raster export (default 2×).</td></tr>
+        <tr><td>exportCSV()</td><td><code>string</code></td><td>The table-view data as CSV (raw values).</td></tr>
+        <tr><td>download(format, filename)</td><td><code>Promise</code></td><td><code>'png'</code> <code>'svg'</code> <code>'csv'</code>.</td></tr>
+        <tr><td>getData() · config</td><td></td><td>Current data / normalised config.</td></tr>
+        <tr><td>resize() · destroy()</td><td></td><td>Re-measure; tear down (factory charts remove their element).</td></tr>
+        <tr><td>on(name, fn) · off()</td><td></td><td>Instance events (same names, without the <code>o-</code> prefix).</td></tr>
+        <tr><td>Orion.chart.register(types, renderer)</td><td></td><td>Add a chart type (<code>prepare / render / legend / table / summary</code>).</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="events">
+    <h2>Events</h2>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>detail</th><th>When</th></tr></thead>
+      <tbody>
+        <tr><td>o-point-click</td><td><code>series</code> <code>index</code> <code>value</code> <code>label</code> <code>name</code> <code>text</code></td><td>Click / tap on a mark, or Enter on the focused point.</td></tr>
+        <tr><td>o-point-hover</td><td>same</td><td>The active point changes (pointer or keyboard).</td></tr>
+        <tr><td>o-legend-toggle</td><td><code>{ series, name, visible, user }</code></td><td>A legend button (or <code>toggleSeries</code>) hid or showed a series.</td></tr>
+        <tr><td>o-zoom</td><td><code>{ min, max }</code>; maps <code>{ scale, x, y }</code></td><td>Brush zoom, reset or map zoom.</td></tr>
+        <tr><td>o-render</td><td><code>{ type }</code></td><td>After each completed render / animation.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="live">
+    <h2>Updates &amp; streaming</h2>
+    <p>Every change animates from the previous state: values and the value axis tween, hidden series fade out of the stack, new slices grow. <code>append()</code> slides the window; the x axis tweens with it.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-sm" id="lv-rand">update() random data</button>
+          <button class="o-btn o-btn-sm" id="lv-append">append() a month</button>
+          <button class="o-btn o-btn-sm" id="lv-toggle">toggleSeries(1)</button>
+          <button class="o-btn o-btn-sm" id="lv-type">Switch column ⇄ line</button>
+          <button class="o-btn o-btn-sm" id="lv-stack">Toggle stacked</button>
+        </div>
+        <o-chart id="lv-chart" height="280"></o-chart>
+        <div class="docs-log" id="lv-log"></div>
+        <script>
+          {
+            const el = document.getElementById('lv-chart');
+            const names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const rnd = docs.rand(2);
+            const v = () => Math.round(40 + rnd() * 60);
+            let n = 6;
+            el.config = { type: 'column', labels: names.slice(0, n), maxPoints: 8, series: [{ name: 'Online', data: names.slice(0, n).map(v) }, { name: 'In store', data: names.slice(0, n).map(v) }] };
+            const log = m => docs.log('#lv-log', m);
+            document.getElementById('lv-rand').onclick = () => el.update({ series: [{ name: 'Online', data: el.getData().series[0].data.map(v) }, { name: 'In store', data: el.getData().series[1].data.map(v) }] });
+            document.getElementById('lv-append').onclick = () => { el.append({ label: names[n % 12], values: [v(), v()] }); n++; };
+            document.getElementById('lv-toggle').onclick = () => el.toggleSeries(1);
+            document.getElementById('lv-type').onclick = () => el.update({ type: el.chart.config.type === 'column' ? 'line' : 'column' });
+            document.getElementById('lv-stack').onclick = () => el.update({ stacked: !el.chart.config.stacked });
+            el.addEventListener('o-legend-toggle', e => log(`o-legend-toggle ${e.detail.name} → ${e.detail.visible ? 'shown' : 'hidden'}`));
+            el.addEventListener('o-point-click', e => log(`o-point-click ${e.detail.name} · ${e.detail.label}: ${e.detail.text}`));
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="export">
+    <h2>Export</h2>
+    <p>Exports inline the resolved theme colors, so the file looks the same outside the page. Enable the corner menu with <code>toolbar: { download: true }</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-sm" data-export="png">Download PNG</button>
+          <button class="o-btn o-btn-sm" data-export="svg">Download SVG</button>
+          <button class="o-btn o-btn-sm" data-export="csv">Download CSV</button>
+          <button class="o-btn o-btn-sm" id="ex-size">Measure exports</button>
+        </div>
+        <o-chart id="ex-chart" height="240"></o-chart>
+        <div class="docs-log" id="ex-log"></div>
+        <script>
+          {
+            const el = document.getElementById('ex-chart');
+            el.config = {
+              type: 'area', title: 'Weekly signups', toolbar: { download: true, table: true },
+              labels: ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8'],
+              series: [{ name: 'Organic', data: [320, 360, 410, 390, 450, 470, 520, 560] }, { name: 'Paid', data: [120, 180, 150, 210, 260, 240, 280, 300] }],
+            };
+            document.querySelectorAll('[data-export]').forEach(b => (b.onclick = () => el.download(b.dataset.export, 'weekly-signups')));
+            document.getElementById('ex-size').onclick = async () => {
+              const png = await el.exportPNG({ scale: 2 });
+              docs.log('#ex-log', `SVG ${el.exportSVG().length.toLocaleString()} chars · PNG ${Math.round(png.size / 1024)} KB · CSV: ${el.exportCSV().split('\r\n')[1]}`);
+            };
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="theming">
+    <h2>Theming &amp; color</h2>
+    <p>All marks read CSS custom properties, so switching the theme (try the header toggle) recolors charts without a re-render. Dark mode is <em>selected</em>, not inverted: each slot has its own dark step validated against the dark surface, and sequential ramps flip their anchor so that "near zero" recedes into the background.</p>
+    <table class="docs-api">
+      <thead><tr><th>Token</th><th>Role</th></tr></thead>
+      <tbody>
+        <tr><td>--o-chart-1 … --o-chart-8</td><td>Categorical slots in fixed order (blue, orange, aqua, yellow, magenta, green, violet, red). Never cycled; the ninth series folds into "Other".</td></tr>
+        <tr><td>--o-chart-other</td><td>De-emphasis gray for "Other" and emphasis mode.</td></tr>
+        <tr><td>--o-seq-100 … --o-seq-700</td><td>Sequential blue ramp (heatmaps, choropleths, calendar); exposed to marks as <code>--o-ch-q1…7</code>, reversed in dark mode.</td></tr>
+        <tr><td>--o-ch-o1 … --o-ch-o5</td><td>Ordinal ramp for ordered stages (funnel): seq 700→300 light, 200→600 dark.</td></tr>
+        <tr><td>--o-div-neg / mid / pos</td><td>Diverging poles and neutral midpoint (<code>--o-ch-d1…7</code> steps).</td></tr>
+        <tr><td>--o-status-good / warning / serious / critical</td><td>Reserved for state (gauge bands, candle direction, win/loss) — always with a label or shape.</td></tr>
+        <tr><td>--o-chart-grid / --o-chart-axis / --o-chart-surface</td><td>Hairline grid, baseline, and the surface used for gaps and rings (set it if your card isn't <code>--o-surface</code>).</td></tr>
+      </tbody>
+    </table>
+    <p>The default palette was checked with the data-viz validator against Orion's real surfaces (<code>#ffffff</code> light, <code>#121a2b</code> dark): lightness band, chroma floor, adjacent CVD separation (worst ΔE 9.1 light / 8.4 dark), normal-vision floor (19.6 / 19.3) all pass; the first three slots also pass all-pairs (scatter, maps). Three light slots (aqua, yellow, magenta) sit below 3:1 on white, which is why every chart ships a table view and direct labels. If you replace the palette with <code>Orion.theme.set({ '--o-chart-1': … })</code>, re-validate it.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-cluster" aria-label="Palette" id="pal"></div>
+        <script>
+          {
+            const box = document.getElementById('pal');
+            for (let i = 1; i <= 8; i++) {
+              const s = document.createElement('span');
+              s.className = 'o-chip';
+              s.innerHTML = `<span class="o-swatch" style="background: var(--o-chart-${i})"></span><code>--o-chart-${i}</code>`;
+              box.append(s);
+            }
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="a11y">
+    <h2>Accessibility</h2>
+    <ul>
+      <li>The plot is a focusable <code>role="img"</code> whose accessible name summarises the chart (type, series, range, extremes); the toolbar, legend buttons and table are regular controls.</li>
+      <li>Keyboard: arrows move between points (and series), <kbd class="o-kbd">Home</kbd>/<kbd class="o-kbd">End</kbd> jump, <kbd class="o-kbd">Enter</kbd> clicks, <kbd class="o-kbd">Esc</kbd> clears. Each move is announced through the live region and shows the same tooltip as hover.</li>
+      <li>"View as table" reveals the data; when closed, the same table stays available to screen readers (up to 400 rows).</li>
+      <li>Identity never depends on color alone: legends for ≥ 2 series, selective direct labels, hollow vs. filled candles, labelled status.</li>
+      <li>Tooltips enhance, never gate — every value is also in the table. Motion is disabled under <code>prefers-reduced-motion</code>; <code>forced-colors</code> adds outlines.</li>
+      <li>All strings are translatable under <code>chart.*</code> (<code>Orion.i18n.add('fr', { chart: { viewTable: 'Voir le tableau' } })</code>) and numbers/dates follow the active locale.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

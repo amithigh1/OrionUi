@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scheduler — Orion Admin</title>
+<meta name="docs:section" content="Scheduling">
+<meta name="docs:order" content="20">
+<meta name="docs:desc" content="Resource timeline: rooms, staff or equipment on rows, time across the top">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Scheduler</h1>
+    <p class="docs-lead">Set <code>view="resource-day"</code>, <code>resource-week</code> or <code>resource-month</code>
+      on <code>&lt;o-calendar&gt;</code> to get a resource timeline: a sticky column of rooms, staff or equipment on
+      the left and a scrollable time axis across the top. Bookings on the same resource that overlap are flagged as
+      conflicts, and a resource's <code>capacity</code> is checked against an event's <code>attendees</code>.</p>
+  </header>
+
+  <section id="rooms">
+    <h2>Meeting-room scheduler</h2>
+    <p>Five rooms grouped by floor. Drag a booking to another room or time, drag its edges to change its length,
+      drag on empty space to create a new booking, and hold <kbd class="o-kbd">Ctrl</kbd> and scroll (or pinch) to
+      zoom the timeline. The double-booked slot on Room A and the over-capacity workshop on the Boardroom are
+      highlighted automatically.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-calendar id="sched-rooms" view="resource-day" views='["resource-day","resource-week","day"]'
+          editable selectable now-indicator business-hours='{"start":"08:00","end":"19:00"}'
+          first-hour="7" last-hour="20" height="26rem" label="Meeting room scheduler"></o-calendar>
+        <div class="docs-log" id="sched-rooms-log"></div>
+        <script>
+          (() => {
+            const cal = document.getElementById('sched-rooms');
+            const at = (h, m = 0) => { const d = new Date(); d.setHours(h, m, 0, 0); return d; };
+            cal.resources = [
+              { id: 'a', title: 'Room A', subtitle: '4 seats', capacity: 4, group: 'Floor 2', color: 'primary' },
+              { id: 'b', title: 'Room B', subtitle: '6 seats', capacity: 6, group: 'Floor 2', color: 'info' },
+              { id: 'board', title: 'Boardroom', subtitle: '10 seats', capacity: 10, group: 'Floor 2', color: 'chart-5' },
+              { id: 'c', title: 'Focus Pod 1', subtitle: '2 seats', capacity: 2, group: 'Floor 3', color: 'success' },
+              { id: 'd', title: 'Focus Pod 2', subtitle: '2 seats', capacity: 2, group: 'Floor 3', color: 'warning' },
+            ];
+            cal.events = [
+              { id: 'r1', title: 'Vendor call', resourceId: 'a', start: at(9), end: at(10), color: 'primary' },
+              { id: 'r2', title: 'Design crit', resourceId: 'a', start: at(9, 30), end: at(10, 30), color: 'chart-3', attendees: ['Mei', 'Ben'] },
+              { id: 'r3', title: 'Budget review', resourceId: 'b', start: at(11), end: at(12, 30), color: 'info' },
+              { id: 'r4', title: 'All-hands prep', resourceId: 'board', start: at(13), end: at(14), color: 'chart-5' },
+              { id: 'r5', title: 'Product workshop', resourceId: 'board', start: at(14, 30), end: at(16, 30), color: 'chart-5', attendees: Array.from({ length: 14 }, (_, i) => 'Guest ' + i) },
+              { id: 'r6', title: 'Deep work', resourceId: 'c', start: at(9), end: at(12), color: 'success' },
+              { id: 'r7', title: 'Interview', resourceId: 'd', start: at(15), end: at(15, 45), color: 'warning' },
+            ];
+            const log = m => docs.log('#sched-rooms-log', m);
+            cal.addEventListener('o-event-click', e => log('o-event-click ' + e.detail.event.title + ' (' + e.detail.event.resourceId + ')'));
+            cal.addEventListener('o-event-change', e => log('o-event-change ' + e.detail.event.title + ' → ' + e.detail.event.resourceId + ' ' + Orion.format.time(e.detail.event.start)));
+            cal.addEventListener('o-select-range', e => log('o-select-range resource=' + e.detail.resourceId + ' ' + Orion.format.time(e.detail.start)));
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="week">
+    <h2>Resource week &amp; zoom</h2>
+    <p><code>resource-week</code> shows a full week per resource; <code>resource-month</code> collapses each day to a
+      single column (good for equipment or vehicle bookings that span days). The toolbar's zoom buttons (or
+      <code>zoomBy(n)</code>) step through 5 zoom levels.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-calendar id="sched-week" view="resource-month" views='["resource-week","resource-month"]'
+          height="22rem" label="Equipment scheduler"></o-calendar>
+        <script>
+          (() => {
+            const cal = document.getElementById('sched-week');
+            const D = Orion.date, iso = n => D.toISODate(D.add(D.today(), n));
+            cal.resources = [
+              { id: 'van1', title: 'Delivery Van 1', color: 'primary' },
+              { id: 'van2', title: 'Delivery Van 2', color: 'info' },
+              { id: 'forklift', title: 'Forklift', color: 'warning' },
+            ];
+            cal.events = [
+              { id: 'v1', title: 'Client site visit', resourceId: 'van1', start: iso(1), end: iso(3), allDay: true, color: 'primary' },
+              { id: 'v2', title: 'Warehouse run', resourceId: 'van2', start: iso(2), end: iso(2), allDay: true, color: 'info' },
+              { id: 'v3', title: 'Maintenance', resourceId: 'forklift', start: iso(4), end: iso(6), allDay: true, color: 'warning' },
+            ];
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <p>Resource views use the same <code>&lt;o-calendar&gt;</code> API as <a href="calendar.html">Calendar</a> — see
+      its full prop, event and method tables. The additions specific to resource scheduling are below.</p>
+    <table class="docs-api">
+      <thead><tr><th>Prop / attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>resources</code></td><td>array</td><td><code>{ id, title, subtitle, color, capacity, group, avatar }[]</code> — one row per resource, grouped by <code>group</code> when present.</td></tr>
+        <tr><td><code>view</code></td><td>string</td><td><code>resource-day</code> · <code>resource-week</code> · <code>resource-month</code>.</td></tr>
+        <tr><td><code>conflicts</code></td><td>boolean</td><td>Outline overlapping bookings on the same resource in red (default on).</td></tr>
+        <tr><td><code>zoom</code></td><td>number</td><td>0–4; also <code>zoomBy(n)</code> and Ctrl/Cmd+scroll on the timeline.</td></tr>
+      </tbody>
+    </table>
+    <p>Events assigned to a resource set <code>resourceId</code> to match a resource's <code>id</code>; events with no
+      matching resource are grouped into an "Unassigned" row. An event's capacity check compares
+      <code>resources[].capacity</code> against <code>event.attendees.length</code> (or a numeric
+      <code>event.attendees</code> / <code>event.guests</code>), showing an over-capacity badge and tooltip.</p>
+  </section>
+</main>
+</body>
+</html>

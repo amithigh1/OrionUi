@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Theme Builder — Orion Admin</title>
+<meta name="docs:section" content="Foundation">
+<meta name="docs:order" content="15">
+<meta name="docs:desc" content="A live visual editor for colors, radius, density, shadows and sidebar style">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Theme Builder</h1>
+    <p class="docs-lead"><code>&lt;o-theme-builder&gt;</code> edits <a href="theming.html">Orion.theme</a>
+      live: brand colors with generated palettes, a WCAG contrast checker, radius/density/shadow/sidebar
+      controls, side-by-side light/dark previews built from real components, presets, JSON/CSS
+      import-export and "save as tenant". See <a href="theming.html">Theming</a> for the token reference this
+      editor writes to.</p>
+  </header>
+
+  <section id="demo">
+    <h2>Live demo</h2>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <o-theme-builder id="demo-tb"></o-theme-builder>
+        <script>
+          document.getElementById('demo-tb').addEventListener('o-save-tenant', e => docs.log('#tb-log', 'Saved tenant: ' + e.detail.name));
+        </script>
+        <div class="docs-log" id="tb-log"></div>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Prop</td><td><code>presets</code> — <code>[{ name, primary, secondary?, info?, radius?, density? }]</code>; defaults to 8 built-in presets.</td></tr>
+        <tr><td><code>applyPreset(name)</code></td><td>Apply a preset by name.</td></tr>
+        <tr><td><code>exportJSON()</code> / <code>importJSON(json)</code></td><td>Round-trip the full draft.</td></tr>
+        <tr><td><code>exportCSS()</code></td><td><code>Orion.theme.exportCSS()</code> of the current overrides.</td></tr>
+        <tr><td><code>saveAsTenant(name)</code></td><td><code>Orion.theme.register(name, tokens)</code> + <code>use(name)</code>.</td></tr>
+        <tr><td><code>reset()</code></td><td><code>Orion.theme.reset()</code> and restore the default draft.</td></tr>
+        <tr><td>Events</td><td><code>o-change {draft}</code>, <code>o-preset {name}</code>, <code>o-save-tenant {name,tokens}</code>, <code>o-reset</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

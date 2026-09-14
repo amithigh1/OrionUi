@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modal fixture — Orion Admin</title>
+<script src="../../../dist/orion.js"></script>
+</head>
+<body style="padding:2rem">
+<div style="transform:translateZ(0);overflow:hidden;height:60px">
+  <button class="o-btn" id="t1" data-o-toggle="modal" data-o-target="#m1">Open m1</button>
+  <o-modal id="m1" heading="First modal">
+    <p>Hello from m1.</p>
+    <input class="o-input" id="m1-input">
+    <button class="o-btn" id="t2" data-o-toggle="modal" data-o-target="#m2">Open nested</button>
+    <o-modal id="m2" heading="Nested" size="sm"><p>Nested body</p><button class="o-btn" id="m2-x" data-o-dismiss="modal" data-o-value="bye">Dismiss</button></o-modal>
+    <div slot="footer"><button class="o-btn" id="m1-cancel" data-o-dismiss="modal">Cancel</button><button class="o-btn o-btn-primary" id="m1-ok" data-o-dismiss="modal" data-o-value="ok">OK</button></div>
+  </o-modal>
+</div>
+<button class="o-btn" id="t3" data-o-toggle="modal" data-o-target="#m3">Static</button>
+<o-modal id="m3" heading="Static" static closable="false" centered><p>Pick one.</p><div slot="footer"><button class="o-btn o-btn-primary" id="m3-ok" data-o-dismiss="modal">Done</button></div></o-modal>
+<button class="o-btn" id="t4" data-o-toggle="drawer" data-o-target="#d1">Drawer</button>
+<o-drawer id="d1" heading="Filters" placement="end"><p>Drawer body</p><a href="#x" id="d1-link">Link</a><div slot="footer"><button class="o-btn" data-o-dismiss="drawer" id="d1-close">Close</button></div></o-drawer>
+<div id="log"></div>
+<script>
+  window.evlog = [];
+  ['o-open', 'o-opened', 'o-before-close', 'o-close', 'o-closed'].forEach(n => document.addEventListener(n, e => evlog.push(n + ':' + e.target.id + (e.detail && e.detail.reason ? ':' + e.detail.reason : '') + (e.detail && e.detail.value !== undefined ? '=' + e.detail.value : ''))));
+</script>
+</body>
+</html>

@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dialogs — Orion Admin</title>
+<meta name="docs:section" content="Overlays &amp; Feedback">
+<meta name="docs:order" content="20">
+<meta name="docs:desc" content="Promise-based alert, confirm and prompt dialogs, plus data-o-confirm">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Dialogs</h1>
+    <p class="docs-lead">Promise-based replacements for <code>window.alert/confirm/prompt</code>, built on <code>Orion.modal()</code>: a small, centered card with a colored icon badge. Every call returns a promise you can <code>await</code>.</p>
+  </header>
+
+  <section id="alert">
+    <h2>Alert</h2>
+    <p><code>Orion.alert(text | options) → Promise&lt;void&gt;</code>. Resolves once the user dismisses it.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-primary" id="demo-alert-btn">Show alert</button>
+        <button class="o-btn" id="demo-alert-success-btn">Success alert</button>
+        <div class="docs-log" id="demo-alert-log" style="width:100%"></div>
+        <script>
+          document.getElementById('demo-alert-btn').addEventListener('click', async () => {
+            await Orion.alert('Your changes were saved.');
+            docs.log('#demo-alert-log', 'alert dismissed');
+          });
+          document.getElementById('demo-alert-success-btn').addEventListener('click', async () => {
+            await Orion.alert({ title: 'Upload complete', text: 'orion-report.pdf is ready to share.', type: 'success' });
+            docs.log('#demo-alert-log', 'success alert dismissed');
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="confirm">
+    <h2>Confirm</h2>
+    <p><code>Orion.confirm(text | options) → Promise&lt;boolean&gt;</code>. <code>type</code> sets the icon and color: <code>info</code>, <code>success</code>, <code>warning</code>, <code>danger</code> (or <code>error</code>), <code>question</code> (default). <code>danger</code> also focuses Cancel so Enter is the safe choice.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn" id="demo-confirm-q">Leave page?</button>
+        <button class="o-btn o-btn-soft-warning" id="demo-confirm-warn">Warning</button>
+        <button class="o-btn o-btn-soft-danger" id="demo-confirm-danger">Delete user</button>
+        <button class="o-btn o-btn-soft-info" id="demo-confirm-info">Info confirm</button>
+        <div class="docs-log" id="demo-confirm-log" style="width:100%"></div>
+        <script>
+          const cLog = (label, v) => docs.log('#demo-confirm-log', label + ': ' + JSON.stringify(v));
+          document.getElementById('demo-confirm-q').addEventListener('click', async () => cLog('leave', await Orion.confirm('Leave the page? Unsaved changes will be lost.')));
+          document.getElementById('demo-confirm-warn').addEventListener('click', async () => cLog('warn', await Orion.confirm({ title: 'Unsaved changes', text: 'Continuing will discard your draft.', type: 'warning', confirmText: 'Discard' })));
+          document.getElementById('demo-confirm-danger').addEventListener('click', async () => cLog('delete', await Orion.confirm({ title: 'Delete user?', text: 'This removes their account and cannot be undone.', danger: true, confirmText: 'Delete' })));
+          document.getElementById('demo-confirm-info').addEventListener('click', async () => cLog('info', await Orion.confirm({ title: 'Switch workspace', text: 'You will be moved to "Acme Marketing".', type: 'info', confirmText: 'Switch' })));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="type-to-confirm">
+    <h2>Type-to-confirm &amp; checkbox</h2>
+    <p><code>requireText</code> disables the confirm button until the input matches exactly. <code>checkbox</code> adds an extra option and the promise resolves <code>{ confirmed, checked }</code> instead of a plain boolean.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-danger" id="demo-typeconfirm-btn">Delete project…</button>
+        <button class="o-btn" id="demo-checkbox-btn">Sign out everywhere</button>
+        <div class="docs-log" id="demo-typeconfirm-log" style="width:100%"></div>
+        <script>
+          document.getElementById('demo-typeconfirm-btn').addEventListener('click', async () => {
+            const ok = await Orion.confirm({ title: 'Delete "Website redesign"?', text: 'This permanently deletes the project, its tasks and files.', danger: true, requireText: 'delete', confirmText: 'Delete project' });
+            docs.log('#demo-typeconfirm-log', 'deleted: ' + ok);
+          });
+          document.getElementById('demo-checkbox-btn').addEventListener('click', async () => {
+            const { confirmed, checked } = await Orion.confirm({ title: 'Sign out of every device?', text: 'You will need to sign in again everywhere.', checkbox: "Don't ask me again", confirmText: 'Sign out' });
+            docs.log('#demo-typeconfirm-log', 'confirmed=' + confirmed + ' checked=' + checked);
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="prompt">
+    <h2>Prompt</h2>
+    <p><code>Orion.prompt(text | options) → Promise&lt;string | null&gt;</code>. Supports validation, a required field, any input type and a multiline textarea (Ctrl/⌘+Enter submits).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn" id="demo-prompt-rename">Rename file</button>
+        <button class="o-btn" id="demo-prompt-email">Ask for email</button>
+        <button class="o-btn" id="demo-prompt-note">Add a note</button>
+        <div class="docs-log" id="demo-prompt-log" style="width:100%"></div>
+        <script>
+          document.getElementById('demo-prompt-rename').addEventListener('click', async () => {
+            const name = await Orion.prompt({ title: 'Rename file', label: 'File name', value: 'report.pdf', required: true, validate: v => /\.pdf$/i.test(v) ? null : 'File name must end with .pdf' });
+            docs.log('#demo-prompt-log', 'name: ' + JSON.stringify(name));
+          });
+          document.getElementById('demo-prompt-email').addEventListener('click', async () => {
+            const email = await Orion.prompt({ title: 'Forward invoice', label: 'Recipient email', inputType: 'email', placeholder: 'name@company.com', required: true });
+            docs.log('#demo-prompt-log', 'email: ' + JSON.stringify(email));
+          });
+          document.getElementById('demo-prompt-note').addEventListener('click', async () => {
+            const note = await Orion.prompt({ title: 'Add a note', label: 'Note', multiline: true, rows: 4, placeholder: 'Anything the next reviewer should know…' });
+            docs.log('#demo-prompt-log', 'note: ' + JSON.stringify(note));
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="data-confirm">
+    <h2>data-o-confirm behavior</h2>
+    <p>Intercepts clicks (links, buttons) and form submissions until the user confirms, then continues the original action: the link navigates, the click is re-dispatched (so other handlers and actions run), or the form submits with its original submitter.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <a class="o-btn o-btn-soft-danger" href="#deleted" data-o-confirm="Delete this API key? Any integration using it will stop working." data-o-confirm-type="danger" data-o-confirm-text="Delete key" id="demo-dc-link">Delete API key</a>
+        <button class="o-btn" id="demo-dc-btn" data-o-confirm="Send the newsletter to 12,400 subscribers now?" data-o-confirm-title="Send newsletter">Send newsletter</button>
+        <div class="docs-log" id="demo-dc-log" style="width:100%"></div>
+        <script>
+          document.getElementById('demo-dc-link').addEventListener('click', e => { e.preventDefault(); docs.log('#demo-dc-log', 'navigated (prevented for the demo)'); });
+          document.getElementById('demo-dc-btn').addEventListener('click', () => docs.log('#demo-dc-log', 'newsletter sent'));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Orion.alert(text | options) → Promise&lt;void&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>title</td><td>string</td><td>—</td><td>Title. Without a title, <code>text</code> is shown as the title.</td></tr>
+        <tr><td>text</td><td>string</td><td>—</td><td>Message (plain text, newlines kept).</td></tr>
+        <tr><td>html</td><td>string</td><td>—</td><td>Rich message, sanitized with <code>Orion.sanitize</code>.</td></tr>
+        <tr><td>type</td><td>info｜success｜warning｜danger｜question</td><td>info</td><td>Icon badge and color (<code>error</code> is an alias for <code>danger</code>).</td></tr>
+        <tr><td>icon</td><td>string｜false</td><td>per type</td><td>Custom icon name, or no icon.</td></tr>
+        <tr><td>okText</td><td>string</td><td>OK</td><td>Button text.</td></tr>
+      </tbody>
+    </table>
+    <h3>Orion.confirm(text | options) → Promise&lt;boolean | { confirmed, checked }&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td colspan="4">All <code>Orion.alert</code> options, plus:</td></tr>
+        <tr><td>confirmText / cancelText</td><td>string</td><td>Confirm / Cancel</td><td>Button texts.</td></tr>
+        <tr><td>danger</td><td>boolean</td><td>false</td><td>Red confirm button, danger icon, and Cancel gets focus (Enter = safe choice).</td></tr>
+        <tr><td>requireText</td><td>string</td><td>—</td><td>Type-to-confirm: the confirm button stays disabled until the input equals this text exactly.</td></tr>
+        <tr><td>checkbox</td><td>string｜true</td><td>—</td><td>Adds a checkbox; the promise then resolves <code>{ confirmed, checked }</code> instead of a boolean.</td></tr>
+        <tr><td>checked</td><td>boolean</td><td>false</td><td>Initial checkbox state.</td></tr>
+      </tbody>
+    </table>
+    <p>Default <code>type</code> is <code>question</code> (<code>danger</code> when <code>danger: true</code>). Escape / backdrop click resolve <code>false</code>.</p>
+    <h3>Orion.prompt(text | options) → Promise&lt;string | null&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>title, text</td><td>string</td><td>—</td><td>Title and description (a string argument becomes the title).</td></tr>
+        <tr><td>label</td><td>string</td><td>—</td><td>Visible field label (otherwise the title is the accessible name).</td></tr>
+        <tr><td>value, placeholder</td><td>string</td><td>—</td><td>Initial value / placeholder.</td></tr>
+        <tr><td>inputType</td><td>string</td><td>text</td><td>Any <code>&lt;input type&gt;</code> (email, number, password, url…).</td></tr>
+        <tr><td>multiline, rows</td><td>boolean, number</td><td>false, 4</td><td>Use a <code>&lt;textarea&gt;</code> (Ctrl/⌘+Enter submits).</td></tr>
+        <tr><td>required</td><td>boolean</td><td>false</td><td>Empty value shows "This field is required".</td></tr>
+        <tr><td>validate(value)</td><td>function</td><td>—</td><td>Return an error string (or a Promise of one) to block submission; <code>null</code>/falsy = valid.</td></tr>
+        <tr><td>okText / cancelText</td><td>string</td><td>OK / Cancel</td><td>Button texts.</td></tr>
+        <tr><td>type, icon</td><td></td><td>none</td><td>Optional icon badge, same as alert/confirm.</td></tr>
+      </tbody>
+    </table>
+    <p>Resolves the entered string, or <code>null</code> when cancelled. Every returned promise has a <code>.modal</code> property (the underlying <code>Orion.modal</code> handle) so it can be closed programmatically: <code>p.modal.close()</code>.</p>
+    <h3>data-o-confirm behavior</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>data-o-confirm</td><td>Message (empty → "Are you sure?").</td></tr>
+        <tr><td>data-o-confirm-title</td><td>Title (the message becomes the description).</td></tr>
+        <tr><td>data-o-confirm-type</td><td>question, warning, danger (danger styling + safe focus), info, success.</td></tr>
+        <tr><td>data-o-confirm-text</td><td>Confirm button text.</td></tr>
+      </tbody>
+    </table>
+    <p>Works on links, buttons and forms (<code>&lt;form data-o-confirm="…"&gt;</code> confirms before submitting, using the original submit button).</p>
+    <h3>Keyboard</h3>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Enter</td><td>Activates the focused button (OK / Confirm, or Cancel for danger dialogs); submits the prompt field.</td></tr>
+        <tr><td>Ctrl/⌘+Enter</td><td>Submits a multiline prompt.</td></tr>
+        <tr><td>Escape</td><td>Cancel (resolves <code>false</code> / <code>null</code>).</td></tr>
+        <tr><td>Tab</td><td>Cycles focus inside the dialog.</td></tr>
+      </tbody>
+    </table>
+    <h3>Accessibility &amp; CSS</h3>
+    <p>Alert and confirm dialogs use <code>role="alertdialog"</code>; prompt uses the modal's default <code>role="dialog"</code>. Each is labelled by its title and described by its text. Classes: <code>.o-dialog</code> (on the <code>&lt;dialog&gt;</code>), <code>.o-dialog-{alert|confirm|prompt}</code>, <code>.o-dialog-{type}</code>, <code>.o-dialog-layout</code>, <code>.o-dialog-icon</code>, <code>.o-dialog-title</code>, <code>.o-dialog-text</code>, <code>.o-dialog-field</code>, <code>.o-dialog-check</code>. On phones the icon layout centers and the buttons become full width.</p>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Upload — Advanced — Orion Admin</title>
+<meta name="docs:section" content="Uploads">
+<meta name="docs:order" content="20">
+<meta name="docs:desc" content="Chunked & resumable transport, tus mode, custom uploaders and the headless Orion.upload() API">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .demo-out { margin: 1rem 0 0; padding: .75rem 1rem; font: .75rem/1.6 var(--o-font-mono); background: var(--o-surface-2); border: 1px dashed var(--o-border-strong); border-radius: var(--o-radius); white-space: pre-wrap; min-height: 2.5rem; color: var(--o-text-muted); word-break: break-all; }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Upload — Advanced</h1>
+    <p class="docs-lead">Chunked transport, resumable uploads that survive a reload, clipboard &amp; folder ingestion, custom transports, tus 1.0 mode and the headless <code>Orion.upload()</code> controller. See <a href="upload.html">Upload</a> for the everyday features and the full props/events/methods reference.</p>
+  </header>
+
+  <section id="mock">
+    <h2>The mock transport</h2>
+    <p>Every demo on this page runs fully offline against <code>Orion.upload.mock({ latency, failRate, speed, tick, seed })</code> — an in-memory server emulator built for testing and prototyping. It returns a function that plays back realistic progress events for whole-file uploads, and it also exposes <code>.request</code>, a second emulator that understands <strong>chunked</strong> (<code>Content-Range</code> / <code>X-File-Id</code>) and <strong>tus 1.0</strong> (<code>Tus-Resumable</code>) protocols, so you can develop and test resumable flows without a backend. <code>.server</code> is a <code>Map</code> of what each virtual upload has received so far, and <code>.log</code> records every attempt (handy to prove retries / resumed chunks actually happened).</p>
+    <pre class="docs-code-block" data-lang="js">
+      const mock = Orion.upload.mock({ latency: 250, failRate: 0.1, speed: 1_500_000, seed: 7 });
+      el.uploader = mock;              // whole-file or chunked uploads call mock(file, {onProgress, signal, chunk})
+      el.url = '/upload';              // required so the element knows a transport exists
+      // — or, for the URL + Content-Range / tus code paths —
+      el.request = mock.request;       // replaces only the HTTP primitive; chunk/tus framing stays real
+    </pre>
+  </section>
+
+  <section id="chunked">
+    <h2>Chunked upload</h2>
+    <p>Set <code>chunk-size</code> and files larger than it are split into parts sent with up to <code>chunk-parallel</code> concurrent requests, each retried independently with exponential backoff. The default framing sends <code>Content-Range</code>, <code>X-File-Id</code>, <code>X-File-Name</code>, <code>X-Chunk-Index</code> and <code>X-Chunk-Count</code> headers with an octet-stream body — override any of it with <code>chunk-request(chunk, base)</code>, and post-process the assembled file server-side with <code>finalize(ctx)</code>.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-upload id="up-chunk" url="/upload" chunk-size="256kb" chunk-parallel="3" retries="2" auto></o-upload>
+        <div class="docs-log" id="up-chunk-log"></div>
+        <script>{
+          const up = document.getElementById('up-chunk');
+          const mock = Orion.upload.mock({ latency: 150, speed: 700_000, failRate: 0.15, seed: 3 });
+          up.uploader = mock;
+          up.addEventListener('o-progress', e => { if (e.detail.percent % 20 === 0) docs.log('#up-chunk-log', `${e.detail.item.name} ${e.detail.percent}%`); });
+          up.addEventListener('o-success', e => docs.log('#up-chunk-log', `done — ${mock.log.filter(r => r.name === e.detail.item.name).length} chunk attempts`));
+        }</script>
+      </template>
+    </div>
+    <p>Drop a file larger than 256&nbsp;KB above and watch the log: several chunks are in flight together, and a simulated failure only retries <em>that</em> chunk, not the whole file.</p>
+  </section>
+
+  <section id="resumable">
+    <h2>Resumable upload</h2>
+    <p>With <code>resumable</code>, each file gets a stable fingerprint (name + size + last-modified + a SHA-256 of its first/last 64&nbsp;KB, via <code>SubtleCrypto</code>) and the set of completed chunk indexes is persisted to IndexedDB (falling back to <code>localStorage</code>, or <code>Orion.idb</code> from the services package when present). Re-adding the same file — after a reload, a crashed tab, or a lost connection — only sends what's missing. The element also auto-pauses on <code>offline</code> and resumes on <code>online</code>.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-sm" type="button" id="up-resume-reload" disabled>Simulate reload (recreate the element)</button>
+        </div>
+        <div id="up-resume-host"></div>
+        <div class="docs-log" id="up-resume-log"></div>
+        <script>{
+          const host = document.getElementById('up-resume-host');
+          const btn = document.getElementById('up-resume-reload');
+          const mock = Orion.upload.mock({ latency: 200, speed: 250_000, failRate: 0, seed: 11 });
+          let lastFile = null, el;
+          function mount() {
+            host.replaceChildren();
+            el = document.createElement('o-upload');
+            el.id = 'up-resume';
+            el.multiple = false; el.resumable = true; el.chunkSize = '128kb'; el.url = '/upload'; el.auto = true;
+            el.uploader = mock;
+            el.addEventListener('o-add', e => { lastFile = e.detail.file; btn.disabled = false; });
+            el.addEventListener('o-resumed', e => docs.log('#up-resume-log', `resumed “${e.detail.file.name}” from ${Math.round(e.detail.offset / 1024)} KB`));
+            el.addEventListener('o-progress', e => { if (e.detail.percent % 25 === 0) docs.log('#up-resume-log', `${e.detail.percent}%`); });
+            el.addEventListener('o-success', () => docs.log('#up-resume-log', 'upload finished'));
+            host.append(el);
+          }
+          mount();
+          btn.onclick = () => {
+            // Simulate closing the tab: just tear down the element (like a real reload would) — do NOT call
+            // cancel(), which deletes the persisted resume data on purpose (an explicit user cancel means
+            // "give up"). Removing the element aborts the in-flight request but keeps what was already saved.
+            docs.log('#up-resume-log', '— reloaded — re-adding the same file —');
+            mount();
+            if (lastFile) el.addFiles([lastFile]);
+          };
+        }</script>
+      </template>
+    </div>
+    <p>Add a file, let it get partway, then click <strong>Simulate reload</strong>: a fresh <code>&lt;o-upload&gt;</code> is created (as a real page reload would give you) and the same <code>File</code> is re-added — the log shows <code>o-resumed</code> firing with a non-zero offset instead of the upload starting over.</p>
+  </section>
+
+  <section id="progress">
+    <h2>Progress, speed &amp; ETA</h2>
+    <p>Per-file <code>o-progress</code> events carry a smoothed <code>speed</code> (bytes/s) and <code>eta</code> (seconds); the built-in list row and summary bar already render both. Slow the mock transport down to see them settle.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <label class="o-label o-mb-0" for="up-speed-range">Simulated speed</label>
+          <input class="o-range" type="range" id="up-speed-range" min="50000" max="2000000" step="50000" value="300000" style="max-width:14rem">
+          <span id="up-speed-val" class="o-text-sm o-muted"></span>
+        </div>
+        <o-upload id="up-speed" multiple url="/upload" auto></o-upload>
+        <script>{
+          const range = document.getElementById('up-speed-range'), val = document.getElementById('up-speed-val'), up = document.getElementById('up-speed');
+          let mock = Orion.upload.mock({ latency: 200, speed: +range.value });
+          up.uploader = mock;
+          const paint = () => { val.textContent = Orion.util.formatBytes(+range.value) + '/s'; };
+          range.oninput = () => { mock = Orion.upload.mock({ latency: 200, speed: +range.value }); up.uploader = mock; paint(); };
+          paint();
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="paste">
+    <h2>Clipboard paste</h2>
+    <p>Focus (or hover, with <code>paste="element"</code>, the default) the zone below and paste — a screenshot copied from the OS gets a generated, timestamped filename. Set <code>paste="window"</code> to accept a paste anywhere on the page while this element is connected.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-upload id="up-paste" multiple variant="compact" hint="Click here, then press Ctrl/Cmd+V" style="max-width:22rem"></o-upload>
+      </template>
+    </div>
+  </section>
+
+  <section id="folder">
+    <h2>Folder upload</h2>
+    <p>Set <code>directory</code> for a native folder picker (Chromium/WebKit), or just drag a folder onto any zone — both paths walk the tree with <code>webkitGetAsEntry</code>/<code>FileSystemDirectoryReader</code> and keep each file's relative path (shown as its name, and sent to the server as its <code>relativePath</code>).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-upload id="up-folder" directory variant="button" label="Choose a folder"></o-upload>
+      </template>
+    </div>
+  </section>
+
+  <section id="custom">
+    <h2>Custom transports</h2>
+    <p>The <code>uploader</code> hook fully replaces the transport — receive the <code>File</code> (or, mid-chunk, a <code>{ index, start, end, blob, fileId, total }</code> chunk descriptor) and resolve with whatever the server returned. This example uses <code>fetch</code> with an <code>AbortController</code> instead of the built-in <code>XMLHttpRequest</code> transport (wrapped here to still simulate progress, since <code>fetch</code> has no native upload-progress event):</p>
+    <pre class="docs-code-block" data-lang="js">
+      el.uploader = async (file, { onProgress, signal, item }) => {
+        const body = new FormData();
+        body.append('file', file, file.name);
+        const res = await fetch('/upload', { method: 'POST', body, signal });
+        if (!res.ok) throw new Error('Upload failed: ' + res.status);
+        onProgress(file.size, file.size);
+        return res.json();               // becomes item.response / o-success detail.response
+      };
+    </pre>
+    <p>For finer control keep the built-in multipart/chunk/tus framing and swap only the HTTP call with <code>request</code> — this is exactly what <code>Orion.upload.mock().request</code> plugs into for the demos on this page:</p>
+    <pre class="docs-code-block" data-lang="js">
+      el.request = ({ method, url, headers, body, onProgress, signal }) =>
+        Orion.upload.request({ method, url, headers, body, onProgress, signal, withCredentials: true });
+    </pre>
+  </section>
+
+  <section id="tus">
+    <h2>tus 1.0 mode</h2>
+    <p>Set <code>protocol="tus"</code> to speak the <a href="https://tus.io/protocols/resumable-upload" target="_blank" rel="noopener">tus resumable upload protocol</a>: a <code>POST</code> creates the upload and returns a <code>Location</code>, then <code>PATCH</code> requests stream <code>chunk-size</code>-sized pieces with <code>Upload-Offset</code>; a <code>HEAD</code> re-checks the offset to resume after a drop. <code>resumable</code> also persists the returned URL so a reload can <code>HEAD</code> it directly instead of creating a new upload.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-upload id="up-tus" url="/files/" protocol="tus" resumable chunk-size="192kb" auto></o-upload>
+        <div class="docs-log" id="up-tus-log"></div>
+        <script>{
+          const mock = Orion.upload.mock({ latency: 200, speed: 500_000, seed: 5 });
+          const up = document.getElementById('up-tus');
+          up.request = mock.request;
+          up.addEventListener('o-success', e => docs.log('#up-tus-log', `finalized at ${e.detail.response.url || e.detail.response.id}`));
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="programmatic">
+    <h2>Programmatic API — <code>Orion.upload()</code></h2>
+    <p>For a fully headless flow (no custom element, e.g. from an existing <code>&lt;input type="file"&gt;</code> or a drop zone you already built), <code>Orion.upload(files, options) → controller</code> runs the exact same validation/queue/transport engine and returns a small controller: <code>add</code>, <code>upload</code>, <code>pause</code>, <code>resume</code>, <code>cancel</code>, <code>retry</code>, <code>remove</code>, <code>clear</code>, event subscription (<code>on</code>/<code>off</code>/<code>once</code>, or <code>onAdd</code>/<code>onProgress</code>/… callback options), a live <code>files</code>/<code>stats</code> getter and a <code>done</code> promise that resolves once the whole batch settles.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <input type="file" id="up-headless-input" multiple class="o-input">
+        <div class="docs-log" id="up-headless-log"></div>
+        <script>{
+          document.getElementById('up-headless-input').addEventListener('change', async e => {
+            const files = [...e.target.files];
+            e.target.value = '';
+            if (!files.length) return;
+            const ctl = Orion.upload(files, {
+              url: '/upload', uploader: Orion.upload.mock({ latency: 250, speed: 1_000_000, failRate: 0.1 }),
+              onProgress: it => docs.log('#up-headless-log', `${it.name} ${it.progress.percent}%`),
+              onError: it => docs.log('#up-headless-log', `${it.name} failed: ${it.error}`),
+            });
+            const result = await ctl.done;
+            docs.log('#up-headless-log', `done: ${result.files.length} uploaded, ${result.failed.length} failed`);
+          });
+        }</script>
+      </template>
+    </div>
+    <h3>Other <code>Orion.upload.*</code> helpers</h3>
+    <table class="docs-api">
+      <thead><tr><th>Function</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>mock(opts) → uploader</td><td>The in-memory transport used throughout these docs; also has <code>.request</code>, <code>.server</code>, <code>.log</code>, <code>.received(fileId)</code>, <code>.reset()</code>.</td></tr>
+        <tr><td>validate(file, rules) → Promise&lt;null | {reason,message}&gt;</td><td>Run the same checks as the element (accept/size/count/dimensions/sniff) on one file, standalone.</td></tr>
+        <tr><td>sniff(blob) → Promise&lt;kind | null&gt;</td><td>Magic-number detection: <code>png jpeg gif webp pdf zip mp4</code>.</td></tr>
+        <tr><td>fingerprint(file) → Promise&lt;string&gt;</td><td>Stable id used for resumable storage (SHA-256 of metadata + first/last 64&nbsp;KB).</td></tr>
+        <tr><td>compress(file, opts) / crop(file, opts) → Promise&lt;File&gt;</td><td>The built-in image pre-processing, usable outside the element too.</td></tr>
+        <tr><td>thumbnail(file, px) → Promise&lt;objectURL | null&gt;</td><td>Generate a preview URL (caller must <code>URL.revokeObjectURL</code> it).</td></tr>
+        <tr><td>fileKind(file) → { group, color, icon, ext }</td><td>Type icon/color/extension used by the built-in list row.</td></tr>
+        <tr><td>xhr(options) → uploader</td><td>The built-in whole-file <code>XMLHttpRequest</code> uploader as a standalone function.</td></tr>
+        <tr><td>request(reqOptions) → Promise</td><td>The low-level XHR primitive every transport is built on (swap it globally with the <code>request</code> option).</td></tr>
+        <tr><td>download(url, opts) → Promise&lt;Blob&gt;</td><td>Download with progress; delegates to <code>Orion.http.download</code> when the services package is present.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="server">
+    <h2>Server-side notes</h2>
+    <p>The client makes no assumptions beyond the request shape it sends — any backend that accepts multipart <code>FormData</code>, raw <code>Content-Range</code> chunks or the tus protocol works. A minimal Node/Express handler for the default (non-chunked) multipart mode:</p>
+    <pre class="docs-code-block" data-lang="js">
+      import express from 'express';
+      import multer from 'multer';
+
+      const upload = multer({ dest: 'uploads/', limits: { fileSize: 25 * 1024 * 1024 } });
+      const app = express();
+
+      // matches the default field-name="file"; el.data adds extra form fields alongside it
+      app.post('/upload', upload.single('file'), (req, res) => {
+        res.json({ id: req.file.filename, name: req.file.originalname, size: req.file.size });
+      });
+    </pre>
+    <p>A chunked endpoint reads the headers the default <code>chunk-request</code> framing sends and appends each chunk to a per-file temp path, keyed by <code>X-File-Id</code>:</p>
+    <pre class="docs-code-block" data-lang="js">
+      import fs from 'node:fs';
+
+      app.post('/upload', express.raw({ type: '*/*', limit: '20mb' }), (req, res) => {
+        const range = /bytes (\d+)-(\d+)\/(\d+)/.exec(req.header('content-range'));
+        if (!range) return res.status(400).end();
+        const [, start, , total] = range.map(Number);
+        const fileId = req.header('x-file-id');
+        const tmp = `uploads/${fileId}.part`;
+        const fd = fs.openSync(tmp, fs.existsSync(tmp) ? 'r+' : 'w');
+        fs.writeSync(fd, req.body, 0, req.body.length, start);
+        fs.closeSync(fd);
+        const done = fs.statSync(tmp).size >= total;
+        res.json(done ? { id: fileId, name: decodeURIComponent(req.header('x-file-name')), size: total } : { ok: true, received: fs.statSync(tmp).size });
+      });
+    </pre>
+    <p>For tus mode, point <code>url</code> at a real <a href="https://github.com/tus/tus-node-server" target="_blank" rel="noopener">tus-node-server</a> (or any conformant tus 1.0 server) — the client already speaks the protocol's creation, <code>HEAD</code> and <code>PATCH</code> steps. In every mode, keep <code>max-size</code>/<code>accept</code> client-side checks in sync with server-side limits: the client-side checks are a UX convenience, not a security boundary — always re-validate size, type and content on the server.</p>
+  </section>
+</main>
+</body>
+</html>

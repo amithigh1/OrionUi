@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Locked — Orion Admin</title>
+<script src="../dist/orion.js"></script>
+<style>
+  body { margin: 0; display: grid; place-items: center; min-height: 100vh;
+    background: radial-gradient(700px 300px at 50% -10%, var(--o-primary-subtle), transparent 70%), var(--o-bg); }
+  .lock { width: 100%; max-width: 22rem; text-align: center; }
+</style>
+</head>
+<body>
+  <div class="lock">
+    <o-avatar name="Aisha Rahman" size="2xl" status="away" class="o-mb-3"></o-avatar>
+    <h1 class="o-h4 o-mb-1">Aisha Rahman</h1>
+    <p class="o-text-muted">Your session is locked. Enter your password to continue.</p>
+    <form id="unlock" class="o-mt-5" data-o-validate novalidate>
+      <div class="o-field">
+        <label class="o-sr-only" for="pw">Password</label>
+        <input class="o-input o-input-lg o-text-center" id="pw" name="password" type="password" autocomplete="current-password" placeholder="Password" data-o-password-toggle data-o-rules="required">
+        <div class="o-error"></div>
+      </div>
+      <button class="o-btn o-btn-primary o-btn-block o-btn-lg" type="submit"><o-icon name="unlock"></o-icon>Unlock</button>
+    </form>
+    <p class="o-mt-5 o-mb-0"><a class="o-text-sm" href="login.html">Not you? Sign in with another account</a></p>
+  </div>
+<script>
+  const f = document.getElementById('unlock');
+  const v = Orion.validate ? Orion.validate(f) : null;
+  f.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (v && !(await v.validate())) return;
+    const btn = f.querySelector('button');
+    btn.classList.add('is-loading');
+    setTimeout(() => { btn.classList.remove('is-loading'); location.href = 'dashboard.html'; }, 700);
+  });
+</script>
+</body>
+</html>

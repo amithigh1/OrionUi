@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Device &amp; Network — Orion Admin</title>
+<meta name="docs:section" content="Services &amp; Utilities">
+<meta name="docs:order" content="50">
+<meta name="docs:desc" content="Browser/device detection, live breakpoints, feature support and a network status indicator">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .dn-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); }
+  .dn-kv { width: 100%; font-size: var(--o-fs-sm); }
+  .dn-kv td:first-child { color: var(--o-text-muted); white-space: nowrap; width: 1%; }
+  .dn-kv code { font-size: .8em; }
+  .dn-bp { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
+  .dn-bp-now { font-size: 2.5rem; font-weight: 800; letter-spacing: -.03em; line-height: 1; color: var(--o-primary-text); min-width: 4.5rem; }
+  .dn-ruler { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 2px; width: 100%; margin-top: .75rem; }
+  .dn-ruler > span { padding: .375rem .25rem; font-size: var(--o-fs-xs); text-align: center; background: var(--o-surface-3); color: var(--o-text-muted); border-radius: var(--o-radius-xs); }
+  .dn-ruler > span.is-active { background: var(--o-primary); color: var(--o-on-primary); font-weight: 700; }
+  .dn-ruler small { display: block; opacity: .75; font-size: .65rem; }
+  .dn-sup { display: flex; flex-wrap: wrap; gap: .375rem; }
+  .dn-sup .o-chip.is-yes { color: var(--o-success-text); background: var(--o-success-subtle); border-color: var(--o-success-border); }
+  .dn-sup .o-chip.is-no { color: var(--o-text-muted); text-decoration: line-through; text-decoration-color: color-mix(in srgb, currentColor 40%, transparent); }
+  .dn-sup .o-icon { width: .9rem; height: .9rem; }
+  .dn-show { display: grid; gap: .5rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); }
+  .dn-show > div { padding: .75rem; font-size: var(--o-fs-sm); border: 1px dashed var(--o-primary-border); border-radius: var(--o-radius); background: var(--o-primary-subtle); color: var(--o-primary-text); }
+  .dn-show code { color: inherit; background: transparent; }
+  .dn-classes { font: .75rem/1.7 var(--o-font-mono); word-break: break-word; }
+  .dn-pre { margin: 0; max-height: 16rem; overflow: auto; font: .75rem/1.6 var(--o-font-mono); padding: .75rem; background: var(--o-surface-2); border: 1px solid var(--o-border); border-radius: var(--o-radius); white-space: pre-wrap; word-break: break-word; }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Device &amp; Network</h1>
+    <p class="docs-lead"><code>Orion.device</code> detects the operating system, browser, engine, form factor and feature support (UA Client Hints with a user-agent fallback), keeps live values for breakpoint, orientation, theme and connectivity, and adds <code>o-*</code> classes to <code>&lt;html&gt;</code>. <code>Orion.network</code> and <code>&lt;o-network-status&gt;</code> report connection quality.</p>
+  </header>
+
+  <section id="device-info">
+    <h2>Device information</h2>
+    <p>Static facts are read once; everything that can change (breakpoint, orientation, online, color scheme, pointer, connection) is a live getter. <code>await Orion.device.ready</code> resolves after the asynchronous refinements (UA-CH high-entropy values such as Windows 11 detection, AVIF/WebP decode tests).</p>
+    <div class="docs-demo">
+      <template>
+        <div class="dn-grid">
+          <div class="o-card o-card-flat"><div class="o-card-header"><h3 class="o-card-title">Platform</h3></div><table class="o-table o-table-sm dn-kv" id="dn-info"></table></div>
+          <div class="o-card o-card-flat"><div class="o-card-header"><h3 class="o-card-title">Environment</h3></div><table class="o-table o-table-sm dn-kv" id="dn-env"></table></div>
+        </div>
+        <script>
+          (() => {
+            const D = Orion.device, esc = Orion.util.esc;
+            const row = (k, v) => `<tr><td>${k}</td><td>${v === true ? '<span class="o-badge o-badge-soft-success">yes</span>' : v === false ? '<span class="o-badge">no</span>' : v == null || v === '' ? '<span class="o-text-subtle">—</span>' : '<code>' + esc(v) + '</code>'}</td></tr>`;
+            const paint = () => {
+              document.getElementById('dn-info').innerHTML = [['os', D.os], ['osVersion', D.osVersion], ['browser', D.browser], ['browserVersion', D.browserVersion], ['engine', D.engine], ['model', D.model],
+                ['mobile', D.mobile], ['tablet', D.tablet], ['desktop', D.desktop], ['touch', D.touch], ['memory', D.memory && D.memory + ' GB'], ['cores', D.cores]].map(r => row(...r)).join('');
+              const c = D.connection;
+              document.getElementById('dn-env').innerHTML = [['breakpoint', D.breakpoint], ['orientation', D.orientation], ['pointer', D.pointer], ['hover', D.hover], ['pixelRatio', D.pixelRatio],
+                ['standalone', D.standalone], ['prefersDark', D.prefersDark], ['reducedMotion', D.reducedMotion], ['online', D.online],
+                ['connection', [c.effectiveType, c.downlink != null && c.downlink + ' Mbps', c.saveData && 'save-data'].filter(Boolean).join(' · ')]].map(r => row(...r)).join('');
+            };
+            paint();
+            D.ready.then(paint);
+            D.onChange(paint);
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="breakpoint">
+    <h2>Live breakpoint &amp; change events</h2>
+    <p>The breakpoint uses the same media queries as the CSS grid (<code>sm 576 · md 768 · lg 992 · xl 1200 · xxl 1400</code>). Resize the window or rotate a device to see <code>onChange</code> fire.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="dn-bp">
+          <div class="dn-bp-now" id="dn-bp" aria-live="polite"></div>
+          <div class="o-small o-text-muted" id="dn-bp-meta"></div>
+        </div>
+        <div class="dn-ruler" id="dn-ruler" aria-hidden="true"></div>
+        <div class="docs-log" id="dn-log"></div>
+        <script>
+          (() => {
+            const D = Orion.device, bps = [['xs', '0'], ['sm', '576'], ['md', '768'], ['lg', '992'], ['xl', '1200'], ['xxl', '1400']];
+            const paint = () => {
+              document.getElementById('dn-bp').textContent = D.breakpoint;
+              document.getElementById('dn-bp-meta').textContent = `${D.width} × ${D.height}px · ${D.orientation} · ${D.pointer} pointer`;
+              document.getElementById('dn-ruler').innerHTML = bps.map(([n, px]) => `<span class="${n === D.breakpoint ? 'is-active' : ''}">${n}<small>≥ ${px}</small></span>`).join('');
+            };
+            paint();
+            addEventListener('resize', Orion.util.rafThrottle(paint));
+            D.onChange(e => { paint(); docs.log('#dn-log', `${e.type}: ${e.from} → ${e.to}`); });
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="supports">
+    <h2>Feature support</h2>
+    <p><code>Orion.device.supports</code> has one boolean per capability. <code>webgl</code> is evaluated lazily on first access; <code>webp</code>/<code>avif</code> are confirmed by decoding a tiny image.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="dn-sup" id="dn-sup" role="list"></div>
+        <script>
+          (() => {
+            const paint = () => {
+              const s = Orion.device.supports;
+              document.getElementById('dn-sup').innerHTML = Object.keys(s).sort().map(k => `<span role="listitem" class="o-chip ${s[k] ? 'is-yes' : 'is-no'}">${Orion.icon(s[k] ? 'check' : 'x')}<span>${k}</span><span class="o-sr-only">${s[k] ? 'supported' : 'not supported'}</span></span>`).join('');
+            };
+            paint();
+            Orion.device.ready.then(paint);
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="show-hide">
+    <h2>Show / hide by device</h2>
+    <p><code>data-o-show</code> and <code>data-o-hide</code> take a device query. Separate tokens with spaces or commas for <em>any</em>, join with <code>+</code> for <em>all</em>, prefix <code>!</code> to negate. Elements are re-evaluated on every change.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="dn-show">
+          <div data-o-show="desktop">Visible on <code>desktop</code></div>
+          <div data-o-show="mobile tablet">Visible on <code>mobile tablet</code></div>
+          <div data-o-show="md-up">Visible on <code>md-up</code> (≥ 768px)</div>
+          <div data-o-show="sm-down">Visible on <code>sm-down</code> (&lt; 768px)</div>
+          <div data-o-hide="touch">Hidden on <code>touch</code> devices</div>
+          <div data-o-show="ios android">Visible on <code>ios android</code></div>
+          <div data-o-show="windows mac linux chromeos">Visible on desktop OSes</div>
+          <div data-o-show="dark">Visible when the OS prefers <code>dark</code></div>
+          <div data-o-show="landscape+lg-down">Visible on <code>landscape+lg-down</code></div>
+          <div data-o-show="standalone">Visible in an installed PWA</div>
+        </div>
+      </template>
+    </div>
+    <h3>Classes on &lt;html&gt;</h3>
+    <div class="docs-demo">
+      <template>
+        <div class="dn-classes" id="dn-cls"></div>
+        <script>
+          (() => { const p = () => { document.getElementById('dn-cls').textContent = [...document.documentElement.classList].filter(c => /^o-(touch|no-touch|mobile|tablet|desktop|os-|browser-|engine-|pointer-|bp-|portrait|landscape|standalone|offline|reduced)/.test(c)).join('  '); }; p(); Orion.device.onChange(p); })();
+        </script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="css">
+      /* style by device without JavaScript */
+      .o-touch .toolbar { gap: 1rem; }              /* bigger touch targets */
+      .o-os-ios .app-header { padding-top: env(safe-area-inset-top); }
+      .o-offline .sync-button { opacity: .5; }
+    </pre>
+  </section>
+
+  <section id="ua">
+    <h2>Parse any user agent</h2>
+    <p><code>Orion.device.parseUA(ua, { touchPoints, uaData })</code> is the same parser used internally — handy for analytics or server logs.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-field">
+          <label class="o-label" for="dn-ua">User-agent string</label>
+          <select class="o-select o-mb-2" id="dn-ua-pick" aria-label="Examples">
+            <option value="">This browser</option>
+            <option>Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1</option>
+            <option>Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Mobile Safari/537.36</option>
+            <option>Mozilla/5.0 (Linux; Android 13; SM-X710) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36</option>
+            <option>Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0</option>
+            <option>Mozilla/5.0 (Macintosh; Intel Mac OS X 14.5; rv:127.0) Gecko/20100101 Firefox/127.0</option>
+            <option>Mozilla/5.0 (Linux; Android 14; SAMSUNG SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/25.0 Chrome/121.0.0.0 Mobile Safari/537.36</option>
+          </select>
+          <textarea class="o-textarea" id="dn-ua" rows="2"></textarea>
+        </div>
+        <pre class="dn-pre" id="dn-ua-out" aria-live="polite"></pre>
+        <script>
+          (() => {
+            const ta = document.getElementById('dn-ua'), out = document.getElementById('dn-ua-out'), pick = document.getElementById('dn-ua-pick');
+            const run = () => { out.textContent = JSON.stringify(Orion.device.parseUA(ta.value), null, 2); };
+            ta.value = navigator.userAgent; run();
+            ta.addEventListener('input', run);
+            pick.addEventListener('change', () => { ta.value = pick.value || navigator.userAgent; run(); });
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="network">
+    <h2>Network status indicator</h2>
+    <p><code>&lt;o-network-status&gt;</code> shows <strong>Online</strong>, <strong>Slow connection</strong> or <strong>Offline</strong> with an icon and text (never color alone). Add <code>toast</code> to pop a toast on changes when <code>Orion.toast</code> is available, and <code>hide-online</code> for an offline-only banner. Changes are always announced to screen readers. Use the buttons to preview states with <code>Orion.network.simulate()</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3" role="group" aria-label="Simulate">
+          <button class="o-btn o-btn-sm" data-sim="">Real status</button>
+          <button class="o-btn o-btn-sm" data-sim="online">Online</button>
+          <button class="o-btn o-btn-sm" data-sim="slow">Slow</button>
+          <button class="o-btn o-btn-sm" data-sim="offline">Offline</button>
+          <button class="o-btn o-btn-sm o-btn-soft-primary" id="dn-check">Ping (check)</button>
+        </div>
+        <div class="o-stack" style="--o-gap:.75rem">
+          <div class="o-hstack"><span class="o-text-muted o-small" style="width:4.5rem">dot</span><o-network-status variant="dot"></o-network-status></div>
+          <div class="o-hstack"><span class="o-text-muted o-small" style="width:4.5rem">badge</span><o-network-status variant="badge" toast></o-network-status></div>
+          <o-network-status variant="full"></o-network-status>
+          <o-network-status variant="full" hide-online></o-network-status>
+        </div>
+        <div class="docs-log" id="dn-net-log"></div>
+        <script>
+          (() => {
+            document.querySelectorAll('[data-sim]').forEach(b => b.addEventListener('click', () => Orion.network.simulate(b.dataset.sim || null)));
+            document.getElementById('dn-check').addEventListener('click', async () => docs.log('#dn-net-log', 'check() -> ' + await Orion.network.check()));
+            Orion.network.onChange(e => docs.log('#dn-net-log', `${e.from} → ${e.status}  (${e.effectiveType || '?'}, rtt ${e.rtt ?? '?'} ms, ${e.downlink ?? '?'} Mbps)`));
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Orion.device</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>mobile / tablet / desktop</td><td>boolean</td><td>Form factor (iPadOS reported as tablet via touch points).</td></tr>
+        <tr><td>touch</td><td>boolean</td><td>Touch input available (<code>maxTouchPoints</code> / touch events).</td></tr>
+        <tr><td>pointer / hover</td><td>'fine' | 'coarse' / boolean</td><td>Primary pointer (live media query).</td></tr>
+        <tr><td>os / osVersion</td><td>string</td><td><code>ios</code> <code>android</code> <code>windows</code> <code>macos</code> <code>linux</code> <code>chromeos</code> <code>unknown</code>. Windows 11 is detected with UA-CH.</td></tr>
+        <tr><td>browser / browserVersion</td><td>string</td><td><code>chrome</code> <code>edge</code> <code>firefox</code> <code>safari</code> <code>opera</code> <code>samsung</code> <code>yandex</code> <code>vivaldi</code> <code>brave</code> <code>ie</code></td></tr>
+        <tr><td>engine</td><td>string</td><td><code>blink webkit gecko trident</code> (all iOS browsers are WebKit).</td></tr>
+        <tr><td>model</td><td>string</td><td>Device model when exposed by UA-CH (Android).</td></tr>
+        <tr><td>standalone</td><td>boolean</td><td>Running as an installed app (display-mode standalone / minimal-ui / WCO, iOS <code>navigator.standalone</code>).</td></tr>
+        <tr><td>pixelRatio, width, height</td><td>number</td><td>Live viewport values.</td></tr>
+        <tr><td>prefersDark / reducedMotion</td><td>boolean</td><td>Live OS preferences.</td></tr>
+        <tr><td>online</td><td>boolean</td><td><code>navigator.onLine</code> (see <code>Orion.network</code> for quality).</td></tr>
+        <tr><td>connection</td><td>object</td><td><code>{ effectiveType, downlink, rtt, saveData, type }</code> (Network Information API; nulls elsewhere).</td></tr>
+        <tr><td>memory / cores</td><td>number | null</td><td><code>deviceMemory</code> (GB) and <code>hardwareConcurrency</code>.</td></tr>
+        <tr><td>orientation</td><td>'portrait' | 'landscape'</td><td>Live.</td></tr>
+        <tr><td>breakpoint</td><td>'xs' … 'xxl'</td><td>Live, matches the CSS breakpoints.</td></tr>
+        <tr><td>supports</td><td>object</td><td><code>webp</code> <code>avif</code> <code>touch</code> <code>share</code> <code>clipboard</code> <code>notifications</code> <code>serviceWorker</code> <code>webauthn</code> <code>webgl</code> <code>barcodeDetector</code> <code>eyeDropper</code> <code>speech</code> <code>speechSynthesis</code> <code>speechRecognition</code> <code>mediaRecorder</code> <code>fullscreen</code> <code>vibrate</code> <code>geolocation</code> <code>webrtc</code> <code>wakeLock</code> <code>bluetooth</code> <code>usb</code> <code>indexedDB</code> <code>broadcastChannel</code> <code>pointerEvents</code></td></tr>
+        <tr><td>ready</td><td>Promise&lt;device&gt;</td><td>Resolves after asynchronous refinements.</td></tr>
+        <tr><td>is(query)</td><td>boolean</td><td>Evaluate a device query (see below).</td></tr>
+        <tr><td>onChange(fn)</td><td>() =&gt; void</td><td><code>fn({ type, from, to, device })</code> for <code>breakpoint</code> <code>orientation</code> <code>online</code> <code>theme</code> <code>motion</code> <code>pointer</code> <code>connection</code> <code>standalone</code> <code>supports</code> <code>ua</code>. Also on the bus as <code>device:change</code>.</td></tr>
+        <tr><td>parseUA(ua, opts)</td><td>object</td><td>Parse a user-agent string.</td></tr>
+        <tr><td>refresh()</td><td>device</td><td>Re-detect (e.g. after a UA override in tests).</td></tr>
+      </tbody>
+    </table>
+    <h3>Device query tokens (<code>is()</code>, <code>data-o-show</code>, <code>data-o-hide</code>)</h3>
+    <table class="docs-api">
+      <thead><tr><th>Token</th><th>True when</th></tr></thead>
+      <tbody>
+        <tr><td>mobile tablet desktop touch standalone online offline</td><td>Matching flag.</td></tr>
+        <tr><td>xs sm md lg xl xxl</td><td>Exactly that breakpoint. Suffix <code>-up</code> (that one or wider), <code>-down</code> (that one or narrower), <code>-only</code>.</td></tr>
+        <tr><td>ios android windows macos (mac) linux chromeos apple</td><td>Operating system.</td></tr>
+        <tr><td>chrome safari firefox edge opera samsung · blink webkit gecko</td><td>Browser / engine.</td></tr>
+        <tr><td>portrait landscape coarse fine hover dark light reduced-motion retina save-data</td><td>Live media state.</td></tr>
+        <tr><td>a b · a, b</td><td>Any token matches.</td></tr>
+        <tr><td>a+b · !a · not-a</td><td>All tokens match · negation.</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;html&gt; classes</h3>
+    <p><code>o-touch</code>/<code>o-no-touch</code>, <code>o-mobile</code>/<code>o-tablet</code>/<code>o-desktop</code>, <code>o-os-{os}</code>, <code>o-browser-{browser}</code>, <code>o-engine-{engine}</code>, <code>o-pointer-{fine|coarse}</code>, <code>o-bp-{bp}</code>, <code>o-portrait</code>/<code>o-landscape</code>, <code>o-standalone</code>, <code>o-offline</code>, <code>o-reduced-motion</code>.</p>
+
+    <h3>Orion.network</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>online</td><td>Browser online and last <code>check()</code> succeeded.</td></tr>
+        <tr><td>status</td><td><code>'online' | 'slow' | 'offline'</code>. Slow when <code>effectiveType</code> is in <code>thresholds.types</code>, <code>rtt ≥ thresholds.rtt</code> or <code>downlink &lt; thresholds.downlink</code>.</td></tr>
+        <tr><td>effectiveType, rtt, downlink, saveData, type</td><td>Network Information API values (null when unsupported).</td></tr>
+        <tr><td>thresholds</td><td><code>{ types: ['slow-2g', '2g'], rtt: 900, downlink: 0.4 }</code> — editable.</td></tr>
+        <tr><td>info()</td><td>Snapshot object.</td></tr>
+        <tr><td>onChange(fn)</td><td><code>fn({ status, from, online, effectiveType, rtt, downlink, saveData })</code> → off. Bus: <code>network:change</code>.</td></tr>
+        <tr><td>check(url?, { timeout })</td><td>HEAD request (no-store) to detect captive portals / "lie-fi"; retries every 15 s while unreachable.</td></tr>
+        <tr><td>simulate(status | null)</td><td>Preview <code>'online' | 'slow' | 'offline'</code> (docs, tests).</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-network-status&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute / property</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>variant</td><td>badge</td><td><code>dot</code> (status dot with an accessible label), <code>badge</code>, <code>full</code> (alert with details and Retry when offline).</td></tr>
+        <tr><td>toast</td><td>false</td><td>Show a toast on changes (needs <code>Orion.toast</code>; one toast per change page-wide).</td></tr>
+        <tr><td>hide-online</td><td>false</td><td>Only visible while slow/offline.</td></tr>
+        <tr><td>texts</td><td>—</td><td>Override strings: <code>online offline slow onlineDesc slowDesc offlineDesc retry status</code>.</td></tr>
+        <tr><td>status (read-only)</td><td></td><td>Current status.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody><tr><td>o-change</td><td>{ status, from }</td><td>Fired by <code>&lt;o-network-status&gt;</code> when the status changes.</td></tr></tbody>
+    </table>
+    <h3>i18n keys</h3>
+    <p><code>network.online · offline · slow · status · backOnline · wentOffline · wentSlow · onlineDesc · offlineDesc · slowDesc · retry · checking</code></p>
+    <h3>Frameworks &amp; SSR</h3>
+    <p>Everything is SSR-safe: on the server <code>Orion.device</code> reports a desktop with <code>breakpoint 'lg'</code>, so render device-specific UI after hydration (or use the CSS classes / <code>data-o-show</code>). Subscribe to <code>onChange</code> in an effect and call the returned function on unmount.</p>
+  </section>
+</main>
+</body>
+</html>

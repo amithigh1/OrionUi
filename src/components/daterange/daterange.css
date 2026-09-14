@@ -1,0 +1,51 @@
+/* ============================================================================
+ * <o-daterange> — two typed inputs + panel (presets · months · times · summary footer)
+ * Customise: --o-cal-cell, --o-dr-presets-w
+ * ========================================================================== */
+o-daterange { display: block; position: relative; min-width: 0; }
+o-daterange:not(:defined) { visibility: hidden; }
+.o-dr-control { display: flex; align-items: center; gap: .125rem; padding: 0; padding-inline: .75rem .375rem; }
+.o-dr-icon { display: inline-grid; place-items: center; flex-shrink: 0; margin-inline-end: .25rem; color: var(--o-text-subtle); }
+.o-dr-icon > .o-icon { width: 1rem; height: 1rem; }
+.o-dr-input {
+  flex: 1 1 0; align-self: stretch; width: 100%; min-width: 0; padding: 0 .25rem; font: inherit; color: inherit; text-overflow: ellipsis;
+  background: transparent; border: 0; outline: 0; font-variant-numeric: tabular-nums; transition: box-shadow var(--o-dur-fast);
+}
+.o-dr-input::placeholder { color: var(--o-text-subtle); }
+.o-dr-input.is-active { box-shadow: inset 0 -2px 0 var(--o-primary); }
+.o-dr-sep { display: inline-grid; place-items: center; flex-shrink: 0; padding-inline: .25rem; color: var(--o-text-subtle); }
+.o-dr-sep > .o-icon { width: .875rem; height: .875rem; }
+.o-control-sm.o-dr-control { padding-inline-start: .5rem; }
+
+.o-dr-panel { display: flex; flex-direction: column; max-width: calc(100vw - 16px); padding: 0; overflow: hidden; }
+.o-dr-layout { display: flex; min-height: 0; }
+.o-dr-presets {
+  display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto; min-width: var(--o-dr-presets-w, 9.5rem); padding: .5rem;
+  overflow-y: auto; background: var(--o-surface-2); border-inline-end: 1px solid var(--o-border);
+}
+.o-dr-preset {
+  display: block; width: 100%; padding: .4375rem .625rem; font: inherit; font-size: var(--o-fs-sm); text-align: start; white-space: nowrap;
+  color: var(--o-text); background: transparent; border: 0; border-radius: var(--o-radius-sm); cursor: pointer;
+}
+.o-dr-preset:hover { background: var(--o-surface-3); }
+.o-dr-preset[aria-pressed="true"] { font-weight: 500; color: var(--o-primary-text); background: var(--o-primary-subtle); }
+.o-dr-preset:focus-visible { outline: none; box-shadow: 0 0 0 var(--o-ring-width) color-mix(in srgb, var(--o-focus) var(--o-ring-alpha), transparent); }
+.o-dr-main { display: flex; flex-direction: column; min-width: 0; }
+.o-dr-cal { padding: .5rem .75rem .25rem; }
+.o-dr-times { display: flex; gap: .75rem; padding: .625rem .75rem .75rem; border-top: 1px solid var(--o-border); }
+.o-dr-time { display: flex; flex-direction: column; gap: .25rem; flex: 1 1 0; min-width: 0; margin: 0; font-size: var(--o-fs-xs); font-weight: 500; color: var(--o-text-muted); }
+.o-dr-foot { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .75rem; padding: .5rem .75rem; background: var(--o-surface-2); border-top: 1px solid var(--o-border); }
+.o-dr-summary { flex: 1 1 12rem; min-width: 0; font-size: var(--o-fs-sm); color: var(--o-text-muted); font-variant-numeric: tabular-nums; }
+.o-dr-actions { display: flex; gap: .375rem; margin-inline-start: auto; }
+
+/* phones: bottom sheet, one month, presets as a scrolling chip row */
+.o-dr-panel.is-sheet .o-dr-layout { flex-direction: column; overflow-y: auto; }
+.o-dr-panel.is-sheet .o-dr-presets {
+  flex-direction: row; gap: .375rem; min-width: 0; padding: .5rem .75rem; overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
+  background: transparent; border-inline-end: 0; border-bottom: 1px solid var(--o-border);
+}
+.o-dr-panel.is-sheet .o-dr-preset { flex: 0 0 auto; width: auto; padding: .3125rem .75rem; background: var(--o-surface); border: 1px solid var(--o-border); border-radius: var(--o-radius-pill); }
+.o-dr-panel.is-sheet .o-dr-preset[aria-pressed="true"] { background: var(--o-primary-subtle); border-color: var(--o-primary-border); }
+.o-dr-panel.is-sheet .o-dr-cal { display: flex; justify-content: center; }
+.o-dr-panel.is-sheet .o-cal { --o-cal-cell: min(3rem, calc((100vw - 2rem) / 7)); }
+.o-dr-panel.is-sheet .o-dr-foot { padding-block: .625rem; }

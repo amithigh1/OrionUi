@@ -1,0 +1,32 @@
+{
+  "nodes": [
+    { "id": "received", "type": "terminator", "label": "Order received", "style": { "fill": "var(--o-success-subtle)", "stroke": "var(--o-success)", "textColor": "var(--o-success-text)" } },
+    { "id": "validate", "type": "rounded", "label": "Validate order details" },
+    { "id": "stock", "type": "diamond", "label": "Items in stock?", "style": { "fill": "var(--o-warning-subtle)", "stroke": "var(--o-warning)", "textColor": "var(--o-warning-text)" } },
+    { "id": "backorder", "type": "rounded", "label": "Create backorder" },
+    { "id": "notify", "type": "document", "label": "Email delay notice" },
+    { "id": "charge", "type": "parallelogram", "label": "Charge payment" },
+    { "id": "paid", "type": "diamond", "label": "Payment approved?", "style": { "fill": "var(--o-warning-subtle)", "stroke": "var(--o-warning)", "textColor": "var(--o-warning-text)" } },
+    { "id": "cancel", "type": "terminator", "label": "Cancel order", "style": { "fill": "var(--o-danger-subtle)", "stroke": "var(--o-danger)", "textColor": "var(--o-danger-text)" } },
+    { "id": "pick", "type": "rounded", "label": "Pick & pack items" },
+    { "id": "inventory", "type": "cylinder", "label": "Inventory DB", "style": { "fill": "var(--o-info-subtle)", "stroke": "var(--o-info)", "textColor": "var(--o-info-text)" } },
+    { "id": "ship", "type": "rounded", "label": "Ship with carrier" },
+    { "id": "invoice", "type": "document", "label": "Send invoice" },
+    { "id": "done", "type": "terminator", "label": "Order complete", "style": { "fill": "var(--o-success-subtle)", "stroke": "var(--o-success)", "textColor": "var(--o-success-text)" } }
+  ],
+  "edges": [
+    { "id": "e1", "from": "received", "to": "validate" },
+    { "id": "e2", "from": "validate", "to": "stock" },
+    { "id": "e3", "from": "stock", "to": "charge", "label": "Yes" },
+    { "id": "e4", "from": "stock", "to": "backorder", "label": "No" },
+    { "id": "e5", "from": "backorder", "to": "notify" },
+    { "id": "e6", "from": "charge", "to": "paid" },
+    { "id": "e7", "from": "paid", "to": "pick", "label": "Yes" },
+    { "id": "e8", "from": "paid", "to": "cancel", "label": "No" },
+    { "id": "e9", "from": "pick", "to": "inventory", "label": "Update stock", "dashed": true, "arrow": "both" },
+    { "id": "e10", "from": "pick", "to": "ship" },
+    { "id": "e11", "from": "ship", "to": "invoice" },
+    { "id": "e12", "from": "invoice", "to": "done" },
+    { "id": "e13", "from": "notify", "to": "done", "label": "Restocked later", "dashed": true }
+  ]
+}

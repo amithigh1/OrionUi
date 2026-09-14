@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sidebar — Orion Admin</title>
+<meta name="docs:section" content="Layout &amp; Navigation">
+<meta name="docs:order" content="20">
+<meta name="docs:desc" content="Navigation tree with search, badges, mini rail flyouts and a data-driven <o-sidebar-menu>">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .sb-frame { display: flex; height: 26rem; border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); overflow: hidden; background: var(--o-bg); }
+  .sb-frame .o-sidebar { height: auto; }
+  .sb-frame-body { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; padding: 1rem; color: var(--o-text-muted); font-size: var(--o-fs-sm); text-align: center; }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Sidebar</h1>
+    <p class="docs-lead"><code>.o-sidebar</code> renders a brand, a search filter, sectioned navigation with nested collapsible
+      groups, badges and a footer user card. Active links are detected from the URL automatically. In mini mode, submenus
+      become hover/focus fly-outs positioned with the core <code>place()</code> engine. <code>&lt;o-sidebar-menu&gt;</code>
+      renders the same markup from a JSON tree for single-page apps.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Full sidebar</h2>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="sb-frame">
+          <aside class="o-sidebar" data-o-sidebar="manual" aria-label="Example" style="--o-sidebar-w:16rem">
+            <a class="o-sidebar-brand" href="#"><span class="o-sidebar-brand-mark"><o-icon name="layout-grid"></o-icon></span><span class="o-sidebar-brand-text">Orion Admin</span></a>
+            <div class="o-sidebar-search"><input class="o-input" type="search" placeholder="Search menu…" aria-label="Search menu"></div>
+            <nav class="o-sidebar-body">
+              <ul class="o-menu">
+                <li class="o-menu-heading">Main</li>
+                <li class="o-menu-item"><a class="o-menu-link is-active" href="#" aria-current="page"><o-icon name="dashboard" class="o-menu-icon"></o-icon><span class="o-menu-label">Dashboard</span></a></li>
+                <li class="o-menu-item"><a class="o-menu-link" href="#"><o-icon name="trending-up" class="o-menu-icon"></o-icon><span class="o-menu-label">Analytics</span></a></li>
+                <li class="o-menu-heading">Management</li>
+                <li class="o-menu-item">
+                  <button class="o-menu-link o-menu-toggle" type="button"><o-icon name="users" class="o-menu-icon"></o-icon><span class="o-menu-label">Users</span></button>
+                  <ul class="o-menu-sub" hidden>
+                    <li class="o-menu-item"><a class="o-menu-link" href="#">All users</a></li>
+                    <li class="o-menu-item"><a class="o-menu-link" href="#">Roles &amp; permissions</a></li>
+                  </ul>
+                </li>
+                <li class="o-menu-item"><a class="o-menu-link" href="#"><o-icon name="shopping-cart" class="o-menu-icon"></o-icon><span class="o-menu-label">Orders</span><span class="o-badge o-badge-sm o-menu-badge o-badge-primary">24</span></a></li>
+                <li class="o-menu-item"><a class="o-menu-link" href="#"><o-icon name="share-2" class="o-menu-icon"></o-icon><span class="o-menu-label">Integrations</span><span class="o-menu-dot"><span class="o-sr-only">New</span></span></a></li>
+              </ul>
+            </nav>
+            <div class="o-sidebar-footer">
+              <button class="o-sidebar-user" type="button"><span class="o-avatar o-avatar-sm">AR</span><span class="o-user-info"><span class="o-user-name">Aisha Rahman</span><span class="o-user-sub">Administrator</span></span><o-icon name="more-vertical" class="o-icon-more"></o-icon></button>
+            </div>
+          </aside>
+          <div class="sb-frame-body">Type in the search box to filter the menu (try "user" or "order"), or click "Users" to expand its group.</div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="mini">
+    <h2>Mini rail with fly-outs</h2>
+    <p>Add <code>.is-mini</code> (this is what <code>.o-app.is-collapsed</code> does inside a shell) to collapse to icons only.
+      Hover or focus an icon for its label; hover/click a group icon to open a fly-out submenu positioned next to the rail.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="sb-frame" style="height:20rem">
+          <aside class="o-sidebar is-mini" data-o-sidebar="manual" aria-label="Mini example">
+            <div class="o-sidebar-brand"><span class="o-sidebar-brand-mark"><o-icon name="layout-grid"></o-icon></span><span class="o-sidebar-brand-text">Orion</span></div>
+            <nav class="o-sidebar-body"><ul class="o-menu">
+              <li class="o-menu-item"><a class="o-menu-link is-active" href="#" aria-current="page"><o-icon name="dashboard" class="o-menu-icon"></o-icon><span class="o-menu-label">Dashboard</span></a></li>
+              <li class="o-menu-item">
+                <button class="o-menu-link o-menu-toggle" type="button"><o-icon name="users" class="o-menu-icon"></o-icon><span class="o-menu-label">Users</span></button>
+                <ul class="o-menu-sub" hidden>
+                  <li class="o-menu-item"><a class="o-menu-link" href="#">All users</a></li>
+                  <li class="o-menu-item"><a class="o-menu-link" href="#">Roles &amp; permissions</a></li>
+                  <li class="o-menu-item"><a class="o-menu-link" href="#">Invitations</a></li>
+                </ul>
+              </li>
+              <li class="o-menu-item"><a class="o-menu-link" href="#"><o-icon name="shopping-cart" class="o-menu-icon"></o-icon><span class="o-menu-label">Orders</span><span class="o-badge o-badge-sm o-menu-badge o-badge-primary">24</span></a></li>
+              <li class="o-menu-item"><a class="o-menu-link" href="#"><o-icon name="settings" class="o-menu-icon"></o-icon><span class="o-menu-label">Settings</span></a></li>
+            </ul></nav>
+            <div class="o-sidebar-footer"><button class="o-sidebar-user" type="button"><span class="o-avatar o-avatar-sm">AR</span><span class="o-user-info"><span class="o-user-name">Aisha Rahman</span></span></button></div>
+          </aside>
+          <div class="sb-frame-body">Hover "Dashboard" for its tooltip, then hover or click "Users" for the fly-out submenu. Try arrow keys: focus a link and press → to open a group.</div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="resizable-dark">
+    <h2>Resizable width &amp; dark variant</h2>
+    <p><code>data-o-sidebar-resizable="200,360"</code> (min,max px) adds a drag handle at the edge — drag it, double-click to
+      reset, or focus it and use the arrow keys / Home / End. <code>.o-theme-dark</code> scopes the sidebar to the dark palette
+      regardless of the page theme (handy for a permanently-dark sidebar in an otherwise light app).</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="sb-frame" style="height:18rem">
+          <aside class="o-sidebar o-theme-dark" data-o-sidebar="manual" data-o-sidebar-resizable="200,360" aria-label="Dark resizable example">
+            <div class="o-sidebar-brand"><span class="o-sidebar-brand-mark"><o-icon name="layout-grid"></o-icon></span><span class="o-sidebar-brand-text">Orion</span></div>
+            <nav class="o-sidebar-body"><ul class="o-menu">
+              <li class="o-menu-item"><a class="o-menu-link is-active" href="#" aria-current="page"><o-icon name="dashboard" class="o-menu-icon"></o-icon><span class="o-menu-label">Dashboard</span></a></li>
+              <li class="o-menu-item"><a class="o-menu-link" href="#"><o-icon name="package" class="o-menu-icon"></o-icon><span class="o-menu-label">Products</span></a></li>
+              <li class="o-menu-item"><a class="o-menu-link" href="#"><o-icon name="settings" class="o-menu-icon"></o-icon><span class="o-menu-label">Settings</span></a></li>
+            </ul></nav>
+          </aside>
+          <div class="sb-frame-body">Drag the right edge of the dark sidebar to resize it.</div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="data-driven">
+    <h2>&lt;o-sidebar-menu&gt; (data-driven)</h2>
+    <p>Renders the identical markup from a JSON array — ideal for single-page apps where the menu comes from configuration or
+      an API. <code>current</code> marks the active item by href/id prefix; leave it unset to auto-detect from the URL. This
+      demo fetches the same <a href="../fixtures/shell/menu.json">fixture</a> used by the app-shell dashboard example.</p>
+    <div class="docs-demo">
+      <template>
+        <div style="max-width:20rem;max-height:22rem;overflow:auto;border:1px solid var(--o-border);border-radius:var(--o-radius-lg)">
+          <o-sidebar-menu id="sm-demo" current="#/users"></o-sidebar-menu>
+        </div>
+        <div class="docs-log" id="log-sm"></div>
+        <script>
+          fetch('../fixtures/shell/menu.json').then(r => r.json()).then(items => { document.getElementById('sm-demo').items = items; });
+          document.getElementById('sm-demo').addEventListener('o-navigate', e => docs.log('#log-sm', `o-navigate → ${e.detail.item.label} (${e.detail.href})`));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="filter">
+    <h2>Search filter &amp; active detection</h2>
+    <p>Typing in <code>.o-sidebar-search input</code> fuzzy-filters items and their ancestors, keeping matched groups open and
+      restoring the previous expand state when cleared. A link's <code>href</code> is compared against
+      <code>location</code> to mark it <code>.is-active</code> / <code>aria-current="page"</code> and expand its ancestor
+      groups; opt out per-link with <code>data-o-active="none"</code>, or for the whole sidebar with
+      <code>data-o-sidebar="manual"</code>.</p>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Markup</h3>
+    <table class="docs-api">
+      <thead><tr><th>Class / attribute</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.o-sidebar[data-o-sidebar]</td><td>Root. <code>data-o-sidebar="manual"</code> disables URL active-detection.</td></tr>
+        <tr><td>.o-sidebar-brand, .o-sidebar-search, .o-sidebar-body, .o-sidebar-footer</td><td>Sections.</td></tr>
+        <tr><td>.o-sidebar-user</td><td>Footer user card button (pair with a dropdown via <code>data-o-toggle="dropdown"</code>).</td></tr>
+        <tr><td>.o-menu, .o-menu-heading, .o-menu-item, .o-menu-link, .o-menu-icon, .o-menu-label, .o-menu-badge, .o-menu-dot</td><td>Tree parts.</td></tr>
+        <tr><td>.o-menu-toggle + .o-menu-sub</td><td>A collapsible group (button + nested <code>&lt;ul&gt;</code>, animated open/close).</td></tr>
+        <tr><td>data-o-active="exact｜prefix｜none"</td><td>Per-link (or ancestor) active-matching mode.</td></tr>
+        <tr><td>data-o-sidebar-accordion</td><td>Only one open group per level.</td></tr>
+        <tr><td>data-o-sidebar-resizable="min,max"</td><td>Adds a drag handle; width persists in <code>localStorage</code>.</td></tr>
+        <tr><td>.is-mini</td><td>Icon rail; submenus become fly-outs, labels become tooltips.</td></tr>
+        <tr><td>.o-theme-dark</td><td>Force the dark palette for this sidebar regardless of the page theme.</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-sidebar-menu&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>items</td><td>Array</td><td><code>{ label, icon, href, id, badge, badgeColor, dot, children, active, section, disabled, target, open }</code>.</td></tr>
+        <tr><td>current</td><td>string</td><td>Active href or id (prefix-matched); omit to auto-detect from the URL.</td></tr>
+        <tr><td>accordion</td><td>boolean</td><td>One open group per level.</td></tr>
+        <tr><td>texts</td><td>object</td><td>Per-instance string overrides.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-menu-toggle</td><td><code>{ open, label }</code></td><td>Dispatched on a <code>.o-menu-toggle</code> when its group opens/closes.</td></tr>
+        <tr><td>o-menu-active</td><td><code>{ link, href, label }</code></td><td>Dispatched on the sidebar/menu root when the active link changes.</td></tr>
+        <tr><td>o-navigate (&lt;o-sidebar-menu&gt;)</td><td><code>{ item, href, originalEvent }</code></td><td>Cancelable — call <code>preventDefault()</code> to let a router handle navigation.</td></tr>
+        <tr><td>o-sidebar-resize</td><td><code>{ width }</code></td><td>Fired while dragging the resize handle.</td></tr>
+      </tbody>
+    </table>
+    <h3>JavaScript API</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Orion.sidebar.sync(el?)</td><td>Re-run active-link detection (all sidebars, or one).</td></tr>
+        <tr><td>setActive(el, hrefOrLink)</td><td>Mark a link active programmatically.</td></tr>
+        <tr><td>filter(el, query)</td><td>Run the search filter without a search input.</td></tr>
+        <tr><td>open(toggle) / close(toggle)</td><td>Open/close one group by its toggle element.</td></tr>
+        <tr><td>expandAll(el) / collapseAll(el)</td><td>All groups in a sidebar.</td></tr>
+        <tr><td>flyout(toggle, opts) / closeFlyout(refocus?)</td><td>Low-level fly-out control (mini mode).</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS custom properties</h3>
+    <p><code>--o-sidebar-w</code>, <code>--o-sidebar-w-mini</code>, <code>--o-sidebar-bg</code>, <code>--o-sidebar-text</code>,
+      <code>--o-header-h</code> (brand block height).</p>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>↓ / ↑</td><td>Move between visible links (wraps).</td></tr>
+        <tr><td>→ (← in RTL)</td><td>On a group: open it (full sidebar) or open its fly-out and focus it (mini). On a link inside an open group: move into it.</td></tr>
+        <tr><td>← (→ in RTL)</td><td>Close the focused group, or return focus to its parent toggle / close a fly-out.</td></tr>
+        <tr><td>Home / End</td><td>First / last visible link.</td></tr>
+        <tr><td>Escape (in the search box)</td><td>Clear the filter.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

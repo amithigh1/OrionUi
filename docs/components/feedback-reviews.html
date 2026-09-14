@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feedback and Reviews — Orion Admin</title>
+<meta name="docs:section" content="Forms">
+<meta name="docs:order" content="96">
+<meta name="docs:desc" content="A floating feedback launcher and a rating-summary + review-list + write-a-review widget">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Feedback and Reviews</h1>
+    <p class="docs-lead"><code>Orion.feedback(options)</code> is a floating corner launcher for quick site-wide feedback (rating + category + message). <code>&lt;o-reviews&gt;</code> is a rating-summary histogram, sortable/filterable review list, and a write-a-review form, all in one element.</p>
+  </header>
+
+  <section id="feedback">
+    <h2>Orion.feedback()</h2>
+    <p>Click below to attach the launcher to this page (bottom-right corner) and open it once so you can see the panel immediately.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-primary" id="fb-enable">Show the feedback launcher</button>
+        <button class="o-btn o-btn-ghost" id="fb-disable">Remove it</button>
+        <div class="docs-log" id="fb-log"></div>
+        <script>
+          let fbCtl = null;
+          document.getElementById('fb-enable').onclick = () => {
+            fbCtl?.destroy();
+            fbCtl = Orion.feedback({
+              position: 'bottom-end',
+              categories: ['Bug', 'Idea', 'Praise', 'Other'],
+              onSubmit: async data => { await new Promise(r => setTimeout(r, 300)); docs.log('#fb-log', 'submitted: ' + JSON.stringify(data)); },
+            });
+            fbCtl.open();
+          };
+          document.getElementById('fb-disable').onclick = () => { fbCtl?.destroy(); fbCtl = null; };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="reviews">
+    <h2>&lt;o-reviews&gt;</h2>
+    <p>Seed data via the <code>reviews</code> property/attribute, or a <code>&lt;script type="application/json"&gt;</code> child as shown here. Try sorting, filtering by star rating (click a histogram row), voting a review helpful, and writing your own.</p>
+    <div class="docs-demo">
+      <template>
+        <o-reviews id="product-reviews" allow-write name="product-x">
+          <script type="application/json">
+            [
+              { "id": "r1", "author": "Aisha Rahman", "rating": 5, "title": "Exactly what we needed", "body": "Setup took ten minutes and the validation engine alone saved us weeks.", "date": "2026-08-20", "verified": true, "helpful": 14, "unhelpful": 0 },
+              { "id": "r2", "author": "Ben Tan", "rating": 4, "title": "Great, with a few rough edges", "body": "Very solid overall. Would like more chart types out of the box.", "date": "2026-08-05", "verified": true, "helpful": 6, "unhelpful": 1, "response": "Thanks Ben — more chart types are on the roadmap!" },
+              { "id": "r3", "author": "Chen Wei", "rating": 5, "title": "Beautiful defaults", "body": "Barely had to write any custom CSS to get a professional-looking admin panel.", "date": "2026-07-28", "verified": false, "helpful": 9, "unhelpful": 0 },
+              { "id": "r4", "author": "Diego Garcia", "rating": 3, "title": "Good but heavy docs", "body": "The library itself is great; the docs could use more end-to-end examples.", "date": "2026-07-02", "verified": true, "helpful": 3, "unhelpful": 2 },
+              { "id": "r5", "author": "Elena Ivanova", "rating": 5, "title": "Zero dependencies, zero regrets", "body": "Dropped it into a legacy jQuery app with no conflicts at all.", "date": "2026-06-14", "verified": true, "helpful": 11, "unhelpful": 0 }
+            ]
+          </script>
+        </o-reviews>
+        <div class="docs-log" id="review-log"></div>
+        <script>
+          document.getElementById('product-reviews').addEventListener('o-review', e => docs.log('#review-log', 'o-review: ' + JSON.stringify(e.detail.review)));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Orion.feedback(options)</h3>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>id</td><td>Omit to replace the single default launcher on repeat calls; pass a value to run several independently.</td></tr>
+        <tr><td>position</td><td><code>bottom-end</code> (default) · <code>bottom-start</code> · <code>top-end</code> · <code>top-start</code></td></tr>
+        <tr><td>categories</td><td>Array of category chip labels; omit for rating + message only.</td></tr>
+        <tr><td>buttonText</td><td>Optional visible label on the launcher (icon-only otherwise).</td></tr>
+        <tr><td>onSubmit(data)</td><td><code>data: { rating, category, message, url, userAgent, viewport, timestamp }</code></td></tr>
+      </tbody>
+    </table>
+    <p>Returns <code>{ open(), close(), destroy() }</code>. Built on the core floating/overlay primitives — Escape, outside-click, and a focus trap all work automatically.</p>
+    <h3>&lt;o-reviews&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>reviews</td><td><code>{ id, author, avatar, rating, title, body, date, verified, helpful, unhelpful, response }[]</code></td></tr>
+        <tr><td>summary</td><td>Default <code>true</code> — average + 5-row histogram (click a row to filter).</td></tr>
+        <tr><td>allowWrite / sort / filterStars</td><td><code>sort</code>: <code>recent</code> (default) · <code>helpful</code> · <code>highest</code> · <code>lowest</code>.</td></tr>
+        <tr><td>name</td><td>Storage key so a "helpful" vote is only counted once per browser.</td></tr>
+        <tr><td>addReview(review) / getReviews() / setReviews(list)</td><td>Methods.</td></tr>
+        <tr><td>voteHelpful(id, helpful)</td><td>Records a Yes/No vote; returns <code>false</code> if this browser already voted.</td></tr>
+        <tr><td>o-review { review } / o-vote-helpful { id, helpful }</td><td>Events.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard &amp; accessibility</h2>
+    <p>The feedback panel traps focus while open and returns it to the launcher on close (Escape or outside click both work). Star pickers are native radiogroups (arrow keys move between them). The review list's sort/filter controls are a native <code>&lt;select&gt;</code> and buttons; the average rating and each review's stars expose an <code>aria-label</code> ("4.2 out of 5 stars") since the stars themselves are decorative.</p>
+  </section>
+</main>
+</body>
+</html>

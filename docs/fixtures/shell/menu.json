@@ -1,0 +1,31 @@
+[
+  { "section": "Main" },
+  { "label": "Dashboard", "icon": "dashboard", "href": "#/dashboard" },
+  { "label": "Analytics", "icon": "trending-up", "href": "#/analytics" },
+  { "section": "Management" },
+  {
+    "label": "Users", "icon": "users",
+    "children": [
+      { "label": "All users", "href": "#/users" },
+      { "label": "Roles & permissions", "href": "#/users/roles" },
+      { "label": "Invitations", "href": "#/users/invitations", "badge": 3 }
+    ]
+  },
+  {
+    "label": "Products", "icon": "package",
+    "children": [
+      { "label": "Catalog", "href": "#/products" },
+      { "label": "Categories", "href": "#/products/categories" },
+      { "label": "Inventory", "href": "#/products/inventory" }
+    ]
+  },
+  { "label": "Orders", "icon": "shopping-cart", "href": "#/orders", "badge": 24 },
+  { "section": "Content" },
+  { "label": "Pages", "icon": "file-text", "href": "#/pages" },
+  { "label": "Media library", "icon": "image", "href": "#/media" },
+  { "label": "Comments", "icon": "message-square", "href": "#/comments", "badge": 5, "badgeColor": "danger" },
+  { "section": "System" },
+  { "label": "Settings", "icon": "settings", "href": "#/settings" },
+  { "label": "Integrations", "icon": "share-2", "href": "#/integrations", "dot": true },
+  { "label": "Audit log", "icon": "list-checks", "href": "#/audit" }
+]

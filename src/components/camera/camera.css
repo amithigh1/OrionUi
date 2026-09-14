@@ -1,0 +1,105 @@
+/* <o-camera> / <o-doc-scanner>: live preview stage, overlays (grid, face guide, flash, countdown), states, controls. */
+o-camera, o-doc-scanner { display: block; --o-camera-ar: 4 / 3; }
+o-camera:not(:defined), o-doc-scanner:not(:defined) { visibility: hidden; }
+
+.o-camera-stage {
+  position: relative; width: 100%; aspect-ratio: var(--o-camera-ar); max-height: 34rem; overflow: hidden;
+  background: #000; border-radius: var(--o-radius-lg); isolation: isolate;
+}
+.o-camera-video, .o-camera-review, .o-scanner-edit-canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; background: #000;
+}
+.o-camera-video.is-mirrored { transform: scaleX(-1); }
+.o-scanner-edit-canvas { object-fit: contain; background: #111; }
+
+.o-camera-grid { position: absolute; inset: 0; pointer-events: none; opacity: .55; }
+.o-camera-grid::before, .o-camera-grid::after {
+  content: ""; position: absolute; inset: 0;
+  background-image: linear-gradient(to right, transparent calc(33.33% - .5px), rgba(255,255,255,.8) calc(33.33% - .5px), rgba(255,255,255,.8) calc(33.33% + .5px), transparent calc(33.33% + .5px), transparent calc(66.66% - .5px), rgba(255,255,255,.8) calc(66.66% - .5px), rgba(255,255,255,.8) calc(66.66% + .5px), transparent calc(66.66% + .5px));
+}
+.o-camera-grid::after {
+  background-image: linear-gradient(to bottom, transparent calc(33.33% - .5px), rgba(255,255,255,.8) calc(33.33% - .5px), rgba(255,255,255,.8) calc(33.33% + .5px), transparent calc(33.33% + .5px), transparent calc(66.66% - .5px), rgba(255,255,255,.8) calc(66.66% - .5px), rgba(255,255,255,.8) calc(66.66% + .5px), transparent calc(66.66% + .5px));
+}
+
+.o-camera-face-guide {
+  position: absolute; inset: 8% 26%; border: 3px solid rgba(255,255,255,.85); border-radius: 50% / 60%;
+  box-shadow: 0 0 0 999px rgba(0,0,0,.45); transition: border-color var(--o-dur) var(--o-ease);
+}
+.o-camera-face-guide.is-good { border-color: var(--o-success); }
+
+.o-camera-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+.o-camera-countdown {
+  position: absolute; inset: 0; display: grid; place-items: center; font-size: 5rem; font-weight: 700; color: #fff;
+  text-shadow: 0 2px 12px rgba(0,0,0,.6); pointer-events: none; font-variant-numeric: tabular-nums;
+}
+.o-camera-hint {
+  position: absolute; inset-inline: 0; bottom: .75rem; margin-inline: auto; width: fit-content; max-width: 90%;
+  padding: .375rem .875rem; font-size: var(--o-fs-sm); font-weight: 500; color: #fff; text-align: center;
+  background: rgba(0,0,0,.55); border-radius: var(--o-radius-pill); backdrop-filter: blur(4px);
+}
+
+.o-camera-state, .o-scanner-stage > .o-camera-state {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: .375rem; padding: 1.5rem; text-align: center; background: color-mix(in srgb, #000 78%, var(--o-surface-2));
+  color: #f1f5f9;
+}
+.o-camera-state-icon { color: var(--o-text-subtle); margin-bottom: .25rem; }
+.o-camera-state-msg { margin: 0; font-weight: 600; }
+.o-camera-state-hint { margin: 0; font-size: var(--o-fs-sm); color: #cbd5e1; max-width: 26rem; }
+
+.o-camera-controls, .o-scanner-controls, .o-scanner-export {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: .75rem;
+}
+.o-camera-live-controls { display: flex; flex: 1 1 auto; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.o-camera-device, .o-scanner-controls .o-camera-device { max-width: 12rem; }
+.o-camera-review-actions { display: flex; flex: 1 1 auto; justify-content: flex-end; gap: .5rem; }
+.o-scanner-controls { justify-content: space-between; }
+
+.o-camera-shutter {
+  width: 3.5rem; height: 3.5rem; margin-inline-start: auto; flex-shrink: 0; padding: 0; border-radius: 50%;
+  border: 3px solid var(--o-surface); background: var(--o-danger); cursor: pointer; box-shadow: 0 0 0 2px var(--o-border-strong);
+  transition: transform var(--o-dur-fast) var(--o-ease);
+}
+.o-camera-shutter:hover { transform: scale(1.05); }
+.o-camera-shutter:active { transform: scale(.92); }
+.o-camera-shutter:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--o-border-strong), 0 0 0 calc(var(--o-ring-width) + 2px) color-mix(in srgb, var(--o-focus) var(--o-ring-alpha), transparent); }
+
+/* ── document scanner ── */
+.o-scanner-quad { fill: color-mix(in srgb, var(--o-primary) 18%, transparent); stroke: var(--o-primary); stroke-width: .6; vector-effect: non-scaling-stroke; }
+.o-scanner-handle {
+  position: absolute; width: 1.75rem; height: 1.75rem; margin: -.875rem; border-radius: 50%; cursor: grab;
+  background: var(--o-primary); border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.5); touch-action: none;
+}
+.o-scanner-handle:active { cursor: grabbing; }
+.o-scanner-handle:focus-visible { outline: none; box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--o-primary); }
+.o-scanner-loupe {
+  position: absolute; width: 96px; height: 96px; border-radius: 50%; border: 3px solid #fff; box-shadow: var(--o-shadow-lg);
+  pointer-events: none; z-index: 2;
+}
+.o-scanner-pages { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: .75rem; padding-top: .75rem; border-top: 1px solid var(--o-border); }
+.o-scanner-page { display: flex; flex-direction: column; gap: .3rem; width: 8rem; }
+.o-scanner-thumb { width: 100%; height: auto; border: 1px solid var(--o-border); border-radius: var(--o-radius-sm); background: var(--o-surface-2); }
+.o-scanner-page-num {
+  position: absolute; margin: .25rem; padding: 0 .375rem; font-size: var(--o-fs-xs); font-weight: 600; color: #fff;
+  background: rgba(0,0,0,.6); border-radius: var(--o-radius-sm); line-height: 1.4;
+}
+.o-scanner-page-actions { display: flex; justify-content: space-between; gap: .125rem; }
+.o-scanner-export { justify-content: flex-end; }
+.o-scanner-count { flex: 1 1 auto; font-size: var(--o-fs-sm); color: var(--o-text-muted); align-self: center; }
+
+@media (max-width: 480px) {
+  .o-camera-stage { aspect-ratio: 3 / 4; max-height: none; border-radius: var(--o-radius); }
+  .o-camera-controls, .o-scanner-controls { gap: .375rem; }
+  .o-camera-device, .o-scanner-controls .o-camera-device { max-width: 7.5rem; }
+  .o-camera-live-controls span, .o-camera-review-actions span { display: none; }
+}
+o-camera[data-fullscreen], o-doc-scanner[data-fullscreen] {
+  position: fixed; inset: 0; z-index: var(--o-z-modal); background: #000;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+o-camera[data-fullscreen] .o-camera-stage { height: 100%; max-height: none; border-radius: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .o-camera-shutter, .o-camera-shutter:hover, .o-camera-shutter:active { transition: none; transform: none; }
+  .o-camera-face-guide { transition: none; }
+}

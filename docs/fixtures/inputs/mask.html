@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mask fixture — Orion Admin</title>
+<script src="../../../dist/orion.js"></script>
+</head>
+<body class="o-container o-py-6">
+<form id="f" class="o-stack" style="max-width:28rem">
+  <input class="o-input" id="phone" name="phone" data-o-mask="(999) 999-9999" data-o-mask-placeholder="_">
+  <input class="o-input" id="date" name="date" data-o-mask="date" data-o-mask-format="DD/MM/YYYY">
+  <input class="o-input" id="card" name="card" data-o-mask="card">
+  <input class="o-input" id="iban" data-o-mask="iban">
+  <input class="o-input" id="ip" data-o-mask="ip">
+  <input class="o-input" id="mac" data-o-mask="mac">
+  <input class="o-input" id="zip" data-o-mask="postcode-us">
+  <input class="o-input" id="hex" data-o-mask="hex-color">
+  <input class="o-input" id="plate" data-o-mask-regex="^[A-Z]{0,3}\d{0,4}$" data-o-mask-case="upper" data-o-mask-complete="^[A-Z]{3}\d{4}$">
+  <input class="o-input" id="intl" data-o-mask="+1 (999) 999-9999">
+  <input class="o-input" id="max" data-o-mask="9999 9999 9999" maxlength="9">
+  <input class="o-input" id="time" data-o-mask="time" data-o-mask-placeholder="HH:mm">
+  <textarea class="o-textarea" id="bio" name="bio" data-o-counter maxlength="40" data-o-autosize="5" rows="2"></textarea>
+  <input class="o-input" id="words" data-o-counter data-o-counter-mode="words" data-o-counter-max="5">
+  <button class="o-btn" type="reset">Reset</button>
+</form>
+</body>
+</html>

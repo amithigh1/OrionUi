@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Table: Server-side — Orion Admin</title>
+<meta name="docs:section" content="Data">
+<meta name="docs:order" content="20">
+<meta name="docs:desc" content="Server-side paging, sorting, search and filters with loading, error and abort handling">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Data Table: server-side</h1>
+    <p class="docs-lead">Give <code>&lt;o-datatable&gt;</code> a <code>source(query)</code> function or a <code>url</code> template and it asks your backend for one page at a time. It shows skeleton rows on first load, a progress line on later loads, debounces search, aborts stale requests and keeps selection across pages by row id.</p>
+  </header>
+
+  <section id="source">
+    <h2>source(query)</h2>
+    <p>The function receives <code>{ page, pageSize, sort: [{ key, dir }], search, filters: { key: value } }</code> plus <code>{ signal }</code> (an <code>AbortSignal</code>) and resolves to <code>{ rows, total }</code>. This demo uses <code>docs.fakeServer</code> with 450 ms latency over 5,000 people. Watch the query log.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-datatable id="dt-srv" page-size="10" selectable label="Customers (server)"></o-datatable>
+        <div class="docs-log o-m-3" id="dt-srv-log"></div>
+        <script>{
+          const dt = document.getElementById('dt-srv');
+          const server = docs.fakeServer(docs.people(5000, 17), { latency: 450 });
+          dt.columns = [
+            { key: 'name', title: 'Name', type: 'avatar', subtitle: 'email', width: 250 },
+            { key: 'role', title: 'Role', type: 'badge', filter: 'multiselect', filterOptions: ['Admin', 'Editor', 'Viewer', 'Manager', 'Support'], colors: { Admin: 'danger', Manager: 'primary', Editor: 'info', Support: 'warning', Viewer: 'secondary' } },
+            { key: 'department', title: 'Department', filter: 'select', filterOptions: ['Engineering', 'Sales', 'Marketing', 'Finance', 'Operations', 'Design', 'HR', 'Legal'] },
+            { key: 'city', title: 'City', filter: 'text' },
+            { key: 'salary', title: 'Salary', type: 'currency', format: { maximumFractionDigits: 0 } },
+            { key: 'joined', title: 'Joined', type: 'date' },
+          ];
+          dt.source = async (query, { signal }) => {
+            docs.log('#dt-srv-log', 'query ' + JSON.stringify(query));
+            return server(query);
+          };
+          dt.bulkActions = [{ label: 'Export', icon: 'download', action: (rows, ctx) => docs.log('#dt-srv-log', ctx.all ? `export ALL ${ctx.count} matching ${JSON.stringify(ctx.query.filters)}` : `export ${rows.length} rows: ${rows.map(r => r.id).join(', ')}`) }];
+          dt.addEventListener('o-load', e => docs.log('#dt-srv-log', `o-load ${e.detail.rows.length} rows of ${e.detail.total}`));
+        }</script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+      dt.source = async ({ page, pageSize, sort, search, filters }, { signal }) =&gt; {
+        const res = await fetch('/api/users?' + new URLSearchParams({ page, pageSize, q: search, sort: sort.map(s =&gt; s.key + ':' + s.dir).join(',') }), { signal });
+        const json = await res.json();
+        return { rows: json.items, total: json.count };   // optional: facets: { role: { Admin: 12 } }, aggregates: { salary: 123456 }
+      };
+    </pre>
+  </section>
+
+  <section id="url">
+    <h2>url template &amp; mapResponse</h2>
+    <p>Placeholders <code>{page}</code>, <code>{pageSize}</code>, <code>{offset}</code>, <code>{limit}</code>, <code>{search}</code>, <code>{sort}</code>, <code>{sortKey}</code>, <code>{dir}</code> and <code>{filters}</code> are filled in (without placeholders, standard query parameters are appended). Responses shaped like <code>{ rows, total }</code>, <code>{ data, meta: { total } }</code>, <code>{ items, totalCount }</code> or a plain array are understood; otherwise supply <code>mapResponse(json, query)</code>. This demo reads a static JSON fixture, so <code>mapResponse</code> does the paging.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-datatable id="dt-url" page-size="8" url="../fixtures/datatable/users.json?page={page}&amp;size={pageSize}&amp;q={search}" toolbar='{"columns":false}'></o-datatable>
+        <script>{
+          const dt = document.getElementById('dt-url');
+          dt.columns = [{ key: 'id', title: '#', type: 'number', width: 70 }, 'name', 'email', { key: 'department', title: 'Department' }, { key: 'salary', type: 'currency', format: { maximumFractionDigits: 0 } }, { key: 'joined', type: 'date' }];
+          dt.mapResponse = (json, q) => {
+            let rows = json.data;
+            if (q.search) rows = rows.filter(r => JSON.stringify(r).toLowerCase().includes(q.search.toLowerCase()));
+            if (q.sort[0]) { const { key, dir } = q.sort[0]; rows = [...rows].sort((a, b) => (a[key] > b[key] ? 1 : a[key] < b[key] ? -1 : 0) * (dir === 'desc' ? -1 : 1)); }
+            return { rows: rows.slice((q.page - 1) * q.pageSize, q.page * q.pageSize), total: rows.length };
+          };
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="states">
+    <h2>Loading, empty &amp; error states</h2>
+    <p>First load shows skeleton rows; later loads keep the rows visible with a progress line and <code>aria-busy</code>. Errors show a message with <strong>Retry</strong> and fire <code>o-error</code>. An empty result shows a friendly state with <em>Clear all</em> when filters are active.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-cluster o-p-3" style="border-bottom:1px solid var(--o-border)">
+          <label class="o-switch o-mb-0"><input type="checkbox" id="dt-err-toggle" checked><span>Fail requests</span></label>
+          <button class="o-btn o-btn-sm" id="dt-err-slow">Slow reload (3s)</button>
+        </div>
+        <o-datatable id="dt-err" page-size="5" toolbar='{"columns":false,"density":false,"export":false}'></o-datatable>
+        <script>{
+          const dt = document.getElementById('dt-err');
+          const server = docs.fakeServer(docs.people(40, 2), { latency: 300 });
+          let fail = true, slow = false;
+          dt.columns = ['name', 'email', { key: 'status', type: 'badge', colors: { Active: 'success', Pending: 'warning', Inactive: 'secondary', Suspended: 'danger' } }];
+          dt.source = async q => {
+            if (slow) { slow = false; await new Promise(r => setTimeout(r, 3000)); }
+            if (fail) { await new Promise(r => setTimeout(r, 300)); throw new Error('503 Service Unavailable — the demo backend is "down".'); }
+            return server(q);
+          };
+          document.getElementById('dt-err-toggle').onchange = e => { fail = e.target.checked; };
+          document.getElementById('dt-err-slow').onclick = () => { fail = false; document.getElementById('dt-err-toggle').checked = false; slow = true; dt.reload(); };
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="infinite">
+    <h2>Infinite loading</h2>
+    <p>With <code>infinite</code> the table loads the next page when you scroll near the end (inside its own <code>height</code> or with the page). It stops when <code>total</code> is reached.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-datatable id="dt-inf" infinite height="360px" page-size="25" density="compact" toolbar='{"columns":false,"export":false}'></o-datatable>
+        <script>{
+          const dt = document.getElementById('dt-inf');
+          dt.columns = [{ key: 'id', title: '#', type: 'number', width: 80 }, 'name', 'email', 'country', { key: 'salary', type: 'currency', format: { maximumFractionDigits: 0 } }];
+          dt.source = docs.fakeServer(docs.people(300, 4), { latency: 400 });
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="shapes">
+    <h2>Query &amp; response</h2>
+    <table class="docs-api">
+      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>query.page</td><td><code>number</code></td><td>1-based page.</td></tr>
+        <tr><td>query.pageSize</td><td><code>number</code></td><td>Rows per page.</td></tr>
+        <tr><td>query.sort</td><td><code>{ key, dir: 'asc'|'desc' }[]</code></td><td>Multi-column sort, most significant first.</td></tr>
+        <tr><td>query.search</td><td><code>string</code></td><td>Global search text (debounced by <code>search-debounce</code>, default 250 ms).</td></tr>
+        <tr><td>query.filters</td><td><code>{ [key]: value }</code></td><td>Text: string · select: string · multiselect: string[] · number-range: <code>{ min, max }</code> · date-range: <code>{ from, to }</code> (ISO dates) · boolean: true/false.</td></tr>
+        <tr><td>options.signal</td><td><code>AbortSignal</code></td><td>Aborted when a newer query starts (2nd argument of <code>source</code>).</td></tr>
+        <tr><td>response.rows</td><td><code>object[]</code></td><td>Rows of the requested page (also <code>data</code>, <code>items</code>, <code>results</code>, <code>records</code>).</td></tr>
+        <tr><td>response.total</td><td><code>number</code></td><td>Total matching rows (also <code>totalCount</code>, <code>count</code>, <code>recordsFiltered</code>, <code>meta.total</code>).</td></tr>
+        <tr><td>response.facets</td><td><code>{ [key]: { [value]: count } }</code></td><td>Optional counts shown in filter menus and chips.</td></tr>
+        <tr><td>response.aggregates</td><td><code>{ [key]: value }</code></td><td>Optional footer aggregates (columns with <code>aggregate</code>).</td></tr>
+      </tbody>
+    </table>
+    <h3>Related API</h3>
+    <table class="docs-api">
+      <thead><tr><th>Name</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>source</td><td><code>async (query, { signal, table }) =&gt; ({ rows, total })</code>. Setting it switches to server mode.</td></tr>
+        <tr><td>url / map-response</td><td>URL template fetched with <code>fetch()</code> (+ <code>fetchOptions</code>); <code>mapResponse(json, query)</code> converts the JSON.</td></tr>
+        <tr><td>reload()</td><td>Re-run the current query (returns a Promise).</td></tr>
+        <tr><td>getQuery()</td><td>The query that would be sent now.</td></tr>
+        <tr><td>selectAll('all')</td><td>In server mode marks <em>every matching row</em> as selected: <code>o-select</code> and bulk actions receive <code>{ all: true, query, count }</code>.</td></tr>
+        <tr><td>o-load</td><td><code>{ rows, total, query }</code> after each successful response.</td></tr>
+        <tr><td>o-error</td><td><code>{ error, query }</code> when the source throws or the response is not OK.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

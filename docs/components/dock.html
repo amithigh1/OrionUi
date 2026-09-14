@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dock — Orion Admin</title>
+<meta name="docs:section" content="Layout &amp; Navigation">
+<meta name="docs:order" content="80">
+<meta name="docs:desc" content="IDE-style dockable panels: regions, resizable splitters, drag-to-move, float, minimize, maximize, layout persistence">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <style>
+    .dock-demo { height: 28rem; border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); overflow: hidden; }
+    .dock-demo.is-tall { height: 34rem; }
+    .dock-tree { list-style: none; margin: 0; padding: 0; font-size: var(--o-fs-sm); }
+    .dock-tree li { padding: .25rem .375rem; border-radius: var(--o-radius-xs); cursor: pointer; white-space: nowrap; }
+    .dock-tree li:hover { background: var(--o-surface-2); }
+    .dock-editor { display: flex; flex-direction: column; gap: .5rem; height: 100%; }
+    .dock-editor textarea { flex: 1 1 auto; min-height: 6rem; resize: none; font: .8125rem/1.6 var(--o-font-mono); }
+    .dock-term { margin: 0; font: .8125rem/1.6 var(--o-font-mono); color: var(--o-text-muted); white-space: pre-wrap; }
+    .dock-props { font-size: var(--o-fs-sm); }
+    .dock-props dt { font-weight: 600; margin-top: .5rem; }
+    .dock-props dd { margin: 0 0 .25rem; color: var(--o-text-muted); }
+  </style>
+  <header class="docs-hero">
+    <h1>Dock</h1>
+    <p class="docs-lead"><code>&lt;o-dock&gt;</code> arranges <code>&lt;o-dock-panel&gt;</code> children into an IDE-style workbench: a start sidebar, main area, end sidebar and bottom panel, each a resizable, minimizable tab group built on <code>&lt;o-split&gt;</code>. Drag a tab to move it between regions, float it into its own window, or drive everything from the panel menu.</p>
+  </header>
+
+  <section id="layout">
+    <h2>Explorer / editor / terminal / properties</h2>
+    <p>Drag a tab onto another region (or off the dock entirely to float it). Each region's <o-icon name="more-horizontal"></o-icon> menu offers Move to…, Float, Minimize/Expand, Maximize/Restore and Close — the keyboard path for everything a drag can do (also reachable with <kbd class="o-kbd">Shift</kbd>+<kbd class="o-kbd">F10</kbd> on a focused tab). Double-click a gutter to snap a sidebar to its rail.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-sm" id="dk-reset">Reset layout</button>
+          <button class="o-btn o-btn-sm" id="dk-float">Float "Properties"</button>
+          <button class="o-btn o-btn-sm" id="dk-max">Maximize editor</button>
+          <button class="o-btn o-btn-sm o-btn-ghost" id="dk-panels">Panels…</button>
+        </div>
+        <o-dock id="dk" layout-key="docs-ide" label="Workbench" class="dock-demo is-tall">
+          <o-dock-panel id="explorer" title="Explorer" icon="file" region="start" size="20">
+            <strong class="o-fs-sm">src/</strong>
+            <ul class="dock-tree">
+              <li><o-icon name="file" size="14"></o-icon> index.js</li>
+              <li><o-icon name="file" size="14"></o-icon> dock.css</li>
+              <li><o-icon name="file" size="14"></o-icon> README.md</li>
+            </ul>
+          </o-dock-panel>
+          <o-dock-panel id="search" title="Search" icon="search" region="start">
+            <div class="o-input-wrap"><o-icon name="search"></o-icon><input class="o-input o-input-sm" placeholder="Search files…"></div>
+          </o-dock-panel>
+          <o-dock-panel id="editor" title="index.js" icon="file" region="center">
+            <div class="dock-editor">
+              <textarea class="o-input" spellcheck="false">export function greet(name) {
+  return `Hello, ${name}!`;
+}</textarea>
+            </div>
+          </o-dock-panel>
+          <o-dock-panel id="readme" title="README.md" icon="file" region="center">
+            <div class="dock-editor"><textarea class="o-input" spellcheck="false"># Orion Admin
+
+A single-file admin UI library.</textarea></div>
+          </o-dock-panel>
+          <o-dock-panel id="terminal" title="Terminal" icon="monitor" region="bottom" size="26">
+            <pre class="dock-term">$ npm run build
+&gt; orion-admin build
+&#10003; 300+ components  120 ms  -&gt; dist/
+$ _</pre>
+          </o-dock-panel>
+          <o-dock-panel id="problems" title="Problems" icon="alert-triangle" region="bottom" badge="0">
+            <p class="o-text-muted o-fs-sm">No problems detected.</p>
+          </o-dock-panel>
+          <o-dock-panel id="properties" title="Properties" icon="settings" region="end" size="18">
+            <dl class="dock-props">
+              <dt>Name</dt><dd>index.js</dd>
+              <dt>Size</dt><dd>84 bytes</dd>
+              <dt>Modified</dt><dd>just now</dd>
+            </dl>
+          </o-dock-panel>
+        </o-dock>
+        <div class="docs-log" id="log-dk"></div>
+        <script>
+          const dk = document.getElementById('dk');
+          document.getElementById('dk-reset').onclick = () => dk.reset();
+          document.getElementById('dk-float').onclick = () => dk.float('properties');
+          document.getElementById('dk-max').onclick = () => dk.toggleMaximize('center');
+          document.getElementById('dk-panels').onclick = e => dk.openPanelsMenu(e.currentTarget);
+          dk.addEventListener('o-layout-change', () => docs.log('#log-dk', 'o-layout-change'));
+          dk.addEventListener('o-panel-move', e => docs.log('#log-dk', `o-panel-move ${e.detail.id}: ${e.detail.from} → ${e.detail.to}`));
+          dk.addEventListener('o-close', e => docs.log('#log-dk', `o-close ${e.detail.id}`));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="persistence">
+    <h2>Layout persistence</h2>
+    <p>With <code>layout-key</code> set, every structural change (move, float, minimize, maximize, close, or a manual gutter drag) is saved to <code>localStorage</code> and restored automatically next time. Read or apply a snapshot directly with <code>getLayout()</code> / <code>setLayout()</code>.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-cluster">
+          <button class="o-btn o-btn-sm o-btn-primary" id="dk2-save">Save snapshot</button>
+          <button class="o-btn o-btn-sm" id="dk2-restore">Restore snapshot</button>
+        </div>
+        <pre class="docs-code-block" id="dk2-out">// getLayout() output appears here</pre>
+        <script>
+          let snapshot = null;
+          document.getElementById('dk2-save').onclick = () => {
+            snapshot = dk.getLayout();
+            document.getElementById('dk2-out').textContent = JSON.stringify(snapshot, null, 2);
+          };
+          document.getElementById('dk2-restore').onclick = () => { if (snapshot) dk.setLayout(snapshot); };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>&lt;o-dock&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute / property</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>layout-key</td><td><code>string</code></td><td>Persistence key (<code>orion:dock:&lt;key&gt;</code>). Omit to disable persistence.</td></tr>
+        <tr><td>label</td><td><code>string</code></td><td>Accessible label for the dock landmark.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>getLayout() → object</td><td>Serializable snapshot: panel placement/order/closed, region sizes, minimized regions, the maximized region and float geometry.</td></tr>
+        <tr><td>setLayout(layout)</td><td>Applies a snapshot from <code>getLayout()</code>.</td></tr>
+        <tr><td>reset()</td><td>Discards the persisted layout and rebuilds from the declared markup.</td></tr>
+        <tr><td>movePanel(id, region, index?)</td><td>Docks a panel into <code>start | center | end | bottom</code>.</td></tr>
+        <tr><td>float(id, { x, y, w, h }?) / dockBack(id)</td><td>Detach into (or return from) a floating window.</td></tr>
+        <tr><td>minimize(region) / expand(region) / toggleMinimize(region)</td><td>Collapse/restore a region's rail (not <code>center</code>).</td></tr>
+        <tr><td>maximize(region) / restore() / toggleMaximize(region)</td><td>Hide every other region so one fills the dock.</td></tr>
+        <tr><td>close(id) / open(id)</td><td>Hide a panel (cancelable <code>o-close</code>) / restore it.</td></tr>
+        <tr><td>getPanels() → array</td><td><code>{ id, title, icon, region, closed, floating, active }</code> for every panel.</td></tr>
+        <tr><td>openPanelsMenu(anchor?)</td><td>Opens the checklist menu that closes/restores any panel.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-layout-change</td><td><code>{ layout }</code></td><td>Fired after any structural change; same shape as <code>getLayout()</code>.</td></tr>
+        <tr><td>o-close</td><td><code>{ id }</code></td><td>Cancelable; fired before a panel is closed.</td></tr>
+        <tr><td>o-panel-move</td><td><code>{ id, from, to }</code></td><td>A panel was docked into a different region.</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-dock-panel&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute / property</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>title / icon / badge</td><td><code>string</code></td><td>Tab label, icon name and a small badge.</td></tr>
+        <tr><td>region</td><td><code>string</code></td><td>Initial region (<code>start | center | end | bottom</code>, default <code>center</code>); read once, at first sync.</td></tr>
+        <tr><td>size</td><td><code>number</code></td><td>Desired initial weight (%) of the panel's region.</td></tr>
+        <tr><td>closable</td><td><code>boolean</code></td><td>Default <code>true</code>.</td></tr>
+      </tbody>
+    </table>
+    <p>CSS custom properties: <code>--o-dock-rail</code> (rail thickness), <code>--o-dock-tab-h</code> (tab strip height). <code>&lt;o-dock&gt;</code> needs a height from its container.</p>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Input</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>← / → / Home / End</td><td>Move focus between tabs in a region and activate them (RTL mirrored).</td></tr>
+        <tr><td>Delete</td><td>Close the focused tab.</td></tr>
+        <tr><td>Shift + F10 · ContextMenu key · region's <o-icon name="more-horizontal" size="14"></o-icon> button</td><td>Open the panel menu: Move to…, Float, Minimize/Expand, Maximize/Restore, Close, Panels….</td></tr>
+        <tr><td>Drag a tab</td><td>Reorder within a region, dock into another region (drop indicator), or drop outside the dock to float it.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="responsive">
+    <h2>Responsive</h2>
+    <p>Below ~600px wide, every open panel collapses into a single tab strip (resize this page or the demo container to see it) — region-specific actions (move, float, minimize, maximize) are hidden in favor of a plain Close, since dragging between regions and floating windows don't fit a narrow screen.</p>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Something went wrong — Orion Admin</title>
+<script src="../dist/orion.js"></script>
+</head>
+<body class="o-container">
+  <div class="o-error-page">
+    <div>
+      <p class="o-error-code">500</p>
+      <h1 class="o-h2">Something went wrong on our side</h1>
+      <p class="o-lead o-mb-5">The error has been logged and our team is looking into it. You can retry in a moment.</p>
+      <div class="o-card o-card-body o-mx-auto o-mb-5 o-text-start" style="max-width:30rem">
+        <div class="o-between o-text-sm"><span class="o-text-muted">Reference</span><code class="o-code" id="ref">ORN-7F3A-2B91</code></div>
+        <div class="o-between o-text-sm o-mt-2"><span class="o-text-muted">Time</span><span id="time"></span></div>
+        <button class="o-btn o-btn-sm o-btn-ghost o-mt-3" data-o-action="copy" data-o-target="#ref"><o-icon name="copy"></o-icon>Copy reference</button>
+      </div>
+      <div class="o-cluster o-justify-center">
+        <button class="o-btn o-btn-primary" onclick="location.reload()"><o-icon name="refresh"></o-icon>Try again</button>
+        <a class="o-btn" href="dashboard.html">Back to dashboard</a>
+        <a class="o-btn o-btn-ghost" href="mailto:support@example.com">Contact support</a>
+      </div>
+    </div>
+  </div>
+<script>document.getElementById('time').textContent = Orion.format.datetime(new Date());</script>
+</body>
+</html>

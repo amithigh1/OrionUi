@@ -1,0 +1,38 @@
+/* ============================================================================
+ * <o-presence>, <o-presence-list> — online/away/busy/dnd/offline indicators.
+ * The dot itself reuses the core `.o-status` / `.o-status-{status}` classes (src/css/60-content.css,
+ * also used by <o-avatar status>); this file only adds the missing `.o-status-dnd` variant plus the
+ * layout for the two elements. Tokens + logical properties throughout so RTL mirrors automatically.
+ * ========================================================================== */
+o-presence:not(:defined), o-presence-list:not(:defined) { visibility: hidden; }
+
+/* Core ships .o-status-online/away/busy/offline (src/css/60-content.css); dnd is added here. */
+.o-status-dnd { background: var(--o-status-critical); }
+
+/* ── <o-presence> ─────────────────────────────────────────────────────── */
+.o-presence { display: inline-flex; align-items: center; gap: .4375rem; min-width: 0; color: var(--o-text); font-size: var(--o-fs-sm); }
+.o-presence-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.o-presence-label[hidden] { display: none; }
+
+/* ── <o-presence-list> ───────────────────────────────────────────────── */
+.o-presence-list { display: flex; flex-direction: column; gap: .125rem; min-width: 0; }
+.o-presence-group-head {
+  display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .5rem .25rem .25rem;
+  font-size: .6875rem; font-weight: 700; color: var(--o-text-muted); text-transform: uppercase; letter-spacing: .04em;
+}
+.o-presence-group-head:first-child { padding-top: 0; }
+.o-presence-group-count { font-variant-numeric: tabular-nums; }
+.o-presence-group { display: flex; flex-direction: column; }
+.o-presence-row {
+  display: flex; align-items: center; gap: .625rem; padding: .375rem .25rem; border-radius: var(--o-radius);
+  cursor: pointer; color: inherit;
+}
+.o-presence-row:hover { background: var(--o-surface-2); }
+.o-presence-row:focus-visible { outline: none; box-shadow: 0 0 0 var(--o-ring-width) color-mix(in srgb, var(--o-focus) var(--o-ring-alpha), transparent); }
+.o-presence-row-avatar { position: relative; flex-shrink: 0; display: inline-flex; }
+.o-presence-row-avatar > .o-status { position: absolute; bottom: -1px; inset-inline-end: -1px; box-shadow: 0 0 0 2px var(--o-surface); }
+.o-presence-row-body { min-width: 0; display: flex; flex-direction: column; gap: .0625rem; }
+.o-presence-row-name { font-size: var(--o-fs-sm); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.o-presence-row-sub { font-size: .6875rem; color: var(--o-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.o-presence-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .5rem; padding: 1.75rem 1rem; text-align: center; color: var(--o-text-muted); }
+.o-presence-empty .o-icon { width: 1.75rem; height: 1.75rem; color: var(--o-text-subtle); }

@@ -1,0 +1,57 @@
+/* <o-signature>: toolbar + resizable ink pad (canvas) + optional typed-signature row. */
+o-signature { display: block; }
+o-signature:not(:defined) { visibility: hidden; }
+
+.o-signature-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-bottom: .5rem; }
+.o-signature-spacer { flex: 1 1 auto; }
+.o-signature-swatch {
+  display: inline-flex; width: 1.75rem; height: 1.75rem; border-radius: var(--o-radius-sm); overflow: hidden;
+  border: 1px solid var(--o-border); cursor: pointer; flex-shrink: 0;
+}
+.o-signature-color { width: 100%; height: 100%; padding: 0; border: 0; cursor: pointer; background: none; }
+.o-signature-color::-webkit-color-swatch-wrapper { padding: 0; }
+.o-signature-color::-webkit-color-swatch { border: 0; }
+.o-signature-width { width: 6rem; flex-shrink: 0; }
+
+.o-signature-tabs { display: inline-flex; padding: 2px; gap: 2px; background: var(--o-surface-3); border-radius: var(--o-radius); }
+.o-signature-tab {
+  padding: .3rem .75rem; font-size: var(--o-fs-sm); font-weight: 500; color: var(--o-text-muted);
+  background: transparent; border: 0; border-radius: calc(var(--o-radius) - 2px); cursor: pointer;
+}
+.o-signature-tab.is-active { background: var(--o-surface); color: var(--o-text); box-shadow: var(--o-shadow-xs); }
+.o-signature-tab:focus-visible { outline: none; box-shadow: 0 0 0 var(--o-ring-width) color-mix(in srgb, var(--o-focus) var(--o-ring-alpha), transparent); }
+
+.o-signature-pad {
+  position: relative; width: 100%; aspect-ratio: 5 / 2; max-height: 20rem; min-height: 7rem;
+  background: var(--o-surface); border: 1px dashed var(--o-border-strong); border-radius: var(--o-radius-lg);
+  overflow: hidden; touch-action: none;
+}
+.o-signature-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; touch-action: none; }
+.o-signature-canvas:focus-visible { outline: none; box-shadow: inset 0 0 0 var(--o-ring-width) color-mix(in srgb, var(--o-focus) var(--o-ring-alpha), transparent); }
+o-signature[readonly] .o-signature-canvas, o-signature.is-disabled .o-signature-canvas { cursor: default; }
+
+.o-signature-baseline {
+  position: absolute; inset-inline: 8%; bottom: 22%; height: 0; border-bottom: 1px solid var(--o-border-strong);
+  pointer-events: none;
+}
+.o-signature-placeholder {
+  position: absolute; inset-inline: 8%; bottom: calc(22% + .35rem); font-size: var(--o-fs-sm); color: var(--o-text-subtle);
+  pointer-events: none; user-select: none;
+}
+o-signature[data-empty] .o-signature-placeholder { display: block; }
+.o-signature-placeholder[hidden] { display: none; }
+
+.o-signature-typed-row { display: flex; gap: .5rem; margin-top: .5rem; }
+.o-signature-typed-row[hidden] { display: none; }
+.o-signature-typed-input { flex: 1 1 auto; min-width: 0; }
+.o-signature-font { flex: 0 0 auto; max-width: 9rem; }
+
+o-signature[required] .o-signature-pad { border-color: var(--o-border-strong); }
+o-signature[data-empty][required]:user-invalid .o-signature-pad,
+o-signature.is-disabled .o-signature-toolbar { opacity: .6; pointer-events: none; }
+
+@media (max-width: 480px) {
+  .o-signature-toolbar { gap: .375rem; }
+  .o-signature-width { width: 4.5rem; }
+  .o-signature-clear span { display: none; }
+}

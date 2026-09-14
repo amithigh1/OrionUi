@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orders — Orion Admin</title>
+<script src="../dist/orion.js"></script>
+<link rel="stylesheet" href="assets/shell.css">
+<script>
+  window.PAGE = {
+    id: 'orders', title: 'Orders', subtitle: 'Server-side table with filters, detail drawer and export.',
+    breadcrumbs: [{ label: 'Home', href: 'dashboard.html' }, { label: 'Commerce' }, { label: 'Orders' }],
+    actions: '<o-select id="status-filter" placeholder="All statuses" clearable style="min-width:12rem"'
+      + ' options=\'["Paid","Pending","Shipped","Refunded","Cancelled"]\'></o-select>'
+      + '<button class="o-btn" id="orders-export"><o-icon name="download"></o-icon>Export</button>',
+  };
+</script>
+<script src="assets/shell.js" defer></script>
+</head>
+<body>
+<div id="app-content">
+  <div class="o-card">
+    <o-datatable id="orders" row-key="id" page-size="12"></o-datatable>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const D = Orion.date, F = Orion.format;
+    const STATUS = ['Paid', 'Pending', 'Shipped', 'Refunded', 'Cancelled'];
+    const COLORS = { Paid: 'success', Pending: 'warning', Shipped: 'info', Refunded: 'danger', Cancelled: 'secondary' };
+    const NAMES = ['Aisha Rahman', 'Ben Tan', 'Chen Wei', 'Diego Silva', 'Elena Ivanova', 'Farid Haddad', 'Grace Kim', 'Hiro Sato', 'Isabel Costa', 'Jamal Ahmed'];
+    const ITEMS = ['Aurora desk lamp', 'Nimbus chair', 'Orbit monitor arm', 'Pulse keyboard', 'Vertex mouse', 'Cobalt notebook'];
+
+    /* Demo dataset — in a real app this lives on the server. */
+    let seed = 42; const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+    const ALL = Array.from({ length: 840 }, (_, i) => {
+      const lines = Array.from({ length: 1 + Math.floor(rnd() * 3) }, () => ({
+        item: ITEMS[Math.floor(rnd() * ITEMS.length)], qty: 1 + Math.floor(rnd() * 3), price: Math.round((29 + rnd() * 380) * 100) / 100,
+      }));
+      const total = lines.reduce((s, l) => s + l.qty * l.price, 0);
+      return {
+        id: 10000 + i, ref: '#' + (10000 + i), customer: NAMES[Math.floor(rnd() * NAMES.length)],
+        status: STATUS[Math.floor(rnd() * STATUS.length)], items: lines.length, lines,
+        total: Math.round(total * 100) / 100, date: D.add(new Date(), -Math.floor(rnd() * 120), 'd'),
+        payment: ['Card', 'Bank transfer', 'PayPal', 'Cash on delivery'][Math.floor(rnd() * 4)],
+      };
+    });
+
+    const table = document.getElementById('orders');
+    table.columns = [
+      { key: 'ref', title: 'Order', sortable: true },
+      { key: 'customer', title: 'Customer', type: 'avatar' },
+      { key: 'status', title: 'Status', type: 'badge', colors: COLORS, filter: 'select' },
+      { key: 'items', title: 'Items', align: 'end' },
+      { key: 'payment', title: 'Payment' },
+      { key: 'total', title: 'Total', type: 'currency', align: 'end', sortable: true },
+      { key: 'date', title: 'Date', type: 'date', sortable: true },
+    ];
+
+    /* Server-side processing: the table asks for exactly the page it needs. */
+    table.source = async ({ page = 1, pageSize = 12, sort = [], search = '', filters = {} }) => {
+      await new Promise(r => setTimeout(r, 220));               // simulate latency
+      let rows = ALL;
+      if (search) { const q = search.toLowerCase(); rows = rows.filter(r => (r.ref + r.customer + r.status + r.payment).toLowerCase().includes(q)); }
+      for (const [k, v] of Object.entries(filters)) if (v != null && v !== '' && !(Array.isArray(v) && !v.length)) {
+        rows = rows.filter(r => (Array.isArray(v) ? v.map(String).includes(String(r[k])) : String(r[k]) === String(v)));
+      }
+      if (sort.length) rows = [...rows].sort((a, b) => { for (const s of sort) { const x = a[s.key], y = b[s.key]; const c = x > y ? 1 : x < y ? -1 : 0; if (c) return s.dir === 'desc' ? -c : c; } return 0; });
+      return { rows: rows.slice((page - 1) * pageSize, page * pageSize), total: rows.length };
+    };
+
+    /* Row click → detail drawer */
+    table.addEventListener('o-row-click', e => {
+      const o = e.detail.row;
+      const body = `
+        <div class="o-stack" style="--o-gap:1.25rem">
+          <div class="o-between"><div><div class="o-text-muted o-text-sm">Order</div><b class="o-text-lg">${o.ref}</b></div>
+            <span class="o-badge o-badge-soft-${COLORS[o.status]}">${o.status}</span></div>
+          <dl class="o-dl">
+            <dt>Customer</dt><dd>${o.customer}</dd>
+            <dt>Date</dt><dd>${F.date(o.date, 'medium')}</dd>
+            <dt>Payment</dt><dd>${o.payment}</dd>
+          </dl>
+          <div>
+            <div class="o-section-title">Items</div>
+            <table class="o-table o-table-sm"><tbody>
+              ${o.lines.map(l => `<tr><td>${l.item}</td><td class="o-num">${l.qty} × ${F.currency(l.price)}</td><td class="o-num">${F.currency(l.qty * l.price)}</td></tr>`).join('')}
+              <tr><td colspan="2"><b>Total</b></td><td class="o-num"><b>${F.currency(o.total)}</b></td></tr>
+            </tbody></table>
+          </div>
+          <div class="o-cluster"><a class="o-btn o-btn-primary" href="invoice.html"><o-icon name="receipt"></o-icon>View invoice</a>
+            <button class="o-btn" onclick="Orion.toast('Marked as shipped')"><o-icon name="truck"></o-icon>Mark shipped</button></div>
+        </div>`;
+      if (Orion.drawer) Orion.drawer({ title: `Order ${o.ref}`, content: body, placement: 'end', size: 'md' });
+      else if (Orion.modal) Orion.modal({ title: `Order ${o.ref}`, content: body });
+    });
+
+    document.getElementById('status-filter')?.addEventListener('o-change', e => table.setFilter?.('status', e.detail.value));
+    document.getElementById('orders-export')?.addEventListener('click', () => table.export ? table.export('csv') : Orion.toast?.('Export needs the data package'));
+  });
+</script>
+</body>
+</html>

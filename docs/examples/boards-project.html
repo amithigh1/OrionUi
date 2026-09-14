@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project workspace — Orion Admin</title>
+<script src="../../dist/orion.js"></script>
+<style>
+  body { margin: 0; height: 100vh; display: flex; flex-direction: column; background: var(--o-bg); color: var(--o-text); font: var(--o-fs-base)/1.5 var(--o-font-sans); }
+  header { display: flex; align-items: center; gap: .75rem; padding: .75rem 1.25rem; background: var(--o-surface); border-bottom: 1px solid var(--o-border); }
+  header h1 { margin: 0; font-size: var(--o-fs-lg); }
+  main { flex: 1 1 auto; display: flex; min-height: 0; }
+  aside { flex: 0 0 18rem; padding: .75rem; border-inline-end: 1px solid var(--o-border); overflow: auto; }
+  aside h2 { margin: .25rem .25rem .5rem; font-size: var(--o-fs-xs); text-transform: uppercase; letter-spacing: .04em; color: var(--o-text-muted); }
+  .board-wrap { flex: 1 1 auto; padding: 1rem; min-width: 0; }
+  o-kanban { height: 100%; }
+  o-tree { height: 20rem; }
+</style>
+</head>
+<body>
+<header>
+  <span class="o-dot o-c-primary" aria-hidden="true"></span>
+  <h1>Orion Admin — Project workspace</h1>
+  <span class="o-badge o-badge-sm" id="status">Loading…</span>
+</header>
+<main>
+  <aside>
+    <h2>Files</h2>
+    <o-tree id="files" filetype></o-tree>
+  </aside>
+  <div class="board-wrap">
+    <o-kanban id="board" filterable wip-block persist="example-project"></o-kanban>
+  </div>
+</main>
+<script>
+  (async () => {
+    const res = await fetch('../fixtures/boards/project.json');
+    const data = await res.json();
+    const board = document.getElementById('board');
+    board.columns = data.columns;
+    board.cards = data.cards;
+    board.onMove = async () => { await new Promise(r => setTimeout(r, 150)); return true; };
+
+    const files = document.getElementById('files');
+    files.nodes = data.files;
+    files.load = async node => {
+      await new Promise(r => setTimeout(r, 300));
+      if (node.id === 'core') return [{ id: 'env', label: 'env.js' }, { id: 'dom', label: 'dom.js' }, { id: 'component', label: 'component.js' }];
+      return [];
+    };
+    const status = document.getElementById('status');
+    files.addEventListener('o-select', e => { status.textContent = 'Selected: ' + e.detail.node.label; });
+    board.addEventListener('o-card-move', e => { status.textContent = `Moved "${e.detail.card.title}" to ${e.detail.to}`; });
+    status.textContent = `${board.cards.length} cards · ${board.columns.length} columns`;
+  })();
+</script>
+</body>
+</html>

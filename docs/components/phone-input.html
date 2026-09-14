@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phone input — Orion Admin</title>
+<meta name="docs:section" content="Forms">
+<meta name="docs:order" content="40">
+<meta name="docs:desc" content="Country selector, auto-formatting and E.164 value">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Phone input</h1>
+    <p class="docs-lead"><code>&lt;o-phone&gt;</code> pairs a searchable country selector with a national-format text field.
+      It formats as you type, detects the country from a pasted <code>+</code>/<code>00</code> international number, and
+      always exposes (and submits) a normalised E.164 value.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-field" style="max-width:22rem">
+          <label class="o-label" for="ph-1">Mobile number</label>
+          <o-phone id="ph-1" name="mobile" country="MY" required></o-phone>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="preferred">
+    <h2>Preferred countries &amp; recent</h2>
+    <p><code>preferred</code> pins countries to the top of the list (e.g. the markets your product serves); the countries
+      the visitor picked most recently are remembered too (<code>recent</code>, on by default, persisted in localStorage).
+      Open the selector and search by name, ISO code or dial code.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-field" style="max-width:22rem">
+          <label class="o-label" for="ph-2">Support line</label>
+          <o-phone id="ph-2" name="support" country="US" preferred="US,CA,GB,MY,SG"></o-phone>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="format">
+    <h2>Display format</h2>
+    <p><code>format</code> controls what is shown while the field is not being actively typed into (the value is always
+      E.164): <code>national</code> (default), <code>international</code>, or <code>e164</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-form-grid">
+          <div class="o-field"><label class="o-label" for="ph-3">National (default)</label><o-phone id="ph-3" value="+442079460958"></o-phone></div>
+          <div class="o-field"><label class="o-label" for="ph-4">International</label><o-phone id="ph-4" format="international" value="+442079460958"></o-phone></div>
+          <div class="o-field"><label class="o-label" for="ph-5">E.164</label><o-phone id="ph-5" format="e164" value="+442079460958"></o-phone></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="states">
+    <h2>Sizes, validation &amp; disabled</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-form-grid">
+          <div class="o-field"><label class="o-label" for="ph-sm">Small</label><o-phone id="ph-sm" size="sm" country="SG"></o-phone></div>
+          <div class="o-field"><label class="o-label" for="ph-lg">Large</label><o-phone id="ph-lg" size="lg" country="SG"></o-phone></div>
+          <div class="o-field"><label class="o-label" for="ph-dis">Disabled</label><o-phone id="ph-dis" value="+60123456789" disabled></o-phone></div>
+          <div class="o-field">
+            <label class="o-label" for="ph-req">Required (blur to validate)</label>
+            <o-phone id="ph-req" required></o-phone>
+            <div class="o-error is-visible" id="ph-req-err" hidden></div>
+            <script>
+              const el = document.getElementById('ph-req');
+              el.addEventListener('change', () => { document.getElementById('ph-req-err').hidden = el.valid; document.getElementById('ph-req-err').textContent = el.valid ? '' : 'Enter a valid phone number'; });
+            </script>
+          </div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="js-api">
+    <h2>JS API &amp; events</h2>
+    <div class="docs-demo">
+      <template>
+        <o-phone id="ph-js" country="MY" style="max-width:22rem"></o-phone>
+        <div class="o-help o-mt-2" id="ph-js-out">value: —</div>
+        <script>
+          const jsEl = document.getElementById('ph-js');
+          const paint = () => { document.getElementById('ph-js-out').textContent = `value: ${jsEl.value || '—'}  ·  valid: ${jsEl.valid}  ·  country: ${jsEl.countryInfo?.iso ?? ''}`; };
+          jsEl.addEventListener('o-change', paint); jsEl.addEventListener('o-country', paint);
+          queueMicrotask(paint); // wait one tick: the element upgrades (setup()) right after this inline script runs
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="rtl">
+    <h2>RTL</h2>
+    <div class="docs-demo" dir="rtl">
+      <template>
+        <div class="o-field" style="max-width:22rem">
+          <label class="o-label" for="ph-rtl">رقم الجوال</label>
+          <o-phone id="ph-rtl" country="AE" preferred="AE,SA,EG"></o-phone>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>Props / attributes</h2>
+    <table class="docs-api">
+      <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>value</td><td>String</td><td>E.164 value, e.g. <code>+60123456789</code>.</td></tr>
+        <tr><td>country</td><td>String</td><td>ISO2 default country; falls back to the current locale's region.</td></tr>
+        <tr><td>preferred</td><td>Array | CSV</td><td>ISO2 codes pinned above the alphabetical list.</td></tr>
+        <tr><td>format</td><td>String</td><td><code>national</code> (default) | <code>international</code> | <code>e164</code>.</td></tr>
+        <tr><td>recent</td><td>Boolean</td><td>Remember recently picked countries (default <code>true</code>).</td></tr>
+        <tr><td>placeholder, locale, size, name, required, disabled, readonly, texts</td><td>—</td><td>Standard.</td></tr>
+      </tbody>
+    </table>
+    <h3>Read-only getters &amp; methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.countryInfo / .valid / .national / .e164</td><td>Current country record, validity, national digits, E.164 value.</td></tr>
+        <tr><td>.open() / .close()</td><td>Open/close the country panel.</td></tr>
+        <tr><td>.clear()</td><td>Empty the field.</td></tr>
+        <tr><td>.setCountry(iso)</td><td>Switch country, keeping the typed national number.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>input, change</td><td>Native, mirrored from the internal field.</td></tr>
+        <tr><td>o-change</td><td><code>{ value, country, valid }</code></td></tr>
+        <tr><td>o-country</td><td><code>{ country }</code> — fired when the country changes (typed, pasted or picked).</td></tr>
+      </tbody>
+    </table>
+    <h3>Keyboard</h3>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Enter / Space / ↓ (on the country button)</td><td>Open the country panel.</td></tr>
+        <tr><td>Any character (on the country button)</td><td>Open the panel and start a search.</td></tr>
+        <tr><td>↑ / ↓, Home / End, Page Up/Down</td><td>Move through results.</td></tr>
+        <tr><td>Enter</td><td>Pick the active country.</td></tr>
+        <tr><td>Esc</td><td>Close the panel.</td></tr>
+      </tbody>
+    </table>
+    <h3>JS API</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Orion.phone.parse(text, iso)</td><td>→ <code>{ country, dial, national, e164, valid }</code>.</td></tr>
+        <tr><td>Orion.phone.format(value, style, iso)</td><td>Format an E.164 value as <code>national</code>/<code>international</code>/<code>e164</code>.</td></tr>
+        <tr><td>Orion.phone.validate(value, iso)</td><td>→ boolean.</td></tr>
+        <tr><td>Orion.phone.countries</td><td>→ <code>[{ iso, dial, name, areas }]</code>.</td></tr>
+        <tr><td>Orion.phone.flag(iso)</td><td>→ flag emoji (falls back automatically to an ISO badge when the OS has no flag glyphs, as on Windows).</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

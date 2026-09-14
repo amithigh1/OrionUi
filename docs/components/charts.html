@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Charts — Orion Admin</title>
+<meta name="docs:section" content="Charts">
+<meta name="docs:order" content="10">
+<meta name="docs:desc" content="Line, area, column, bar, stacked, 100% and mixed charts with a time axis, zoom and streaming">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Charts</h1>
+    <p class="docs-lead">A hand-written SVG chart engine: line, area, column, bar, stacked, 100% and mixed charts that theme with CSS tokens, animate, stream, zoom, speak to screen readers and export to SVG, PNG or CSV — from one <code>&lt;script&gt;</code> tag.</p>
+  </header>
+
+  <section id="overview">
+    <h2>Overview</h2>
+    <p>Create a chart with the <code>&lt;o-chart&gt;</code> element (config as a property or a JSON attribute) or with <code>Orion.chart(el, config)</code>. Colors come from the validated categorical palette <code>--o-chart-1…8</code> in a fixed order, so a series keeps its color when others are hidden. Hover shows a crosshair and one tooltip listing every series; the <em>table</em> button in the corner shows the same data as an accessible table.</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-grid-auto-fit" style="--o-min: 13rem; --o-gap: 1rem" id="ov-kpis"></div>
+        <div class="o-card o-mt-4">
+          <div class="o-card-header"><div><h3 class="o-card-title">Revenue vs costs</h3><p class="o-card-subtitle">Last 12 months · USD</p></div></div>
+          <div class="o-card-body"><o-chart id="ov-revenue" height="300"></o-chart></div>
+        </div>
+        <script>
+          {
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const revenue = [42100, 45300, 51200, 48900, 56400, 61000, 63800, 62100, 70300, 74200, 79400, 86100];
+            const costs = [31200, 32900, 34100, 35800, 37200, 39100, 40800, 42600, 44100, 46900, 48800, 51700];
+            document.getElementById('ov-revenue').config = {
+              type: 'line',
+              labels: months,
+              yAxis: { format: 'currency' },
+              series: [
+                { name: 'Revenue', data: revenue },
+                { name: 'Costs', data: costs },
+              ],
+            };
+            // KPI tiles: label · value · delta · 12-point sparkline (current period in the accent)
+            const kpis = [
+              ['Revenue', '$86.1K', '+8.4%', 'up', revenue],
+              ['Gross margin', '40.0%', '+1.2 pts', 'up', revenue.map((r, i) => (r - costs[i]) / r)],
+              ['Orders', '2,184', '+3.1%', 'up', [1610, 1690, 1720, 1700, 1810, 1880, 1900, 1870, 1990, 2050, 2120, 2184]],
+              ['Avg. order value', '$39.42', '+5.2%', 'up', [26.1, 26.8, 29.8, 28.8, 31.2, 32.4, 33.6, 33.2, 35.3, 36.2, 37.5, 39.4]],
+            ];
+            const box = document.getElementById('ov-kpis');
+            for (const [label, value, delta, dir, trend] of kpis) {
+              const card = document.createElement('div');
+              card.className = 'o-card o-card-compact';
+              card.innerHTML = '<div class="o-card-body o-stat"><span class="o-stat-label"></span><div class="o-between"><span class="o-stat-value"></span><o-sparkline style="width: 5.5rem"></o-sparkline></div><span class="o-stat-meta"><span class="o-trend"></span> vs last month</span></div>';
+              card.querySelector('.o-stat-label').textContent = label;
+              card.querySelector('.o-stat-value').textContent = value;
+              const tr = card.querySelector('.o-trend');
+              tr.append(Object.assign(document.createElement('bdi'), { textContent: delta }));
+              tr.classList.add(dir === 'up' ? 'is-up' : 'is-down');
+              card.querySelector('o-sparkline').values = trend;
+              box.append(card);
+            }
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="line">
+    <h2>Line</h2>
+    <p>Lines are 2px with round joins. Up to four series get a direct label at their end (with leader lines if ends converge) in addition to the legend. Use <code>curve: 'smooth'</code> (monotone, never overshoots) or <code>'step'</code>, and <code>dashed: true</code> for targets or forecasts.</p>
+    <div class="docs-demo">
+      <template>
+        <o-chart id="line-demo" height="280"></o-chart>
+        <script>
+          document.getElementById('line-demo').config = {
+            type: 'line',
+            curve: 'smooth',
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            yAxis: { title: 'Active users' },
+            series: [
+              { name: 'This week', data: [1840, 2120, 2310, 2270, 2490, 1680, 1510] },
+              { name: 'Last week', data: [1720, 1950, 2080, 2150, 2210, 1560, 1440] },
+              { name: 'Goal', data: [2000, 2000, 2000, 2000, 2000, 2000, 2000], dashed: true, curve: 'linear' },
+            ],
+          };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="area">
+    <h2>Area &amp; time axis</h2>
+    <p>Pass <code>{ x, y }</code> points with dates (or date labels) and the x axis becomes a time axis with calendar-aligned, localized ticks (hours, days, weeks, months, years). Areas are a 10% wash under a 2px line; <code>stacked: true</code> stacks them.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-grid" style="--o-cols: 2; --o-gap: 1.5rem">
+          <div><h3 class="o-section-title">Sessions, last 90 days</h3><o-chart id="area-time" height="240"></o-chart></div>
+          <div><h3 class="o-section-title">Traffic by channel (stacked)</h3><o-chart id="area-stack" height="240"></o-chart></div>
+        </div>
+        <script>
+          {
+            const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - 89);
+            const rnd = docs.rand(11);
+            const day = i => new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+            document.getElementById('area-time').config = {
+              type: 'area',
+              series: [{ name: 'Sessions', data: Array.from({ length: 90 }, (_, i) => ({ x: day(i), y: Math.round(1400 + i * 9 + Math.sin(i / 3.5) * 180 + rnd() * 160 - (day(i).getDay() % 6 === 0 ? 420 : 0)) })) }],
+            };
+            const weeks = Array.from({ length: 12 }, (_, i) => day(i * 7 + 6));
+            document.getElementById('area-stack').config = {
+              type: 'area', stacked: true, curve: 'smooth', labels: weeks,
+              yAxis: { format: 'compact' },
+              series: [
+                { name: 'Organic', data: weeks.map((_, i) => 5200 + i * 180 + Math.round(rnd() * 400)) },
+                { name: 'Paid', data: weeks.map((_, i) => 2600 + (i > 6 ? 900 : 0) + Math.round(rnd() * 300)) },
+                { name: 'Referral', data: weeks.map((_, i) => 1200 + i * 40 + Math.round(rnd() * 200)) },
+              ],
+            };
+          }
+        </script>
+        <style>@media (max-width: 760px) { .docs-preview .o-grid[style*="--o-cols: 2"] { --o-cols: 1 !important; } }</style>
+      </template>
+    </div>
+  </section>
+
+  <section id="column">
+    <h2>Column (grouped)</h2>
+    <p>Bars are at most 24px thick with a 4px rounded data end and a square baseline; neighbours are separated by a 2px surface gap. The whole band is the hover target, and each bar has its own tooltip.</p>
+    <div class="docs-demo">
+      <template>
+        <o-chart type="column" height="280" config='{
+          "labels": ["Q1", "Q2", "Q3", "Q4"],
+          "yAxis": { "format": "compact", "title": "Visits" },
+          "series": [
+            { "name": "Organic", "data": [32400, 41100, 38200, 46300] },
+            { "name": "Paid", "data": [21200, 26400, 30100, 28600] },
+            { "name": "Referral", "data": [12100, 14200, 15300, 19400] },
+            { "name": "Social", "data": [8100, 9300, 12600, 11100] }
+          ]
+        }'></o-chart>
+      </template>
+    </div>
+  </section>
+
+  <section id="bar">
+    <h2>Bar (horizontal)</h2>
+    <p><code>type: 'bar'</code> (or <code>horizontal: true</code>) puts long category names down the side. A single series needs no legend — the title names it — and values sit at the bar tips when they fit.</p>
+    <div class="docs-demo">
+      <template>
+        <o-chart id="bar-demo"></o-chart>
+        <script>
+          document.getElementById('bar-demo').config = {
+            type: 'bar',
+            labels: ['/pricing', '/docs/getting-started', '/blog/launch-week', '/signup', '/integrations', '/about'],
+            series: [{ name: 'Page views', data: [12840, 9420, 7110, 5380, 3960, 2140] }],
+          };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="stacked">
+    <h2>Stacked &amp; 100%</h2>
+    <p><code>stacked: true</code> stacks every bar series (or group them with <code>stack: 'name'</code>); <code>stacked: 'percent'</code> shows each segment's share. Only the outermost segment is rounded. Segment labels appear only when they fit — the tooltip and table carry the rest.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-grid" style="--o-cols: 2; --o-gap: 1.5rem">
+          <o-chart id="stack-demo" height="280"></o-chart>
+          <o-chart id="pct-demo" height="280"></o-chart>
+        </div>
+        <script>
+          document.getElementById('stack-demo').config = {
+            type: 'column', stacked: true,
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            yAxis: { format: 'currency' },
+            series: [
+              { name: 'Subscriptions', data: [21400, 23100, 24800, 26200, 27900, 29300] },
+              { name: 'Services', data: [8200, 7900, 9400, 10100, 9800, 11200] },
+              { name: 'Marketplace', data: [3100, 3600, 3900, 4500, 5200, 6100] },
+            ],
+          };
+          document.getElementById('pct-demo').config = {
+            type: 'bar', stacked: 'percent', dataLabels: true,
+            labels: ['Desktop', 'Mobile', 'Tablet'],
+            series: [
+              { name: 'New visitors', data: [4200, 7800, 1100] },
+              { name: 'Returning', data: [6100, 4600, 1500] },
+            ],
+          };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="mixed">
+    <h2>Mixed bar + line</h2>
+    <p>Give each series a <code>type</code> to combine columns and lines on <strong>one</strong> value axis. There is deliberately no second y-axis: two measures on different scales belong in two charts (or indexed to a common base).</p>
+    <div class="docs-demo">
+      <template>
+        <o-chart id="mixed-demo" height="280"></o-chart>
+        <script>
+          document.getElementById('mixed-demo').config = {
+            type: 'mixed',
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
+            yAxis: { title: 'Orders' },
+            series: [
+              { name: 'Orders', type: 'column', data: [1210, 1340, 1480, 1390, 1620, 1710, 1690, 1840] },
+              { name: 'Target', type: 'line', dashed: true, data: [1300, 1350, 1400, 1450, 1500, 1550, 1600, 1650] },
+              { name: '3-month average', type: 'line', curve: 'smooth', data: [null, null, 1343, 1403, 1497, 1573, 1673, 1747] },
+            ],
+          };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="zoom">
+    <h2>Zoom &amp; annotations</h2>
+    <p><code>zoom: { x: true }</code> lets users drag across the plot to zoom (the y axis refits); the reset button, a double-click or <code>chart.resetZoom()</code> restores it. <code>annotations</code> draw target lines and highlighted bands.</p>
+    <div class="docs-demo">
+      <template>
+        <o-chart id="zoom-demo" height="300"></o-chart>
+        <div class="docs-log" id="zoom-log"></div>
+        <script>
+          {
+            const el = document.getElementById('zoom-demo');
+            const data = docs.series(180, { base: 420, vol: 0.06, seed: 5 });
+            const campaign = [data[70].x, data[95].x];
+            el.config = {
+              type: 'line',
+              zoom: { x: true },
+              yAxis: { title: 'Signups', beginAtZero: false },
+              annotations: [
+                { type: 'band', axis: 'x', from: campaign[0], to: campaign[1], label: 'Spring campaign' },
+                { type: 'line', axis: 'y', value: 500, label: 'Target 500', status: 'good' },
+              ],
+              series: [{ name: 'Signups', data }],
+            };
+            el.addEventListener('o-zoom', e => docs.log('#zoom-log', 'o-zoom ' + (e.detail.min == null ? 'reset' : new Date(e.detail.min).toDateString() + ' → ' + new Date(e.detail.max).toDateString())));
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="large">
+    <h2>Large data</h2>
+    <p>Line and area series with more than 2,000 points are downsampled with Largest-Triangle-Three-Buckets to about 1.5 points per pixel, keeping peaks and troughs. Hover still reads the exact nearest point through a binary search over the full data.</p>
+    <div class="docs-demo">
+      <template>
+        <o-chart id="large-demo" height="260"></o-chart>
+        <p class="o-small o-muted o-mt-2" id="large-note"></p>
+        <script>
+          {
+            const n = 20000, t0 = Date.now() - n * 60000;
+            const rnd = docs.rand(3);
+            let v = 50;
+            const data = Array.from({ length: n }, (_, i) => { v += (rnd() - 0.5) * 3 + (50 - v) * 0.01; return { x: t0 + i * 60000, y: Math.round(v * 10) / 10 + (i % 2880 === 1440 ? 25 : 0) }; });
+            const t = performance.now();
+            document.getElementById('large-demo').config = { type: 'line', zoom: { x: true }, xAxis: { type: 'time' }, yAxis: { title: 'Latency (ms)' }, series: [{ name: 'p95 latency', data }] };
+            requestAnimationFrame(() => { document.getElementById('large-note').textContent = `${n.toLocaleString()} points rendered in ${Math.round(performance.now() - t)} ms. Drag to zoom into any day.`; });
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="realtime">
+    <h2>Real-time stream</h2>
+    <p><code>chart.append(points, { max })</code> pushes new points (one per series) and drops the oldest; the line slides smoothly and the value axis refits. This server-load panel updates every second.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-card">
+          <div class="o-card-header"><div><h3 class="o-card-title">Server load</h3><p class="o-card-subtitle">api-eu-1 · live, 1s resolution</p></div><button class="o-btn o-btn-sm" id="rt-toggle" aria-pressed="false">Pause</button></div>
+          <div class="o-card-body"><o-chart id="rt-demo" height="240"></o-chart></div>
+        </div>
+        <script>
+          {
+            const el = document.getElementById('rt-demo');
+            const rnd = docs.rand(9);
+            let cpu = 38, mem = 61;
+            const next = () => { cpu = Math.min(96, Math.max(8, cpu + (rnd() - 0.5) * 14)); mem = Math.min(92, Math.max(40, mem + (rnd() - 0.48) * 3)); return [Math.round(cpu), Math.round(mem)]; };
+            const now = Date.now();
+            const hist = Array.from({ length: 60 }, (_, i) => [new Date(now - (60 - i) * 1000), ...next()]);
+            el.config = {
+              type: 'line', curve: 'smooth', maxPoints: 60,
+              yAxis: { min: 0, max: 100, suffix: '%', format: v => Math.round(v) },
+              series: [
+                { name: 'CPU', data: hist.map(([x, c]) => ({ x, y: c })) },
+                { name: 'Memory', data: hist.map(([x, , m]) => ({ x, y: m })) },
+              ],
+            };
+            let timer = setInterval(() => { const [c, m] = next(); const x = new Date(); el.append([{ x, y: c }, { x, y: m }]); }, 1000);
+            document.getElementById('rt-toggle').addEventListener('click', e => {
+              const paused = e.currentTarget.getAttribute('aria-pressed') === 'true';
+              e.currentTarget.setAttribute('aria-pressed', String(!paused));
+              e.currentTarget.textContent = paused ? 'Pause' : 'Resume';
+              if (paused) timer = setInterval(() => { const [c, m] = next(); const x = new Date(); el.append([{ x, y: c }, { x, y: m }]); }, 1000); else clearInterval(timer);
+            });
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="emphasis">
+    <h2>Emphasis &amp; legend</h2>
+    <p>Click a legend item to hide a series — survivors keep their colors. Hover a legend item (or call <code>chart.highlight(i)</code>) to emphasise one series and gray the rest. A ninth series is never given a generated color: it folds into "Other".</p>
+    <div class="docs-demo">
+      <template>
+        <o-chart id="emph-demo" height="260"></o-chart>
+        <div class="o-cluster o-mt-3" id="emph-btns"></div>
+        <script>
+          {
+            const el = document.getElementById('emph-demo');
+            const regions = ['North', 'South', 'East', 'West'];
+            el.config = {
+              type: 'line', labels: ['2019', '2020', '2021', '2022', '2023', '2024', '2025'],
+              yAxis: { format: 'compact' },
+              series: regions.map((name, i) => ({ name, data: [0, 1, 2, 3, 4, 5, 6].map(k => Math.round(1000 * (1 + i * 0.2) * (1 + k * (0.06 + i * 0.03)) + ((k * 37 + i * 11) % 9) * 30)) })),
+            };
+            const btns = document.getElementById('emph-btns');
+            ['None', ...regions].forEach((r, i) => {
+              const b = document.createElement('button');
+              b.className = 'o-btn o-btn-sm'; b.textContent = i ? 'Highlight ' + r : 'Clear highlight';
+              b.onclick = () => el.highlight(i ? i - 1 : null);
+              btns.append(b);
+            });
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API at a glance</h2>
+    <p>The full configuration reference, events, streaming, export, theming and accessibility notes live on the <a href="charts-api.html">Chart API</a> page.</p>
+    <table class="docs-api">
+      <thead><tr><th>Type</th><th>Use it for</th><th>Key options</th></tr></thead>
+      <tbody>
+        <tr><td>line</td><td>Trends over time, several series</td><td><code>curve</code>, <code>dashed</code>, <code>markers</code>, <code>dataLabels</code></td></tr>
+        <tr><td>area</td><td>One trend, or part-to-whole over time</td><td><code>stacked</code>, <code>curve</code></td></tr>
+        <tr><td>column / bar</td><td>Comparing magnitudes; long names → bar</td><td><code>stacked</code>, <code>stack</code>, <code>barWidth</code> (≤ 24), <code>dataLabels</code></td></tr>
+        <tr><td>mixed</td><td>Columns + lines on one axis</td><td><code>series[].type</code></td></tr>
+        <tr><td>xAxis.type</td><td><code>category</code> · <code>time</code> · <code>linear</code> · <code>log</code></td><td>inferred from data when omitted</td></tr>
+        <tr><td>zoom</td><td>Brush-zoom along x</td><td><code>{ x: true }</code>, <code>o-zoom</code> event</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Tab</td><td>Focus the plot (the first point is announced), then the legend buttons and the toolbar.</td></tr>
+        <tr><td>← / →</td><td>Previous / next data point (category or x position).</td></tr>
+        <tr><td>↑ / ↓</td><td>Move between series at the same x.</td></tr>
+        <tr><td>Home / End, PageUp / PageDown</td><td>First / last point, jump 10 points.</td></tr>
+        <tr><td>Enter / Space</td><td>Fire <code>o-point-click</code> for the focused point.</td></tr>
+        <tr><td>Escape</td><td>Clear the focused point and hide the tooltip.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

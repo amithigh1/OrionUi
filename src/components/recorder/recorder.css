@@ -1,0 +1,59 @@
+/* <o-audio-recorder> / <o-video-recorder>: live stage (level meter, waveform or camera/screen preview), controls, playback. */
+o-audio-recorder, o-video-recorder { display: block; }
+o-audio-recorder:not(:defined), o-video-recorder:not(:defined) { visibility: hidden; }
+
+.o-recorder-stage {
+  position: relative; display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; padding: .875rem 1rem;
+  background: var(--o-surface-2); border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); min-height: 3.5rem;
+}
+.o-recorder-device { max-width: 11rem; }
+.o-recorder-dot {
+  width: .625rem; height: .625rem; border-radius: 50%; background: var(--o-border-strong); flex-shrink: 0;
+}
+.o-recorder-dot.is-live { background: var(--o-danger); animation: o-rec-pulse 1.4s ease-in-out infinite; }
+@keyframes o-rec-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+.o-recorder-time { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--o-text); min-width: 3.5rem; }
+.o-recorder-level { flex: 1 1 8rem; height: .5rem; min-width: 4rem; background: var(--o-surface-3); border-radius: var(--o-radius-pill); overflow: hidden; }
+.o-recorder-level-fill { height: 100%; width: 0; background: var(--o-success); border-radius: inherit; transition: width 80ms linear; }
+.o-recorder-wave { flex: 2 1 12rem; height: 3rem; min-width: 6rem; color: var(--o-primary); border-radius: var(--o-radius-sm); background: var(--o-surface); }
+.o-recorder-progress { flex-basis: 100%; }
+
+.o-recorder-state {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: .375rem; padding: 1rem; text-align: center; background: var(--o-surface-2); border-radius: inherit;
+}
+.o-recorder-state-icon { color: var(--o-text-subtle); }
+.o-recorder-state-msg { margin: 0; font-weight: 600; }
+.o-recorder-state-hint { margin: 0; font-size: var(--o-fs-sm); color: var(--o-text-muted); max-width: 24rem; }
+
+.o-recorder-controls { display: flex; gap: .5rem; margin-top: .75rem; }
+.o-recorder-playback { margin-top: .75rem; }
+.o-recorder-playback-actions { display: flex; gap: .5rem; margin-top: .5rem; }
+.o-recorder-player { width: 100%; display: block; border-radius: var(--o-radius); }
+audio.o-recorder-player { height: 2.75rem; }
+
+/* video recorder */
+.o-recorder-stage-video {
+  display: block; padding: 0; overflow: hidden; aspect-ratio: 16 / 9; background: #000; min-height: 12rem;
+}
+.o-recorder-video, .o-recorder-canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #000; }
+.o-recorder-hidden-source { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.o-recorder-overlay {
+  position: absolute; top: .625rem; inset-inline-start: .625rem; display: flex; align-items: center; gap: .5rem;
+  padding: .3rem .625rem; background: rgba(0,0,0,.55); border-radius: var(--o-radius-pill); backdrop-filter: blur(4px);
+}
+.o-recorder-overlay .o-recorder-time { color: #fff; min-width: 3rem; }
+.o-recorder-stage-video .o-recorder-progress { position: absolute; inset-inline: 0; bottom: 0; border-radius: 0; }
+.o-recorder-stage-video .o-recorder-state { background: color-mix(in srgb, #000 78%, var(--o-surface-2)); color: #f1f5f9; }
+.o-recorder-stage-video .o-recorder-state-hint { color: #cbd5e1; }
+video.o-recorder-video-player { width: 100%; border-radius: var(--o-radius); background: #000; aspect-ratio: 16 / 9; }
+
+@media (max-width: 480px) {
+  .o-recorder-stage { padding: .625rem .75rem; }
+  .o-recorder-wave { flex-basis: 100%; }
+  .o-recorder-controls span, .o-recorder-playback-actions span { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .o-recorder-dot.is-live { animation: none; }
+  .o-recorder-level-fill { transition: none; }
+}

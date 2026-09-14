@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Horizontal shell — Orion Admin</title>
+<script src="../../dist/orion.js"></script>
+</head>
+<body>
+<div class="o-app o-app-horizontal" data-o-app="horizontal">
+  <a class="o-skip-link" href="#main">Skip to main content</a>
+
+  <header class="o-app-header">
+    <nav class="o-navbar" aria-label="Main">
+      <div class="o-navbar-inner">
+        <a class="o-navbar-brand" href="#/">
+          <span class="o-navbar-brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg></span>
+          Orion Admin
+        </a>
+        <button class="o-navbar-toggle" data-o-toggle="navbar" data-o-target="#nav-h" aria-controls="nav-h" aria-expanded="false" aria-label="Menu"><o-icon name="menu"></o-icon></button>
+        <div class="o-navbar-collapse" id="nav-h">
+          <ul class="o-navbar-nav">
+            <li class="o-navbar-item"><a class="o-navbar-link is-active" href="#/dashboard" aria-current="page">Dashboard</a></li>
+            <li class="o-navbar-item o-megamenu-item">
+              <button class="o-navbar-link" type="button" data-o-megamenu-toggle aria-haspopup="true"><span>Products</span><o-icon name="chevron-down" class="o-navbar-caret"></o-icon></button>
+              <div class="o-megamenu">
+                <div class="o-megamenu-inner">
+                  <div class="o-megamenu-col">
+                    <div class="o-megamenu-heading">Catalog</div>
+                    <a class="o-megamenu-link" href="#/products"><o-icon name="package"></o-icon><span><strong>All products</strong><small>Browse the full catalog</small></span></a>
+                    <a class="o-megamenu-link" href="#/products/categories"><o-icon name="layers"></o-icon><span><strong>Categories</strong><small>Organize by type</small></span></a>
+                    <a class="o-megamenu-link" href="#/products/tags"><o-icon name="tag"></o-icon><span><strong>Tags</strong><small>Labels &amp; collections</small></span></a>
+                  </div>
+                  <div class="o-megamenu-col">
+                    <div class="o-megamenu-heading">Operations</div>
+                    <a class="o-megamenu-link" href="#/products/inventory"><o-icon name="truck"></o-icon><span><strong>Inventory</strong><small>Stock levels &amp; warehouses</small></span></a>
+                    <a class="o-megamenu-link" href="#/products/pricing"><o-icon name="credit-card"></o-icon><span><strong>Pricing</strong><small>Rules &amp; discounts</small></span></a>
+                    <a class="o-megamenu-link" href="#/products/reviews"><o-icon name="star"></o-icon><span><strong>Reviews</strong><small>Customer feedback</small></span></a>
+                  </div>
+                  <div class="o-megamenu-promo">
+                    <h4>Bulk importer</h4>
+                    <p>Import thousands of products from a CSV or XLSX file in minutes.</p>
+                    <a class="o-btn o-btn-primary o-btn-sm" href="#/products/import">Try it <o-icon name="arrow-right"></o-icon></a>
+                  </div>
+                </div>
+              </div>
+            </li>
+            <li class="o-navbar-item"><a class="o-navbar-link" href="#/orders">Orders</a></li>
+            <li class="o-navbar-item"><a class="o-navbar-link" href="#/reports">Reports</a></li>
+          </ul>
+          <label class="o-navbar-search"><o-icon name="search"></o-icon><input class="o-input" type="search" placeholder="Search…" aria-label="Search"></label>
+        </div>
+        <div class="o-navbar-actions">
+          <o-lang-switch variant="menu"></o-lang-switch>
+          <o-theme-switch variant="icon"></o-theme-switch>
+          <button class="o-btn o-btn-ghost o-btn-icon" aria-label="Notifications" style="position:relative"><o-icon name="bell"></o-icon><span class="o-badge o-badge-counter">2</span></button>
+          <button class="o-header-user" type="button" data-o-toggle="dropdown" data-o-target="#um">
+            <span class="o-avatar o-avatar-sm">BT</span><span class="o-user-info"><span class="o-user-name">Ben Tan</span></span>
+          </button>
+          <div class="o-dropdown-menu" id="um">
+            <button class="o-dropdown-item" type="button"><o-icon name="user"></o-icon>Profile</button>
+            <button class="o-dropdown-item" type="button"><o-icon name="log-out"></o-icon>Sign out</button>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <nav class="o-app-topnav" aria-label="Breadcrumb">
+    <div class="o-container-xl" style="padding-block:.625rem">
+      <o-breadcrumb separator="chevron" items='[{"label":"Home","href":"#/dashboard"},{"label":"Reports"}]'></o-breadcrumb>
+    </div>
+  </nav>
+
+  <main class="o-app-main" id="main">
+    <div class="o-app-content o-app-content-boxed">
+      <div class="o-page-header">
+        <div><h1 class="o-h3" style="margin:0">Reports</h1><p class="o-text-muted" style="margin:.25rem 0 0">Horizontal navigation shell — top navbar with a mega menu, no sidebar.</p></div>
+        <div class="o-page-header-actions"><button class="o-btn o-btn-primary"><o-icon name="download"></o-icon>Export report</button></div>
+      </div>
+      <div class="o-grid-auto" style="--o-min:13rem;--o-gap:1.25rem">
+        <div class="o-card"><div class="o-card-body"><div class="o-stat"><span class="o-stat-label">Sessions</span><span class="o-stat-value">48,220</span><span class="o-trend is-up">+8.9%</span></div></div></div>
+        <div class="o-card"><div class="o-card-body"><div class="o-stat"><span class="o-stat-label">Conversion</span><span class="o-stat-value">3.4%</span><span class="o-trend is-up">+0.4pt</span></div></div></div>
+        <div class="o-card"><div class="o-card-body"><div class="o-stat"><span class="o-stat-label">Avg. order</span><span class="o-stat-value">$62.10</span><span class="o-trend is-down">-1.1%</span></div></div></div>
+      </div>
+      <div class="o-empty o-card o-mt-5">
+        <div class="o-empty-icon"><o-icon name="chart-bar"></o-icon></div>
+        <p class="o-empty-title">Chart placeholder</p>
+        <p class="o-empty-text">This page demonstrates the horizontal app shell, the navbar hamburger collapse (resize the window) and the mega menu on “Products” (hover or click).</p>
+      </div>
+    </div>
+    <footer class="o-app-footer">
+      <span>© 2026 Orion Admin.</span>
+      <span class="o-cluster"><a href="#/privacy">Privacy</a><a href="#/terms">Terms</a></span>
+    </footer>
+  </main>
+</div>
+<o-back-to-top threshold="240"></o-back-to-top>
+</body>
+</html>

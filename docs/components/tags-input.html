@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tags input — Orion Admin</title>
+<meta name="docs:section" content="Forms">
+<meta name="docs:order" content="55">
+<meta name="docs:desc" content="Free-form or suggestion-backed tags with drag reorder and inline edit">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Tags input</h1>
+    <p class="docs-lead"><code>&lt;o-tags&gt;</code> turns a text field into a chip list: press Enter/Tab/comma or paste a
+      delimited list to add tags, drag chips to reorder, double-click or F2 to rename in place, and wire up
+      <code>suggestions</code> or an async <code>source</code> for autocomplete.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-field" style="max-width:26rem">
+          <label class="o-label" for="tg-1">Skills</label>
+          <o-tags id="tg-1" name="skills" value='["javascript","css"]'></o-tags>
+          <div class="o-help">Enter, comma or Tab adds a tag. Backspace on an empty field removes the last one.</div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="suggestions">
+    <h2>Suggestions</h2>
+    <p><code>suggestions</code> filters a static list with fuzzy matching as you type. Use <code>strict</code> to only
+      allow values from the list.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-field" style="max-width:26rem">
+          <label class="o-label" for="tg-2">Framework</label>
+          <o-tags id="tg-2" name="frameworks" suggestions='["React","Vue","Angular","Svelte","Solid","Qwik","Ember","Preact"]' strict max="4"></o-tags>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="async">
+    <h2>Async source</h2>
+    <p><code>source</code> is an <code>async (query) =&gt; items</code> function — great for a remote search API.</p>
+    <div class="docs-demo">
+      <template>
+        <o-tags id="tg-3" name="people" placeholder="Search people…" style="max-width:26rem"></o-tags>
+        <script>
+          const PEOPLE = docs.people(30).map(p => ({ value: String(p.id), label: p.name }));
+          document.getElementById('tg-3').source = async q => {
+            await new Promise(r => setTimeout(r, 200));
+            return Orion.util.fuzzySearch(PEOPLE, q, x => x.label, 8);
+          };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="colors">
+    <h2>Colors</h2>
+    <p><code>colors</code> maps a tag's text to a semantic color name or any CSS color; <code>color-for</code> is a
+      function for computed colors (e.g. hashing a category to a palette).</p>
+    <div class="docs-demo">
+      <template>
+        <o-tags value='["urgent","in-progress","done","design"]' colors='{"urgent":"danger","in-progress":"warning","done":"success","design":"#7c3aed"}' style="max-width:28rem"></o-tags>
+      </template>
+    </div>
+  </section>
+
+  <section id="constraints">
+    <h2>Pattern, max &amp; duplicates</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-form-grid">
+          <div class="o-field"><label class="o-label" for="tg-pat">Lowercase slugs only</label><o-tags id="tg-pat" pattern="^[a-z0-9-]+$" placeholder="my-slug"></o-tags></div>
+          <div class="o-field"><label class="o-label" for="tg-max">Max 3, no duplicates</label><o-tags id="tg-max" max="3" value='["a","b"]'></o-tags></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="reorder">
+    <h2>Drag reorder &amp; inline edit</h2>
+    <p>Drag a chip to reorder (pointer events, works with touch too); double-click or press F2/Enter on a focused chip to
+      rename it; Alt+←/→ reorders from the keyboard.</p>
+    <div class="docs-demo">
+      <template>
+        <o-tags value='["First","Second","Third","Fourth"]' style="max-width:28rem"></o-tags>
+      </template>
+    </div>
+  </section>
+
+  <section id="states">
+    <h2>Sizes, readonly &amp; RTL</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-stack" style="gap:1rem;max-width:28rem">
+          <o-tags size="sm" value='["small"]'></o-tags>
+          <o-tags size="lg" value='["large"]'></o-tags>
+          <o-tags value='["read","only"]' readonly></o-tags>
+          <div dir="rtl"><o-tags value='["واحد","اثنان"]'></o-tags></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>Props / attributes</h2>
+    <table class="docs-api">
+      <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>value</td><td>Array&lt;string&gt;</td><td></td></tr>
+        <tr><td>placeholder, max</td><td>String, Number</td><td></td></tr>
+        <tr><td>allow-duplicates, pattern</td><td>Boolean, String (regex)</td><td></td></tr>
+        <tr><td>suggestions</td><td>Array&lt;string | {value,label,color}&gt;</td><td></td></tr>
+        <tr><td>source</td><td>Function</td><td><code>async (query) =&gt; items</code>; property only.</td></tr>
+        <tr><td>strict</td><td>Boolean</td><td>Only accept values present in <code>suggestions</code>/<code>source</code>.</td></tr>
+        <tr><td>separator</td><td>String</td><td>Join tags into one form field value with this separator (default: one field entry per tag).</td></tr>
+        <tr><td>delimiters</td><td>String</td><td>Characters that split pasted/typed text into tags (default <code>,;</code>, plus Enter/Tab).</td></tr>
+        <tr><td>min-chars</td><td>Number</td><td>Characters typed before suggestions open (default 1).</td></tr>
+        <tr><td>max-length</td><td>Number</td><td>Max characters per tag.</td></tr>
+        <tr><td>transform</td><td>String</td><td><code>lower</code> | <code>upper</code>.</td></tr>
+        <tr><td>color-for</td><td>Function</td><td><code>(tag) =&gt; color</code>; property only.</td></tr>
+        <tr><td>colors</td><td>Object</td><td><code>{ tagText: 'success' | '#hex' }</code>.</td></tr>
+        <tr><td>editable, sortable</td><td>Boolean</td><td>Both default <code>true</code>.</td></tr>
+        <tr><td>size, name, required, disabled, readonly, texts</td><td>—</td><td>Standard.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.add(tag | tags)</td><td>Validated add, same path as user entry.</td></tr>
+        <tr><td>.remove(tag | index)</td><td></td></tr>
+        <tr><td>.clear()</td><td></td></tr>
+        <tr><td>.open() / .close()</td><td>Suggestion panel.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>o-add</td><td><code>{ tag }</code> — cancelable.</td></tr>
+        <tr><td>o-remove</td><td><code>{ tag, index }</code> — cancelable.</td></tr>
+        <tr><td>o-change, input, change</td><td><code>{ value }</code></td></tr>
+      </tbody>
+    </table>
+    <h3>Keyboard</h3>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Enter / , / Tab</td><td>Add the current text as a tag.</td></tr>
+        <tr><td>Backspace (empty field)</td><td>Remove the last tag.</td></tr>
+        <tr><td>← / → (on a chip)</td><td>Move focus between chips (RTL-aware).</td></tr>
+        <tr><td>Alt + ← / →</td><td>Reorder the focused chip.</td></tr>
+        <tr><td>Delete / Backspace (on a chip)</td><td>Remove it.</td></tr>
+        <tr><td>Enter / F2 (on a chip)</td><td>Edit it in place.</td></tr>
+        <tr><td>↓ (in the field)</td><td>Open suggestions.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

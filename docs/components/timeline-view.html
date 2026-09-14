@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timeline view — Orion Admin</title>
+<meta name="docs:section" content="Scheduling">
+<meta name="docs:order" content="55">
+<meta name="docs:desc" content="Interactive time axis: grouped lanes, zoom/pan, drag scheduling, clustering">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Timeline view</h1>
+    <p class="docs-lead"><code>&lt;o-timeline-view&gt;</code> lays items — ranges, points and background bands — on an adaptive time axis (minutes to centuries), stacked automatically inside optional nested, collapsible lanes. Pan and zoom with a mouse, wheel, touch pinch or the keyboard; drag to move or resize editable items; dense points cluster and expand on demand. For a project plan with dependencies and a task tree, see <a href="gantt.html">Gantt chart</a>; for CSS-only activity feeds, see <a href="timeline.html">Timeline &amp; Stats</a>.</p>
+  </header>
+
+  <section id="overview">
+    <h2>Team activity</h2>
+    <p>Incidents, deployments and on-call shifts across three teams. Groups can nest (each team has a sub-lane for on-call); drag an editable item to move it, drag its edges to resize a range, and shift-drag the background to zoom into a period. <code>o-item-change</code> is cancelable — this demo refuses to move an item into the past.</p>
+    <div class="docs-demo">
+      <template>
+        <o-timeline-view id="tv-main" editable now height="24rem" label="Team activity timeline"></o-timeline-view>
+        <div class="docs-log" id="tv-main-log"></div>
+        <script>
+          (() => {
+            const D = Orion.date, day = n => D.add(D.today(), n), at = (n, h = 9, m = 0) => { const d = day(n); d.setHours(h, m, 0, 0); return d; };
+            const tv = document.getElementById('tv-main'), log = m => docs.log('#tv-main-log', m);
+            tv.groups = [
+              { id: 'api', content: 'API team' },
+              { id: 'api-oncall', content: 'On-call', nested: [] },
+              { id: 'web', content: 'Web team' },
+              { id: 'web-oncall', content: 'On-call', nested: [] },
+              { id: 'data', content: 'Data team', collapsed: true },
+              { id: 'data-oncall', content: 'On-call', nested: [] },
+            ].map(g => g.id.endsWith('-oncall') ? g : { ...g, nested: [g.id + '-oncall'] });
+            tv.items = [
+              { id: 1, group: 'api', type: 'background', start: at(-1, 22), end: at(0, 6), color: 'danger', title: 'Overnight freeze window' },
+              { id: 2, group: 'api', content: 'Deploy API v2.4', start: at(-2, 14), end: at(-2, 15, 30), title: 'Deploy API v2.4' },
+              { id: 3, group: 'api', content: 'Incident: elevated 5xx', start: at(-1, 23), end: at(0, 1), color: 'danger' },
+              { id: 4, group: 'api', content: 'Postmortem published', start: at(0, 16) },
+              { id: 5, group: 'api-oncall', content: 'Aisha Rahman', start: at(-3), end: at(1) },
+              { id: 6, group: 'api-oncall', content: 'Ben Tan', start: at(1), end: at(5) },
+              { id: 7, group: 'web', content: 'A/B test: checkout flow', start: at(-4), end: at(3), color: 'chart-3' },
+              { id: 8, group: 'web', content: 'Ship redesign', start: at(-1, 10), end: at(-1, 12) },
+              { id: 9, group: 'web', content: 'CDN cache purge', start: at(2, 9) },
+              { id: 10, group: 'web-oncall', content: 'Mei Lim', start: at(-3), end: at(2) },
+              { id: 11, group: 'web-oncall', content: 'Diego Garcia', start: at(2), end: at(5) },
+              { id: 12, group: 'data', content: 'Nightly ETL', start: at(-1, 1), end: at(-1, 3) },
+              { id: 13, group: 'data', content: 'Warehouse migration', start: at(0), end: at(4), color: 'chart-5' },
+              { id: 14, group: 'data-oncall', content: 'Hiro Sato', start: at(-3), end: at(4) },
+            ];
+            tv.groupTemplate = g => Orion.util.html`<strong>${g.content}</strong>`;
+            tv.itemTemplate = it => it.content;
+            tv.addEventListener('o-item-change', e => {
+              const { item, changes, previous } = e.detail;
+              if (changes.start && D.isBefore(item.start, new Date(), 'minute') && !D.isBefore(previous.start, new Date(), 'minute')) { e.preventDefault(); log(`✖ refused: cannot move "${item.content}" into the past`); return; }
+              log(`o-item-change ${item.content}: ${JSON.stringify(Object.keys(changes))}`);
+            });
+            tv.addEventListener('o-select', e => log(`o-select ${e.detail.items.map(i => i.content).join(', ') || '(cleared)'}`));
+            tv.addEventListener('o-group-collapse', e => log(`o-group-collapse ${e.detail.group.content}`));
+            tv.addEventListener('o-group-expand', e => log(`o-group-expand ${e.detail.group.content}`));
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="zoom">
+    <h2>Pan &amp; zoom</h2>
+    <p>The toolbar's zoom buttons and <strong>Fit all</strong>, <kbd class="o-kbd">Ctrl</kbd>/pinch to zoom around the pointer, drag the background to pan (with inertia), or hold <kbd class="o-kbd">Shift</kbd> and drag to draw a box that zooms straight to that range. The axis adapts its unit automatically — from minutes up to centuries — as you zoom.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-sm" id="zm-hour">Zoom to 1 hour</button>
+          <button class="o-btn o-btn-sm" id="zm-day">Zoom to 1 day</button>
+          <button class="o-btn o-btn-sm" id="zm-year">Zoom to 1 year</button>
+          <span class="o-text-muted o-text-sm" id="zm-range"></span>
+        </div>
+        <o-timeline-view id="tv-zoom" height="14rem"></o-timeline-view>
+        <script>
+          (() => {
+            const D = Orion.date, tv = document.getElementById('tv-zoom'), out = document.getElementById('zm-range');
+            const now = D.today();
+            tv.items = [
+              { id: 1, content: 'Sprint 12', start: D.add(now, -14), end: D.add(now, 0) },
+              { id: 2, content: 'Sprint 13', start: D.add(now, 0), end: D.add(now, 14) },
+              { id: 3, content: 'Release freeze', type: 'point', start: D.add(now, 10) },
+            ];
+            const paint = () => { out.textContent = `${Orion.format.datetime(tv.start)} – ${Orion.format.datetime(tv.end)}`; };
+            document.getElementById('zm-hour').onclick = () => tv.setWindow(+D.add(now, 0), +D.add(now, 0) + 36e5);
+            document.getElementById('zm-day').onclick = () => tv.setWindow(+D.startOf(now, 'day'), +D.add(D.startOf(now, 'day'), 1));
+            document.getElementById('zm-year').onclick = () => tv.setWindow(+D.startOf(now, 'year'), +D.add(D.startOf(now, 'year'), 1, 'year'));
+            tv.addEventListener('o-range-change', paint);
+            paint();
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="items">
+    <h2>Item types &amp; clustering</h2>
+    <p>Three item types: <code>range</code> (has <code>end</code>), <code>point</code> (a single instant) and <code>background</code> (a shaded band behind everything, never selectable). Dense points within ~26px of each other cluster into a count bubble; double-click (or <kbd class="o-kbd">Enter</kbd>) a cluster to zoom into it.</p>
+    <div class="docs-demo">
+      <template>
+        <o-timeline-view id="tv-cluster" selectable height="13rem"></o-timeline-view>
+        <script>
+          (() => {
+            const D = Orion.date, base = +D.today(), tv = document.getElementById('tv-cluster'), hour = 36e5;
+            const r = docs.rand(11);
+            const items = [{ id: 'bg', type: 'background', start: base - 24 * hour, end: base + 24 * hour, title: 'Weekend' }];
+            for (let i = 0; i < 30; i++) items.push({ id: 'p' + i, type: 'point', content: '#' + (i + 1), start: base + (-3 + r() * 6) * 24 * hour });
+            items.push({ id: 'range', content: 'Maintenance window', start: base + 2 * 24 * hour, end: base + 2 * 24 * hour + 12 * hour });
+            tv.items = items;
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="frameworks">
+    <h2>Frameworks</h2>
+    <p>Set <code>items</code>/<code>groups</code> as properties (React 19, Vue <code>:items</code>, Angular <code>[items]</code>) and listen for <code>o-item-change</code> to write edits back to your store; <code>getItems()</code>/<code>getGroups()</code> return plain JSON-safe objects (dates as real <code>Date</code> instances). Reassigning <code>items</code> re-normalizes the model but keeps the current window and selection.</p>
+    <pre class="docs-code-block" data-lang="html">
+      &lt;!-- Vue --&gt;
+      &lt;o-timeline-view :items="items" :groups="groups" editable @o-item-change="save($event.detail)" /&gt;
+      &lt;!-- Angular --&gt;
+      &lt;o-timeline-view [items]="items" (o-select)="onSelect($event.detail)"&gt;&lt;/o-timeline-view&gt;
+    </pre>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Attributes &amp; properties</h3>
+    <table class="docs-api">
+      <thead><tr><th>Property (attribute)</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>items</td><td>Item[]</td><td>[]</td><td>The items on the axis (see Item fields). JSON in the attribute; set the property from frameworks.</td></tr>
+        <tr><td>groups</td><td>Group[]</td><td>null</td><td>Optional lanes (see Group fields). Omit for a single ungrouped lane.</td></tr>
+        <tr><td>start / end</td><td>date</td><td>auto</td><td>The visible window. Auto-fits the data (plus 8% padding) on first render; read/write together as the current window (use <code>setWindow()</code> to change both atomically).</td></tr>
+        <tr><td>zoom-min / zoom-max</td><td>number (ms)</td><td>60000 / ~20 years</td><td>Clamp on the window span, in milliseconds.</td></tr>
+        <tr><td>stack</td><td>boolean</td><td>true</td><td>Stack overlapping items into extra rows within a lane (<code>stack="false"</code> overlaps them instead).</td></tr>
+        <tr><td>editable</td><td>boolean</td><td>false</td><td>Allow drag move/resize by default; a per-item <code>editable</code> field overrides this.</td></tr>
+        <tr><td>selectable</td><td>boolean</td><td>true</td><td>Allow click/keyboard selection by default; a per-item <code>selectable</code> field overrides this. Background items are never selectable.</td></tr>
+        <tr><td>now</td><td>boolean</td><td>false</td><td>Draw a line at the current time (updates every 30s).</td></tr>
+        <tr><td>toolbar</td><td>boolean</td><td>true</td><td>Show the built-in zoom/fit/now toolbar.</td></tr>
+        <tr><td>height</td><td>CSS length</td><td>22rem</td><td>Component height (or set <code>--o-tv-h</code>).</td></tr>
+        <tr><td>groups-width</td><td>number</td><td>160</td><td>Lane-label column width in px.</td></tr>
+        <tr><td>label</td><td>string</td><td>“Timeline”</td><td>Accessible name.</td></tr>
+        <tr><td>item-template</td><td>(item) =&gt; Node | SafeHTML | string</td><td>text content</td><td>Custom item content.</td></tr>
+        <tr><td>group-template</td><td>(group) =&gt; Node | SafeHTML | string</td><td>text content</td><td>Custom lane-label content.</td></tr>
+        <tr><td>texts</td><td>object</td><td>—</td><td>Per-instance overrides of <code>timelineView.*</code> strings.</td></tr>
+      </tbody>
+    </table>
+    <h3>Item fields</h3>
+    <table class="docs-api">
+      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>id</td><td>string | number</td><td>Unique id (generated when missing).</td></tr>
+        <tr><td>content</td><td>string | Node | SafeHTML</td><td>Label (overridden by <code>itemTemplate</code> when set).</td></tr>
+        <tr><td>start</td><td>Date | string | number</td><td>Required.</td></tr>
+        <tr><td>end</td><td>Date | string | number</td><td>Present → <code>range</code>; omitted → <code>point</code> (unless <code>type</code> says otherwise).</td></tr>
+        <tr><td>type</td><td>'range' | 'point' | 'background'</td><td>Inferred from <code>end</code> when omitted. Background items ignore <code>editable</code>/<code>selectable</code>.</td></tr>
+        <tr><td>group</td><td>id</td><td>Lane id; falls back to the ungrouped lane when it doesn't match a known group.</td></tr>
+        <tr><td>className</td><td>string</td><td>Extra class on the item element.</td></tr>
+        <tr><td>color</td><td>token | CSS color</td><td><code>primary</code>, <code>success</code>, … , <code>chart-1</code>…<code>chart-8</code> or any CSS color.</td></tr>
+        <tr><td>editable / selectable</td><td>boolean</td><td>Per-item override of the element's <code>editable</code>/<code>selectable</code>.</td></tr>
+        <tr><td>title</td><td>string</td><td>Native tooltip (<code>title=""</code>).</td></tr>
+        <tr><td>data</td><td>any</td><td>Your payload (returned untouched). Other unknown fields are kept too.</td></tr>
+      </tbody>
+    </table>
+    <h3>Group fields</h3>
+    <table class="docs-api">
+      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>id</td><td>string | number</td><td>Unique id (generated when missing).</td></tr>
+        <tr><td>content</td><td>string | Node | SafeHTML</td><td>Lane label (overridden by <code>groupTemplate</code> when set).</td></tr>
+        <tr><td>nested</td><td>id[]</td><td>Child group ids, rendered as indented sub-lanes directly below.</td></tr>
+        <tr><td>collapsed</td><td>boolean</td><td>Initial state; a group with no <code>nested</code> children has no toggle.</td></tr>
+        <tr><td>order</td><td>number</td><td>Sort order among siblings (default: declaration order).</td></tr>
+        <tr><td>visible</td><td>boolean</td><td>Default true; <code>false</code> hides the lane (and its items).</td></tr>
+        <tr><td>height</td><td>number</td><td>Fixed lane height in px (default: sized to fit the stacked rows).</td></tr>
+        <tr><td>className</td><td>string</td><td>Extra class on the lane label row.</td></tr>
+        <tr><td>data</td><td>any</td><td>Your payload (returned untouched).</td></tr>
+      </tbody>
+    </table>
+    <p>Items whose <code>group</code> doesn't match any known group id render in the implicit, italicized <em>Other</em> lane.</p>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Cancelable</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>o-item-change</td><td>✓</td><td><code>{ item, changes, previous, revert() }</code> — a user drag (move/resize) or the <kbd class="o-kbd">Alt</kbd>+arrow keyboard nudge. <code>revert()</code> undoes just this change later.</td></tr>
+        <tr><td>o-item-click</td><td></td><td><code>{ id, item, originalEvent }</code></td></tr>
+        <tr><td>o-item-dblclick</td><td></td><td><code>{ id, item, originalEvent }</code></td></tr>
+        <tr><td>o-select</td><td></td><td><code>{ ids, items }</code> — click, <kbd class="o-kbd">Ctrl</kbd>/<kbd class="o-kbd">Shift</kbd>-click or <kbd class="o-kbd">Enter</kbd>. Not fired by <code>setSelection()</code>.</td></tr>
+        <tr><td>o-range-change</td><td></td><td><code>{ start, end }</code> — the visible window changed (pan, zoom, <code>setWindow</code>/<code>fit</code>/<code>moveTo</code> without <code>{ silent: true }</code>).</td></tr>
+        <tr><td>o-group-collapse / o-group-expand</td><td></td><td><code>{ id, group }</code> — a lane toggle, including <code>toggleGroup()</code>/<code>collapseGroup()</code>/<code>expandGroup()</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>getItems() / getItem(id)</td><td>Public copies (dates as real <code>Date</code> instances).</td></tr>
+        <tr><td>setItems(items) / addItem(item) / updateItem(id, changes) / removeItem(id)</td><td>Silent data API (like <code>updateTask</code> on <code>&lt;o-gantt&gt;</code>) — no events, no undo.</td></tr>
+        <tr><td>getGroups() / setGroups(groups)</td><td>Lane data; <code>collapsed</code> reflects the live toggle state.</td></tr>
+        <tr><td>getSelection() / setSelection(ids)</td><td><code>setSelection()</code> does not emit <code>o-select</code>.</td></tr>
+        <tr><td>expandGroup(id) / collapseGroup(id) / toggleGroup(id)</td><td>Programmatic lane toggle (emits <code>o-group-expand</code>/<code>o-group-collapse</code>, like the built-in click).</td></tr>
+        <tr><td>setWindow(start, end, opts)</td><td>Set the visible window; span is clamped to <code>[zoomMin, zoomMax]</code>. <code>{ silent: true }</code> skips <code>o-range-change</code>.</td></tr>
+        <tr><td>fit(opts)</td><td><code>{ items?: id[] }</code> — zoom/pan so every item (or a subset) is visible.</td></tr>
+        <tr><td>moveTo(time, opts)</td><td>Recenter the window on <code>time</code> without changing its span.</td></tr>
+        <tr><td>zoom(percentage, opts) / zoomIn(percentage) / zoomOut(percentage)</td><td>Positive zooms in; <code>opts.anchor</code> (0–1, default 0.5) keeps that fraction of the viewport fixed.</td></tr>
+        <tr><td>refresh()</td><td>Recompute and re-render (after changing sizes with CSS).</td></tr>
+        <tr><td>Orion.timelineView(target, config)</td><td>Factory: creates an <code>&lt;o-timeline-view&gt;</code> in <code>target</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS variables</h3>
+    <p><code>--o-tv-h</code>, <code>--o-tv-range</code>, <code>--o-tv-point</code>, <code>--o-tv-now</code>, <code>--o-tv-weekend</code>, <code>--o-tv-sel</code>, <code>--o-tv-brush</code>. A per-item <code>color</code> overrides <code>--o-tv-color</code> on that item only.</p>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <p>The chart is a focusable <code>role="region"</code>; arrow keys move focus between items (chronologically) and recenter the view, without changing the selection until <kbd class="o-kbd">Enter</kbd>. Changes are announced to screen readers.</p>
+    <table class="docs-api">
+      <thead><tr><th>Keys</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>→ / ←</td><td>Focus the next/previous item and recenter the view on it (or pan when there are no items).</td></tr>
+        <tr><td>Home / End</td><td>Focus the first/last item.</td></tr>
+        <tr><td>Enter</td><td>Toggle-select the focused item.</td></tr>
+        <tr><td>Alt + ← / →</td><td>Move the focused item one snap unit earlier/later (when editable).</td></tr>
+        <tr><td>Delete</td><td>Remove the focused item (when editable).</td></tr>
+        <tr><td>+ / −</td><td>Zoom in/out.</td></tr>
+        <tr><td>0</td><td>Fit all items.</td></tr>
+        <tr><td>Escape</td><td>Cancel an in-progress drag.</td></tr>
+        <tr><td>Ctrl/Cmd + wheel, or pinch</td><td>Continuous zoom around the pointer.</td></tr>
+        <tr><td>Shift + drag (mouse)</td><td>Draw a box on the axis and zoom straight to that range.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

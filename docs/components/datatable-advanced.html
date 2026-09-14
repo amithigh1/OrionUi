@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Table: Advanced — Orion Admin</title>
+<meta name="docs:section" content="Data">
+<meta name="docs:order" content="40">
+<meta name="docs:desc" content="Column chooser, reorder, resize, frozen columns, master-detail, tree grid, grouping, virtual scroll, saved views, export and import">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Data Table: advanced</h1>
+    <p class="docs-lead">Customizable columns with persistence, sticky headers, frozen columns, master-detail, tree grids, grouping with aggregates, 100k-row virtual scrolling, infinite loading, saved views and export / import / print.</p>
+  </header>
+
+  <section id="columns">
+    <h2>Columns: choose, reorder, resize, freeze</h2>
+    <p>Open <strong>Columns</strong> to show, hide, search, move or reset columns and to group rows. Drag a header to reorder it, drag its edge to resize, double-click the edge to fit the content. From the keyboard: focus a header, <kbd class="o-kbd">Ctrl</kbd>+<kbd class="o-kbd">←/→</kbd> resizes and <kbd class="o-kbd">Ctrl</kbd>+<kbd class="o-kbd">Shift</kbd>+<kbd class="o-kbd">←/→</kbd> moves it. <code>frozen: 'start' | 'end'</code> pins columns with a shadow while scrolled. The header sticks to the page top (<code>sticky-offset="56"</code> clears the docs header). With <code>state-key</code> the layout, sort, filters, page size and density persist in <code>localStorage</code> — reload the page to see it.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-datatable id="dt-power" state-key="docs-power-grid" sticky-offset="56" selectable filterable page-size="15" label="Employees"></o-datatable>
+        <script>{
+          const dt = document.getElementById('dt-power');
+          dt.columns = [
+            { key: 'name', title: 'Employee', type: 'avatar', subtitle: 'email', frozen: 'start', width: 240, reorderable: false },
+            { key: 'id', title: 'ID', type: 'number', width: 80, hidden: true },
+            { key: 'role', title: 'Role', type: 'badge', colors: { Admin: 'danger', Manager: 'primary', Editor: 'info', Support: 'warning', Viewer: 'secondary' } },
+            { key: 'department', title: 'Department' },
+            { key: 'status', title: 'Status', type: 'badge', colors: { Active: 'success', Pending: 'warning', Inactive: 'secondary', Suspended: 'danger' } },
+            { key: 'country', title: 'Country' },
+            { key: 'city', title: 'City' },
+            { key: 'salary', title: 'Salary', type: 'currency', format: { maximumFractionDigits: 0 }, headerTooltip: 'Annual base salary in USD' },
+            { key: 'rating', title: 'Rating', type: 'number', format: 1 },
+            { key: 'progress', title: 'Goals', type: 'progress', width: 160 },
+            { key: 'joined', title: 'Joined', type: 'date' },
+            { key: 'lastLogin', title: 'Last login', type: 'datetime', width: 190 },
+            { type: 'actions', title: '', frozen: 'end' },
+          ];
+          dt.rows = docs.people(600, 77);
+          dt.rowActions = [
+            { label: 'Open', icon: 'external-link', action: row => Orion.announce('Open ' + row.name) },
+            { label: 'Delete', icon: 'trash', variant: 'danger', confirm: true, action: row => dt.removeRow(row) },
+          ];
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="master-detail">
+    <h2>Expandable rows &amp; master-detail</h2>
+    <p><code>detail(row)</code> returns HTML, a Node or a Promise (loaded lazily, cached per row). The header chevron expands all rows on the page. Here each customer expands into a nested <code>&lt;o-datatable&gt;</code> of orders.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-datatable id="dt-md" page-size="5" toolbar="false"></o-datatable>
+        <script>{
+          const dt = document.getElementById('dt-md');
+          dt.columns = [{ key: 'name', title: 'Customer', type: 'avatar', subtitle: 'email', width: 260 }, 'country', { key: 'orders', title: 'Orders', type: 'number' }, { key: 'spent', title: 'Lifetime value', type: 'currency', aggregate: 'sum' }];
+          const people = docs.people(18, 90).map(p => ({ ...p, orders: 2 + (p.id * 7) % 5, spent: 0 }));
+          const ordersOf = p => { const r = docs.rand(p.id); return Array.from({ length: p.orders }, (_, i) => ({ id: `${p.id}-${i + 1}`, number: 'SO-' + (10400 + p.id * 10 + i), date: new Date(Date.now() - r() * 3e10), items: 1 + Math.floor(r() * 6), total: Math.round(r() * 90000) / 100, state: ['Paid', 'Shipped', 'Refunded', 'Processing'][Math.floor(r() * 4)] })); };
+          people.forEach(p => { p.spent = ordersOf(p).reduce((s, o) => s + o.total, 0); });
+          dt.rows = people;
+          dt.detail = async row => {
+            await new Promise(r => setTimeout(r, 350));
+            const wrap = document.createElement('div');
+            wrap.innerHTML = `<div class="o-between o-mb-2"><strong>Orders of ${Orion.util.esc(row.name)}</strong><span class="o-muted o-text-sm">${Orion.util.esc(row.city)}, ${Orion.util.esc(row.country)}</span></div>`;
+            const nested = document.createElement('o-datatable');
+            nested.setAttribute('toolbar', 'false'); nested.setAttribute('pagination', 'false'); nested.setAttribute('density', 'compact');
+            nested.columns = [{ key: 'number', title: 'Order' }, { key: 'date', type: 'date' }, { key: 'items', type: 'number', aggregate: 'sum' }, { key: 'state', type: 'badge', colors: { Paid: 'success', Shipped: 'info', Refunded: 'danger', Processing: 'warning' } }, { key: 'total', type: 'currency', aggregate: 'sum' }];
+            nested.rows = ordersOf(row);
+            wrap.append(nested);
+            return wrap;
+          };
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="tree">
+    <h2>Tree grid</h2>
+    <p><code>tree: { childrenKey: 'children', lazy: async row =&gt; children }</code> renders an indented, keyboard-navigable tree (<code>role="treegrid"</code>: <kbd class="o-kbd">→</kbd> expands, <kbd class="o-kbd">←</kbd> collapses or goes to the parent). Selecting a node selects its descendants; partially selected parents are indeterminate. Search and filters keep the path to each match. <em>Research</em> loads its teams lazily.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-datatable id="dt-tree" selectable pagination="false" toolbar='{"columns":false,"density":false}'></o-datatable>
+        <script>{
+          const dt = document.getElementById('dt-tree');
+          const r = docs.rand(5), P = docs.people(60, 12);
+          let pi = 0;
+          const team = (dept, name, n) => ({ id: `${dept}-${name}`, name, kind: 'Team', budget: 0, children: Array.from({ length: n }, () => { const p = P[pi++ % P.length]; return { id: `p${pi}`, name: p.name, kind: p.role, budget: p.salary, progress: p.progress }; }) });
+          const dept = (name, teams) => ({ id: name, name, kind: 'Department', children: teams.map(([t, n]) => team(name, t, n)) });
+          const data = [
+            dept('Engineering', [['Platform', 4], ['Mobile', 3], ['Data', 3]]),
+            dept('Sales', [['EMEA', 3], ['APAC', 4]]),
+            dept('Design', [['Product design', 3]]),
+            { id: 'Research', name: 'Research', kind: 'Department', hasChildren: true },
+          ];
+          const roll = n => { if (n.children) { n.children.forEach(roll); n.budget = n.children.reduce((s, c) => s + (c.budget || 0), 0); n.progress = Math.round(n.children.reduce((s, c) => s + (c.progress || 0), 0) / n.children.length); } return n; };
+          data.forEach(roll);
+          dt.columns = [{ key: 'name', title: 'Name', width: 300 }, { key: 'kind', title: 'Type' }, { key: 'budget', title: 'Budget', type: 'currency', format: { maximumFractionDigits: 0 } }, { key: 'progress', title: 'Progress', type: 'progress' }];
+          dt.tree = {
+            childrenKey: 'children',
+            lazy: async row => { await new Promise(res => setTimeout(res, 600)); return [team('Research', 'AI lab', 3), team('Research', 'Hardware', 2)].map(roll); },
+          };
+          dt.rows = data;
+          dt.toggleNode('Engineering', true);
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="grouping">
+    <h2>Grouping &amp; aggregates</h2>
+    <p><code>group-by</code> groups rows under collapsible headers (also available in the <strong>Columns</strong> panel). Columns with <code>aggregate: 'sum' | 'avg' | 'count' | 'min' | 'max' | fn</code> show per-group values and a footer total over all filtered rows.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-datatable id="dt-group" group-by="department" page-size="25" toolbar='{"density":false}'></o-datatable>
+        <script>{
+          const dt = document.getElementById('dt-group');
+          dt.columns = [
+            { key: 'name', title: 'Name', width: 200 },
+            { key: 'department', title: 'Department' },
+            { key: 'role', title: 'Role' },
+            { key: 'id', title: 'ID', type: 'number', aggregate: 'count', width: 110 },
+            { key: 'rating', title: 'Avg rating', type: 'number', format: 1, aggregate: 'avg' },
+            { key: 'salary', title: 'Payroll', type: 'currency', format: { maximumFractionDigits: 0 }, aggregate: 'sum' },
+          ];
+          dt.rows = docs.people(80, 61);
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="virtual">
+    <h2>Virtual scrolling — 100,000 rows</h2>
+    <p>With <code>virtual</code> only the visible rows (plus a small buffer) exist in the DOM, at a fixed row height per density (or <code>row-height</code>). Sorting, search and filters still run over every row.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-cluster o-p-3" style="border-bottom:1px solid var(--o-border)"><span class="o-muted o-text-sm" id="dt-virtual-info">Generating 100,000 rows…</span></div>
+        <o-datatable id="dt-virtual" virtual height="440px" selectable filterable label="100k rows"></o-datatable>
+        <script>{
+          const dt = document.getElementById('dt-virtual');
+          dt.columns = [
+            { key: 'id', title: '#', type: 'number', width: 90 },
+            { key: 'name', title: 'Name', width: 180 },
+            { key: 'email', title: 'Email', width: 260 },
+            { key: 'department', title: 'Department' },
+            { key: 'status', title: 'Status', type: 'badge', colors: { Active: 'success', Pending: 'warning', Inactive: 'secondary', Suspended: 'danger' } },
+            { key: 'salary', title: 'Salary', type: 'currency', format: { maximumFractionDigits: 0 } },
+            { key: 'joined', title: 'Joined', type: 'date' },
+          ];
+          setTimeout(() => {
+            const t0 = performance.now();
+            const rows = docs.people(100000, 1);
+            const t1 = performance.now();
+            dt.rows = rows; dt.flush();
+            document.getElementById('dt-virtual-info').textContent = `Generated in ${Math.round(t1 - t0)} ms · first render in ${Math.round(performance.now() - t1)} ms · ${dt.querySelectorAll('.o-dt-row').length} rows in the DOM. Sort a column or search to try it.`;
+            dt.addEventListener('o-sort', () => requestAnimationFrame(() => { document.getElementById('dt-virtual-info').textContent = `Sorted 100,000 rows in ${Math.round(dt._perf)} ms`; }));
+          }, 50);
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="infinite">
+    <h2>Infinite loading</h2>
+    <p><code>infinite</code> reveals <code>page-size</code> more rows as you reach the end (client data) or fetches the next page from a <a href="datatable-server.html#infinite">server source</a>.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-datatable id="dt-infinite" infinite height="320px" page-size="20" toolbar='{"columns":false,"density":false,"export":false}' density="compact"></o-datatable>
+        <script>{
+          const dt = document.getElementById('dt-infinite');
+          dt.columns = [{ key: 'id', title: '#', type: 'number', width: 80 }, 'name', 'city', { key: 'joined', type: 'date' }];
+          dt.rows = docs.people(500, 23);
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="views">
+    <h2>Saved views &amp; filters</h2>
+    <p>With <code>state-key</code> the <strong>Views</strong> menu saves the current columns, order, widths, sort, filters, search, page size, density and grouping under a name, loads or deletes them, and marks one as the default (applied on load). Provide presets with <code>views</code>. <code>getState()</code> / <code>setState()</code> and <code>o-state-change</code> let you store state on your server instead.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-datatable id="dt-views" state-key="docs-views-demo" page-size="8" filterable></o-datatable>
+        <pre class="o-pre o-m-3 o-text-xs" id="dt-views-state" style="max-height:9rem">state…</pre>
+        <script>{
+          const dt = document.getElementById('dt-views');
+          dt.columns = ['name', { key: 'department' }, { key: 'status', type: 'badge', colors: { Active: 'success', Pending: 'warning', Inactive: 'secondary', Suspended: 'danger' } }, { key: 'salary', type: 'currency', format: { maximumFractionDigits: 0 } }, { key: 'joined', type: 'date' }];
+          dt.views = [
+            { name: 'High earners', state: { sort: [{ key: 'salary', dir: 'desc' }], filters: { salary: { min: 120000, max: null } } } },
+            { name: 'Engineering (active)', state: { filters: { department: 'Engineering', status: ['Active'] }, columns: { hidden: ['department'] } } },
+          ];
+          dt.rows = docs.people(150, 29);
+          const show = () => { document.getElementById('dt-views-state').textContent = JSON.stringify(dt.getState(), null, 1); };
+          dt.addEventListener('o-state-change', show); setTimeout(show, 100);
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="export">
+    <h2>Export, import &amp; print</h2>
+    <p><strong>Export</strong> offers CSV and JSON built in, Excel and PDF when the data package (<code>Orion.export</code> / <code>Orion.xlsx</code> / <code>Orion.PDF</code>) or a registered <code>Orion.DataTable.exporters[format]</code> is available, plus copy to clipboard, print and print preview — for filtered, selected, current-page or all rows, visible or all columns. <strong>Import</strong> (<code>importable</code>) reads CSV (and XLSX via <code>Orion.xlsx.read</code>) with a column-mapping preview.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-cluster o-p-3" style="border-bottom:1px solid var(--o-border)">
+          <button class="o-btn o-btn-sm" id="dt-io-csv">Show CSV of filtered rows</button>
+          <button class="o-btn o-btn-sm" id="dt-io-import"><o-icon name="upload"></o-icon> Import sample CSV</button>
+          <button class="o-btn o-btn-sm" id="dt-io-preview"><o-icon name="printer"></o-icon> Print preview</button>
+        </div>
+        <o-datatable id="dt-io" importable selectable page-size="6" export-filename="team"></o-datatable>
+        <pre class="o-pre o-m-3 o-text-xs" id="dt-io-out" style="max-height:10rem">CSV output appears here…</pre>
+        <script>{
+          const dt = document.getElementById('dt-io');
+          dt.columns = ['name', 'email', 'role', 'department', { key: 'salary', type: 'currency', format: { maximumFractionDigits: 0 } }, { key: 'joined', type: 'date' }, { key: 'status', type: 'badge' }];
+          dt.rows = docs.people(40, 36);
+          document.getElementById('dt-io-csv').onclick = async () => { document.getElementById('dt-io-out').textContent = await dt.export('csv', { download: false }); };
+          document.getElementById('dt-io-import').onclick = async () => { const text = await (await fetch('../fixtures/datatable/users-import.csv')).text(); dt.importCSV(text); };
+          document.getElementById('dt-io-preview').onclick = () => dt.printPreview({ title: 'Team export' });
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API (advanced)</h2>
+    <table class="docs-api">
+      <thead><tr><th>Name</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>detail</td><td><code>(row, { table }) =&gt; string | Node | Promise</code> — expandable detail row.</td></tr>
+        <tr><td>tree</td><td><code>{ childrenKey = 'children', lazy(row), hasChildren(row) }</code>; lazy nodes have <code>hasChildren: true</code> or <code>children: true</code>.</td></tr>
+        <tr><td>group-by</td><td>Column key to group by. Group headers are collapsible (<kbd class="o-kbd">←/→</kbd>, Enter).</td></tr>
+        <tr><td>aggregates</td><td>Show the footer aggregate row (default <code>true</code> when a column has <code>aggregate</code>).</td></tr>
+        <tr><td>virtual / row-height / height</td><td>Virtual scrolling with fixed row height inside a <code>height</code> (default 30rem).</td></tr>
+        <tr><td>infinite</td><td>Load more rows on scroll instead of paging.</td></tr>
+        <tr><td>sticky-header / sticky-offset</td><td>Sticky header (default on). Without <code>height</code> it sticks to the page, offset by <code>sticky-offset</code> px.</td></tr>
+        <tr><td>state-key / views</td><td>Persist state in <code>localStorage</code> (<code>orion:datatable:&lt;key&gt;</code>) · preset views <code>[{ name, state }]</code>.</td></tr>
+        <tr><td>importable / export-filename</td><td>Show the Import button · base name for downloads.</td></tr>
+        <tr><td>expand(key) · collapse(key) · toggleExpand(key) · expandAll() · collapseAll()</td><td>Detail rows (tree / group aware for expandAll / collapseAll).</td></tr>
+        <tr><td>toggleNode(key, open)</td><td>Expand / collapse a tree node (loads lazy children).</td></tr>
+        <tr><td>setColumnVisible(id, on) · moveColumn(id, target, before) · setColumnWidth(id, px) · autofitColumn(id) · resetColumns()</td><td>Column customisation.</td></tr>
+        <tr><td>getState() · setState(state) · saveView(name) · applyView(name) · deleteView(name) · setDefaultView(name) · resetView() · getViews()</td><td>State and views.</td></tr>
+        <tr><td>export(format, opts)</td><td><code>'csv'|'tsv'|'json'|'xlsx'|'pdf'|'clipboard'|'print'|'preview'</code>; opts <code>{ rows: 'filtered'|'selected'|'page'|'all'|array, columns: 'visible'|'all', formatted, filename, download }</code>. Returns the text for text formats.</td></tr>
+        <tr><td>exportData(opts)</td><td><code>{ columns, header, rows, objects, filename, title }</code> — what exporters receive.</td></tr>
+        <tr><td>importCSV(fileOrText, { preview, replace }) · importFile()</td><td>Import with a mapping preview (fires cancelable <code>o-import</code>).</td></tr>
+        <tr><td>print(opts) · printPreview(opts) · printHTML(opts)</td><td>Print through a hidden iframe, preview dialog (or <code>Orion.printPreview</code>), or get the printable HTML.</td></tr>
+        <tr><td>Orion.DataTable.exporters</td><td>Register formats: <code>Orion.DataTable.exporters.xlsx = async (data, opts) =&gt; { … }</code>.</td></tr>
+        <tr><td>o-expand · o-group · o-column-resize · o-column-move · o-column-toggle · o-state-change · o-view-change · o-view-save · o-export · o-import</td><td>Advanced events.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

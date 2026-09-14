@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lazy Loading — Orion Admin</title>
+<meta name="docs:section" content="Media">
+<meta name="docs:order" content="30">
+<meta name="docs:desc" content="Lazy images, picture sources, iframes, videos and backgrounds with blur-up placeholders, fade-in, error fallback and deferred rendering">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .lz-grid { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fill, minmax(min(12rem, 100%), 1fr)); }
+  .lz-grid img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; border-radius: var(--o-radius); --o-lazy-radius: var(--o-radius); }
+  .lz-hero { display: grid; place-items: end start; min-height: 13rem; padding: 1.5rem; border-radius: var(--o-radius-lg); color: var(--o-on-dark); }
+  .lz-hero h3 { margin: 0; color: inherit; text-shadow: 0 1px 8px rgba(0, 0, 0, .45); }
+  .lz-frame { width: 100%; height: 14rem; border: 1px solid var(--o-border); border-radius: var(--o-radius); background: #fff; }
+  .lz-chart { display: flex; align-items: flex-end; gap: .5rem; height: 9rem; padding: 1rem; border: 1px solid var(--o-border); border-radius: var(--o-radius); background: var(--o-surface); }
+  .lz-chart i { flex: 1; border-radius: 4px 4px 0 0; background: var(--o-chart-1); animation: o-lazy-fade .6s var(--o-ease) both; }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Lazy loading</h1>
+    <p class="docs-lead">Attribute behaviors that load images, <code>&lt;picture&gt;</code> sources, iframes, videos and background images just before they scroll into view — with blur-up (LQIP) or color placeholders, a shimmer while waiting, fade-in, error fallbacks, and a hook to render any heavy content on demand. Works with markup rendered by any framework.</p>
+  </header>
+
+  <section id="blur-up">
+    <h2>Image grid with blur-up placeholders</h2>
+    <p>Put the real image in <code>data-src</code> and a tiny preview (a ~20 px JPEG as a data URI) in <code>data-o-lazy-placeholder</code>. The preview is shown blurred and sharpens when the full image arrives. Press <em>Replay slowly</em> to watch it with a simulated slow network.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="lz-grid" id="lz-grid">
+          <img data-o-lazy data-src="../fixtures/media/photo-mountains-thumb.jpg" data-o-lazy-placeholder="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABALDA4MChAODQ4SERATGCgaGBYWGDEjJR0oOjM9PDkzODdASFxOQERXRTc4UG1RV19iZ2hnPk1xeXBkeFxlZ2P/2wBDARESEhgVGC8aGi9jQjhCY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2P/wAARCAANABQDASIAAhEBAxEB/8QAFwABAQEBAAAAAAAAAAAAAAAABQABA//EACMQAAEDAgUFAAAAAAAAAAAAAAEAAgMFEQQVIWKSEzFDUVP/xAAXAQADAQAAAAAAAAAAAAAAAAAAAQMF/8QAGxEAAgMAAwAAAAAAAAAAAAAAAAIBElEDEzH/2gAMAwEAAhEDEQA/ABW0t5cBZrT31cAu8dFLiQ57Lj04IfM8Xcnrya7itzTGfeTkVpNyJPkFLLgmaRKCQGg23BSMFUxg88nIqT7UwLLh/9k=" width="560" height="373" alt="Mountains">
+          <img data-o-lazy data-src="../fixtures/media/photo-ocean-thumb.jpg" data-o-lazy-placeholder="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABALDA4MChAODQ4SERATGCgaGBYWGDEjJR0oOjM9PDkzODdASFxOQERXRTc4UG1RV19iZ2hnPk1xeXBkeFxlZ2P/2wBDARESEhgVGC8aGi9jQjhCY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2P/wAARCAANABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAQFAv/EACEQAAEDAwQDAAAAAAAAAAAAAAEAAgMFESEEFVOSIkJx/8QAFgEBAQEAAAAAAAAAAAAAAAAAAAIE/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAMBUhIUof/aAAwDAQACEQMRAD8AkCmE+jgfq0+kSwgGWI5yL3GFN3XV88ncokq2slbaSeRwtaxeThVg20dNWwqg86mvJ8Y7BCQ3XV80ncoTFto6NhND/9k=" width="560" height="373" alt="Ocean">
+          <img data-o-lazy data-src="../fixtures/media/photo-desert-thumb.jpg" data-o-lazy-placeholder="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABALDA4MChAODQ4SERATGCgaGBYWGDEjJR0oOjM9PDkzODdASFxOQERXRTc4UG1RV19iZ2hnPk1xeXBkeFxlZ2P/2wBDARESEhgVGC8aGi9jQjhCY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2P/wAARCAANABQDASIAAhEBAxEB/8QAFwABAQEBAAAAAAAAAAAAAAAAAAUBBv/EACMQAAEDAwIHAAAAAAAAAAAAAAEAAhEDBBITFBUhIzJhcpH/xAAWAQEBAQAAAAAAAAAAAAAAAAAAAgT/xAAcEQABBAMBAAAAAAAAAAAAAAAAAgMVUQFSoQX/2gAMAwEAAhEDEQA/AOj2jdIN0xlM5Iy0wnptd7BSOLVXntH1ab+pUEEDmsefUc16XGJsp7HwimC4eBAKJLua9EUiz//Z" width="560" height="373" alt="Desert">
+          <img data-o-lazy data-src="../fixtures/media/photo-city-thumb.jpg" data-o-lazy-placeholder="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABALDA4MChAODQ4SERATGCgaGBYWGDEjJR0oOjM9PDkzODdASFxOQERXRTc4UG1RV19iZ2hnPk1xeXBkeFxlZ2P/2wBDARESEhgVGC8aGi9jQjhCY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2P/wAARCAANABQDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAABQAB/8QAIRABAAIBAwQDAAAAAAAAAAAAAQACEQMFIRITIiNhgZH/xAAWAQEBAQAAAAAAAAAAAAAAAAABAAT/xAAcEQACAgIDAAAAAAAAAAAAAAAAAhJRAQMREzH/2gAMAwEAAhEDEQA/AA3Sw4SbWgWFBw8jDjcbFcds/ZruNvL1nPzN+d68+BFaEXRyqEoZfcLWtnoD7lHvSiilH//Z" width="560" height="373" alt="City">
+          <img data-o-lazy data-src="../fixtures/media/photo-lake-thumb.jpg" data-o-lazy-placeholder="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABALDA4MChAODQ4SERATGCgaGBYWGDEjJR0oOjM9PDkzODdASFxOQERXRTc4UG1RV19iZ2hnPk1xeXBkeFxlZ2P/2wBDARESEhgVGC8aGi9jQjhCY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2P/wAARCAAUABQDASIAAhEBAxEB/8QAGQABAAIDAAAAAAAAAAAAAAAAAAEGAwQF/8QAIBAAAQQDAAIDAAAAAAAAAAAAAQACAxEEEiFRoRMiMf/EABkBAAIDAQAAAAAAAAAAAAAAAAABAgMEBf/EABoRAQACAwEAAAAAAAAAAAAAAAADEgIRURP/2gAMAwEAAhEDEQA/AOjky4GHcUujpLo69LfdLI0YbIXzfLC6NpDST2iqeZNyXFxLj0knpU3xoBsO7QK22zc+kfFskGCx32yIQT2gUVR3Hn2idpC84uNISOH4VG7vKIoLTc+UREDT/9k=" width="560" height="373" alt="Lake">
+          <img data-o-lazy data-src="../fixtures/media/photo-tropical-thumb.jpg" data-o-lazy-placeholder="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABALDA4MChAODQ4SERATGCgaGBYWGDEjJR0oOjM9PDkzODdASFxOQERXRTc4UG1RV19iZ2hnPk1xeXBkeFxlZ2P/2wBDARESEhgVGC8aGi9jQjhCY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2P/wAARCAAUABQDASIAAhEBAxEB/8QAFwABAQEBAAAAAAAAAAAAAAAAAAMEAf/EACkQAAICAAQEBQUAAAAAAAAAAAECAAMEERIhBRMiMUFRUmFxc5GTwdH/xAAZAQACAwEAAAAAAAAAAAAAAAACBgABBAX/xAAdEQACAQQDAAAAAAAAAAAAAAAAARESEyGRUVJh/9oADAMBAAIRAxEAPwDcuFwtVWm3DFrGGQcuQAfjKMLg6FtrtZOcnipGUnZXj7ANXMOrpHT98tvaWVOJqMlBA+mo/U2XMtSchNYdL0Ts4erWMyV6VJ2HlEqRxUer8a/yIV30F09Xo0m12ZWLbr2hrnI79t4iJtT5G+EdFzgAA7CIiVLJCP/Z" width="560" height="373" alt="Beach">
+        </div>
+        <div class="o-cluster o-mt-3">
+          <button class="o-btn o-btn-sm" id="lz-replay"><o-icon name="refresh"></o-icon> Replay slowly</button>
+          <span class="o-small o-muted" id="lz-count"></span>
+        </div>
+        <script>
+          const grid = document.getElementById('lz-grid'), initial = grid.innerHTML;
+          let loaded = 0;
+          const count = () => { document.getElementById('lz-count').textContent = `${loaded} loaded`; };
+          grid.addEventListener('o-lazy-load', () => { loaded++; count(); });
+          // A loader receives each URL before it is used: sign URLs, add auth, or (here) simulate a slow network.
+          Orion.lazy.config({ loader: (url, el) => el.closest('.is-slow') ? new Promise(r => setTimeout(() => r(url), 600 + Math.random() * 1400)) : url });
+          document.getElementById('lz-replay').onclick = () => { loaded = 0; count(); grid.classList.add('is-slow'); grid.innerHTML = initial; };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="placeholders">
+    <h2>Color &amp; skeleton placeholders</h2>
+    <p>A color value (<code>#hex</code>, <code>rgb()</code>, <code>var()</code>) paints the box in the image's dominant color. Without any placeholder a shimmer is shown until the image loads. Always give lazy images a size (<code>width</code>/<code>height</code> or CSS <code>aspect-ratio</code>) so the page does not jump.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="lz-grid">
+          <img class="is-slow" data-o-lazy data-src="../fixtures/media/photo-aurora-thumb.jpg" data-o-lazy-placeholder="#134e4a" width="373" height="560" alt="Aurora">
+          <img class="is-slow" data-o-lazy data-src="../fixtures/media/photo-lavender-thumb.jpg" data-o-lazy-placeholder="#7e22ce" width="373" height="560" alt="Lavender">
+          <img class="is-slow" data-o-lazy data-src="../fixtures/media/photo-forest-thumb.jpg" width="373" height="560" alt="Forest">
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="responsive">
+    <h2>Responsive images &amp; <code>&lt;picture&gt;</code></h2>
+    <p><code>data-srcset</code> and <code>data-sizes</code> are copied when the image becomes visible; <code>data-sizes="auto"</code> uses the rendered width. Inside <code>&lt;picture&gt;</code>, put <code>data-srcset</code> on each <code>&lt;source&gt;</code> and <code>data-o-lazy</code> on the <code>&lt;img&gt;</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="lz-grid">
+          <img data-o-lazy data-src="../fixtures/media/photo-desert.jpg" data-srcset="../fixtures/media/photo-desert-thumb.jpg 560w, ../fixtures/media/photo-desert.jpg 1600w" data-sizes="auto" width="1600" height="1067" alt="Desert (srcset)">
+          <picture>
+            <source media="(max-width: 600px)" data-srcset="../fixtures/media/photo-city-thumb.jpg">
+            <img data-o-lazy data-src="../fixtures/media/photo-city.jpg" width="1600" height="1067" alt="City (picture)">
+          </picture>
+          <img data-o-lazy src="../fixtures/media/photo-ocean-thumb.jpg" width="560" height="373" alt="Ocean (native loading=lazy)">
+        </div>
+        <p class="o-small o-muted o-mt-2">The third image has a real <code>src</code>: the behavior only adds <code>loading="lazy"</code>, the fade-in and the error fallback.</p>
+      </template>
+    </div>
+  </section>
+
+  <section id="iframes">
+    <h2>Iframes, videos &amp; background images</h2>
+    <p>Iframes use the browser's native <code>loading="lazy"</code> when available. Videos get their <code>data-src</code> / <code>data-poster</code> (and <code>&lt;source data-src&gt;</code>) when visible. <code>data-o-lazy-bg</code> preloads a background image and swaps it in once it is ready.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-grid-auto" style="--o-min:16rem">
+          <iframe class="lz-frame" data-o-lazy data-src="../fixtures/media/page.html" title="Invoice preview" sandbox="allow-scripts"></iframe>
+          <video class="lz-frame" data-o-lazy data-src="../fixtures/media/clip2.webm" data-poster="../fixtures/media/clip2-poster.jpg" controls muted playsinline preload="none" style="object-fit:cover;background:#000"></video>
+        </div>
+        <div class="lz-hero o-mt-3" data-o-lazy-bg="../fixtures/media/photo-lavender.jpg" data-o-lazy-placeholder="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABALDA4MChAODQ4SERATGCgaGBYWGDEjJR0oOjM9PDkzODdASFxOQERXRTc4UG1RV19iZ2hnPk1xeXBkeFxlZ2P/2wBDARESEhgVGC8aGi9jQjhCY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2P/wAARCAAUAA0DASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAMEAv/EACYQAAIBAwIEBwAAAAAAAAAAAAECEQADBBIhBTGRsRMiQWFxgaH/xAAWAQEBAQAAAAAAAAAAAAAAAAAEAwX/xAAcEQACAAcAAAAAAAAAAAAAAAAAAQMEERIyUaH/2gAMAwEAAhEDEQA/AJ14XecwqE0tMPxCwtlXKmG0mYPvVmDm5ak3L19xII0jaNjz6HpUhbKxrjDGcBWMmAoP3WknM7XR90OuJmZVh6abu3wdI/KdZAut595RX5kbmZ7d6KKSiZ//2Q==" style="background-position:center 70%">
+          <h3>Background image loaded on demand</h3>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="errors">
+    <h2>Error fallback</h2>
+    <p>If an image fails, <code>data-o-lazy-error</code> (or <code>Orion.lazy.config({ errorImage })</code>) replaces it; otherwise a neutral “broken image” state is shown. <code>o-lazy-error</code> fires in both cases.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="lz-grid">
+          <img data-o-lazy data-src="data:image/png;base64,AAAA" data-o-lazy-error="../fixtures/media/scene-lake.svg" width="560" height="373" alt="Uses a fallback image">
+          <img data-o-lazy data-src="data:image/png;base64,AAAA" width="560" height="373" alt="Shows the error state">
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="render">
+    <h2>Deferred rendering</h2>
+    <p><code>data-o-lazy-render</code> stamps the element's <code>&lt;template&gt;</code> the first time it scrolls into view and fires <code>o-visible</code> — use it to mount charts, maps or other expensive widgets only when needed. With <code>data-o-lazy-render="repeat"</code> it fires <code>o-visible</code> / <code>o-hidden</code> every time (e.g. to pause animations offscreen).</p>
+    <div class="docs-demo">
+      <template>
+        <div data-o-lazy-render id="lz-render" style="--o-lazy-min-h: 9rem">
+          <template>
+            <div class="lz-chart" aria-label="Weekly sales chart" role="img"><i style="height:40%"></i><i style="height:65%"></i><i style="height:52%"></i><i style="height:80%"></i><i style="height:70%"></i><i style="height:92%"></i><i style="height:60%"></i></div>
+          </template>
+        </div>
+        <div class="docs-log" id="lz-log"></div>
+        <script>
+          const r = document.getElementById('lz-render');
+          r.addEventListener('o-visible', () => docs.log('#lz-log', 'o-visible — template stamped, mount your widget here'));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>On</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>data-o-lazy</td><td>img, iframe, video, audio, picture &gt; img</td><td>Enable lazy loading (with <code>data-src</code>, <code>data-srcset</code>, <code>data-sizes</code>, <code>data-poster</code>); on an element with a real <code>src</code> it adds <code>loading="lazy"</code> + fade + fallback.</td></tr>
+        <tr><td>data-o-lazy-bg</td><td>any element</td><td>Background image URL loaded when visible.</td></tr>
+        <tr><td>data-o-lazy-placeholder</td><td>img, bg</td><td>Tiny image URL / data URI (blurred), a color, or <code>none</code>.</td></tr>
+        <tr><td>data-o-lazy-error</td><td>img</td><td>Fallback image when loading fails.</td></tr>
+        <tr><td>data-o-lazy-margin</td><td>all</td><td>IntersectionObserver <code>rootMargin</code> (default <code>200px 0px</code>).</td></tr>
+        <tr><td>data-o-lazy-render</td><td>any element</td><td>Stamp the child <code>&lt;template&gt;</code> and fire <code>o-visible</code> when visible (<code>"repeat"</code>: every time, plus <code>o-hidden</code>). Adds <code>data-o-visible</code> while visible.</td></tr>
+      </tbody>
+    </table>
+    <table class="docs-api">
+      <thead><tr><th>JavaScript</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Orion.lazy.load(el)</td><td>Load an element immediately (e.g. before printing).</td></tr>
+        <tr><td>Orion.lazy.observe(root) → cleanup</td><td>Initialise lazy elements inside a shadow root or a detached tree.</td></tr>
+        <tr><td>Orion.lazy.config({ rootMargin, errorImage, fade, loader })</td><td>Global options. <code>loader(url, el)</code> may return a (promise of a) URL — for signed or authenticated URLs.</td></tr>
+      </tbody>
+    </table>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-lazy-load</td><td>{}</td><td>The image / background finished loading.</td></tr>
+        <tr><td>o-lazy-error</td><td>{}</td><td>Loading failed (after the fallback, if any).</td></tr>
+        <tr><td>o-visible / o-hidden</td><td>{ entry }</td><td><code>data-o-lazy-render</code> visibility changes.</td></tr>
+      </tbody>
+    </table>
+    <p>Classes set by the behavior: <code>.o-lazy</code>, <code>.is-lazy</code> (shimmer), <code>.is-placeholder</code> (blurred preview), <code>.is-loaded</code>, <code>.is-fade</code>, <code>.is-error</code>, <code>.is-fallback</code>. Animations respect <code>prefers-reduced-motion</code>. Carousels load the <code>data-src</code> of slides next to the visible ones ahead of time.</p>
+  </section>
+</main>
+</body>
+</html>

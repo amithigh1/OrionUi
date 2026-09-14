@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comments &amp; Mentions — Orion Admin</title>
+<meta name="docs:section" content="Editors">
+<meta name="docs:order" content="30">
+<meta name="docs:desc" content="Caret-positioned @mentions, #tags and emoji autocomplete for text fields and rich text, plus an emoji picker">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .demo-grid { display: grid; gap: 1rem 1.5rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); width: 100%; }
+  .demo-grid > div { min-width: 0; }
+  .mentions-ce { min-height: 6rem; white-space: pre-wrap; }
+  .mentions-ce:empty::before { content: attr(data-placeholder); color: var(--o-text-subtle); }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Comments &amp; Mentions</h1>
+    <p class="docs-lead">Caret-positioned autocomplete for <code>@mentions</code>, <code>#tags</code> and <code>:emoji:</code>, for plain <code>&lt;textarea&gt;</code>/<code>&lt;input&gt;</code> fields, contenteditable regions, and the <a href="editor.html"><code>&lt;o-editor&gt;</code></a> rich text editor. Built from three pieces you can use independently: <code>Orion.mentions()</code> (the autocomplete engine), <code>Orion.mentions.emoji</code> (a ~300-entry searchable emoji set with a picker popup), and <code>Orion.editorKit</code> (the shared popover/menu/caret-rect primitives all of the above — and the rich editor's toolbar — are built on).</p>
+  </header>
+
+  <section id="mentions-overview">
+    <h2>Overview</h2>
+    <p>There is no <code>&lt;o-mentions&gt;</code> custom element — mentions is a <strong>behavior + service</strong>. Either add <code>data-o-mentions</code> to existing markup for a zero-JS setup, or call <code>Orion.mentions(target, options)</code> yourself for full control (async sources, multiple trigger characters, custom rendering). Both attach to the same target types:</p>
+    <ul>
+      <li><code>&lt;textarea&gt;</code> / <code>&lt;input&gt;</code> — positions the popup with an off-screen mirror-div technique (<code>Orion.editorKit.caretRect</code>) and inserts plain text.</li>
+      <li>Any <code>contenteditable</code> element — positions the popup against the live selection <code>Range</code> and inserts an inline <code>&lt;span class="o-mention"&gt;</code> token.</li>
+      <li>An <code>&lt;o-editor&gt;</code> host — same as contenteditable, but anchored/scoped to its internal content area.</li>
+    </ul>
+    <p>See the <a href="../../src/components/mentions/README.md"><code>README.md</code></a> next to the source for the full API reference (every option, every method, and the exact shape the <code>data-o-mentions</code> behavior expects).</p>
+  </section>
+
+  <section id="mentions-declarative">
+    <h2>Declarative: <code>data-o-mentions</code></h2>
+    <p>The fastest way to add mentions to a plain field: no JavaScript at all. The attribute value is JSON (an array of strings or objects) or a dotted path to a global. <code>data-o-mentions-trigger</code> changes the trigger character (default <code>@</code>).</p>
+    <div class="docs-demo">
+      <template>
+        <label class="o-label" for="mentions-basic">Comment</label>
+        <textarea id="mentions-basic" class="o-textarea" rows="3" placeholder="Type @ to mention someone…"
+          data-o-mentions='["Ada Lovelace","Alan Turing","Grace Hopper"]'></textarea>
+        <p class="o-text-sm o-text-muted o-mt-2">Try <code>@a</code> — both matches share the same prefix so you can see the fuzzy filter narrow down as you keep typing.</p>
+      </template>
+    </div>
+  </section>
+
+  <section id="mentions-async">
+    <h2>JS API: async / remote source</h2>
+    <p><code>Orion.mentions(el, options)</code> gives you the full <code>MentionsOptions</code> shape — here a <code>source</code> function simulates a network round-trip (700 ms) and returns objects with <code>label</code>/<code>description</code> so each row gets a description line and an avatar. While a request is in flight the popup shows a spinner (<code>mentions.loading</code>); once it resolves the list re-renders in place.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-p-3">
+          <label class="o-label" for="mentions-async-field">Assign a reviewer</label>
+          <textarea id="mentions-async-field" class="o-textarea" rows="3" placeholder="Type @ to search 60 people (remote, debounced)…"></textarea>
+          <button type="button" class="o-btn o-btn-sm o-mt-2" id="mentions-async-log-btn">Log current mentions</button>
+        </div>
+        <div class="docs-log o-m-3" id="mentions-async-log"></div>
+        <script>{
+          const people = docs.people(60, 3);
+          const field = document.getElementById('mentions-async-field');
+          const ctl = Orion.mentions(field, {
+            source: async (query) => {
+              await new Promise(r => setTimeout(r, 700));
+              const q = query.toLowerCase();
+              return people.filter(p => p.name.toLowerCase().includes(q)).slice(0, 8)
+                .map(p => ({ id: p.id, label: p.name, description: p.department }));
+            },
+          });
+          field.addEventListener('o-mention', e => docs.log('#mentions-async-log', 'o-mention ' + JSON.stringify(e.detail.item.label)));
+          document.getElementById('mentions-async-log-btn').addEventListener('click', () => docs.log('#mentions-async-log', 'getMentions() -> ' + JSON.stringify(ctl.getMentions())));
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="mentions-contenteditable">
+    <h2>Contenteditable</h2>
+    <p>The same <code>Orion.mentions()</code> call works on any <code>contenteditable</code> element. Picking a suggestion inserts a non-editable <code>&lt;span class="o-mention"&gt;</code> token (followed by a caret-escape space) instead of plain text.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-p-3">
+          <label class="o-label" for="mentions-ce">Note</label>
+          <div id="mentions-ce" class="o-textarea mentions-ce" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Type @ to mention, or # to tag…"></div>
+        </div>
+        <script>{
+          Orion.mentions(document.getElementById('mentions-ce'), {
+            triggers: {
+              '@': ['Ada Lovelace', 'Alan Turing', 'Grace Hopper', 'Katherine Johnson', 'Margaret Hamilton'],
+              '#': { source: ['bug', 'design', 'urgent', 'question', 'blocked'], className: 'demo-tags' },
+            },
+          });
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="mentions-emoji">
+    <h2>Emoji</h2>
+    <p><code>Orion.mentions.emoji</code> is a standalone, dependency-free emoji set: a search index over ~300 entries and a picker popover. It also plugs straight into <code>Orion.mentions()</code> as a trigger source — that's exactly how <code>&lt;o-editor&gt;</code> wires up its <code>:</code> emoji autocomplete.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button type="button" class="o-btn o-btn-primary" id="emoji-picker-btn">😀 Insert emoji…</button>
+        <output id="emoji-picker-out" class="o-text-lg o-ms-3" style="min-width:2em;display:inline-block"></output>
+        <script>{
+          document.getElementById('emoji-picker-btn').addEventListener('click', e => {
+            Orion.mentions.emoji.picker(e.currentTarget, {
+              onSelect: char => { document.getElementById('emoji-picker-out').textContent = char; },
+            });
+          });
+        }</script>
+      </template>
+    </div>
+    <h3>The <code>:</code> trigger</h3>
+    <p>Pass <code>Orion.mentions.emoji.source</code> as a trigger source (with <code>minChars: 1</code>, since an empty query would list all ~300 entries) to get inline <code>:name</code> autocomplete anywhere <code>Orion.mentions()</code> works.</p>
+    <div class="docs-demo">
+      <template>
+        <label class="o-label" for="mentions-emoji-field">Status update</label>
+        <input id="mentions-emoji-field" class="o-input" placeholder="Type : then a word, e.g. :part">
+        <script>{
+          Orion.mentions(document.getElementById('mentions-emoji-field'), {
+            triggers: { ':': { source: Orion.mentions.emoji.source, minChars: 1 } },
+          });
+        }</script>
+      </template>
+    </div>
+    <h3>Search</h3>
+    <p><code>Orion.mentions.emoji.search(query, limit)</code> is the plain function behind both the picker and the <code>:</code> trigger — useful for building your own UI over the same data.</p>
+    <pre class="docs-code-block" data-lang="js">
+      Orion.mentions.emoji.search('smile', 5);
+      // -> [{ char: '😀', name: 'grinning', keywords: ['smile','happy'], category: 'smileys', search: '…' }, …]
+    </pre>
+  </section>
+
+  <section id="mentions-keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Trigger character (<code>@</code>, <code>#</code>, <code>:</code>, …)</td><td>Opens the suggestion popup once a valid query follows it.</td></tr>
+        <tr><td>↓ / ↑</td><td>Move the active suggestion (wraps at the ends).</td></tr>
+        <tr><td>Enter · Tab</td><td>Insert the active suggestion.</td></tr>
+        <tr><td>Escape</td><td>Dismiss the popup without inserting anything. Re-arms as soon as you type or delete a character at that trigger — it won't stay permanently closed.</td></tr>
+        <tr><td>← → · Home · End · click</td><td>Re-evaluates the caret position; may open, move or close the popup.</td></tr>
+      </tbody>
+    </table>
+    <p>ARIA: the field gets <code>aria-autocomplete="list"</code>, and while open, <code>aria-expanded="true"</code>, <code>aria-controls</code> and <code>aria-activedescendant</code> pointing at a <code>role="listbox"</code> / <code>role="option"</code> popup; result counts are announced.</p>
+    <h3>Emoji picker</h3>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Typing (in the search box)</td><td>Filters the grid by name/keyword.</td></tr>
+        <tr><td>↓ (in the search box)</td><td>Moves focus into the grid.</td></tr>
+        <tr><td>Enter (in the search box)</td><td>Picks the first result.</td></tr>
+        <tr><td>↑ ↓ ← → (in the grid)</td><td>Move one cell (wraps).</td></tr>
+        <tr><td>Home · End</td><td>First / last cell.</td></tr>
+        <tr><td>Enter · Space</td><td>Pick the focused emoji.</td></tr>
+        <tr><td>Escape</td><td>Close the picker.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="mentions-api">
+    <h2>API</h2>
+    <h3><code>Orion.mentions(target, options)</code></h3>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>triggers</td><td>{ char: source | TriggerConfig }</td><td>{ '@': options.source }</td><td>One entry per trigger character. A bare value is shorthand for <code>{ source }</code>.</td></tr>
+        <tr><td>trigger · source</td><td>string · Source</td><td>'@' · —</td><td>Shorthand for a single trigger when <code>triggers</code> is omitted.</td></tr>
+        <tr><td>limit · minChars · debounce</td><td>number</td><td>8 · 0 · 120</td><td>Max suggestions · min query length before searching · debounce (ms) for async sources while already open.</td></tr>
+        <tr><td>allowSpaces · maxLength</td><td>boolean · number</td><td>true · 40</td><td>Allow up to 3 space-separated words in the query · max query length before the trigger is abandoned.</td></tr>
+        <tr><td>insert(item, trigger)</td><td>function</td><td>—</td><td>Returns the string/Node to insert. Default: <code>"{trigger}{label} "</code> for fields, an <code>.o-mention</code> token for rich text.</td></tr>
+        <tr><td>render(item, query, trigger)</td><td>function</td><td>—</td><td>Custom suggestion row (HTML string or Node). Strings are inserted as-is (not escaped) — escape your own data.</td></tr>
+        <tr><td>onSelect(item, trigger)</td><td>function</td><td>—</td><td>Called after a pick (in addition to the <code>o-mention</code> event).</td></tr>
+        <tr><td>className</td><td>string</td><td>—</td><td>Extra class on the suggestion popover.</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Source</strong> (per trigger): an array of strings/objects (<code>{ id, label, avatar, description }</code>, matched with fuzzy search), an <code>async (query, trigger) =&gt; items</code> function, or a dotted string path resolved against <code>window</code>. A <code>TriggerConfig</code> object can override <code>insert</code>, <code>render</code>, <code>onSelect</code>, <code>allowSpaces</code>, <code>maxLength</code>, <code>minChars</code>, <code>limit</code>, <code>className</code> per trigger, plus <code>startOfLine</code> (only match at the start of a line/block) and <code>hideEmpty</code> (close instead of showing "No matches").</p>
+    <h3>Mentions instance</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.isOpen</td><td>Getter — whether the popup is currently open.</td></tr>
+        <tr><td>.getMentions()</td><td>Returns <code>[{ id, label, trigger }]</code> currently present. Reads live <code>.o-mention</code> DOM nodes for rich text; best-effort substring matching against <code>.value</code> for plain fields.</td></tr>
+        <tr><td>.update(options)</td><td>Merge new options at runtime (passing <code>triggers</code> replaces the whole map).</td></tr>
+        <tr><td>.close(reason?)</td><td>Close the popup without inserting anything.</td></tr>
+        <tr><td>.destroy()</td><td>Remove all listeners/ARIA and close the popup. Call before discarding the target.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Target</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>o-mention</td><td>The field/contenteditable element (or the <code>&lt;o-editor&gt;</code> host)</td><td><code>{ item, trigger }</code> — fired after any pick, mention or emoji.</td></tr>
+      </tbody>
+    </table>
+    <h3><code>data-o-mentions</code> behavior</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Value</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>data-o-mentions</td><td>JSON array/object, or a dotted global path</td><td>Required — the source for the default (<code>@</code>) trigger.</td></tr>
+        <tr><td>data-o-mentions-trigger</td><td>string</td><td>Trigger character for the attribute source. Default <code>@</code>.</td></tr>
+        <tr><td>data-o-mentions-emoji</td><td>boolean (presence-only)</td><td>Also wires up <code>:</code> with <code>Orion.mentions.emoji.source</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3><code>Orion.mentions.emoji</code></h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.list · .categories</td><td>The raw emoji array (~300 entries) and its 7 category names.</td></tr>
+        <tr><td>.search(query, limit = 50)</td><td>Prefix matches first, then substring matches, over name + keywords.</td></tr>
+        <tr><td>.picker(anchor, { onSelect(char, emoji), placement, owner, recent })</td><td>Opens a searchable popover; returns an <code>editorKit.popover()</code> handle.</td></tr>
+        <tr><td>.recent() · .remember(char)</td><td>Read/record the last 16 picks (persisted in <code>localStorage</code>).</td></tr>
+        <tr><td>.source(query)</td><td>Ready-made trigger source: <code>{ id, label, char, emoji, value }[]</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3><code>Orion.editorKit</code></h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.popover(anchor, content, opts)</td><td>Floating panel: portal + placement + the overlay stack (Escape, click-outside, focus return). Returns <code>{ el, open, close(reason), update() }</code>.</td></tr>
+        <tr><td>.menu(anchor, items, opts)</td><td><code>role="menu"</code> popover with <code>ListNav</code> keyboard handling. <code>items</code>: <code>{ id, label, icon, hint, shortcut, disabled, checked, danger } | '-'</code>.</td></tr>
+        <tr><td>.caretRect(target, offset?)</td><td>Viewport rect of a caret position — a mirror-div measurement for <code>&lt;textarea&gt;</code>/<code>&lt;input&gt;</code>, or the current selection otherwise.</td></tr>
+        <tr><td>.rangeRect(range)</td><td>Viewport rect of a collapsed <code>Range</code>, with a fallback for empty lines.</td></tr>
+      </tbody>
+    </table>
+    <p>Full option-by-option reference (every default, every edge case): <a href="../../src/components/mentions/README.md"><code>src/components/mentions/README.md</code></a>.</p>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carousel — Orion Admin</title>
+<meta name="docs:section" content="Media">
+<meta name="docs:order" content="10">
+<meta name="docs:desc" content="Carousel / slider with swipe, momentum, loop, autoplay, thumbnails, fade and content sliders">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .demo-card { display: flex; flex-direction: column; height: 100%; background: var(--o-surface); border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); }
+  .demo-card img { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: cover; border-radius: var(--o-radius-lg) var(--o-radius-lg) 0 0; }
+  .demo-card-body { padding: .875rem 1rem 1rem; }
+  .demo-card-body h4 { margin: 0 0 .25rem; font-size: var(--o-fs-md); }
+  .demo-card-body p { margin: 0; color: var(--o-text-muted); font-size: var(--o-fs-sm); }
+  .demo-kpi { padding: 1rem 1.125rem; height: 100%; background: var(--o-surface); border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); box-shadow: var(--o-shadow-sm); }
+  .demo-quote { display: grid; place-items: center; min-height: 11rem; padding: 2rem 3.5rem 3rem; text-align: center; background: var(--o-surface-2); }
+  .demo-quote blockquote { margin: 0; max-width: 34rem; font-size: var(--o-fs-lg); }
+  .demo-quote cite { display: block; margin-top: .75rem; font-size: var(--o-fs-sm); color: var(--o-text-muted); font-style: normal; }
+  .demo-product { max-width: 30rem; margin-inline: auto; }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Carousel</h1>
+    <p class="docs-lead"><code>&lt;o-carousel&gt;</code> turns its children into slides: touch/mouse swipe with momentum and snapping, keyboard, infinite loop without clones, autoplay that respects WCAG 2.2.2, thumbnails, fade effect, responsive slides-per-view and content sliders. Slides are never moved or cloned, so React, Vue and Angular keep full control of them.</p>
+  </header>
+
+  <section id="hero">
+    <h2>Hero carousel with autoplay</h2>
+    <p>Autoplay pauses while the pointer is over the carousel, while keyboard focus is inside, when the tab is hidden and when the carousel is scrolled out of view. The play/pause button is always available, the active dot shows the countdown, and autoplay never starts under <code>prefers-reduced-motion</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <o-carousel id="hero-car" autoplay="5000" loop arrows dots aspect="16/7" label="Destinations">
+          <div><img class="o-carousel-img" src="../fixtures/media/photo-mountains.jpg" alt="Violet mountains at sunrise">
+            <div class="o-carousel-caption"><h3>Mountain sunrise</h3><p>Layered peaks and morning mist.</p></div></div>
+          <div><img class="o-carousel-img" data-src="../fixtures/media/photo-ocean.jpg" alt="Sun setting over the ocean">
+            <div class="o-carousel-caption"><h3>Ocean sunset</h3><p>Warm light on calm water.</p></div></div>
+          <div><img class="o-carousel-img" data-src="../fixtures/media/photo-desert.jpg" alt="Golden sand dunes">
+            <div class="o-carousel-caption"><h3>Desert dunes</h3><p>Soft curves under a clear sky.</p></div></div>
+          <div><img class="o-carousel-img" data-src="../fixtures/media/photo-city.jpg" alt="City skyline at dusk">
+            <div class="o-carousel-caption"><h3>City lights</h3><p>The skyline wakes up at dusk.</p></div></div>
+        </o-carousel>
+      </template>
+    </div>
+  </section>
+
+  <section id="thumbnails">
+    <h2>Product gallery with thumbnails</h2>
+    <p>Add <code>thumbnails</code> for a strip of clickable thumbnails. Each thumbnail uses the slide's <code>data-thumb</code>, or its first image.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="demo-product">
+          <o-carousel thumbnails arrows aspect="1" label="Aurora headphones colorways">
+            <img src="../fixtures/media/product-coral.jpg" data-thumb="../fixtures/media/product-coral-thumb.jpg" alt="Coral">
+            <img data-src="../fixtures/media/product-midnight.jpg" data-thumb="../fixtures/media/product-midnight-thumb.jpg" alt="Midnight">
+            <img data-src="../fixtures/media/product-mint.jpg" data-thumb="../fixtures/media/product-mint-thumb.jpg" alt="Mint">
+            <img data-src="../fixtures/media/product-sky.jpg" data-thumb="../fixtures/media/product-sky-thumb.jpg" alt="Sky">
+          </o-carousel>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="per-view">
+    <h2>Several slides per view &amp; breakpoints</h2>
+    <p><code>per-view</code> accepts any number (fractions show a peek of the next slide). Use <code>per-view-sm|md|lg|xl</code> for the standard breakpoints (viewport width) or a <code>breakpoints</code> object for full control. <code>gap</code> takes pixels or any CSS length.</p>
+    <div class="docs-demo">
+      <template>
+        <o-carousel per-view="1.15" per-view-sm="2" per-view-lg="3" gap="16" loop arrows dots="outside" label="Trips">
+          <article class="demo-card"><img src="../fixtures/media/photo-lake-thumb.jpg" alt=""><div class="demo-card-body"><h4>Alpine lake</h4><p>3 nights · from $640</p></div></article>
+          <article class="demo-card"><img src="../fixtures/media/photo-forest-thumb.jpg" alt=""><div class="demo-card-body"><h4>Pine forest</h4><p>2 nights · from $410</p></div></article>
+          <article class="demo-card"><img src="../fixtures/media/photo-tropical-thumb.jpg" alt=""><div class="demo-card-body"><h4>Tropical beach</h4><p>5 nights · from $1,280</p></div></article>
+          <article class="demo-card"><img data-src="../fixtures/media/photo-lavender-thumb.jpg" alt=""><div class="demo-card-body"><h4>Lavender fields</h4><p>4 nights · from $890</p></div></article>
+          <article class="demo-card"><img data-src="../fixtures/media/photo-aurora-thumb.jpg" alt=""><div class="demo-card-body"><h4>Northern lights</h4><p>6 nights · from $1,720</p></div></article>
+          <article class="demo-card"><img data-src="../fixtures/media/photo-desert-thumb.jpg" alt=""><div class="demo-card-body"><h4>Desert camp</h4><p>2 nights · from $520</p></div></article>
+        </o-carousel>
+      </template>
+    </div>
+  </section>
+
+  <section id="content-slider">
+    <h2>Content slider</h2>
+    <p><code>per-view="auto"</code> keeps each slide's own width, so cards of any size scroll in a row. <code>.o-carousel-cards</code> gives cards a default width (<code>--o-carousel-card-w</code>) and lets their shadows breathe.</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <o-carousel class="o-carousel-cards" per-view="auto" gap="16" arrows label="Key metrics">
+          <div class="demo-kpi o-stat"><span class="o-stat-label">Revenue</span><span class="o-stat-value">$48.2k</span><span class="o-stat-meta"><span class="o-trend is-up">12%</span> vs last week</span></div>
+          <div class="demo-kpi o-stat"><span class="o-stat-label">Orders</span><span class="o-stat-value">1,284</span><span class="o-stat-meta"><span class="o-trend is-up">4%</span> vs last week</span></div>
+          <div class="demo-kpi o-stat" style="--o-carousel-card-w: 20rem"><span class="o-stat-label">Conversion rate</span><span class="o-stat-value">3.9%</span><span class="o-stat-meta"><span class="o-trend is-down">0.4%</span> vs last week</span></div>
+          <div class="demo-kpi o-stat"><span class="o-stat-label">Refunds</span><span class="o-stat-value">$1.1k</span><span class="o-stat-meta"><span class="o-trend is-flat">0%</span> vs last week</span></div>
+          <div class="demo-kpi o-stat"><span class="o-stat-label">New customers</span><span class="o-stat-value">312</span><span class="o-stat-meta"><span class="o-trend is-up">9%</span> vs last week</span></div>
+          <div class="demo-kpi o-stat"><span class="o-stat-label">Avg. order</span><span class="o-stat-value">$37.50</span><span class="o-stat-meta"><span class="o-trend is-up">2%</span> vs last week</span></div>
+        </o-carousel>
+      </template>
+    </div>
+  </section>
+
+  <section id="center">
+    <h2>Centered slides &amp; fade effect</h2>
+    <div class="docs-demo">
+      <template>
+        <o-carousel per-view="1.6" center loop gap="12" dots="outside" label="Centered gallery">
+          <img src="../fixtures/media/photo-lake-thumb.jpg" alt="Alpine lake" style="aspect-ratio:16/10">
+          <img src="../fixtures/media/photo-ocean-thumb.jpg" alt="Ocean" style="aspect-ratio:16/10">
+          <img src="../fixtures/media/photo-city-thumb.jpg" alt="City" style="aspect-ratio:16/10">
+          <img src="../fixtures/media/photo-mountains-thumb.jpg" alt="Mountains" style="aspect-ratio:16/10">
+        </o-carousel>
+        <br>
+        <o-carousel effect="fade" autoplay="4000" loop dots label="Testimonials">
+          <div class="demo-quote"><blockquote>“Orion replaced four UI libraries in our admin app.”<cite>— Priya Patel, CTO</cite></blockquote></div>
+          <div class="demo-quote"><blockquote>“Accessible out of the box. Our audit passed first time.”<cite>— Lucas Dubois, Design lead</cite></blockquote></div>
+          <div class="demo-quote"><blockquote>“One script tag and our Vue and React teams share the same components.”<cite>— Hana Sato, Engineering manager</cite></blockquote></div>
+        </o-carousel>
+      </template>
+    </div>
+  </section>
+
+  <section id="api-demo">
+    <h2>Methods &amp; events</h2>
+    <div class="docs-demo">
+      <template>
+        <o-carousel id="api-car" per-view="2" gap="12" dots="outside" label="Controlled carousel">
+          <img src="../fixtures/media/photo-forest-thumb.jpg" alt="Forest" style="aspect-ratio:4/3">
+          <img src="../fixtures/media/photo-aurora-thumb.jpg" alt="Aurora" style="aspect-ratio:4/3">
+          <img src="../fixtures/media/photo-lavender-thumb.jpg" alt="Lavender" style="aspect-ratio:4/3">
+          <img src="../fixtures/media/photo-tropical-thumb.jpg" alt="Beach" style="aspect-ratio:4/3">
+          <img src="../fixtures/media/photo-desert-thumb.jpg" alt="Desert" style="aspect-ratio:4/3">
+        </o-carousel>
+        <div class="o-cluster o-mt-3">
+          <button class="o-btn o-btn-sm" id="c-prev">prev()</button>
+          <button class="o-btn o-btn-sm" id="c-next">next()</button>
+          <button class="o-btn o-btn-sm" id="c-go">goTo(3)</button>
+          <button class="o-btn o-btn-sm" id="c-add">Append slide</button>
+        </div>
+        <div class="docs-log" id="car-log"></div>
+        <script>
+          const car = document.getElementById('api-car');
+          car.addEventListener('o-change', e => docs.log('#car-log', `o-change index=${e.detail.index} previous=${e.detail.previous}`));
+          document.getElementById('c-prev').onclick = () => car.prev();
+          document.getElementById('c-next').onclick = () => car.next();
+          document.getElementById('c-go').onclick = () => car.goTo(3);
+          document.getElementById('c-add').onclick = () => {
+            const img = new Image(); img.src = '../fixtures/media/photo-city-thumb.jpg'; img.alt = 'City'; img.style.aspectRatio = '4/3';
+            car.append(img); docs.log('#car-log', `slides: ${car.slides.length}`);
+          };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Attributes / properties</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>autoplay</td><td>number</td><td>0</td><td>Milliseconds between slides; a bare attribute means 5000. <code>0</code> disables.</td></tr>
+        <tr><td>loop</td><td>boolean</td><td>false</td><td>Infinite loop (clone-free). Needs at least <code>ceil(per-view) + 1</code> slides, otherwise it rewinds.</td></tr>
+        <tr><td>rewind</td><td>boolean</td><td>false</td><td>Without <code>loop</code>, <code>next()</code> on the last slide goes back to the first.</td></tr>
+        <tr><td>per-view</td><td>number | 'auto'</td><td>1</td><td>Slides visible at once (fractions allowed). <code>auto</code> keeps each slide's own width.</td></tr>
+        <tr><td>per-view-sm / -md / -lg / -xl</td><td>number | 'auto'</td><td></td><td>Overrides from 576 / 768 / 992 / 1200 px viewport width.</td></tr>
+        <tr><td>breakpoints</td><td>object</td><td>{}</td><td><code>{ "768": { "perView": 2, "gap": 16 } }</code> (min-width keys).</td></tr>
+        <tr><td>gap</td><td>number | CSS length</td><td>0</td><td>Space between slides.</td></tr>
+        <tr><td>effect</td><td>'slide' | 'fade'</td><td>slide</td><td>Transition effect (fade forces one slide per view).</td></tr>
+        <tr><td>arrows</td><td>boolean</td><td>false</td><td>Previous / next buttons.</td></tr>
+        <tr><td>dots</td><td>boolean | 'outside'</td><td>false</td><td>Pagination dots over the slides, or below them with <code>dots="outside"</code>.</td></tr>
+        <tr><td>thumbnails</td><td>boolean</td><td>false</td><td>Thumbnail strip (<code>data-thumb</code> on a slide, else its first image).</td></tr>
+        <tr><td>pause-on-hover</td><td>boolean</td><td>true</td><td>Pause autoplay while hovered (set <code>"false"</code> to disable).</td></tr>
+        <tr><td>draggable</td><td>boolean</td><td>true</td><td>Swipe / mouse drag with momentum (set <code>"false"</code> to disable).</td></tr>
+        <tr><td>center</td><td>boolean</td><td>false</td><td>Center the active slide (use with fractional <code>per-view</code>).</td></tr>
+        <tr><td>step</td><td>number | 'page'</td><td>1</td><td>Slides moved by arrows / keyboard / autoplay.</td></tr>
+        <tr><td>aspect</td><td>string</td><td></td><td>Slide aspect ratio, e.g. <code>16/9</code>.</td></tr>
+        <tr><td>speed</td><td>number</td><td>420</td><td>Transition duration in ms (0 under reduced motion).</td></tr>
+        <tr><td>index</td><td>number</td><td>0</td><td>Current index (setting it jumps without animation).</td></tr>
+        <tr><td>label</td><td>string</td><td></td><td>Accessible name of the carousel region.</td></tr>
+        <tr><td>texts</td><td>object</td><td></td><td>Per-instance strings (<code>prev</code>, <code>next</code>, <code>play</code>, <code>pause</code>, <code>goTo</code>, <code>slideOf</code>…).</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods &amp; getters</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>next() / prev()</td><td>Move by <code>step</code>.</td></tr>
+        <tr><td>goTo(index, { animate = true })</td><td>Go to a position (a page when several slides are visible).</td></tr>
+        <tr><td>play() / pause()</td><td>Start or stop autoplay (same as the play/pause button).</td></tr>
+        <tr><td>refresh()</td><td>Re-read slides and options (automatic when children change).</td></tr>
+        <tr><td>index, count, slides, playing</td><td>Current position, number of positions, slide elements, autoplay running.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-change</td><td>{ index, previous }</td><td>The active position changed.</td></tr>
+        <tr><td>o-play / o-pause</td><td></td><td>Autoplay was started / stopped by the user or the API.</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS</h3>
+    <p>Classes: <code>.o-carousel-img</code> (cover image), <code>.o-carousel-caption</code>, <code>.o-carousel-cards</code>, <code>.o-carousel-nodrag</code> (area that never starts a drag). Variables: <code>--o-carousel-gap</code>, <code>--o-carousel-radius</code>, <code>--o-carousel-thumb-h</code>, <code>--o-carousel-card-w</code>.</p>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard &amp; accessibility</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>← / →</td><td>Previous / next slide (mirrored in right-to-left layouts).</td></tr>
+        <tr><td>Home / End</td><td>First / last position.</td></tr>
+        <tr><td>Tab</td><td>Moves through the carousel, the buttons and the visible slides only (hidden slides are <code>inert</code>).</td></tr>
+      </tbody>
+    </table>
+    <p>Follows the WAI-ARIA carousel pattern: the host is a <code>region</code> with <code>aria-roledescription="carousel"</code>, each slide is a <code>group</code> labelled "n of N", and user navigation is announced to screen readers. Images in slides may use <code>data-src</code> — slides next to the visible ones are loaded ahead of time.</p>
+    <h3>Frameworks</h3>
+    <p>Render slides as normal children — they are never moved, so keyed lists in React/Vue/Angular update in place and the carousel re-reads them automatically. Listen to <code>o-change</code> through a ref in React.</p>
+  </section>
+</main>
+</body>
+</html>

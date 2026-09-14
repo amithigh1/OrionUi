@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Progress, loaders &amp; states — Orion Admin</title>
+<meta name="docs:section" content="Overlays & Feedback">
+<meta name="docs:order" content="70">
+<meta name="docs:title" content="Progress, Loaders &amp; States">
+<meta name="docs:desc" content="Progress bars &amp; rings, spinners, skeleton &amp; shimmer loading, loading overlays, empty and error states">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Progress, Loaders &amp; States</h1>
+    <p class="docs-lead">Show progress, loading and empty/error states consistently: linear and circular progress, spinners, skeleton and shimmer placeholders, overlay loaders, a page top-bar and ready-made empty and error states.</p>
+  </header>
+
+  <section id="progress">
+    <h2>Progress bars</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-stack" style="--o-gap:1rem;max-width:36rem">
+          <div class="o-progress" role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" aria-label="Upload"><div class="o-progress-bar" style="--o-value:45%"></div></div>
+          <div class="o-progress o-progress-lg"><div class="o-progress-bar o-c-success" style="--o-value:72%">72%</div></div>
+          <div class="o-progress o-progress-striped o-progress-animated"><div class="o-progress-bar o-c-warning" style="--o-value:60%"></div></div>
+          <div class="o-progress"><div class="o-progress-bar" style="--o-value:30%"></div><div class="o-progress-bar o-c-info" style="--o-value:20%"></div><div class="o-progress-bar o-c-danger" style="--o-value:10%"></div></div>
+          <div class="o-progress o-progress-indeterminate o-progress-sm"><div class="o-progress-bar"></div></div>
+          <div class="o-progress-labeled"><div class="o-progress"><div class="o-progress-bar" id="live-bar" style="--o-value:0%"></div></div><span class="o-progress-value" id="live-val">0%</span></div>
+          <script>
+            let v = 0; const bar = document.getElementById('live-bar'), val = document.getElementById('live-val');
+            setInterval(() => { v = v >= 100 ? 0 : v + 5; bar.style.setProperty('--o-value', v + '%'); val.textContent = v + '%'; }, 400);
+          </script>
+        </div>
+      </template>
+    </div>
+    <h3>Progress rings</h3>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-progress-ring" style="--o-value:25"><span>25%</span></div>
+        <div class="o-progress-ring o-c-success" style="--o-value:68;--o-size:5rem"><span>68%</span></div>
+        <div class="o-progress-ring o-c-danger" style="--o-value:92;--o-size:6rem;--o-thickness:.6rem"><span>92%</span></div>
+      </template>
+    </div>
+  </section>
+
+  <section id="spinners">
+    <h2>Spinners &amp; loaders</h2>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <span class="o-spinner o-spinner-sm" role="status" aria-label="Loading"></span>
+        <span class="o-spinner" role="status" aria-label="Loading"></span>
+        <span class="o-spinner o-spinner-lg o-spinner-track" role="status" aria-label="Loading"></span>
+        <span class="o-spinner o-c-success"></span>
+        <span class="o-spinner o-spinner-grow o-c-danger"></span>
+        <span class="o-loader-dots" role="status" aria-label="Loading"><i></i><i></i><i></i></span>
+        <span class="o-loader-bars o-c-info" role="status" aria-label="Loading"><i></i><i></i><i></i><i></i></span>
+        <button class="o-btn o-btn-primary"><span class="o-spinner o-spinner-xs o-spinner-inherit"></span> Processing</button>
+      </template>
+    </div>
+    <h3>Loading overlay &amp; page top-bar</h3>
+    <div class="docs-demo">
+      <template>
+        <div class="o-card o-mb-4" id="ov-card"><div class="o-card-body"><h4>Sales report</h4><p class="o-text-muted">Click the button to show an overlay loader on this card for 2 seconds.</p></div></div>
+        <div class="o-cluster">
+          <button class="o-btn" id="ov-btn">Orion.loading(card)</button>
+          <button class="o-btn" id="tb-btn">Orion.progress.start() → done()</button>
+        </div>
+        <script>
+          document.getElementById('ov-btn').onclick = () => { const c = document.getElementById('ov-card'); Orion.loading(c, true, 'Refreshing…'); setTimeout(() => Orion.loading(c, false), 2000); };
+          document.getElementById('tb-btn').onclick = () => { Orion.progress.start(); setTimeout(() => Orion.progress.done(), 1800); };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="skeleton">
+    <h2>Skeleton &amp; shimmer loading</h2>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-grid o-grid-cols-1 o-grid-cols-md-2 o-gap-4">
+          <div class="o-card o-card-body" aria-busy="true" aria-label="Loading profile">
+            <div class="o-hstack o-mb-4"><span class="o-skeleton o-skeleton-avatar"></span><div class="o-flex-1"><div class="o-skeleton o-skeleton-text" style="width:50%"></div><div class="o-skeleton o-skeleton-text" style="width:30%"></div></div></div>
+            <div class="o-skeleton o-skeleton-img o-mb-3"></div>
+            <div class="o-skeleton o-skeleton-text"></div><div class="o-skeleton o-skeleton-text"></div><div class="o-skeleton o-skeleton-text"></div>
+          </div>
+          <div class="o-card o-card-body">
+            <div class="o-skeleton o-skeleton-title"></div>
+            <div class="o-skeleton o-skeleton-pulse o-skeleton-text"></div><div class="o-skeleton o-skeleton-pulse o-skeleton-text"></div>
+            <div class="o-cluster o-mt-4"><span class="o-skeleton o-skeleton-btn"></span><span class="o-skeleton o-skeleton-btn"></span></div>
+            <p class="o-text-muted o-text-sm o-mt-4 o-mb-0">Left: shimmer (default). Right: <code>.o-skeleton-pulse</code>.</p>
+          </div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="empty">
+    <h2>Empty &amp; error states</h2>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-grid o-grid-cols-1 o-grid-cols-md-2 o-gap-4">
+          <div class="o-card"><div class="o-empty">
+            <div class="o-empty-icon"><o-icon name="inbox"></o-icon></div>
+            <h4 class="o-empty-title">No invoices yet</h4>
+            <p class="o-empty-text">Create your first invoice to start getting paid.</p>
+            <div class="o-empty-actions"><button class="o-btn o-btn-primary"><o-icon name="plus"></o-icon> New invoice</button></div>
+          </div></div>
+          <div class="o-card"><div class="o-empty is-error" role="alert">
+            <div class="o-empty-icon"><o-icon name="alert-triangle"></o-icon></div>
+            <h4 class="o-empty-title">Couldn't load data</h4>
+            <p class="o-empty-text">The server didn't respond. Check your connection and try again.</p>
+            <div class="o-empty-actions"><button class="o-btn"><o-icon name="refresh"></o-icon> Retry</button></div>
+          </div></div>
+          <div class="o-card"><div class="o-empty o-empty-sm">
+            <div class="o-empty-icon"><o-icon name="search"></o-icon></div>
+            <h4 class="o-empty-title">No results for "zebra"</h4>
+            <p class="o-empty-text">Try a different search term.</p>
+          </div></div>
+          <div class="o-card"><div class="o-empty is-offline">
+            <div class="o-empty-icon"><o-icon name="wifi-off"></o-icon></div>
+            <h4 class="o-empty-title">You're offline</h4>
+            <p class="o-empty-text">Changes will sync when you're back online.</p>
+          </div></div>
+        </div>
+      </template>
+    </div>
+    <h3>Error page</h3>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-error-page" style="min-height:auto">
+          <div>
+            <p class="o-error-code">404</p>
+            <h2>Page not found</h2>
+            <p class="o-text-muted">The page you're looking for doesn't exist or was moved.</p>
+            <div class="o-cluster o-justify-center"><a class="o-btn o-btn-primary" href="#empty">Back to dashboard</a><a class="o-btn" href="#empty">Contact support</a></div>
+          </div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Class / function</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.o-progress / .o-progress-bar</td><td>Set width with <code>style="--o-value:40%"</code>; sizes <code>-sm -lg -xl</code>; <code>-striped</code>, <code>-animated</code>, <code>-indeterminate</code>; color with <code>.o-c-*</code>.</td></tr>
+        <tr><td>.o-progress-ring</td><td><code>--o-value</code> (0–100), <code>--o-size</code>, <code>--o-thickness</code>.</td></tr>
+        <tr><td>.o-spinner (-xs -sm -lg -xl -track -grow -inherit)</td><td>Spinner; color via <code>.o-c-*</code> or <code>color</code>.</td></tr>
+        <tr><td>.o-loader-dots / .o-loader-bars</td><td>Alternative loaders (child <code>&lt;i&gt;</code> elements).</td></tr>
+        <tr><td>.o-skeleton (-text -title -circle -avatar -btn -img -pulse) / .o-shimmer</td><td>Placeholders.</td></tr>
+        <tr><td>Orion.loading(el, on, text)</td><td>Overlay spinner on any container (sets <code>aria-busy</code>).</td></tr>
+        <tr><td>Orion.progress.start() / set(0..1) / done() / wrap(promise)</td><td>Page top progress bar (nested calls are counted).</td></tr>
+        <tr><td>.o-page-loader + Orion.pageLoader.done()</td><td>Full-page splash loader.</td></tr>
+        <tr><td>.o-empty (.is-error .is-warning .is-success .is-offline .o-empty-sm)</td><td>Empty/error states; parts <code>-icon -title -text -actions</code>.</td></tr>
+        <tr><td>.o-error-page / .o-error-code</td><td>404/500 pages.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

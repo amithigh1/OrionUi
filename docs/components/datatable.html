@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Table — Orion Admin</title>
+<meta name="docs:section" content="Data">
+<meta name="docs:order" content="10">
+<meta name="docs:desc" content="Sortable, searchable, filterable data grid with pagination, formatting and responsive modes">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Data Table</h1>
+    <p class="docs-lead"><code>&lt;o-datatable&gt;</code> is a zero-dependency data grid: client or server processing, multi-column sorting, global search with highlighting, faceted filters, pagination, locale-aware formatting, responsive card and priority modes and full ARIA grid keyboard navigation. It handles 10,000 rows client-side and 100,000 with virtual scrolling.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic usage</h2>
+    <p>Give it <code>columns</code> and <code>rows</code> (as properties or JSON attributes). Click a header to sort (Shift+click adds a level), type in the search box, use the filter icon in a header, or pick a page size.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-datatable id="dt-basic" label="Team members" page-size="10" selectable></o-datatable>
+        <script>{
+          const dt = document.getElementById('dt-basic');
+          dt.columns = [
+            { key: 'name', title: 'Name', type: 'avatar', subtitle: 'email', width: 260, frozen: 'start' },
+            { key: 'role', title: 'Role', type: 'badge', filterable: true, colors: { Admin: 'danger', Manager: 'primary', Editor: 'info', Support: 'warning', Viewer: 'secondary' } },
+            { key: 'department', title: 'Department', filterable: true, filter: 'multiselect' },
+            { key: 'status', title: 'Status', type: 'badge', filterable: true, colors: { Active: 'success', Pending: 'warning', Inactive: 'secondary', Suspended: 'danger' } },
+            { key: 'salary', title: 'Salary', type: 'currency', format: { maximumFractionDigits: 0 }, filterable: true },
+            { key: 'joined', title: 'Joined', type: 'date', filterable: true },
+            { key: 'progress', title: 'Onboarding', type: 'progress', width: 170 },
+          ];
+          dt.rows = docs.people(250);
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="declarative">
+    <h2>Declarative (JSON attributes)</h2>
+    <p>Everything that is an array or object also accepts JSON in attributes, so the table works from plain HTML, server templates or React 18 (which sets attributes). Columns can be plain strings.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-datatable page-size="5" page-sizes="[5,10]" toolbar='{"export":false,"density":false}'
+          columns='[{"key":"code","title":"Code","width":90},{"key":"name","title":"Country"},{"key":"city","title":"Capital / hub"},{"key":"pop","title":"Population (M)","type":"number","format":1}]'
+          rows='[{"id":1,"code":"MY","name":"Malaysia","city":"Kuala Lumpur","pop":34.3},{"id":2,"code":"SG","name":"Singapore","city":"Singapore","pop":5.9},{"id":3,"code":"JP","name":"Japan","city":"Tokyo","pop":124.5},{"id":4,"code":"DE","name":"Germany","city":"Berlin","pop":84.4},{"id":5,"code":"BR","name":"Brazil","city":"São Paulo","pop":216.4},{"id":6,"code":"IN","name":"India","city":"Bengaluru","pop":1428.6},{"id":7,"code":"AE","name":"United Arab Emirates","city":"Dubai","pop":9.5}]'
+          sort='[{"key":"pop","dir":"desc"}]'></o-datatable>
+      </template>
+    </div>
+  </section>
+
+  <section id="factory">
+    <h2>Programmatic factory — <code>Orion.datatable()</code></h2>
+    <p><code>Orion.datatable(target, config)</code> configures <code>target</code> if it's already an
+      <code>&lt;o-datatable&gt;</code>, otherwise creates one inside <code>target</code> and assigns
+      <code>config</code> as properties — useful when the whole setup (columns, rows, callbacks) comes from one
+      object built in JS rather than assigned property-by-property.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div id="dt-factory-host"></div>
+        <script>{
+          const dt = Orion.datatable('#dt-factory-host', {
+            label: 'Factory-built table', pageSize: 5,
+            columns: [{ key: 'name', title: 'Name' }, { key: 'role', title: 'Role', type: 'badge' }, { key: 'joined', title: 'Joined', type: 'date' }],
+            rows: docs.people(20),
+          });
+          dt.addEventListener('o-row-click', e => docs.log('#dt-factory-log', 'o-row-click ' + e.detail.row.name));
+        }</script>
+        <div class="docs-log" id="dt-factory-log"></div>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+      const dt = Orion.datatable('#host', { columns: [...], source: async (query) => fetch(...).then(r => r.json()) });
+      // If #host is already an &lt;o-datatable&gt;, this just Object.assign()s config onto it.
+    </pre>
+  </section>
+
+  <section id="formatting">
+    <h2>Column types &amp; formatting</h2>
+    <p>Built-in types format with the current locale through <code>Orion.format</code>: <code>number</code>, <code>currency</code>, <code>percent</code>, <code>date</code>, <code>datetime</code>, <code>boolean</code>, <code>badge</code>, <code>progress</code>, <code>avatar</code>, <code>link</code>, <code>html</code> and <code>actions</code>. Use <code>format</code> (Intl options or a function) or <code>render(row, value)</code> for anything custom — returned HTML strings are sanitized unless the column sets <code>html: true</code>.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-cluster o-p-3" style="border-bottom:1px solid var(--o-border)">
+          <label class="o-label o-mb-0" for="dt-fmt-locale">Locale</label>
+          <select id="dt-fmt-locale" class="o-select o-input-sm" style="width:auto">
+            <option value="en">en</option><option value="de">de</option><option value="fr">fr</option><option value="ja">ja</option><option value="ar">ar</option>
+          </select>
+          <span class="o-muted o-text-sm">Numbers, currency and dates re-render when the locale changes.</span>
+        </div>
+        <o-datatable id="dt-fmt" pagination="false" toolbar="false" flush></o-datatable>
+        <script>{
+          const dt = document.getElementById('dt-fmt');
+          dt.columns = [
+            { key: 'product', title: 'Product', render: (row, v) => `<strong>${Orion.util.esc(v)}</strong><div class="o-text-xs o-muted">${Orion.util.esc(row.sku)}</div>`, width: 190 },
+            { key: 'price', title: 'Price', type: 'currency', currency: 'EUR' },
+            { key: 'units', title: 'Units', type: 'number' },
+            { key: 'margin', title: 'Margin', type: 'percent', format: 1 },
+            { key: 'inStock', title: 'In stock', type: 'boolean' },
+            { key: 'updated', title: 'Updated', type: 'datetime' },
+            { key: 'url', title: 'Link', type: 'link', href: 'https://example.com/p/{sku}', target: '_blank', format: () => 'View' },
+            { key: 'trend', title: 'Trend', align: 'end', format: v => (v > 0 ? '▲ ' : '▼ ') + Math.abs(v) + '%', cellClass: row => row.trend > 0 ? 'o-text-success' : 'o-text-danger' },
+          ];
+          const now = Date.now();
+          dt.rows = [
+            { id: 1, product: 'Aurora desk lamp', sku: 'AUR-100', price: 89.9, units: 1240, margin: 0.312, inStock: true, updated: new Date(now - 36e5), url: 'x', trend: 12 },
+            { id: 2, product: 'Nimbus chair', sku: 'NIM-220', price: 349, units: 310, margin: 0.228, inStock: false, updated: new Date(now - 864e5 * 3), url: 'x', trend: -4 },
+            { id: 3, product: 'Orbit monitor arm', sku: 'ORB-310', price: 129.5, units: 12987, margin: 0.4, inStock: true, updated: new Date(now - 864e5 * 12), url: 'x', trend: 31 },
+            { id: 4, product: 'Pulse keyboard', sku: 'PUL-045', price: 159, units: 0, margin: null, inStock: null, updated: null, url: '', trend: -1 },
+          ];
+          document.getElementById('dt-fmt-locale').addEventListener('change', e => Orion.i18n.set(e.target.value, { persist: false, dir: 'ltr' }));
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="sorting">
+    <h2>Sorting</h2>
+    <p>Sorting is tri-state (ascending → descending → none). Hold <kbd class="o-kbd">Shift</kbd> to sort by several columns; the order is shown next to each arrow. Set the initial order with <code>sort</code>, provide <code>sortFn</code> for custom comparisons, and listen to <code>o-sort</code>.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-datatable id="dt-sort" page-size="8" toolbar='{"search":false}'></o-datatable>
+        <div class="docs-log o-m-3" id="dt-sort-log"></div>
+        <script>{
+          const dt = document.getElementById('dt-sort');
+          const order = { Admin: 0, Manager: 1, Editor: 2, Support: 3, Viewer: 4 };
+          dt.columns = [
+            { key: 'name', title: 'Name' },
+            { key: 'role', title: 'Role (by rank)', sortFn: (a, b) => order[a] - order[b] },
+            { key: 'department', title: 'Department' },
+            { key: 'rating', title: 'Rating', type: 'number', format: 1 },
+            { key: 'salary', title: 'Salary', type: 'currency', format: { maximumFractionDigits: 0 } },
+          ];
+          dt.rows = docs.people(60, 3);
+          dt.sort = [{ key: 'department', dir: 'asc' }, { key: 'salary', dir: 'desc' }];
+          dt.addEventListener('o-sort', e => docs.log('#dt-sort-log', 'o-sort ' + JSON.stringify(e.detail.sort)));
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="filtering">
+    <h2>Search, filters &amp; facets</h2>
+    <p>The search box matches every word against raw and formatted values and highlights hits. Filterable columns get a filter menu with the right control for their type — text, select, <strong>faceted multi-select with counts</strong>, number range, date range or boolean. Active filters appear as chips with a result count and <em>Clear all</em>. Toggle <strong>Filters</strong> for an inline filter row.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-datatable id="dt-filter" page-size="8" filterable filters='{"status":["Active","Pending"]}'></o-datatable>
+        <script>{
+          const dt = document.getElementById('dt-filter');
+          dt.columns = [
+            { key: 'name', title: 'Name', filter: 'text' },
+            { key: 'role', title: 'Role', type: 'badge', colors: { Admin: 'danger', Manager: 'primary', Editor: 'info', Support: 'warning', Viewer: 'secondary' } },
+            { key: 'country', title: 'Country', filter: 'multiselect' },
+            { key: 'status', title: 'Status', type: 'badge', colors: { Active: 'success', Pending: 'warning', Inactive: 'secondary', Suspended: 'danger' } },
+            { key: 'salary', title: 'Salary', type: 'currency', format: { maximumFractionDigits: 0 } },
+            { key: 'joined', title: 'Joined', type: 'date' },
+            { key: 'remote', title: 'Remote', type: 'boolean' },
+          ];
+          dt.rows = docs.people(400, 11).map(p => ({ ...p, remote: p.tags.includes('remote') }));
+        }</script>
+      </template>
+    </div>
+    <h3>Advanced search hook</h3>
+    <p>Pass any predicate as <code>filterFn</code> (for example from a query builder). It combines with search and column filters and shows as a removable chip.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <form id="dt-qb" class="o-cluster o-p-3" style="border-bottom:1px solid var(--o-border)">
+          <select class="o-select o-input-sm" name="field" style="width:auto" aria-label="Field"><option value="salary">Salary</option><option value="rating">Rating</option><option value="progress">Progress</option></select>
+          <select class="o-select o-input-sm" name="op" style="width:auto" aria-label="Operator"><option value=">">&gt;</option><option value="<">&lt;</option><option value="=">=</option></select>
+          <input class="o-input o-input-sm" name="value" type="number" value="100000" style="width:9rem" aria-label="Value">
+          <button class="o-btn o-btn-primary o-btn-sm">Apply</button>
+          <button class="o-btn o-btn-sm" type="button" id="dt-qb-clear">Clear</button>
+        </form>
+        <o-datatable id="dt-adv" page-size="5" toolbar='{"columns":false,"density":false,"export":false}'></o-datatable>
+        <script>{
+          const dt = document.getElementById('dt-adv');
+          dt.columns = ['name', 'department', { key: 'salary', type: 'currency', format: { maximumFractionDigits: 0 } }, { key: 'rating', type: 'number', format: 1 }, { key: 'progress', type: 'progress' }];
+          dt.rows = docs.people(200, 5);
+          document.getElementById('dt-qb').addEventListener('submit', e => {
+            e.preventDefault();
+            const f = new FormData(e.target), k = f.get('field'), op = f.get('op'), v = +f.get('value');
+            dt.filterLabel = `${k} ${op} ${v}`;
+            dt.filterFn = row => op === '>' ? row[k] > v : op === '<' ? row[k] < v : row[k] === v;
+          });
+          document.getElementById('dt-qb-clear').onclick = () => { dt.filterFn = null; };
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="pagination">
+    <h2>Pagination</h2>
+    <p>Pagination uses <a href="pagination.html"><code>&lt;o-pagination&gt;</code></a> and shows “Showing x–y of z”. Set <code>page-size</code>, <code>page-sizes</code> and <code>page</code>; turn it off with <code>pagination="false"</code> (all rows) or use <a href="datatable-advanced.html#virtual">virtual scrolling</a>.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-datatable id="dt-page" page-size="5" page-sizes="[5,15,30]" page="3" toolbar="false" density="compact"></o-datatable>
+        <script>{
+          const dt = document.getElementById('dt-page');
+          dt.columns = [{ key: 'id', title: '#', type: 'number', width: 70 }, 'name', 'email', 'city', { key: 'lastLogin', title: 'Last login', type: 'datetime' }];
+          dt.rows = docs.people(87, 9);
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="responsive">
+    <h2>Responsive tables</h2>
+    <p><code>responsive="scroll"</code> (default) scrolls horizontally with frozen columns and edge shadows. <code>stack</code> turns rows into labelled cards below the <em>md</em> breakpoint (or in containers narrower than 480px). <code>priority</code> hides low-priority columns (<code>priority: 1</code> is kept longest) as space runs out and shows them in an expandable row.</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-grid" style="--o-cols:1;gap:1.25rem">
+          <div style="max-width:440px"><div class="o-eyebrow o-mb-2">stack · 440px container</div><o-datatable id="dt-stack" responsive="stack" page-size="3" toolbar="false" selectable></o-datatable></div>
+          <div style="max-width:560px"><div class="o-eyebrow o-mb-2">priority · 560px container</div><o-datatable id="dt-prio" responsive="priority" page-size="4" toolbar="false"></o-datatable></div>
+        </div>
+        <script>{
+          const cols = [
+            { key: 'name', title: 'Name', priority: 1, width: 170 },
+            { key: 'role', title: 'Role', type: 'badge', priority: 2 },
+            { key: 'email', title: 'Email', priority: 5, width: 240 },
+            { key: 'salary', title: 'Salary', type: 'currency', format: { maximumFractionDigits: 0 }, priority: 3 },
+            { key: 'joined', title: 'Joined', type: 'date', priority: 4 },
+          ];
+          const rows = docs.people(12, 21);
+          Object.assign(document.getElementById('dt-stack'), { columns: cols, rows });
+          Object.assign(document.getElementById('dt-prio'), { columns: cols, rows });
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="plain">
+    <h2>Enhance a plain table</h2>
+    <p>Add <code>data-o-table</code> to static markup for sorting, search and pagination without writing JavaScript. Cells can carry a <code>data-sort</code> value; <code>&lt;th data-sort="false"&gt;</code> opts out.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-table-wrap">
+          <table class="o-table o-table-hover" data-o-table data-o-table-page-size="4">
+            <thead><tr><th>Invoice</th><th>Customer</th><th data-type="date">Due</th><th class="o-num">Amount</th><th data-sort="false">Status</th></tr></thead>
+            <tbody>
+              <tr><td>INV-1042</td><td>Acme Corp</td><td data-sort="2026-09-02">2 Sep 2026</td><td class="o-num">$4,250.00</td><td><span class="o-badge o-badge-soft-success">Paid</span></td></tr>
+              <tr><td>INV-1043</td><td>Globex</td><td data-sort="2026-09-15">15 Sep 2026</td><td class="o-num">$1,120.50</td><td><span class="o-badge o-badge-soft-warning">Due</span></td></tr>
+              <tr><td>INV-1044</td><td>Initech</td><td data-sort="2026-08-28">28 Aug 2026</td><td class="o-num">$980.00</td><td><span class="o-badge o-badge-soft-danger">Overdue</span></td></tr>
+              <tr><td>INV-1045</td><td>Umbrella</td><td data-sort="2026-10-01">1 Oct 2026</td><td class="o-num">$12,400.00</td><td><span class="o-badge o-badge-soft-secondary">Draft</span></td></tr>
+              <tr><td>INV-1046</td><td>Stark Industries</td><td data-sort="2026-09-20">20 Sep 2026</td><td class="o-num">$7,800.00</td><td><span class="o-badge o-badge-soft-success">Paid</span></td></tr>
+              <tr><td>INV-1047</td><td>Wayne Enterprises</td><td data-sort="2026-09-09">9 Sep 2026</td><td class="o-num">$3,310.00</td><td><span class="o-badge o-badge-soft-warning">Due</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="frameworks">
+    <h2>Frameworks</h2>
+    <p>Set <code>columns</code>, <code>rows</code>, <code>source</code> and callbacks as <strong>properties</strong> (they may be set before the element upgrades). Custom events are <code>o-</code> prefixed.</p>
+    <pre class="docs-code-block" data-lang="js">
+      // React 19
+      &lt;o-datatable ref={ref} columns={columns} rows={rows} selectable="multi" /&gt;
+      useEffect(() =&gt; { const el = ref.current; const f = e =&gt; setSelected(e.detail.rows); el.addEventListener('o-select', f); return () =&gt; el.removeEventListener('o-select', f); }, []);
+
+      // Vue 3  (compilerOptions.isCustomElement = t =&gt; t.startsWith('o-'))
+      &lt;o-datatable :columns="columns" :rows="rows" @o-row-click="open($event.detail.row)" /&gt;
+
+      // Angular  (schemas: [CUSTOM_ELEMENTS_SCHEMA])
+      &lt;o-datatable [columns]="columns" [source]="load" (o-select)="onSelect($event)"&gt;&lt;/o-datatable&gt;
+    </pre>
+  </section>
+</main>
+</body>
+</html>

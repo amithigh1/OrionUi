@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Code Editor — Orion Admin</title>
+<meta name="docs:section" content="Editors">
+<meta name="docs:order" content="20">
+<meta name="docs:desc" content="A textarea-based code editor with syntax highlighting, auto-indent, bracket matching, search &amp; replace and JSON validation">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Code Editor</h1>
+    <p class="docs-lead"><code>&lt;o-code-editor&gt;</code> is a zero-dependency code editor: a native <code>&lt;textarea&gt;</code> (real selection, IME and clipboard) under a synchronized, virtualized, tokenizer-highlighted overlay. It has its own undo history, auto-indent, bracket/quote autoclose, comment toggle, line move/duplicate, a search &amp; replace panel and pluggable validation (JSON built in), and renders multi-thousand-line documents smoothly.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic usage &amp; JSON validation</h2>
+    <p>Give it a <code>language</code> and either a <code>value</code> property/attribute or initial content (a child <code>&lt;template&gt;</code>, <code>&lt;textarea&gt;</code>, or plain text — common leading indentation is stripped automatically). <code>language="json"</code> runs the built-in JSON validator by default (or pass your own function/global name to <code>validate</code>); errors show as a wavy underline, a marker in the gutter, and a message in the problems bar below the editor. Try deleting a closing brace, adding a trailing comma, or typing an unquoted key.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-code-editor id="ce-json" language="json" line-numbers validate statusbar style="max-width:38rem" label="User record"></o-code-editor>
+        <div class="docs-log" id="log-json"></div>
+        <script>{
+          const ed = document.getElementById('ce-json');
+          ed.value = JSON.stringify({ name: 'Ada Lovelace', role: 'Engineer', active: true, tags: ['math', 'computing'] }, null, 2);
+          ed.addEventListener('o-validate', e => {
+            docs.log('#log-json', e.detail.valid ? 'Valid JSON' : e.detail.errors.map(x => `Line ${x.line}, col ${x.column}: ${x.message}`).join(' · '));
+          });
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="languages">
+    <h2>Languages</h2>
+    <p>Highlighting covers JavaScript/TypeScript, JSON, HTML/XML (with embedded <code>&lt;script&gt;</code>/<code>&lt;style&gt;</code>), CSS/SCSS, SQL, Python, PHP, Java, C#, Go, Rust, Bash, YAML and Markdown — see the README for the full alias list. <code>line-numbers</code> adds a gutter; <code>tab-size</code> controls indent width for Tab, auto-indent and <code>indent()</code>/<code>outdent()</code>.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-grid-auto-fit o-p-3" style="--o-min:18rem;--o-gap:1rem">
+          <div>
+            <div class="o-eyebrow o-mb-2">JavaScript</div>
+            <o-code-editor id="ce-js" language="js" line-numbers min-lines="8"></o-code-editor>
+          </div>
+          <div>
+            <div class="o-eyebrow o-mb-2">SQL</div>
+            <o-code-editor id="ce-sql" language="sql" line-numbers min-lines="8"></o-code-editor>
+          </div>
+          <div>
+            <div class="o-eyebrow o-mb-2">HTML</div>
+            <o-code-editor id="ce-html" language="html" line-numbers min-lines="8"></o-code-editor>
+          </div>
+        </div>
+        <script>{
+          document.getElementById('ce-js').value = [
+            'function fibonacci(n) {',
+            '  if (n <= 1) return n;',
+            '  return fibonacci(n - 1) + fibonacci(n - 2);',
+            '}',
+            '',
+            '// Ctrl+/ toggles this comment',
+            'const first10 = Array.from({ length: 10 }, (_, i) => fibonacci(i));',
+            'export default first10;',
+          ].join('\n');
+          document.getElementById('ce-sql').value = [
+            'SELECT u.id, u.name, COUNT(o.id) AS orders',
+            'FROM users u',
+            'LEFT JOIN orders o ON o.user_id = u.id',
+            "WHERE u.status = 'active'",
+            'GROUP BY u.id, u.name',
+            'HAVING COUNT(o.id) > 0',
+            'ORDER BY orders DESC',
+            'LIMIT 20;',
+          ].join('\n');
+          document.getElementById('ce-html').value = [
+            '<section class="card">',
+            '  <h2>Hello</h2>',
+            '  <p>Type <b>Enter</b> after the tag above.</p>',
+            '</section>',
+          ].join('\n');
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="readonly">
+    <h2>Read-only</h2>
+    <p>Set <code>readonly</code> to display code without allowing edits (search still works; typing, auto-indent and auto-close are disabled). Pair with <code>disabled</code> to also remove it from tab order and form submission.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-code-editor id="ce-ro" language="typescript" line-numbers readonly style="max-width:38rem"></o-code-editor>
+        <script>{
+          document.getElementById('ce-ro').value = [
+            'interface User {',
+            '  id: string;',
+            '  name: string;',
+            '  roles: readonly string[];',
+            '}',
+            '',
+            'export function isAdmin(u: User): boolean {',
+            "  return u.roles.includes('admin');",
+            '}',
+          ].join('\n');
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="search">
+    <h2>Search &amp; replace</h2>
+    <p>Ctrl/Cmd+F opens find, Ctrl/Cmd+H opens find &amp; replace; F3 / Shift+F3 repeat the search even with the panel closed. The same actions are scriptable through <code>find()</code>, <code>findNext()</code>/<code>findPrev()</code>, <code>replaceCurrent()</code> and <code>replaceAll()</code>.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-code-editor id="ce-search" language="js" line-numbers style="max-width:38rem"></o-code-editor>
+        <div class="o-cluster o-p-3" style="--o-gap:.5rem;border-top:1px solid var(--o-border)">
+          <button class="o-btn o-btn-sm" type="button" data-m="open">openSearch()</button>
+          <button class="o-btn o-btn-sm" type="button" data-m="find">find('total')</button>
+          <button class="o-btn o-btn-sm" type="button" data-m="next">findNext()</button>
+          <button class="o-btn o-btn-sm" type="button" data-m="replaceAll">replaceAll('total','sum')</button>
+        </div>
+        <div class="docs-log" id="log-search"></div>
+        <script>{
+          const ed = document.getElementById('ce-search');
+          ed.value = [
+            'function total(items) {',
+            '  let total = 0;',
+            '  for (const item of items) total += item.price;',
+            '  return total;',
+            '}',
+          ].join('\n');
+          document.querySelectorAll('[data-m]').forEach(b => b.onclick = () => {
+            const m = b.dataset.m;
+            if (m === 'open') { ed.focus(); ed.openSearch(false); docs.log('#log-search', 'openSearch(false)'); }
+            else if (m === 'find') docs.log('#log-search', 'find("total") -> ' + ed.find('total') + ' matches');
+            else if (m === 'next') { ed.findNext(); docs.log('#log-search', 'findNext()'); }
+            else if (m === 'replaceAll') docs.log('#log-search', 'replaceAll("total","sum") -> ' + ed.replaceAll('total', 'sum') + ' replaced');
+          });
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="performance">
+    <h2>Large documents</h2>
+    <p>The highlighted overlay and gutter are virtualized once a document passes 150 lines (with <code>wrap</code> off): only the visible lines get DOM nodes. Tokenization is cached per line and re-validated incrementally, so editing stays responsive even in very large files.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-code-editor id="ce-big" language="javascript" line-numbers max-lines="16"></o-code-editor>
+        <div class="o-cluster o-p-3" style="--o-gap:.5rem;border-top:1px solid var(--o-border)">
+          <button class="o-btn o-btn-sm o-btn-primary" type="button" id="ce-big-load">Load 6,000 lines</button>
+        </div>
+        <div class="docs-log" id="log-big"></div>
+        <script>{
+          document.getElementById('ce-big-load').onclick = () => {
+            const ed = document.getElementById('ce-big');
+            const lines = [];
+            for (let i = 0; i < 6000; i++) lines.push(`export const value_${i} = ${i} * 2; // line ${i}`);
+            const t0 = performance.now();
+            ed.value = lines.join('\n');
+            ed.refresh();
+            const ms = (performance.now() - t0).toFixed(1);
+            docs.log('#log-big', `Set ${lines.length} lines and rendered in ${ms}ms`);
+          };
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="static">
+    <h2>Static highlighting</h2>
+    <p>For code that never needs editing, add <code>data-o-highlight="&lt;language&gt;"</code> to a plain <code>&lt;pre&gt;&lt;code&gt;</code> block — no JavaScript required beyond loading the bundle. Add <code>data-o-line-numbers</code> for a numbered gutter. This uses the same tokenizer and CSS as the editor (<code>Orion.highlight</code>).</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div class="o-p-3">
+          <pre class="o-pre" data-o-highlight="js"><code>function fib(n) {
+  if (n &lt;= 1) return n;
+  return fib(n - 1) + fib(n - 2);
+}
+console.log(fib(10));</code></pre>
+          <pre class="o-pre o-mt-3" data-o-highlight="python" data-o-line-numbers><code>def fib(n):
+    if n &lt;= 1:
+        return n
+    return fib(n - 1) + fib(n - 2)
+
+print(fib(10))</code></pre>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Tab / Shift+Tab</td><td>Indent / outdent the line, or every selected line.</td></tr>
+        <tr><td>Enter</td><td>Auto-indents to match the previous line; adds a level after <code>{[(</code> (or <code>:</code> for Python/YAML, or an opening HTML/XML tag); between a matching pair it expands to a 3-line block.</td></tr>
+        <tr><td>Backspace</td><td>Deletes a whole empty auto-closed pair in one step, or a full indent unit inside leading whitespace.</td></tr>
+        <tr><td>Home / Shift+Home</td><td>Smart home: first press to the first non-whitespace character, second press to column 0.</td></tr>
+        <tr><td><code>( [ { " ' `</code> etc.</td><td>Auto-closes the matching character; typing the closing character when it's already next just moves over it.</td></tr>
+        <tr><td>Ctrl/Cmd+/</td><td><code>toggleComment()</code> — line or block comment for the current language.</td></tr>
+        <tr><td>Ctrl/Cmd+D</td><td><code>duplicate()</code> — duplicate the selection or current line.</td></tr>
+        <tr><td>Alt+↑ / Alt+↓</td><td><code>moveLines(-1)</code> / <code>moveLines(1)</code>.</td></tr>
+        <tr><td>Ctrl/Cmd+] / Ctrl/Cmd+[</td><td><code>indent()</code> / <code>outdent()</code>.</td></tr>
+        <tr><td>Ctrl/Cmd+Z · Shift+Z · Y</td><td><code>undo()</code> / <code>redo()</code> / <code>redo()</code> (native browser undo is redirected to the same history).</td></tr>
+        <tr><td>Ctrl/Cmd+S</td><td>Fires <code>o-save</code> (default browser save is prevented).</td></tr>
+        <tr><td>Ctrl/Cmd+F</td><td>Open find (<code>openSearch(false)</code>).</td></tr>
+        <tr><td>Ctrl/Cmd+H</td><td>Open find &amp; replace (<code>openSearch(true)</code>).</td></tr>
+        <tr><td>F3 / Shift+F3</td><td><code>findNext()</code> / <code>findPrev()</code>, even while the panel is closed.</td></tr>
+        <tr><td>Escape</td><td>Closes the search panel if open; otherwise arms "Escape then Tab" to move focus out of the editor.</td></tr>
+        <tr><td>Enter / Shift+Enter (in Find)</td><td>Next / previous match.</td></tr>
+        <tr><td>Enter (in Replace) · Ctrl/Cmd+Alt+Enter</td><td>Replace current match · replace all.</td></tr>
+        <tr><td>Alt+C / Alt+R / Alt+W (panel)</td><td>Toggle match case / regex / whole word.</td></tr>
+      </tbody>
+    </table>
+    <p>All editing shortcuts are suppressed while <code>readonly</code>/<code>disabled</code> (find/replace navigation, undo/redo, save and Escape still work).</p>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Properties / attributes</h3>
+    <table class="docs-api">
+      <thead><tr><th>Property (attribute)</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>value</td><td>string</td><td>''</td><td>The document text. Setting it resets undo history and re-validates.</td></tr>
+        <tr><td>language</td><td>string</td><td>'plaintext'</td><td>Any key or alias from <code>Orion.highlight.languages()</code>; unknown values fall back to plaintext.</td></tr>
+        <tr><td>line-numbers</td><td>boolean</td><td>false</td><td>Gutter (non-wrap) or inline numbers (wrap mode).</td></tr>
+        <tr><td>wrap</td><td>boolean</td><td>false</td><td>Soft-wraps long lines; disables virtualization.</td></tr>
+        <tr><td>tab-size</td><td>number</td><td>2</td><td>Spaces per indent level.</td></tr>
+        <tr><td>min-lines</td><td>number</td><td>3</td><td>Minimum visible height, in lines.</td></tr>
+        <tr><td>max-lines</td><td>number</td><td>—</td><td>Once set, the editor scrolls internally past this many lines.</td></tr>
+        <tr><td>placeholder</td><td>string</td><td>—</td><td>Shown on the empty textarea.</td></tr>
+        <tr><td>label</td><td>string</td><td>—</td><td>Overrides the auto <code>aria-label</code>.</td></tr>
+        <tr><td>validate</td><td>boolean | function | string</td><td>—</td><td><code>false</code> disables validation (including the JSON built-in); a function <code>(value, language) =&gt; errors</code> (may be async) or a dotted global name runs instead of / in addition to the JSON built-in.</td></tr>
+        <tr><td>auto-close</td><td>boolean</td><td>true</td><td>Auto-close and type-over/backspace-pair brackets and quotes.</td></tr>
+        <tr><td>statusbar</td><td>boolean</td><td>false</td><td>Bottom bar: cursor position, indent size, language, problem count.</td></tr>
+        <tr><td>texts</td><td>object</td><td>—</td><td>Per-instance string overrides (see README for keys).</td></tr>
+        <tr><td>name, disabled, required, readonly</td><td>—</td><td>—</td><td>Standard form-control behavior (inherited from <code>FormElement</code>).</td></tr>
+        <tr><td>canUndo / canRedo</td><td>boolean (read-only)</td><td></td><td>Whether <code>undo()</code> / <code>redo()</code> would do anything right now.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-input</td><td>{ value }</td><td>Every edit (also native <code>input</code>).</td></tr>
+        <tr><td>o-change</td><td>{ value }</td><td>Debounced ~400ms after the last edit, or on blur (also native <code>change</code>).</td></tr>
+        <tr><td>o-validate</td><td>{ errors, valid }</td><td>After each validation run (debounced ~300ms after edits).</td></tr>
+        <tr><td>o-save</td><td>{ value }</td><td>Ctrl/Cmd+S (default browser save prevented).</td></tr>
+        <tr><td>o-search-open</td><td>{ replace }</td><td><code>openSearch()</code> was called.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>insertText(text) · getSelection() · setSelection(start, end) · gotoLine(line, col)</td><td>Programmatic editing / navigation.</td></tr>
+        <tr><td>indent() · outdent() · toggleComment() · duplicate() · moveLines(dir)</td><td>Line operations, same as their keyboard shortcuts.</td></tr>
+        <tr><td>format()</td><td>Pretty-print JSON in place (no-op, returns <code>false</code>, for other languages).</td></tr>
+        <tr><td>undo() · redo() · canUndo · canRedo</td><td>Internal history (max 400 steps).</td></tr>
+        <tr><td>refresh()</td><td>Re-measure and re-render (e.g. after an external layout change).</td></tr>
+        <tr><td>openSearch(replace?) · closeSearch()</td><td>Show / hide the search panel.</td></tr>
+        <tr><td>find(query, opts?) · findNext() · findPrev()</td><td>Search; <code>opts</code>: <code>{ case, regex, word }</code>. Returns the match count.</td></tr>
+        <tr><td>replaceCurrent() · replaceAll(query?, replacement?, opts?)</td><td>Replace; <code>replaceAll()</code> returns the number replaced.</td></tr>
+        <tr><td>getErrors() · validateNow()</td><td>Read the last validation result / run it immediately (async).</td></tr>
+        <tr><td>checkValidity() · reportValidity() · setCustomValidity(msg)</td><td>Inherited native form validation.</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS variables &amp; classes</h3>
+    <table class="docs-api">
+      <thead><tr><th>Name</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>--o-ce-fs / --o-ce-lh</td><td>Font size / line height (default <code>.8125rem</code> / <code>1.25rem</code>). Keep <code>--o-ce-lh</code> a fixed length — virtualization math depends on it.</td></tr>
+        <tr><td>--o-ce-pad-y / --o-ce-pad-x</td><td>Editor padding (default <code>.5rem</code> / <code>.75rem</code>).</td></tr>
+        <tr><td>--o-ce-bg</td><td>Editor background (auto-switches to <code>--o-surface-2</code> when read-only).</td></tr>
+        <tr><td>--o-ce-gutter-w</td><td>Gutter width; grows automatically with the line-count digit width.</td></tr>
+        <tr><td>--o-code-kw / -str / -num / -com / -fn / -tag / -attr / -type / -prop / -meta / -punct</td><td>Syntax token colors, shared with <code>Orion.highlight</code> output and <code>data-o-highlight</code> blocks.</td></tr>
+        <tr><td>.is-focused · .is-invalid · .is-readonly · .is-disabled · .is-wrap · .has-gutter</td><td>State classes on the host.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="highlight-api">
+    <h2>Orion.highlight (tokenizer service)</h2>
+    <p>The same tokenizer that powers the editor is available standalone, and drives the <code>data-o-highlight</code> behavior used in <a href="#static">Static highlighting</a> above.</p>
+    <table class="docs-api">
+      <thead><tr><th>Name</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Orion.highlight(code, language, opts?)</td><td>Returns escaped HTML with <code>&lt;span class="o-tk-*"&gt;</code> tokens. <code>opts.lines</code> wraps each line in <code>&lt;span class="o-hl-line"&gt;</code>.</td></tr>
+        <tr><td>Orion.highlightElement(preOrCode, lang?)</td><td>Highlights an element's text in place; language is read from <code>data-o-highlight</code>/<code>data-lang</code>/a <code>language-*</code> class when omitted.</td></tr>
+        <tr><td>Orion.highlight.tokenize(line, lang, state)</td><td>Incremental single-line tokenizer: <code>{ tokens, state }</code>.</td></tr>
+        <tr><td>Orion.highlight.languages() · .names · .resolve(lang) · .grammar(lang)</td><td>Introspect supported languages, display names and canonical keys.</td></tr>
+        <tr><td>Orion.highlight.register(name, grammar, aliases?)</td><td>Add or override a language grammar.</td></tr>
+        <tr><td>Orion.highlight.validateJSON(text)</td><td><code>[{ line, column, offset, message, severity }]</code> — the built-in JSON validator (at most one error, first problem wins).</td></tr>
+        <tr><td>data-o-highlight="&lt;language&gt;" [data-o-line-numbers]</td><td>Behavior: highlights a static <code>&lt;pre&gt;</code>/<code>&lt;code&gt;</code> block on connect, for any current or future element (works with framework-rendered markup too).</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

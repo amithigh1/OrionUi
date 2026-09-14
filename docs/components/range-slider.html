@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Range slider — Orion Admin</title>
+<meta name="docs:section" content="Forms">
+<meta name="docs:order" content="60">
+<meta name="docs:desc" content="Single or dual-thumb slider with marks, tooltips and vertical orientation">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Range slider</h1>
+    <p class="docs-lead"><code>&lt;o-range&gt;</code> is a form-associated slider with a single thumb or, with
+      <code>dual</code>, two independent thumbs for a min/max range. For a plain single-value native slider without a
+      custom element, see <code>.o-range</code> on <a href="form-controls.html">Form controls</a>.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Single thumb</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-field" style="max-width:24rem">
+          <label class="o-label" for="rg-1">Volume</label>
+          <o-range id="rg-1" name="volume" min="0" max="100" value="40" tooltip="always"></o-range>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="dual">
+    <h2>Dual thumb (min/max range)</h2>
+    <p>With <code>dual</code>, the component submits <em>two</em> form fields: <code>name</code> for the start value and
+      <code>name-end</code> (defaults to <code>name + "End"</code>) for the end value. <code>min-distance</code> keeps the
+      thumbs from crossing.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-field" style="max-width:24rem">
+          <label class="o-label">Price range</label>
+          <o-range id="rg-2" dual name="price" min="0" max="1000" step="10" value-start="200" value-end="800" min-distance="50" format="currency:USD"></o-range>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="marks">
+    <h2>Marks &amp; ticks</h2>
+    <p><code>marks</code> accepts an array of numbers, <code>{value,label}</code> objects, or a <code>{value:label}</code>
+      map. <code>ticks</code> auto-generates an unlabeled tick at every step.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-stack" style="gap:2.5rem;max-width:26rem">
+          <o-range min="0" max="4" step="1" value="2" marks='[{"value":0,"label":"Free"},{"value":1,"label":"Basic"},{"value":2,"label":"Pro"},{"value":3,"label":"Team"},{"value":4,"label":"Enterprise"}]'></o-range>
+          <o-range min="0" max="20" step="1" value="8" ticks></o-range>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="format">
+    <h2>Formatting the tooltip</h2>
+    <p><code>format</code> accepts a quick shorthand string (<code>currency:USD</code>, <code>percent</code>,
+      <code>number:1</code>) or a function <code>(value, el) =&gt; string</code> for full control.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-stack" style="gap:2.5rem;max-width:24rem">
+          <o-range min="0" max="1" step="0.01" value="0.65" format="percent" tooltip="always"></o-range>
+          <o-range id="rg-fmt" min="0" max="5" step="1" value="3" tooltip="always" style="--o-c:var(--o-success)"></o-range>
+          <script>
+            document.getElementById('rg-fmt').format = v => ['Very low', 'Low', 'Medium', 'High', 'Very high', 'Max'][v];
+          </script>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="vertical">
+    <h2>Vertical</h2>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div style="display:flex;gap:3rem;align-items:flex-end;height:14rem">
+          <o-range orientation="vertical" min="0" max="10" value="7" tooltip="always"></o-range>
+          <o-range orientation="vertical" dual min="0" max="10" value-start="2" value-end="8"></o-range>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="linked">
+    <h2>Linked number inputs</h2>
+    <p>The <code>inputs</code> prop two-way binds the slider to one (single mode) or two (dual mode) existing
+      <code>&lt;input&gt;</code> elements — handy for a "type an exact value" pair next to the slider.</p>
+    <div class="docs-demo">
+      <template>
+        <div style="max-width:26rem">
+          <div class="o-input-group o-mb-2">
+            <input class="o-input" id="rg-min" type="number" value="200">
+            <span class="o-input-addon">to</span>
+            <input class="o-input" id="rg-max" type="number" value="800">
+          </div>
+          <o-range dual min="0" max="1000" step="10" value-start="200" value-end="800" inputs='["#rg-min","#rg-max"]'></o-range>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="states">
+    <h2>Sizes, disabled &amp; RTL</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-stack" style="gap:1.75rem;max-width:24rem">
+          <o-range size="sm" value="30"></o-range>
+          <o-range size="lg" value="70"></o-range>
+          <o-range value="50" disabled></o-range>
+          <div dir="rtl"><o-range dual value-start="20" value-end="70"></o-range></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="filter-example">
+    <h2>Example: price filter</h2>
+    <p>A shop sidebar filter combining a dual range with live labels. See also the full
+      <a href="../examples/inputs-shop-filters.html">shop filters example</a>.</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-card" style="max-width:20rem">
+          <div class="o-card-body">
+            <div class="o-label">Price</div>
+            <o-range id="rg-filter" dual min="0" max="500" step="5" value-start="50" value-end="300" format="currency:USD"></o-range>
+            <div class="o-d-flex o-justify-between o-text-sm o-text-muted o-mt-2"><span id="rg-filter-min"></span><span id="rg-filter-max"></span></div>
+            <script>
+              const rf = document.getElementById('rg-filter');
+              const paint = () => { document.getElementById('rg-filter-min').textContent = Orion.format.currency(rf.valueStart, 'USD'); document.getElementById('rg-filter-max').textContent = Orion.format.currency(rf.valueEnd, 'USD'); };
+              rf.addEventListener('o-change', paint); paint();
+            </script>
+          </div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>Props / attributes</h2>
+    <table class="docs-api">
+      <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>value</td><td>Number</td><td>Single-thumb mode.</td></tr>
+        <tr><td>value-start, value-end</td><td>Number</td><td>Dual mode (requires <code>dual</code>).</td></tr>
+        <tr><td>dual</td><td>Boolean</td><td>Enables the two-thumb range mode.</td></tr>
+        <tr><td>min, max, step</td><td>Number</td><td>Defaults 0 / 100 / 1.</td></tr>
+        <tr><td>min-distance</td><td>Number</td><td>Minimum gap between thumbs in dual mode.</td></tr>
+        <tr><td>marks</td><td>Array | Object</td><td>See "Marks &amp; ticks" above.</td></tr>
+        <tr><td>ticks</td><td>Boolean</td><td>Auto tick marks at every step (capped at 200).</td></tr>
+        <tr><td>format</td><td>Function | String</td><td><code>(value, el) =&gt; string</code>, or <code>"currency:CODE"</code> / <code>"percent"</code> / <code>"number:digits"</code>.</td></tr>
+        <tr><td>orientation</td><td>String</td><td><code>horizontal</code> (default) | <code>vertical</code>.</td></tr>
+        <tr><td>tooltip</td><td>String</td><td><code>auto</code> (default, on hover/focus/drag) | <code>always</code> | <code>never</code>.</td></tr>
+        <tr><td>inputs</td><td>Array</td><td>1 (single) or 2 (dual) CSS selectors or elements to two-way sync.</td></tr>
+        <tr><td>name-end</td><td>String</td><td>Form field name for the end value in dual mode (default <code>name + "End"</code>).</td></tr>
+        <tr><td>size, name, required, disabled, readonly, texts</td><td>—</td><td>Standard.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods &amp; events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.setValue(v)</td><td>Single mode: a number. Dual mode: <code>[start, end]</code>.</td></tr>
+        <tr><td>.setRange(start, end)</td><td>Dual mode convenience — sets both thumbs and fires one <code>change</code>.</td></tr>
+        <tr><td>input, change, o-change</td><td><code>{ value, valueStart, valueEnd }</code> — <code>value</code> is a number (single) or <code>[start,end]</code> (dual).</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS variables</h3>
+    <table class="docs-api">
+      <thead><tr><th>Variable</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>--o-rs-track</td><td>Track thickness.</td></tr>
+        <tr><td>--o-rs-thumb</td><td>Thumb diameter.</td></tr>
+        <tr><td>--o-c</td><td>Accent color (wrap in <code>.o-c-{color}</code> or set directly).</td></tr>
+      </tbody>
+    </table>
+    <h3>Keyboard</h3>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>→ / ↑</td><td>+step (← / → follow RTL).</td></tr>
+        <tr><td>← / ↓</td><td>-step.</td></tr>
+        <tr><td>Page Up / Down</td><td>±10 steps.</td></tr>
+        <tr><td>Home / End</td><td>Jump to min / max.</td></tr>
+      </tbody>
+    </table>
+    <p class="o-callout">Dragging works with mouse, pen and touch (Pointer Events). Clicking anywhere on the track jumps
+      the nearest thumb there and starts a drag from that position.</p>
+  </section>
+</main>
+</body>
+</html>

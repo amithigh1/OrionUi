@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Delivery checkout example — Orion Admin</title>
+<script src="../../dist/orion.js"></script>
+<style>
+  body { max-width: 44rem; margin: 0 auto; padding: 1.5rem; }
+  .checkout-head { margin-bottom: 1.25rem; }
+  .checkout-summary { display: flex; justify-content: space-between; color: var(--o-text-muted); font-size: var(--o-fs-sm); }
+  .store-item {
+    display: flex; justify-content: space-between; gap: .75rem; width: 100%; text-align: start; padding: .625rem .75rem;
+    border: 1px solid var(--o-border); border-radius: var(--o-radius); background: var(--o-surface); color: var(--o-text); cursor: pointer; font: inherit;
+  }
+  .store-item + .store-item { margin-top: .5rem; }
+  .store-item:hover, .store-item.is-active { border-color: var(--o-primary); background: var(--o-primary-subtle); }
+  .store-item small { display: block; color: var(--o-text-muted); }
+  .store-dist { flex-shrink: 0; font-variant-numeric: tabular-nums; color: var(--o-text-muted); font-size: var(--o-fs-sm); }
+  .checkout-actions { display: flex; justify-content: flex-end; gap: .75rem; margin-top: 1.5rem; }
+</style>
+</head>
+<body>
+  <div class="checkout-head">
+    <h1 class="o-mb-1">Delivery details</h1>
+    <p class="o-text-muted o-mb-0">Step 2 of 3 — choose delivery or pickup</p>
+  </div>
+
+  <div class="o-segmented" role="radiogroup" aria-label="Fulfilment method" style="margin-bottom:1.25rem">
+    <label><input type="radio" name="fulfil" value="delivery" checked><span>Deliver to an address</span></label>
+    <label><input type="radio" name="fulfil" value="pickup"><span>Pick up in store</span></label>
+  </div>
+
+  <form id="checkout-form" class="o-stack" style="--o-gap:1.25rem">
+    <section id="panel-delivery">
+      <div class="o-field o-mb-3">
+        <label class="o-label" for="ship-address">Search your address</label>
+        <o-address-input id="ship-address" name="billing" placeholder="Start typing your address" fill='{"street":"#ship-street","city":"#ship-city","postcode":"#ship-postcode"}'></o-address-input>
+      </div>
+      <div class="o-form-grid o-mb-3">
+        <div class="o-field"><label class="o-label" for="ship-street">Street</label><input class="o-input" id="ship-street" readonly></div>
+        <div class="o-field"><label class="o-label" for="ship-city">City</label><input class="o-input" id="ship-city" readonly></div>
+        <div class="o-field"><label class="o-label" for="ship-postcode">Postcode</label><input class="o-input" id="ship-postcode" readonly></div>
+      </div>
+      <div class="o-field">
+        <label class="o-label">Confirm the exact drop-off pin</label>
+        <o-location-picker id="ship-pin" name="dropoff" required mode="marker" lat="3.1390" lng="101.6869" zoom="14"></o-location-picker>
+        <p class="o-help">Drag the pin if the searched address doesn't land exactly on your building.</p>
+      </div>
+    </section>
+
+    <section id="panel-pickup" hidden>
+      <div class="o-d-flex o-gap-3 o-flex-wrap" style="align-items:flex-start">
+        <div id="store-list" style="flex:0 0 14rem;min-width:12rem" role="list" aria-label="Nearby stores"></div>
+        <o-map id="store-map" tiles="offline" controls="zoom" cluster-radius="50" lat="3.14" lng="101.7" zoom="10" style="flex:1 1 20rem;height:20rem"></o-map>
+      </div>
+      <p class="o-mt-2 o-mb-0" id="pickup-selected"></p>
+    </section>
+
+    <div class="checkout-summary">
+      <span id="fulfil-summary">Delivering to your searched address.</span>
+    </div>
+
+    <div class="checkout-actions">
+      <button class="o-btn o-btn-ghost" type="button">Back</button>
+      <button class="o-btn o-btn-primary" type="submit">Continue to payment</button>
+    </div>
+  </form>
+  <div class="docs-log" id="log" style="margin-top:1.5rem;padding:.75rem 1rem;background:var(--o-surface-2);border:1px dashed var(--o-border-strong);border-radius:var(--o-radius);font:.8125rem/1.6 var(--o-font-mono);color:var(--o-text-muted);white-space:pre-wrap"></div>
+
+  <script>
+    const form = document.getElementById('checkout-form');
+    const panelDelivery = document.getElementById('panel-delivery');
+    const panelPickup = document.getElementById('panel-pickup');
+    const summary = document.getElementById('fulfil-summary');
+    const log = document.getElementById('log');
+    const shipPin = document.getElementById('ship-pin');
+    const storeMap = document.getElementById('store-map');
+    const storeList = document.getElementById('store-list');
+    const pickupSelected = document.getElementById('pickup-selected');
+    let mode = 'delivery', selectedStoreId = null, stores = [];
+
+    document.getElementsByName('fulfil').forEach(r => r.addEventListener('change', () => {
+      mode = r.checked ? r.value : mode;
+      if (r.checked) {
+        panelDelivery.hidden = mode !== 'delivery';
+        panelPickup.hidden = mode !== 'pickup';
+        shipPin.required = mode === 'delivery';
+        summary.textContent = mode === 'delivery' ? 'Delivering to your searched address.' : 'Picking up in store — no delivery fee.';
+      }
+    }));
+
+    // Store list + map, fed by the same fixture used in the Map docs page.
+    fetch('../fixtures/maps/stores.json').then(r => r.json()).then(data => {
+      stores = data;
+      storeMap.markers = stores.map(s => ({ id: s.id, lat: s.lat, lng: s.lng, title: s.name, popup: `<strong>${s.name}</strong><br>${s.address}` }));
+      storeList.innerHTML = stores.map(s => `<button type="button" class="store-item" data-id="${s.id}" role="listitem"><span>${s.name}<small>${s.address}</small></span><span class="store-dist"></span></button>`).join('');
+    });
+    storeList.addEventListener('click', e => {
+      const btn = e.target.closest('.store-item'); if (!btn) return;
+      selectStore(btn.dataset.id);
+      storeMap.flyTo(stores.find(s => s.id === btn.dataset.id).lat, stores.find(s => s.id === btn.dataset.id).lng, 14);
+    });
+    storeMap.addEventListener('o-marker-click', e => selectStore(e.detail.marker.id));
+    function selectStore(id) {
+      selectedStoreId = id;
+      storeList.querySelectorAll('.is-active').forEach(x => x.classList.remove('is-active'));
+      storeList.querySelector(`[data-id="${id}"]`)?.classList.add('is-active');
+      const s = stores.find(x => x.id === id);
+      pickupSelected.textContent = s ? `Selected: ${s.name} — ${s.address}` : '';
+    }
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      if (mode === 'delivery' && !shipPin.reportValidity()) { log.textContent = 'Blocked: confirm a drop-off pin first.'; return; }
+      if (mode === 'pickup' && !selectedStoreId) { log.textContent = 'Blocked: choose a pickup store first.'; return; }
+      const fd = new FormData(form);
+      const payload = mode === 'delivery'
+        ? { mode, ...Object.fromEntries(fd) }
+        : { mode, storeId: selectedStoreId, store: stores.find(s => s.id === selectedStoreId)?.name };
+      log.textContent = 'Submitted: ' + JSON.stringify(payload, null, 2);
+    });
+  </script>
+</body>
+</html>

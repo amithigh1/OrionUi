@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="700" viewBox="0 0 400 700">
+  <rect width="400" height="700" fill="#fbfaf6"/>
+  <rect x="0" y="0" width="400" height="700" fill="none" stroke="#d0d5dd" stroke-width="2"/>
+  <text x="200" y="56" font-family="'Courier New', monospace" font-size="26" font-weight="700" fill="#111827" text-anchor="middle">CORNER MARKET</text>
+  <text x="200" y="86" font-family="'Courier New', monospace" font-size="15" fill="#374151" text-anchor="middle">123 Main St</text>
+  <line x1="30" y1="120" x2="370" y2="120" stroke="#9ca3af" stroke-dasharray="4 4"/>
+  <text x="30" y="176" font-family="'Courier New', monospace" font-size="16" fill="#374151">Milk</text>
+  <text x="330" y="176" font-family="'Courier New', monospace" font-size="16" fill="#374151" text-anchor="end">3.49</text>
+  <text x="30" y="206" font-family="'Courier New', monospace" font-size="16" fill="#374151">Bread</text>
+  <text x="330" y="206" font-family="'Courier New', monospace" font-size="16" fill="#374151" text-anchor="end">2.99</text>
+  <text x="30" y="236" font-family="'Courier New', monospace" font-size="16" fill="#374151">Eggs</text>
+  <text x="330" y="236" font-family="'Courier New', monospace" font-size="16" fill="#374151" text-anchor="end">4.20</text>
+  <line x1="30" y1="520" x2="370" y2="520" stroke="#9ca3af" stroke-dasharray="4 4"/>
+  <text x="30" y="580" font-family="'Courier New', monospace" font-size="20" font-weight="700" fill="#111827">Total</text>
+  <text x="330" y="580" font-family="'Courier New', monospace" font-size="20" font-weight="700" fill="#111827" text-anchor="end">11.53</text>
+  <text x="200" y="640" font-family="'Courier New', monospace" font-size="15" fill="#6b7280" text-anchor="middle">Thank you!</text>
+</svg>

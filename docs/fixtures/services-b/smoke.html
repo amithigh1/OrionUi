@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>services-b smoke fixture</title>
+<script src="../../../dist/orion.js"></script>
+</head>
+<body class="o-container o-py-4">
+  <h1 class="o-h3">services-b smoke fixture</h1>
+  <p data-o-show="desktop">desktop only</p>
+  <p data-o-show="mobile">mobile only</p>
+  <o-network-status variant="badge"></o-network-status>
+  <o-network-status variant="full"></o-network-status>
+  <button class="o-btn" id="save" data-o-shortcut="mod+s">Save</button>
+  <button class="o-btn" data-o-permission="users.edit" data-o-denied="disable" id="edit">Edit user</button>
+  <button class="o-btn" data-o-role="admin" id="admin">Admin only</button>
+  <div data-o-permission="salary.view" data-o-denied="blur" id="salary">$120,000</div>
+  <div id="remwrap"><span data-o-permission="x.y" data-o-denied="remove" id="rem">removed</span></div>
+  <o-can permission="billing.view" id="can">Billing<template slot="denied"><em>No billing</em></template></o-can>
+  <o-copy value="hello" variant="input" id="copy"></o-copy>
+  <o-share id="share" url="https://example.com" title="Example" networks="x,linkedin,email,copy" variant="icons"></o-share>
+  <o-share id="share2" url="https://example.com" title="Example" native="never"></o-share>
+  <o-favorite-button id="fav" item='{"id":"r1","title":"Report 1"}' label></o-favorite-button>
+  <o-recent-list id="recent" limit="3"></o-recent-list>
+  <o-favorites-list id="favs"></o-favorites-list>
+  <o-saved-views id="views" scope="smoke"></o-saved-views>
+  <form id="form"><label for="nm">Name</label><input id="nm" class="o-input" value="Ada"><input type="checkbox" id="cb"></form>
+  <o-undo-controls for="form" id="uc"></o-undo-controls>
+  <div id="panel" class="o-card o-p-3">Panel <button class="o-btn o-btn-icon" data-o-action="fullscreen" data-o-target="#panel" aria-label="Fullscreen"><o-icon name="maximize"></o-icon></button></div>
+  <div id="printme"><h2>Invoice</h2><canvas id="cv" width="40" height="20"></canvas></div>
+  <input id="q" data-o-url="q">
+</body>
+</html>

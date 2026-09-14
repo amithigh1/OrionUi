@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Booking — Orion Admin</title>
+<meta name="docs:section" content="Scheduling">
+<meta name="docs:order" content="30">
+<meta name="docs:desc" content="Appointment booking wizard: service, date, time, details and confirmation">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Booking</h1>
+    <p class="docs-lead"><code>&lt;o-booking&gt;</code> is a self-contained appointment booking wizard: pick a
+      service, an available day on an inline calendar, a time slot (grouped morning / afternoon / evening), fill in
+      contact details, and confirm. Availability comes from simple <code>working-hours</code> config or an async
+      <code>availability(date, service)</code> hook for real backends.</p>
+  </header>
+
+  <section id="clinic">
+    <h2>Clinic booking</h2>
+    <p>Three services with different durations. Availability is computed locally from <code>working-hours</code>,
+      existing <code>booked</code> ranges and a 2-hour minimum notice — try tomorrow vs. later this week. Submitting
+      calls <code>onBook</code>, an async hook that can reject to show an error (try the email
+      <code>busy@example.com</code>, which the demo hook always declines).</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-booking id="bk-clinic" location="Lincoln Health Clinic, Suite 4" organizer="Lincoln Health Clinic" label="Book an appointment"></o-booking>
+        <div class="docs-log" id="bk-clinic-log"></div>
+        <script>
+          (() => {
+            const D = Orion.date, bk = document.getElementById('bk-clinic');
+            const iso = n => D.toISODate(D.add(D.today(), n));
+            bk.services = [
+              { id: 'checkup', title: 'General check-up', duration: 30 },
+              { id: 'dental', title: 'Dental cleaning', duration: 45 },
+              { id: 'physio', title: 'Physiotherapy session', duration: 60 },
+            ];
+            bk.workingHours = { days: [1, 2, 3, 4, 5], start: '09:00', end: '17:00' };
+            bk.minNotice = 120;
+            bk.maxDaysAhead = 30;
+            bk.booked = [
+              { start: iso(1) + 'T09:00', end: iso(1) + 'T10:00' },
+              { start: iso(1) + 'T13:00', end: iso(1) + 'T15:00' },
+              { start: iso(2) + 'T11:00', end: iso(2) + 'T12:00' },
+            ];
+            bk.onBook = async (payload) => {
+              await new Promise(r => setTimeout(r, 500));
+              if (payload.details.email === 'busy@example.com') throw new Error('That email already has a booking this week.');
+            };
+            const log = m => docs.log('#bk-clinic-log', m);
+            bk.addEventListener('o-date-select', e => log('o-date-select ' + Orion.format.date(e.detail.date)));
+            bk.addEventListener('o-slot-select', e => log('o-slot-select ' + Orion.format.time(e.detail.start)));
+            bk.addEventListener('o-book', e => log('o-book ' + e.detail.service.title + ' for ' + e.detail.details.name));
+            bk.addEventListener('o-booked', e => log('o-booked ✓ ' + e.detail.booking.service.title));
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="async">
+    <h2>Async availability from a server</h2>
+    <p>Set <code>availability</code> to an async function receiving <code>(date, service)</code> and returning
+      slots as <code>{start,end}</code> Date/ISO pairs, or plain <code>"HH:mm"</code> strings combined with the
+      service's duration. Weekends return no slots here, simulating a real API round-trip.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-booking id="bk-async" label="Book a demo call"></o-booking>
+        <script>
+          (() => {
+            const bk = document.getElementById('bk-async');
+            bk.services = [{ id: 'demo', title: 'Product demo call', duration: 30 }];
+            bk.minNotice = 60;
+            bk.availability = async (day) => {
+              await new Promise(r => setTimeout(r, 450));
+              if (day.getDay() === 0 || day.getDay() === 6) return [];
+              return ['10:00', '10:30', '11:00', '14:00', '14:30', '15:30', '16:00'];
+            };
+            bk.onBook = async () => { await new Promise(r => setTimeout(r, 400)); };
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="factory">
+    <h2>Programmatic factory — <code>Orion.booking()</code></h2>
+    <p><code>Orion.booking(target, config)</code> creates (or configures an existing) <code>&lt;o-booking&gt;</code>
+      inside <code>target</code> and assigns every key of <code>config</code> as a property in one call — handy when
+      the whole setup comes from a single object (e.g. loaded from an API) instead of assigning properties one at a
+      time.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div id="bk-factory-host"></div>
+        <script>
+          (() => {
+            const bk = Orion.booking('#bk-factory-host', {
+              label: 'Book a consultation',
+              services: [{ id: 'consult', title: '30-min consultation', duration: 30 }],
+              workingHours: { days: [1, 2, 3, 4, 5], start: '10:00', end: '16:00' },
+              minNotice: 60,
+              onBook: async () => { await new Promise(r => setTimeout(r, 300)); },
+            });
+            bk.addEventListener('o-booked', () => docs.log('#bk-factory-log', 'o-booked via Orion.booking() instance'));
+          })();
+        </script>
+        <div class="docs-log" id="bk-factory-log"></div>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+      const bk = Orion.booking('#host', { services: [...], workingHours: {...}, onBook: async (payload) => save(payload) });
+      // Equivalent to: const bk = document.createElement('o-booking'); Object.assign(bk, config); host.append(bk);
+    </pre>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Prop / attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>services</code></td><td>array</td><td><code>{ id, title, duration }[]</code>. Zero or one service hides the selector; several render as cards.</td></tr>
+        <tr><td><code>working-hours</code></td><td>object | array</td><td><code>{ days:[1..5], start:"09:00", end:"17:00" }</code>, or an array of such ranges. Ignored when <code>availability</code> is set.</td></tr>
+        <tr><td><code>slot-minutes</code></td><td>number</td><td>Grid step (and default duration when a service doesn't specify one). Default 30.</td></tr>
+        <tr><td><code>buffer-minutes</code></td><td>number</td><td>Gap kept before/after each <code>booked</code> range.</td></tr>
+        <tr><td><code>booked</code></td><td>array</td><td><code>{ start, end }[]</code> existing bookings to exclude (local computation only).</td></tr>
+        <tr><td><code>min-notice</code></td><td>number</td><td>Minutes from now before the earliest offered slot. Default 60.</td></tr>
+        <tr><td><code>max-days-ahead</code></td><td>number</td><td>How far into the future the calendar allows picking. Default 60.</td></tr>
+        <tr><td><code>availability</code></td><td>function</td><td>Async <code>(date, service) =&gt; slots</code>; property only. Overrides local computation.</td></tr>
+        <tr><td><code>timezone</code></td><td>string</td><td>Label shown to the visitor; defaults to the browser's timezone.</td></tr>
+        <tr><td><code>fields</code></td><td>array</td><td>Contact fields to collect, default <code>["name","email","phone","notes"]</code> (name and email are required).</td></tr>
+        <tr><td><code>location</code> / <code>organizer</code></td><td>string</td><td>Included in the confirmation card and the generated <code>.ics</code> file.</td></tr>
+        <tr><td><code>on-book</code></td><td>function</td><td>Async hook called with <code>{ service, start, end, details }</code>; throw/reject to show an inline error and stay on the form. Property only.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>detail</th></tr></thead>
+      <tbody>
+        <tr><td><code>o-date-select</code></td><td><code>{ date }</code></td></tr>
+        <tr><td><code>o-slot-select</code></td><td><code>{ start, end }</code></td></tr>
+        <tr><td><code>o-book</code></td><td><code>{ service, start, end, details }</code> — cancelable; fires before <code>onBook</code> runs.</td></tr>
+        <tr><td><code>o-booked</code></td><td><code>{ booking }</code> — fires once <code>onBook</code> resolves.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>reset()</code></td><td>Returns to the first step and clears the selection.</td></tr>
+        <tr><td><code>gotoStep(step)</code></td><td><code>"pick" | "details" | "done"</code>.</td></tr>
+        <tr><td><code>getBooking()</code></td><td>The confirmed booking, or <code>null</code>.</td></tr>
+        <tr><td><code>downloadICS()</code></td><td>Downloads the confirmed booking as a <code>.ics</code> file (also wired to the "Add to calendar" button).</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

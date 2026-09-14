@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Overview — Orion Admin</title>
+<meta name="docs:section" content="Getting Started">
+<meta name="docs:order" content="0">
+<meta name="docs:title" content="Overview">
+<meta name="docs:desc" content="What Orion Admin is and how it is organised">
+<script src="../dist/orion.js"></script>
+<link rel="stylesheet" href="assets/docs.css">
+<script src="assets/nav.js" defer></script>
+<script src="assets/docs.js" defer></script>
+<style>
+  .home-hero { position: relative; overflow: hidden; padding: 3rem 2rem; margin-bottom: 2.5rem; border-radius: var(--o-radius-xl); color: #fff;
+    background: radial-gradient(1200px 400px at 110% -10%, color-mix(in srgb, var(--o-info) 70%, transparent), transparent 60%),
+                linear-gradient(135deg, var(--o-primary), color-mix(in srgb, var(--o-primary) 55%, #0b1020)); box-shadow: var(--o-shadow-lg); }
+  .home-hero h1 { color: #fff; font-size: clamp(2rem, 4vw, 3rem); letter-spacing: -.03em; margin-bottom: .75rem; }
+  .home-hero p { color: rgba(255,255,255,.86); font-size: 1.125rem; max-width: 42rem; }
+  .home-hero .o-btn-white { --o-btn-fg: var(--o-primary); }
+  .home-hero code { background: rgba(255,255,255,.14) !important; color: #fff !important; }
+  .home-stats { display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 2rem; }
+  .home-stats b { display: block; font-size: 1.75rem; line-height: 1; }
+  .home-stats span { font-size: .8125rem; color: rgba(255,255,255,.75); }
+  .home-feature { display: flex; gap: .875rem; align-items: flex-start; }
+  .home-feature .o-stat-icon { width: 2.5rem; height: 2.5rem; }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <div class="home-hero">
+    <span class="o-badge o-badge-lg" style="background:rgba(255,255,255,.16);color:#fff">Open source · MIT · Zero dependencies</span>
+    <h1 class="o-mt-4">One file. Every admin component you need.</h1>
+    <p>Orion Admin is a complete admin UI toolkit that ships as a <b>single JavaScript file</b>. It covers layout, forms, data tables,
+      charts, calendars, editors, uploads, maps and more. Drop in one <code>&lt;script&gt;</code> tag and use it from plain HTML, React, Vue or Angular.</p>
+    <div class="o-cluster o-mt-6">
+      <a class="o-btn o-btn-white o-btn-lg" href="getting-started.html">Get started</a>
+      <a class="o-btn o-btn-lg" style="--o-btn-bg:rgba(255,255,255,.12);--o-btn-fg:#fff;--o-btn-border:rgba(255,255,255,.3);--o-btn-hover-bg:rgba(255,255,255,.2)" href="../templates/index.html">Browse templates</a>
+    </div>
+    <div class="home-stats">
+      <div><b>1</b><span>file to include</span></div>
+      <div><b>0</b><span>runtime dependencies</span></div>
+      <div><b>300+</b><span>components &amp; utilities</span></div>
+      <div><b>4</b><span>frameworks supported</span></div>
+    </div>
+  </div>
+
+  <section id="quick-start">
+    <h2>Quick start</h2>
+    <p>Add the script and start writing markup. The CSS is embedded in the file and injected automatically.</p>
+    <pre class="docs-code-block" data-lang="html">
+      &lt;!doctype html&gt;
+      &lt;html lang="en"&gt;
+      &lt;head&gt;
+        &lt;script src="https://cdn.jsdelivr.net/npm/orion-admin/dist/orion.min.js"&gt;&lt;/script&gt;
+      &lt;/head&gt;
+      &lt;body class="o-container o-py-6"&gt;
+        &lt;button class="o-btn o-btn-primary" onclick="Orion.toast.success('Hello from Orion!')"&gt;Say hello&lt;/button&gt;
+        &lt;o-datatable id="users"&gt;&lt;/o-datatable&gt;
+      &lt;/body&gt;
+      &lt;/html&gt;
+    </pre>
+  </section>
+
+  <section id="why">
+    <h2>Why Orion Admin</h2>
+    <div class="docs-grid">
+      <div class="o-card o-card-body home-feature"><span class="o-stat-icon"><o-icon name="file"></o-icon></span><div><b>Truly single-file</b><div class="o-text-muted o-text-sm">JS, CSS and icons in one file, via CDN, npm or download. Custom builds keep only what you use.</div></div></div>
+      <div class="o-card o-card-body home-feature"><span class="o-stat-icon o-c-success"><o-icon name="check-circle"></o-icon></span><div><b>Framework-agnostic</b><div class="o-text-muted o-text-sm">Native Custom Elements and attribute behaviors work in HTML, React, Vue, Angular and Svelte.</div></div></div>
+      <div class="o-card o-card-body home-feature"><span class="o-stat-icon o-c-info"><o-icon name="moon"></o-icon></span><div><b>Themes built in</b><div class="o-text-muted o-text-sm">Light, dark and auto modes, high contrast, font scaling, runtime brand colors, multi-tenant and white-label.</div></div></div>
+      <div class="o-card o-card-body home-feature"><span class="o-stat-icon o-c-warning"><o-icon name="user"></o-icon></span><div><b>Accessible</b><div class="o-text-muted o-text-sm">WAI-ARIA patterns, full keyboard support, focus management, screen-reader announcements and reduced motion.</div></div></div>
+      <div class="o-card o-card-body home-feature"><span class="o-stat-icon o-c-danger"><o-icon name="arrow-left"></o-icon></span><div><b>Global-ready</b><div class="o-text-muted o-text-sm">i18n with plurals, locale-aware numbers, dates and currency, and RTL support everywhere.</div></div></div>
+      <div class="o-card o-card-body home-feature"><span class="o-stat-icon o-c-secondary"><o-icon name="lock"></o-icon></span><div><b>Yours to own</b><div class="o-text-muted o-text-sm">MIT licensed, readable source, no build step required, no vendor lock-in.</div></div></div>
+    </div>
+  </section>
+
+  <section id="components">
+    <h2>Everything included</h2>
+    <p>Browse by category. Each page has live demos, copyable code and a full API reference.</p>
+    <div id="home-sections" class="docs-grid"></div>
+    <template id="home-sections-tpl"></template>
+  </section>
+</main>
+<script>
+  // Render the component catalogue from the generated navigation.
+  document.addEventListener('DOMContentLoaded', () => {
+    const box = document.getElementById('home-sections');
+    const nav = (window.DOCS_NAV || []).filter(s => s.section !== 'Getting Started');
+    box.innerHTML = nav.map(s => `<div class="o-card"><div class="o-card-header"><h3 class="o-card-title">${s.section}</h3><span class="o-badge">${s.pages.length}</span></div>
+      <div class="o-card-body o-py-2">${s.pages.map(p => `<a class="docs-nav-link" style="padding-inline:0" href="${p.href}" title="${(p.desc || '').replace(/"/g, '&quot;')}">${p.title}</a>`).join('')}</div></div>`).join('');
+  });
+</script>
+</body>
+</html>

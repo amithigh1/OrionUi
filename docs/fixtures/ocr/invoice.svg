@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <rect width="800" height="600" fill="#ffffff"/>
+  <rect x="0" y="0" width="800" height="600" fill="none" stroke="#d0d5dd" stroke-width="2"/>
+  <text x="40" y="60" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#111827">INVOICE #1042</text>
+  <text x="40" y="106" font-family="Arial, sans-serif" font-size="18" fill="#374151">Bill To: Aisha Rahman</text>
+  <text x="40" y="134" font-family="Arial, sans-serif" font-size="18" fill="#374151">Date: 2026-03-14</text>
+  <line x1="40" y1="160" x2="760" y2="160" stroke="#d0d5dd" stroke-width="2"/>
+  <text x="40" y="196" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#111827">Item</text>
+  <text x="360" y="196" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#111827">Qty</text>
+  <text x="480" y="196" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#111827">Price</text>
+  <text x="40" y="236" font-family="Arial, sans-serif" font-size="16" fill="#374151">Wireless Mouse</text>
+  <text x="360" y="236" font-family="Arial, sans-serif" font-size="16" fill="#374151">2</text>
+  <text x="480" y="236" font-family="Arial, sans-serif" font-size="16" fill="#374151">$24.00</text>
+  <text x="40" y="270" font-family="Arial, sans-serif" font-size="16" fill="#374151">USB-C Cable</text>
+  <text x="360" y="270" font-family="Arial, sans-serif" font-size="16" fill="#374151">3</text>
+  <text x="480" y="270" font-family="Arial, sans-serif" font-size="16" fill="#374151">$9.00</text>
+  <line x1="40" y1="480" x2="760" y2="480" stroke="#d0d5dd" stroke-width="2"/>
+  <text x="40" y="522" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#111827">Total: $75.00</text>
+  <text x="40" y="560" font-family="Arial, sans-serif" font-size="15" fill="#6b7280">Thank you for your business!</text>
+</svg>

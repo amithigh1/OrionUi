@@ -1,0 +1,706 @@
+[
+  {
+    "page": "templates/products.html",
+    "eval": "products.js",
+    "about": "facets, chips, search, grid/table view, product editor validation"
+  },
+  {
+    "page": "templates/profile.html",
+    "eval": "profile.js",
+    "about": "tabs, dirty tracking, validation, sessions, recovery codes, timeline, login table"
+  },
+  {
+    "page": "templates/files.html",
+    "eval": "files.js",
+    "about": "folder navigation, breadcrumb, selection, context menu, lightbox, list view, search, tree"
+  },
+  {
+    "page": "templates/chat.html",
+    "eval": "chat.js",
+    "about": "conversations, send/reply, reactions, @mentions, emoji picker, menu, filter"
+  },
+  {
+    "page": "templates/users.html",
+    "eval": "users.js",
+    "about": "CRUD modal keeps open on invalid submit, closes on cancel"
+  },
+  {
+    "page": "examples/vanilla/index.html",
+    "eval": "vanilla.js",
+    "about": "datatable badges, modal validation"
+  },
+  {
+    "page": "docs/components/preferences.html",
+    "eval": "core-motion.js",
+    "about": "reducedMotion() honours html.o-motion-reduce"
+  },
+  {
+    "page": "docs/components/email-preview.html",
+    "eval": "verify-emailpreview.js",
+    "about": "sanitised email HTML, image blocking, views, dark simulation"
+  },
+  {
+    "page": "docs/components/command-palette.html",
+    "eval": "verify-commandpalette.js",
+    "about": "Ctrl+K, fuzzy, keyboard run, recent, nested groups, live register"
+  },
+  {
+    "page": "docs/components/global-search.html",
+    "eval": "verify-globalsearch.js",
+    "about": "static + fixture async providers, highlight, keyboard, history, scope isolation"
+  },
+  {
+    "page": "docs/components/diagram.html",
+    "eval": "diagram-core.js",
+    "about": "palette add, port-drag connect, move/snap, multi-select, undo/redo, zoom/fit, JSON+SVG export, keyboard"
+  },
+  {
+    "page": "docs/components/workflow.html",
+    "eval": "diagram-workflow.js",
+    "about": "workflow validation rules, properties panel round-trip"
+  },
+  {
+    "page": "docs/components/orgchart.html",
+    "eval": "diagram-orgchart.js",
+    "about": "4-level tree, collapse/expand counts, layout switch, search, keyboard, export"
+  },
+  {
+    "page": "docs/components/graph.html",
+    "eval": "diagram-graph.js",
+    "about": "force layout settles, drag pins, neighbour highlight, edge labels, zoom/pan"
+  },
+  {
+    "page": "docs/components/gantt.html",
+    "eval": "gantt-bars-scale.js",
+    "about": "bar pixel positions vs the header scale (±1px)"
+  },
+  {
+    "page": "docs/components/gantt.html",
+    "eval": "gantt-dependencies.js",
+    "about": "dependency arrows redraw + auto-schedule push on keyboard move"
+  },
+  {
+    "page": "docs/components/gantt.html",
+    "eval": "gantt-drag.js",
+    "about": "pointer drag move/resize → new start/end + o-task-change"
+  },
+  {
+    "page": "docs/components/gantt.html",
+    "eval": "gantt-zoom-today.js",
+    "about": "day/week/month/quarter column counts, today marker"
+  },
+  {
+    "page": "docs/components/gantt.html",
+    "eval": "gantt-collapse-keyboard.js",
+    "about": "group collapse/expand, ArrowDown/Home/End, o-select"
+  },
+  {
+    "page": "docs/components/gantt.html",
+    "eval": "gantt-rtl.js",
+    "flags": [
+      "--rtl"
+    ],
+    "about": "RTL bar mirroring and SVG flip"
+  },
+  {
+    "page": "docs/components/gantt.html",
+    "eval": "gantt-export.js",
+    "about": "PNG/JSON/PDF export events"
+  },
+  {
+    "page": "docs/components/timeline-view.html",
+    "eval": "gantt-timelineview.js",
+    "about": "lane placement (regression), nesting/collapse, zoom width, keyboard select"
+  },
+  {
+    "page": "docs/components/dashboard.html",
+    "eval": "dashboard-add-remove-widget.js",
+    "about": "catalog add/remove with confirm"
+  },
+  {
+    "page": "docs/components/dashboard.html",
+    "eval": "dashboard-breakpoint-mobile.js",
+    "flags": [
+      "--mobile"
+    ],
+    "about": "breakpoint reflow on phone width + live re-reflow"
+  },
+  {
+    "page": "docs/components/dashboard.html",
+    "eval": "dashboard-drag-resize.js",
+    "about": "pointer drag-to-reorder and resize, gridLayout.valid"
+  },
+  {
+    "page": "docs/components/dashboard.html",
+    "eval": "dashboard-persist.js",
+    "about": "localStorage persist round-trip incl. fresh-instance restore"
+  },
+  {
+    "page": "docs/components/dashboard.html",
+    "eval": "dashboard-widget-chrome.js",
+    "about": "widget collapse/expand/refresh/remove/fullscreen + toolbar actions"
+  },
+  {
+    "page": "docs/components/stat.html",
+    "eval": "dashboard-countup.js",
+    "about": "countup reaches target, honours html.o-motion-reduce"
+  },
+  {
+    "page": "docs/components/stat.html",
+    "eval": "dashboard-stat-format.js",
+    "about": "stat currency/percent/compact/bytes/duration + delta colouring"
+  },
+  {
+    "page": "docs/components/infinite-scroll.html",
+    "eval": "dashboard-infinite-chat-up.js",
+    "about": "direction up chat mode keeps scroll on prepend"
+  },
+  {
+    "page": "docs/components/infinite-scroll.html",
+    "eval": "dashboard-infinite-declarative.js",
+    "about": "data-o-infinite loads next page on sentinel, stops at end"
+  },
+  {
+    "page": "docs/components/virtual-list.html",
+    "eval": "dashboard-virtuallist-prepend-anchor.js",
+    "about": "prependItems keeps the top visible item"
+  },
+  {
+    "page": "docs/components/virtual-list.html",
+    "eval": "dashboard-virtuallist-window.js",
+    "about": "100k rows render a window, scrollToIndex"
+  },
+  {
+    "page": "docs/examples/analytics-workspace.html",
+    "eval": "dashboard-example-workspace.js",
+    "about": "example page wiring smoke test"
+  },
+  {
+    "page": "docs/components/http.html",
+    "eval": "http-mock-forms.js",
+    "about": "http.mock accepts object/map/tuple routes, passes unmatched URLs through, rejects garbage"
+  },
+  {
+    "page": "docs/components/maps.html",
+    "eval": "map-tiles.js",
+    "about": "tile grid renders, covers viewport, repaints on pan"
+  },
+  {
+    "page": "docs/components/maps.html",
+    "eval": "map-markers.js",
+    "about": "marker CRUD + markersList"
+  },
+  {
+    "page": "docs/components/maps.html",
+    "eval": "map-cluster.js",
+    "about": "clustering above threshold, spiderfy on click"
+  },
+  {
+    "page": "docs/components/maps.html",
+    "eval": "map-popup.js",
+    "about": "popup open/position/pan-into-view/close"
+  },
+  {
+    "page": "docs/components/maps.html",
+    "eval": "map-keyboard.js",
+    "about": "keyboard pan/zoom/Home"
+  },
+  {
+    "page": "docs/components/maps.html",
+    "eval": "map-wheel-pinch.js",
+    "about": "wheel zoom and two-pointer pinch commit"
+  },
+  {
+    "page": "docs/components/maps.html",
+    "eval": "map-flyto-fitbounds.js",
+    "about": "flyTo animates and commits, fitBounds frames points"
+  },
+  {
+    "page": "docs/components/maps.html",
+    "eval": "map-marker-list.js",
+    "about": "accessible marker list toggle/pick/back"
+  },
+  {
+    "page": "docs/components/maps.html",
+    "eval": "map-vectors.js",
+    "about": "vector layers re-project after pan"
+  },
+  {
+    "page": "docs/components/maps.html",
+    "eval": "map-geolocate.js",
+    "about": "geolocate with mocked navigator.geolocation"
+  },
+  {
+    "page": "docs/components/address-autocomplete.html",
+    "eval": "map-geocode-address-input.js",
+    "about": "address input suggest → keyboard select → structured value"
+  },
+  {
+    "page": "docs/components/location-picker.html",
+    "eval": "map-location-picker.js",
+    "about": "drag pin → value, reverse geocode label, required validation"
+  },
+  {
+    "page": "docs/components/validation.html",
+    "eval": "docs-gaps.js",
+    "about": "Orion.fill() sets nested/checkbox values + dispatches input/change, Orion.formFields() lists controls, round-trips through Orion.serialize()"
+  },
+  {
+    "page": "docs/components/rich-text-editor.html",
+    "eval": "docs-gaps-markdown.js",
+    "about": "standalone Orion.markdown.toHTML()/fromHTML() round-trip outside any <o-editor> instance"
+  },
+  {
+    "page": "docs/components/survey-poll.html",
+    "eval": "docs-gaps-polls.js",
+    "about": "Orion.polls() factory builds a working <o-poll>: pick an option, vote, o-vote + results view"
+  },
+  {
+    "page": "docs/components/two-factor.html",
+    "eval": "docs-gaps-twofa.js",
+    "about": "Orion.twofa.generateBackupCodes() format/count/uniqueness, direct API + the live demo button"
+  },
+  {
+    "page": "docs/components/export-import.html",
+    "eval": "docs-gaps-importer.js",
+    "about": "Orion.importer.autoMap/coerce demo button + Orion.importer.validate() required/range/duplicate detection"
+  },
+  {
+    "page": "docs/components/booking.html",
+    "eval": "docs-gaps-booking.js",
+    "about": "Orion.booking() factory: pick day/slot, fill contact form, submit, o-booked + getBooking()"
+  },
+  {
+    "page": "docs/components/calendar.html",
+    "eval": "docs-gaps-calendar.js",
+    "about": "Orion.calendar() factory: seeded event chip is clickable (o-event-click), addEvent/getEventById/removeEvent"
+  },
+  {
+    "page": "docs/components/datatable.html",
+    "eval": "docs-gaps-datatable.js",
+    "about": "Orion.datatable() factory holds configured rows, o-row-click fires, setSort() API"
+  },
+  {
+    "page": "docs/components/kanban.html",
+    "eval": "docs-gaps-kanban.js",
+    "about": "Orion.kanban() replaces the host with a connected board; addCard()/moveCard() work on the returned element"
+  },
+  {
+    "page": "docs/components/tree.html",
+    "eval": "docs-gaps-tree.js",
+    "about": "Orion.tree() replaces the host with a connected tree; row click o-select, addNode() renders"
+  },
+  {
+    "page": "docs/components/user-data.html",
+    "eval": "docs-gaps-trackview.js",
+    "about": "data-o-track-view records once ≥50% visible past its delay: o-track-view event + Orion.viewed store"
+  },
+  {
+    "page": "docs/components/dynamic-forms.html",
+    "eval": "repeater-duplicate.js",
+    "about": "repeater Duplicate button works (prop no longer shadows duplicate()), attribute toggles the button"
+  },
+  {
+    "page": "docs/components/chat.html",
+    "eval": "comm-chat.js",
+    "about": "o-chat: send/receive ticks, typing indicator, unread divider, scroll-anchor on windowed history, edit-last keyboard shortcut"
+  },
+  {
+    "page": "docs/components/notifications.html",
+    "eval": "comm-notifications.js",
+    "about": "notification bell count, mark-read/all-read, day grouping, toast bridging, connect() with a mocked source, persisted read state"
+  },
+  {
+    "page": "docs/components/presence-activity.html",
+    "eval": "comm-presence.js",
+    "about": "Orion.presence set/get/subscribe, <o-presence>/<o-presence-list> live tracking, autoAway() with a mocked Orion.idle"
+  },
+  {
+    "page": "docs/components/presence-activity.html",
+    "eval": "comm-activity.js",
+    "about": "o-activity-feed renders the dashboard's exact items shape, day grouping, type filter, paged and auto-load infinite loading"
+  },
+  {
+    "page": "docs/components/faceted-filter.html",
+    "eval": "facets-standalone.js",
+    "about": "standalone counts/selection/chips/clear/range/search, keyboard-focusable native controls"
+  },
+  {
+    "page": "docs/components/faceted-filter.html",
+    "eval": "facets-datatable.js",
+    "about": "bound to <o-datatable>: facet toggle changes table total, and the table's own setFilter() syncs facets + chips back"
+  },
+  {
+    "page": "docs/components/compare.html",
+    "eval": "compare-tray.js",
+    "about": "Orion.compare add/remove/toggle/max, localStorage persistence, tray chips, reveal the compare table"
+  },
+  {
+    "page": "docs/components/compare.html",
+    "eval": "compare-table.js",
+    "about": "best-value marks, highlight/only differences toggles, column removal"
+  },
+  {
+    "page": "docs/components/ocr.html",
+    "eval": "ocr-fixture.js",
+    "about": "fixture engine round-trip, progress event order, region narrows the result, abort via signal"
+  },
+  {
+    "page": "docs/components/ocr.html",
+    "eval": "ocr-adapters.js",
+    "about": "Orion.ocr.use/register validation errors, copy/download actions"
+  },
+  {
+    "page": "docs/components/qr-code.html",
+    "eval": "codes-qr-roundtrip.js",
+    "about": "every Orion.qr payload helper + every ECC level round-trips through <o-scanner>, SVG validity, colour/logo/module-style options"
+  },
+  {
+    "page": "docs/components/barcode.html",
+    "eval": "codes-barcode.js",
+    "about": "every symbology round-trips through <o-scanner>, EAN/UPC/ITF-14 check digits computed + rejected when wrong, invalid-input errors, <o-barcode> o-error"
+  },
+  {
+    "page": "docs/components/scanner.html",
+    "eval": "codes-scanner.js",
+    "about": "states via mocked getUserMedia (unsupported/denied/scanning/result), o-scan detail, file/drop scanning, continuous vs single-shot, keyboard-reachable controls"
+  },
+  {
+    "page": "docs/components/calendar.html",
+    "eval": "legacy-calendar-dnd.js",
+    "about": "pointer drag: month-view range-select, week-view event move, week-view resize"
+  },
+  {
+    "page": "docs/components/calendar.html",
+    "eval": "legacy-calendar-recurrence-editor.js",
+    "about": "recurrence editor month-wrap regression: no stray null for a day-29/5th-occurrence edit"
+  },
+  {
+    "page": "docs/components/recurring-events.html",
+    "eval": "legacy-calendar-recurring-scope.js",
+    "about": "drag one occurrence + choose \"this event\" in the scope dialog changes only that occurrence"
+  },
+  {
+    "page": "docs/components/dock.html",
+    "eval": "legacy-dock.js",
+    "about": "o-dock API: regions, minimize/maximize/restore, float/dockBack, close/open veto, layout get/set, reset, tab click+keyboard, panels menu, compact reflow"
+  },
+  {
+    "page": "docs/components/dock.html",
+    "eval": "legacy-dock-drag.js",
+    "about": "o-dock pointer-drag tab between regions, drag-out to float, panel context menu move-to"
+  },
+  {
+    "page": "docs/components/permissions.html",
+    "eval": "legacy-permissions.js",
+    "about": "role/permission cascades (hide/disable/readonly/remove, role inheritance) + clipboard/print/fullscreen smoke test"
+  },
+  {
+    "page": "docs/components/tabs.html",
+    "eval": "legacy-panels.js",
+    "about": "o-tabs keyboard/closable/addable/lazy/hash, o-accordion single/multiple, o-faq search, o-split keyboard+drag+persist"
+  },
+  {
+    "page": "docs/components/shortcuts.html",
+    "eval": "legacy-shortcuts.js",
+    "about": "Orion.shortcuts: combo, \"g i\" sequence, scope stacking, format(), help overlay"
+  },
+  {
+    "page": "docs/components/storage.html",
+    "eval": "legacy-storage.js",
+    "about": "Orion.store ttl/onChange (local+remote), Orion.session, Orion.idb add/get/count/index/tx, Orion.cache"
+  },
+  {
+    "page": "docs/components/undo-redo.html",
+    "eval": "legacy-undo-manager.js",
+    "about": "Orion.UndoManager merge window, batch-as-one-entry, mod+Z/mod+Shift+Z binding"
+  },
+  {
+    "page": "docs/components/url-state.html",
+    "eval": "legacy-url-state.js",
+    "about": "Orion.url set/get, popstate sync, two-way url.bind() with an input"
+  },
+  {
+    "page": "docs/components/workspace.html",
+    "eval": "legacy-workspace.js",
+    "about": "o-workspace open/close (clean/dirty/veto via window.confirm), persistence, plain data-o-toggle tab/collapse"
+  },
+  {
+    "page": "docs/components/device-network.html",
+    "eval": "legacy-device-network-services.js",
+    "about": "data-o-show/hide device queries, Orion.network.simulate + o-network-status, Orion.idle, Orion.favorites, Orion.share fallback"
+  },
+  {
+    "page": "docs/components/http.html",
+    "eval": "legacy-http-client.js",
+    "about": "Orion.http client: params, POST, timeout, retry, abort, network error, interceptors, dedupe, cache, download progress, HttpError shape"
+  },
+  {
+    "page": "docs/components/http.html",
+    "eval": "legacy-http-ajax-forms.js",
+    "about": "data-o-ajax=\"json\" form directive: success message swap, 422 field-error mapping"
+  },
+  {
+    "page": "docs/components/pwa.html",
+    "eval": "legacy-pwa.js",
+    "about": "service-worker register/activate, precache, GET_VERSION, cache-first route, install prompt, notify fallback, offline queue replay order"
+  },
+  {
+    "page": "docs/components/realtime.html",
+    "eval": "legacy-realtime.js",
+    "about": "Orion.ws reconnect/heartbeat/queue/giveup, Orion.sse reconnect, Orion.signalr protocol+mock hub, Orion.poll pause-when-hidden"
+  },
+  {
+    "page": "docs/components/two-factor.html",
+    "eval": "legacy-2fa-setup-wizard.js",
+    "about": "o-2fa-setup wizard: step transitions, real TOTP verify, backup codes, Finish gated on confirm checkbox, wrong-code rejection"
+  },
+  {
+    "page": "docs/components/two-factor.html",
+    "eval": "legacy-totp.js",
+    "about": "Orion.totp.generate() against RFC 6238 8-digit SHA1 test vectors + verify() accept/reject"
+  },
+  {
+    "page": "docs/components/biometric.html",
+    "eval": "legacy-biometric.js",
+    "about": "o-biometric-login: mocked WebAuthn success/cancel state transitions + unsupported-browser reset"
+  },
+  {
+    "page": "docs/components/gallery.html",
+    "eval": "legacy-lightbox-zoom.js",
+    "about": "Orion.lightbox zoomIn()/reset(): is-zoomed class + scale() transform, reset clears both"
+  },
+  {
+    "page": "docs/components/tour.html",
+    "eval": "legacy-tour.js",
+    "about": "Orion.tour: highlight-hole rect matches step target, ArrowRight/Left navigation, Escape ends tour"
+  },
+  {
+    "page": "docs/components/tour.html",
+    "eval": "legacy-checklist-hotspot.js",
+    "about": "o-checklist task click/complete progress, hotspot beacon dismiss persisted to localStorage"
+  },
+  {
+    "page": "docs/components/carousel.html",
+    "eval": "legacy-carousel-swipe.js",
+    "about": "touch-style pointer swipe advances the active slide index"
+  },
+  {
+    "page": "docs/components/lazy-loading.html",
+    "eval": "legacy-lazy-loading.js",
+    "about": "lazy images reach is-loaded, data-o-lazy-render stamps template + sets data-o-visible"
+  },
+  {
+    "page": "docs/components/auth.html",
+    "eval": "legacy-auth-login.js",
+    "about": "o-auth-form login: empty-submit errors, rejected onSubmit marks one field, success clears it + fires o-success"
+  },
+  {
+    "page": "docs/components/players.html",
+    "eval": "legacy-video-preview-card.js",
+    "about": "data-o-video-preview hover-to-play card starts/stops on pointerenter/leave"
+  },
+  {
+    "page": "docs/components/players.html",
+    "eval": "legacy-video-seekbar.js",
+    "about": "clicking the o-video seek bar at 60% moves currentTime to ~60% of duration"
+  },
+  {
+    "page": "docs/components/players.html",
+    "eval": "legacy-video-api.js",
+    "about": "o-video API on the default source: play/seek/setSpeed/pause"
+  },
+  {
+    "page": "docs/components/players.html",
+    "eval": "legacy-video-api-blob.js",
+    "about": "o-video API on a loaded blob source: seek/skip/setSpeed/toggleMute"
+  },
+  {
+    "page": "docs/components/preferences.html",
+    "eval": "legacy-preferences-controls.js",
+    "about": "preferences panel: font-scale slider + A- button sync, density compact, high-contrast + reduce-motion toggles"
+  },
+  {
+    "page": "docs/components/theme-builder.html",
+    "eval": "legacy-theme-builder.js",
+    "about": "o-theme-builder: color input updates --o-primary live, applyPreset() syncs input, exportJSON() reflects draft"
+  },
+  {
+    "page": "docs/components/image-editor.html",
+    "eval": "legacy-image-compress.js",
+    "about": "Orion.image.compress() shrinks a fixture photo under a maxSizeKB budget"
+  },
+  {
+    "page": "docs/components/image-editor.html",
+    "eval": "legacy-image-crop.js",
+    "about": "o-cropper setAspect(1) yields a square crop + matching toBlob() PNG dimensions"
+  },
+  {
+    "page": "docs/components/document-viewer.html",
+    "eval": "legacy-docviewer-docx.js",
+    "about": "o-docviewer DOCX rendering: formatting, links, nested lists, table with grand-total cell, blob image, page break"
+  },
+  {
+    "page": "docs/components/document-viewer.html",
+    "eval": "legacy-docviewer-pdf.js",
+    "about": "o-docviewer PDF rendering: iframe with a src, no fallback/error state"
+  },
+  {
+    "page": "docs/components/accordion.html",
+    "eval": "legacy-accordion-flush.js",
+    "about": "flush prop/attribute two-way sync on o-accordion and o-faq"
+  },
+  {
+    "page": "docs/components/export-import.html",
+    "eval": "legacy-export-import-demo-buttons.js",
+    "about": "zip round-trip demo button, CSV parser Parse button, 5 export-format buttons resolve without throwing"
+  },
+  {
+    "page": "docs/components/export-import.html",
+    "eval": "legacy-import-samples.js",
+    "about": "Load sample.csv/.xlsx/.json quick-preview buttons each render parsed rows"
+  },
+  {
+    "page": "docs/components/export-import.html",
+    "eval": "legacy-import-wizard-dates.js",
+    "about": "Orion.importWizard DD/MM/YYYY date column parses to correct local day/month/year (not ISO-string/timezone-shifted)"
+  },
+  {
+    "page": "docs/components/export-import.html",
+    "eval": "legacy-csv-edge-cases.js",
+    "about": "Orion.csv.parse/detect/stringify: quoted comma, embedded newline, BOM, semicolon auto-detect, formula-injection guard round trip"
+  },
+  {
+    "page": "docs/components/export-import.html",
+    "eval": "legacy-csv-xlsx-extra.js",
+    "about": "Orion.csv dynamicTyping+escaped quotes, parseAsync over a Blob with onChunk, xlsx formula cell + merged-cell fill + hidden sheet"
+  },
+  {
+    "page": "docs/components/export-import.html",
+    "eval": "legacy-xlsx-titlerow.js",
+    "about": "Orion.xlsx.write titleRow renders the title text and sets docProps/core.xml dc:title"
+  },
+  {
+    "page": "docs/components/export-import.html",
+    "eval": "legacy-xlsx-merge.js",
+    "about": "Orion.xlsx.write merges emits a mergeCells block with the requested range"
+  },
+  {
+    "page": "docs/components/export-import.html",
+    "eval": "legacy-export-formats.js",
+    "about": "Orion.export.{csv,xlsx,pdf,json,html,clipboard} resolve with correct Blob/text shape; download:true does not throw"
+  },
+  {
+    "page": "docs/components/export-import.html",
+    "eval": "legacy-zip-roundtrip.js",
+    "about": "Orion.zip.create/read round trip: plain text, unicode, nested binary, empty file"
+  },
+  {
+    "page": "docs/components/export-import.html",
+    "eval": "legacy-xlsx-roundtrip.js",
+    "about": "Orion.xlsx.write/read 500-row round trip: unicode, decimals, booleans, datetimes, nulls"
+  },
+  {
+    "page": "docs/components/timers.html",
+    "eval": "legacy-timers.js",
+    "about": "o-stopwatch start/lap/pause-freezes/reset + keyboard, o-countdown o-complete event"
+  },
+  {
+    "page": "docs/components/camera.html",
+    "eval": "capture-camera.js",
+    "about": "o-camera: unsupported/denied via mocked getUserMedia, source-fixture capture round-trip (dims/blob), mirror, countdown, device switch, mode=document delegation"
+  },
+  {
+    "page": "docs/components/document-scanner.html",
+    "eval": "capture-doc-scanner.js",
+    "about": "o-doc-scanner: loadImage -> auto-detect -> applyCorners perspective crop, filters change pixel data, rotate, multi-page add/reorder/remove, PDF export via Orion.pdf else image fallback"
+  },
+  {
+    "page": "docs/components/signature.html",
+    "eval": "capture-signature.js",
+    "about": "o-signature: real PointerEvents draw a non-empty PNG/SVG/points signature, undo/clear, required blocks form submit until signed, form value round-trip, typed-mode keyboard alternative"
+  },
+  {
+    "page": "docs/components/recorder.html",
+    "eval": "capture-recorder.js",
+    "about": "o-audio-recorder/o-video-recorder: unsupported/denied via mocked getUserMedia, real MediaRecorder round-trip via an injected stream (oscillator/canvas.captureStream), pause/resume, duration-limit auto-stop, level-meter attach/skip, download()"
+  },
+  {
+    "page": "docs/components/speech.html",
+    "eval": "capture-speech.js",
+    "about": "Orion.speech: STT interim/final + language via a fake SpeechRecognition, data-o-voice dictation, TTS speak/pause/resume/cancel + boundary events via a fake speechSynthesis, o-tts highlight-as-spoken, unsupported states"
+  },
+  {
+    "page": "docs/components/ai.html",
+    "eval": "ai-stream-abort.js",
+    "about": "Orion.ai.stream(): onToken fires in order and matches the generator's own yields, an AbortSignal aborts mid-stream, it.cancel() aborts too"
+  },
+  {
+    "page": "docs/components/ai.html",
+    "eval": "ai-security.js",
+    "about": "Orion.ai.anthropic()/.openAICompatible() with an apiKey throw without dangerouslyAllowBrowser and console.warn every time they're allowed; Orion.ai.http() hits the configured proxy URL by default (captured via a mocked fetch)"
+  },
+  {
+    "page": "docs/components/ai-tools.html",
+    "eval": "ai-ghost-complete.js",
+    "about": "data-o-ai-complete: a suggestion appears after typing pauses (caret at end), Tab accepts it into the field, Esc dismisses a fresh one without changing the value"
+  },
+  {
+    "page": "docs/components/ai-tools.html",
+    "eval": "ai-suggest.js",
+    "about": "data-o-ai-suggest: trigger appears on focus, tone menu -> diff preview -> Accept writes the field, a later Translate-to + Discard leaves it untouched"
+  },
+  {
+    "page": "docs/components/ai-tools.html",
+    "eval": "ai-textops.js",
+    "about": "Orion.ai.summarize() resolves text for both an element and a window selection; .rewrite()/.translate() resolve non-empty strings"
+  },
+  {
+    "page": "docs/components/ai-tools.html",
+    "eval": "ai-fillform.js",
+    "about": "Orion.ai.fillForm(): proposes values in a panel, form stays untouched until Apply (Orion.fill), Cancel discards the proposal entirely"
+  },
+  {
+    "page": "docs/components/ai-tools.html",
+    "eval": "ai-analyze.js",
+    "about": "Orion.ai.analyze() returns { summary, keyPoints, entities, fields, raw }; rejects a PDF/oversized Blob with the documented error codes, resolves a plain-text Blob"
+  },
+  {
+    "page": "docs/components/chatbot.html",
+    "eval": "ai-chatbot.js",
+    "about": "<o-chatbot>: open/close, Enter sends and streams a reply, suggested-prompt click, thumbs-up fires o-feedback, Esc stops/closes, exportTranscript(), inline keyboard flow"
+  },
+  {
+    "page": "docs/components/chatbot.html",
+    "eval": "ai-assistant.js",
+    "about": "<o-assistant>: opens without clearing an existing page selection, context badge reflects it, Explain selection streams using that context, Insert writes the result into the focused field"
+  },
+  {
+    "page": "docs/components/booking.html",
+    "eval": "legacy-booking-clinic.js",
+    "about": "declarative <o-booking id=bk-clinic> demo: service change re-renders slots, slot pick -> details step, submit -> done step + getBooking()"
+  },
+  {
+    "page": "docs/components/help.html",
+    "eval": "legacy-help-panel.js",
+    "about": "Orion.help.whatsThis() inspect click opens contextual article, search() filters, navigate()/back() history, close()"
+  },
+  {
+    "page": "docs/components/select.html",
+    "eval": "core-form-name.js",
+    "about": "FormElement: name set as a property reflects to the attribute and the control stays in FormData"
+  },
+  {
+    "page": "docs/components/select.html",
+    "eval": "i18n-locales.js",
+    "about": "Orion.i18n.set() across all 10 shipped locales: live re-render of <o-select>/<o-datatable> empty text, no console errors, ar sets dir=rtl, plural category selection via Intl.PluralRules"
+  },
+  {
+    "page": "docs/components/select.html",
+    "eval": "i18n-standalone-pack.js",
+    "flags": [
+      "--bundle=dist/orion.lite.js"
+    ],
+    "about": "dist/locales/ms.js adds Malay to the English-only lite bundle (runs against orion.lite.js)"
+  }
+]

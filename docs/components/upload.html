@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Upload — Orion Admin</title>
+<meta name="docs:section" content="Uploads">
+<meta name="docs:order" content="10">
+<meta name="docs:desc" content="Drag & drop, multi-file, validated, previewed file uploads in six variants">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .demo-grid { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); width: 100%; }
+  .demo-grid > div { min-width: 0; }
+  .demo-out { margin: 1rem 0 0; padding: .75rem 1rem; font: .75rem/1.6 var(--o-font-mono); background: var(--o-surface-2); border: 1px dashed var(--o-border-strong); border-radius: var(--o-radius); white-space: pre-wrap; min-height: 2.5rem; color: var(--o-text-muted); word-break: break-all; }
+  .demo-variant-label { margin: 0 0 .5rem; font-size: var(--o-fs-xs); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--o-text-subtle); }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Upload</h1>
+    <p class="docs-lead"><code>&lt;o-upload&gt;</code> is a zero-dependency, form-associated file uploader: drag &amp; drop, clipboard paste, folder drops, MIME/extension/magic-number validation, image &amp; video previews, chunked and resumable transport, and six ready-made layouts. This page covers the everyday features — see <a href="upload-advanced.html">Advanced</a> for chunking, resuming, custom transports and the headless <code>Orion.upload()</code> API.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic usage</h2>
+    <p>With no <code>url</code> or <code>uploader</code>, the element just collects <code>File</code> objects (nothing is sent anywhere) — useful inside a plain <code>&lt;form&gt;</code>. Give it a transport to start uploading: this demo uses <code>Orion.upload.mock()</code>, a fully in-memory server emulator built for these docs (and for your own offline tests) that simulates latency, throughput and random failures.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <o-upload id="up-basic" variant="button" url="/upload" auto label="Choose a file"></o-upload>
+        <div class="docs-log" id="up-basic-log"></div>
+        <script>{
+          const up = document.getElementById('up-basic');
+          up.uploader = Orion.upload.mock({ latency: 300, speed: 900_000, failRate: 0.15 });
+          ['o-add', 'o-progress', 'o-success', 'o-error', 'o-complete'].forEach(n => up.addEventListener(n, e => {
+            const d = e.detail || {};
+            const msg = n === 'o-progress' ? `${d.item.name} — ${d.percent}%`
+              : n === 'o-complete' ? `complete: ${d.files.length} done, ${d.failed.length} failed`
+              : `${n} ${d.item ? d.item.name : ''} ${d.message || ''}`;
+            docs.log('#up-basic-log', msg);
+          }));
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="dropzone">
+    <h2>Drag &amp; drop</h2>
+    <p>The default <code>dropzone</code> variant accepts a click, a drop, or a paste from the clipboard (<code>paste="element"</code> is the default — focus or hover the zone and press <kbd class="o-kbd">Ctrl/Cmd+V</kbd>). Dragging a folder over the zone walks it recursively with <code>webkitGetAsEntry</code> and keeps relative paths.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-upload id="up-drop" multiple url="/upload" auto max-files="6" max-size="8mb" hint="Any file, up to 8 MB each, 6 files max"></o-upload>
+        <script>{
+          document.getElementById('up-drop').uploader = Orion.upload.mock({ latency: 400, speed: 1_200_000, failRate: 0.1 });
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="multiple">
+    <h2>Multiple files &amp; manual upload</h2>
+    <p>Set <code>multiple</code> and, optionally, <code>parallel</code> to cap how many files upload at once. Without <code>auto</code>, files sit as <code>queued</code> until <code>upload()</code> is called (here, by the summary bar's <strong>Upload</strong> button) — handy for a "review, then submit" flow. Try pausing, canceling and retrying a file (a failed upload from the 15% simulated failure rate above shows a <strong>Retry</strong> action).</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-upload id="up-multi" multiple url="/upload" parallel="2" retries="2"></o-upload>
+        <script>{
+          document.getElementById('up-multi').uploader = Orion.upload.mock({ latency: 350, speed: 1_500_000, failRate: 0.2, seed: 42 });
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="validation">
+    <h2>Validation &amp; rejected files</h2>
+    <p>Files are checked <em>before</em> upload: <code>accept</code> matches MIME type, extension or a <code>image/*</code> wildcard, and is cross-checked against the file's real content (magic-number sniffing) so a renamed <code>.exe</code> can't pass as a <code>.png</code>. <code>max-size</code> / <code>min-size</code> / <code>total-max-size</code> / <code>max-files</code> and image <code>min-width</code> / <code>max-width</code> / <code>min-height</code> / <code>max-height</code> add more rules, and a custom <code>validate(file)</code> function can reject or approve anything else. Rejected files are never added to the queue but are announced and shown as an error line; listen for <code>o-reject</code> to build your own list.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-upload id="up-valid" multiple accept="image/*,.pdf" max-size="1.5mb" max-files="4" min-width="200" min-height="200"></o-upload>
+        <div class="docs-log" id="up-valid-log"></div>
+        <script>{
+          const up = document.getElementById('up-valid');
+          up.addEventListener('o-reject', e => docs.log('#up-valid-log', `rejected “${e.detail.file.name}” — ${e.detail.message}`));
+          up.addEventListener('o-add', e => docs.log('#up-valid-log', `accepted “${e.detail.file.name}”`));
+        }</script>
+      </template>
+    </div>
+    <p>Try dropping a <code>.txt</code> file, a large image, a tiny (&lt; 200px) image, or renaming a text file to <code>.png</code> — the content sniffing catches the mismatch.</p>
+  </section>
+
+  <section id="previews">
+    <h2>Previews</h2>
+    <p>Images get a downscaled, EXIF-orientation-corrected thumbnail (drawn on a canvas, so a sideways phone photo previews upright); videos get a poster frame grabbed from their first second; everything else gets a type icon with the extension. Previews are generated off the main thread's critical path and revoked automatically when a file is removed.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <o-upload id="up-preview" multiple variant="gallery" accept="image/*,video/*,.pdf,.zip,.csv"></o-upload>
+        <script>{ document.getElementById('up-preview').addEventListener('o-add', () => {}); }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="variants">
+    <h2>Variants</h2>
+    <p>One element, six layouts: <code>dropzone</code> (default, large drop target), <code>button</code> (inline trigger), <code>compact</code> (single-line control that fits a form grid), <code>avatar</code> (round photo picker), <code>gallery</code> (thumbnail grid, drag to reorder with <code>sortable</code>) and <code>inline</code> (slim card, same drop/paste/validate behavior as <code>dropzone</code>).</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="demo-grid">
+          <div>
+            <p class="demo-variant-label">button</p>
+            <o-upload variant="button" multiple label="Attach files"></o-upload>
+          </div>
+          <div>
+            <p class="demo-variant-label">compact</p>
+            <o-upload variant="compact"></o-upload>
+          </div>
+          <div>
+            <p class="demo-variant-label">avatar</p>
+            <o-upload variant="avatar" id="up-avatar"></o-upload>
+          </div>
+          <div>
+            <p class="demo-variant-label">inline</p>
+            <o-upload variant="inline" multiple></o-upload>
+          </div>
+          <div style="grid-column:1/-1">
+            <p class="demo-variant-label">gallery (sortable)</p>
+            <o-upload id="up-gallery-variant" variant="gallery" multiple sortable accept="image/*"></o-upload>
+          </div>
+        </div>
+        <script>{
+          const av = document.getElementById('up-avatar');
+          av.uploader = Orion.upload.mock({ latency: 500, speed: 900_000 });
+          av.url = '/avatar';
+          av.auto = true;
+        }</script>
+      </template>
+    </div>
+    <p>All variants but <code>avatar</code> respect <code>multiple</code>; <code>avatar</code> and single-file <code>compact</code> always keep the latest file only. Drag two images into the gallery above, then drag a card to reorder — the order is exposed through <code>getFiles()</code> and the <code>o-sort</code> event.</p>
+  </section>
+
+  <section id="form">
+    <h2>Inside a <code>&lt;form&gt;</code></h2>
+    <p><code>&lt;o-upload&gt;</code> is form-associated: give it a <code>name</code> and it participates in the form's <code>FormData</code>, validity (<code>required</code> works) and <code>reset()</code> like any native input — no <code>uploader</code>/<code>url</code> needed. When a transport <em>is</em> configured, set <code>submit="files"</code> to always send the raw <code>File</code>s on native submit regardless of upload state, or <code>submit="response"</code> to send the server's id(s) once uploaded (the default, <code>auto</code>, picks <code>response</code> when a transport exists and <code>files</code> otherwise).</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <form id="up-form">
+          <div class="o-field">
+            <label class="o-label" for="up-form-name">Applicant name</label>
+            <input class="o-input" id="up-form-name" name="applicant" required>
+          </div>
+          <div class="o-field o-mt-3">
+            <label class="o-label" for="up-form-file">Résumé</label>
+            <o-upload id="up-form-file" name="resume" required multiple accept=".pdf,.doc,.docx" max-files="3" hint="PDF or Word, up to 3 files"></o-upload>
+          </div>
+          <div class="o-cluster o-mt-3">
+            <button class="o-btn o-btn-primary" type="submit">Submit</button>
+            <button class="o-btn" type="reset">Reset</button>
+          </div>
+        </form>
+        <pre class="demo-out" id="up-form-out">Submit to see FormData</pre>
+        <script>{
+          document.getElementById('up-form').addEventListener('submit', e => {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            document.getElementById('up-form-out').textContent = [...fd.keys()].map(k => `${k}: ${fd.getAll(k).map(v => v instanceof File ? `File(${v.name}, ${v.size}b)` : v).join(', ')}`).join('\n') || '(empty)';
+          });
+        }</script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Properties / attributes</h3>
+    <table class="docs-api">
+      <thead><tr><th>Property (attribute)</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>value</td><td>File[] | any[]</td><td>null</td><td>Get: accepted files (or, once uploaded with <code>submit="response"</code>, server ids). Set: shows existing server files (strings/objects → <code>addRemote</code>) and/or <code>File</code>/<code>Blob</code> values.</td></tr>
+        <tr><td>name, required, disabled, readonly</td><td>—</td><td>—</td><td>Standard form-control behaviour. <code>readonly</code> still allows removing/retrying own actions but blocks adding new files.</td></tr>
+        <tr><td>multiple</td><td>boolean</td><td>false</td><td>Allow more than one file (ignored by <code>variant="avatar"</code>).</td></tr>
+        <tr><td>accept</td><td>string</td><td>—</td><td>Comma list: MIME (<code>image/png</code>), wildcard (<code>image/*</code>) or extension (<code>.pdf</code>).</td></tr>
+        <tr><td>directory</td><td>boolean</td><td>false</td><td>Native folder picker (<code>webkitdirectory</code>); folder drag &amp; drop always works regardless of this flag.</td></tr>
+        <tr><td>capture</td><td>string</td><td>—</td><td><code>user</code> / <code>environment</code> — hints a mobile camera/mic capture UI for the native picker.</td></tr>
+        <tr><td>max-files</td><td>number</td><td>0 (∞)</td><td>Maximum accepted files.</td></tr>
+        <tr><td>max-size, min-size, total-max-size</td><td>string | number</td><td>0 (∞)</td><td>Per-file and combined size limits. Strings parse units: <code>"5mb"</code>, <code>"1.5 GB"</code>, <code>"500k"</code>.</td></tr>
+        <tr><td>min-width, max-width, min-height, max-height</td><td>number</td><td>0 (∞)</td><td>Pixel bounds checked against image files only (read from the file header, no full decode).</td></tr>
+        <tr><td>allow-duplicates</td><td>boolean</td><td>false</td><td>Skip the same-name/size/date duplicate check.</td></tr>
+        <tr><td>sniff</td><td>boolean</td><td>true</td><td>Verify file content against its claimed type with magic numbers (PNG/JPEG/GIF/WebP/PDF/ZIP/MP4).</td></tr>
+        <tr><td>validate</td><td>function(file, {items}) → true | string | Error | {reason,message} | Promise</td><td>—</td><td>Custom rule, run after built-in checks.</td></tr>
+        <tr><td>url</td><td>string | function(file,item)</td><td>—</td><td>Upload endpoint. Presence of <code>url</code> or <code>uploader</code> turns on the transport (drop/pick alone never uploads without one).</td></tr>
+        <tr><td>method, field-name, headers, data</td><td>string / object / function</td><td>POST, "file"</td><td>Request shape for the built-in multipart uploader. <code>headers</code>/<code>data</code> may be functions of <code>(file, item)</code>.</td></tr>
+        <tr><td>with-credentials, timeout</td><td>boolean / number (ms)</td><td>false, 0</td><td>XHR options.</td></tr>
+        <tr><td>binary</td><td>boolean</td><td>false</td><td>Send the raw file as the request body instead of multipart <code>FormData</code>.</td></tr>
+        <tr><td>uploader</td><td>function(file, {onProgress, signal, item}) → Promise&lt;response&gt;</td><td>—</td><td>Replace the transport entirely (used for chunks too when set — see <a href="upload-advanced.html#custom">Advanced</a>).</td></tr>
+        <tr><td>request</td><td>function(reqOptions) → Promise&lt;{status,response,getHeader}&gt;</td><td>—</td><td>Replace only the HTTP primitive (keeps multipart/chunk/tus framing); this is what <code>Orion.upload.mock().request</code> plugs into.</td></tr>
+        <tr><td>parse-response</td><td>function(body, raw)</td><td>—</td><td>Transform a successful response before it becomes <code>item.response</code>.</td></tr>
+        <tr><td>auto</td><td>boolean</td><td>false</td><td>Start uploading as soon as files are accepted (also true when neither <code>auto</code> nor <code>manual</code> is set but a transport exists — set <code>manual</code> to opt out explicitly).</td></tr>
+        <tr><td>parallel</td><td>number</td><td>3</td><td>Concurrent file uploads.</td></tr>
+        <tr><td>retries, retry-delay</td><td>number, number (ms)</td><td>3, 1000</td><td>Automatic retry with exponential backoff + jitter on network errors, timeouts, 408/429/5xx.</td></tr>
+        <tr><td>chunk-size, chunk-parallel, resumable, protocol</td><td>string|number, number, boolean, string</td><td>—, 3, false, —</td><td>See <a href="upload-advanced.html">Advanced</a>: chunked upload, concurrent chunks, persisted resume, <code>protocol="tus"</code>.</td></tr>
+        <tr><td>metadata, chunk-request, finalize, resume-offset, store</td><td>object/fn, fn, fn, fn, object</td><td>—</td><td>Advanced transport hooks — see <a href="upload-advanced.html">Advanced</a>.</td></tr>
+        <tr><td>compress, crop</td><td>boolean | object</td><td>—</td><td>Pre-upload image processing: <code>{maxWidth,maxHeight,quality,type}</code> / <code>{aspect,width,height}</code>. Uses <code>Orion.image.compress</code> / <code>Orion.cropImage</code> (media package) when present, otherwise a built-in canvas fallback.</td></tr>
+        <tr><td>previews, thumb-size</td><td>boolean, number</td><td>true, 160</td><td>Generate thumbnails and their target pixel size.</td></tr>
+        <tr><td>variant</td><td>string (reflects)</td><td>dropzone</td><td><code>dropzone | button | compact | avatar | gallery | inline</code>.</td></tr>
+        <tr><td>paste</td><td>string</td><td>element</td><td><code>element</code> (focus/hover this control), <code>window</code> (paste anywhere on the page), <code>none</code>.</td></tr>
+        <tr><td>drop-target</td><td>string (CSS selector | "body")</td><td>—</td><td>Show a full-page drop overlay while dragging files anywhere over this target; the drop is still routed to this element.</td></tr>
+        <tr><td>sortable</td><td>boolean</td><td>false</td><td>Drag to reorder (mouse) and <kbd class="o-kbd">Alt</kbd>+arrows (keyboard) in the file list.</td></tr>
+        <tr><td>summary</td><td>boolean</td><td>true</td><td>Show the aggregate progress bar/ring + bulk actions when there's more than one file.</td></tr>
+        <tr><td>label, hint</td><td>string</td><td>—</td><td>Override the generated title/button text and helper line.</td></tr>
+        <tr><td>submit</td><td>string</td><td>auto</td><td><code>auto | files | response</code> — see <a href="#form">Inside a form</a>.</td></tr>
+        <tr><td>value-key</td><td>string</td><td>id</td><td>Path read from a successful response to get the server id used by <code>submit="response"</code> and <code>o-success</code>.</td></tr>
+        <tr><td>texts</td><td>object</td><td>—</td><td>Per-instance string overrides (see <code>this.t()</code> in ARCHITECTURE.md).</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-add</td><td>{ file, item, id }</td><td>A file passed validation and was queued.</td></tr>
+        <tr><td>o-reject</td><td>{ file, item, id, reason, message }</td><td>A file failed validation. <code>reason</code>: type, mismatch, maxSize, minSize, totalSize, maxFiles, duplicate, minWidth/maxWidth/minHeight/maxHeight, crop, custom.</td></tr>
+        <tr><td>o-remove</td><td>{ file, item, id }</td><td>A file was removed from the list.</td></tr>
+        <tr><td>o-start</td><td>{ file, item, id }</td><td>A file began uploading.</td></tr>
+        <tr><td>o-progress</td><td>{ file, item, id, loaded, total, percent, speed, eta }</td><td><code>speed</code> in bytes/s, <code>eta</code> in seconds (both smoothed; null until enough samples exist).</td></tr>
+        <tr><td>o-success</td><td>{ file, item, id, response }</td><td>A file finished uploading.</td></tr>
+        <tr><td>o-error</td><td>{ file, item, id, error, message }</td><td>A file failed after exhausting retries.</td></tr>
+        <tr><td>o-complete</td><td>{ files, failed }</td><td>The whole batch settled (no more active/queued/paused files).</td></tr>
+        <tr><td>o-pause / o-resume / o-cancel / o-retry</td><td>{ file, item, id }</td><td>Mirrors the matching method call, from the UI or from code.</td></tr>
+        <tr><td>o-resumed</td><td>{ file, item, id, offset }</td><td>A chunked/tus upload resumed from a non-zero byte offset.</td></tr>
+        <tr><td>o-sort</td><td>{ files }</td><td>The list was reordered (drag or keyboard).</td></tr>
+        <tr><td>o-preview</td><td>{ file, item }</td><td>Cancelable; fired before <code>preview()</code> opens a file (call <code>preventDefault()</code> to supply your own viewer).</td></tr>
+        <tr><td>o-before-remove</td><td>{ file, item }</td><td>Cancelable; fired before a file is removed.</td></tr>
+        <tr><td>o-change</td><td>{ files, value }</td><td>The public value changed (add/remove/upload-complete in <code>submit="response"</code> mode); also native <code>input</code> + <code>change</code>.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>addFiles(files, source = 'api')</td><td>Validate and queue <code>File</code>/<code>Blob</code> objects (array, <code>FileList</code>, or a single file). Returns <code>Promise&lt;{accepted, rejected}&gt;</code>.</td></tr>
+        <tr><td>removeFile(id)</td><td>Remove one file by its item id (see <code>getFiles()</code>).</td></tr>
+        <tr><td>clear()</td><td>Remove every file; returns the count removed.</td></tr>
+        <tr><td>upload(id?)</td><td>Start uploading queued/canceled files (all, or one by id).</td></tr>
+        <tr><td>pause(id?) / resume(id?) / cancel(id?) / retry(id?)</td><td>Control uploads in progress (all, or one by id).</td></tr>
+        <tr><td>getFiles()</td><td>Snapshot array of every item: <code>{ id, file, name, size, type, status, progress, error, response, serverId, preview, … }</code>.</td></tr>
+        <tr><td>stats()</td><td><code>{ count, done, error, uploading, paused, queued, loaded, total, percent, speed, eta }</code> aggregate.</td></tr>
+        <tr><td>browse()</td><td>Open the native file picker programmatically.</td></tr>
+        <tr><td>preview(id)</td><td>Open a file (uses <code>Orion.preview</code> from the media package when present, otherwise a new tab).</td></tr>
+        <tr><td>queue</td><td>(getter) The underlying <code>UploadQueue</code> instance for advanced/headless access.</td></tr>
+        <tr><td>checkValidity() / reportValidity() / setCustomValidity(msg)</td><td>Standard <code>ElementInternals</code> form validation.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>CSS variables</h3>
+    <table class="docs-api">
+      <thead><tr><th>Variable</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>--o-upload-avatar</td><td>6rem</td><td>Diameter of the <code>avatar</code> variant.</td></tr>
+        <tr><td>--o-value, --o-c</td><td>—</td><td>Set on the shared <code>.o-progress</code> / <code>.o-progress-ring</code> elements used for per-file and summary progress — see <a href="feedback.html">Feedback</a>.</td></tr>
+      </tbody>
+    </table>
+    <p>Everything else follows the global tokens (<code>--o-surface*</code>, <code>--o-border*</code>, <code>--o-radius*</code>…) from <a href="theming.html">Theming</a> — there is no component-specific color system to override.</p>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Enter / Space</td><td>On the drop zone: open the file picker. On a focused file row: open the preview (Enter) or pause/resume/retry (Space), matching its current action.</td></tr>
+        <tr><td>↓ / ↑ · Home / End</td><td>Move focus between files in the list (grid-aware in the <code>gallery</code> variant).</td></tr>
+        <tr><td>Delete / Backspace</td><td>Remove the focused file.</td></tr>
+        <tr><td>Alt + arrows</td><td>Reorder the focused file (when <code>sortable</code>).</td></tr>
+        <tr><td>Ctrl/Cmd + V</td><td>Paste files from the clipboard (see the <code>paste</code> attribute).</td></tr>
+        <tr><td>Tab</td><td>Standard focus order: drop zone → summary actions → each file's actions.</td></tr>
+      </tbody>
+    </table>
+    <p>ARIA: the drop zone is a plain button describing the accepted types (<code>aria-describedby</code> the hint text, plus the associated <code>&lt;label&gt;</code> when present); each per-file progress bar is <code>role="progressbar"</code>; status changes, rejections and completion are announced through a polite/assertive live region (<code>Orion.announce</code>).</p>
+  </section>
+</main>
+</body>
+</html>

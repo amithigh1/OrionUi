@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drawer — Orion Admin</title>
+<meta name="docs:section" content="Overlays &amp; Feedback">
+<meta name="docs:order" content="60">
+<meta name="docs:desc" content="Off-canvas panels: sides, sizes, modeless, push and mobile navigation">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Drawer</h1>
+    <p class="docs-lead"><code>&lt;o-drawer&gt;</code> is an off-canvas panel built on the same native-<code>&lt;dialog&gt;</code> foundation as <code>&lt;o-modal&gt;</code> (it is in fact a subclass): focus trap and return, scroll lock, nesting, a cancelable close, and swipe-to-close on touch. Slides in from any of the four edges.</p>
+  </header>
+
+  <section id="sides">
+    <h2>Placement</h2>
+    <p><code>placement="start | end | top | bottom"</code> — logical, RTL aware (<code>end</code> is the right edge in LTR, left in RTL).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn" data-o-toggle="drawer" data-o-target="#demo-start">Start</button>
+        <button class="o-btn" data-o-toggle="drawer" data-o-target="#demo-end">End</button>
+        <button class="o-btn" data-o-toggle="drawer" data-o-target="#demo-top">Top</button>
+        <button class="o-btn" data-o-toggle="drawer" data-o-target="#demo-bottom">Bottom</button>
+        <o-drawer id="demo-start" placement="start" heading="Navigation"><p>Slides in from the start edge (left in LTR, right in RTL).</p></o-drawer>
+        <o-drawer id="demo-end" placement="end" heading="Details"><p>The default placement — slides in from the end edge.</p></o-drawer>
+        <o-drawer id="demo-top" placement="top" heading="Announcement"><p>Slides down from the top; a drag handle appears at the top edge.</p></o-drawer>
+        <o-drawer id="demo-bottom" placement="bottom" heading="Quick actions"><p>Slides up from the bottom — the classic mobile action sheet.</p></o-drawer>
+      </template>
+    </div>
+  </section>
+
+  <section id="sizes">
+    <h2>Sizes</h2>
+    <p><code>size="sm | md | lg | xl | full"</code> (18/24/32/44rem width, or 100%) or any CSS length (e.g. <code>size="480px"</code>).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn" data-o-toggle="drawer" data-o-target="#demo-size-sm">Small</button>
+        <button class="o-btn" data-o-toggle="drawer" data-o-target="#demo-size-lg">Large</button>
+        <button class="o-btn" data-o-toggle="drawer" data-o-target="#demo-size-custom">Custom (480px)</button>
+        <button class="o-btn" data-o-toggle="drawer" data-o-target="#demo-size-full">Full</button>
+        <o-drawer id="demo-size-sm" size="sm" heading="Small drawer"><p>18rem wide — good for a short list of filters.</p></o-drawer>
+        <o-drawer id="demo-size-lg" size="lg" heading="Large drawer"><p>32rem wide — room for a longer form.</p></o-drawer>
+        <o-drawer id="demo-size-custom" size="480px" heading="Custom width"><p>Any CSS length works, e.g. <code>size="480px"</code>.</p></o-drawer>
+        <o-drawer id="demo-size-full" size="full" heading="Full width"><p>Spans the entire viewport, like a mobile takeover screen.</p></o-drawer>
+      </template>
+    </div>
+  </section>
+
+  <section id="modeless">
+    <h2>Modeless, static &amp; push</h2>
+    <p><code>backdrop="false"</code> makes the drawer modeless (page stays interactive, no focus trap or scroll lock). <code>push</code> additionally shifts a target element's margin instead of overlaying it. <code>static</code> keeps a normal (modal) drawer open on backdrop click.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn" data-o-toggle="drawer" data-o-target="#demo-modeless">Modeless</button>
+        <button class="o-btn" id="demo-push-btn">Push content</button>
+        <button class="o-btn" data-o-toggle="drawer" data-o-target="#demo-static">Static backdrop</button>
+        <o-drawer id="demo-modeless" heading="Modeless panel" backdrop="false" size="sm">
+          <p>The page behind stays clickable and scrollable — try selecting text on the page while this is open.</p>
+        </o-drawer>
+        <o-drawer id="demo-static" heading="Static backdrop" static><p>Clicking the backdrop does not close this drawer (it shakes). Use Escape or the button.</p><div slot="footer"><button class="o-btn o-btn-primary" data-o-dismiss="drawer">Got it</button></div></o-drawer>
+        <div id="demo-push-target" style="margin-top:1rem;padding:1rem;border:1px dashed var(--o-border);border-radius:var(--o-radius)">This box represents the page content that gets pushed aside.</div>
+        <script>
+          document.getElementById('demo-push-btn').addEventListener('click', () => {
+            Orion.drawer({ title: 'Pinned panel', placement: 'end', size: 'sm', push: '#demo-push-target', content: '<p class="o-mb-0">The target element\'s margin animates to make room instead of overlaying it.</p>' });
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="mobile-nav">
+    <h2>Mobile navigation pattern</h2>
+    <p>A <code>start</code> drawer is the standard responsive sidebar-to-drawer pattern: keep the sidebar visible on desktop, collapse it into a drawer below a breakpoint.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-primary" data-o-toggle="drawer" data-o-target="#demo-mobile-nav"><o-icon name="menu"></o-icon> Open navigation</button>
+        <o-drawer id="demo-mobile-nav" placement="start" size="sm" heading="Orion Admin">
+          <nav class="o-nav o-nav-vertical">
+            <a class="o-nav-link is-active" href="#"><o-icon name="home"></o-icon> Dashboard</a>
+            <a class="o-nav-link" href="#"><o-icon name="user"></o-icon> Customers</a>
+            <a class="o-nav-link" href="#"><o-icon name="columns"></o-icon> Reports</a>
+            <a class="o-nav-link" href="#"><o-icon name="settings"></o-icon> Settings</a>
+          </nav>
+        </o-drawer>
+      </template>
+    </div>
+  </section>
+
+  <section id="form">
+    <h2>Form &amp; loading</h2>
+    <p>Drawers support the same <code>slot="footer"</code>, <code>closable</code> and <code>loading</code> behavior as modals.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-primary" data-o-toggle="drawer" data-o-target="#demo-form-drawer">Edit contact</button>
+        <o-drawer id="demo-form-drawer" heading="Edit contact" size="sm">
+          <div class="o-field"><label class="o-label" for="demo-drawer-name">Name</label><input class="o-input" id="demo-drawer-name" value="Aisha Rahman"></div>
+          <div class="o-field" style="margin-top:.625rem"><label class="o-label" for="demo-drawer-email">Email</label><input class="o-input" id="demo-drawer-email" type="email" value="aisha@example.com"></div>
+          <div slot="footer"><button class="o-btn" data-o-dismiss="drawer">Cancel</button><button class="o-btn o-btn-primary" id="demo-drawer-save">Save</button></div>
+        </o-drawer>
+        <script>
+          document.getElementById('demo-drawer-save').addEventListener('click', e => {
+            const d = document.getElementById('demo-form-drawer');
+            d.loading = true;
+            setTimeout(() => { d.loading = false; d.close('saved'); }, 1000);
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="programmatic">
+    <h2>Orion.drawer()</h2>
+    <p>Same handle shape as <code>Orion.modal()</code>, built with buttons and a <code>result</code> promise.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn" id="demo-prog-drawer">Notifications</button>
+        <div class="docs-log" id="demo-prog-drawer-log" style="width:100%"></div>
+        <script>
+          document.getElementById('demo-prog-drawer').addEventListener('click', async () => {
+            const d = Orion.drawer({
+              title: 'Notifications', placement: 'end', size: 'sm',
+              content: '<p>You are all caught up. No new notifications.</p>',
+              buttons: [{ text: 'Close', value: 'closed' }],
+            });
+            docs.log('#demo-prog-drawer-log', 'result: ' + (await d.result));
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="events">
+    <h2>Events</h2>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn" data-o-toggle="drawer" data-o-target="#demo-events-drawer">Open and watch the log</button>
+        <o-drawer id="demo-events-drawer" heading="Event demo" size="sm"><p>Close it any way you like (button, Escape, backdrop, or swipe on touch).</p><div slot="footer"><button class="o-btn o-btn-primary" data-o-dismiss="drawer" data-o-value="ok">OK</button></div></o-drawer>
+        <div class="docs-log" id="demo-events-log" style="width:100%"></div>
+        <script>
+          ['o-open', 'o-opened', 'o-before-close', 'o-close', 'o-closed'].forEach(n => document.getElementById('demo-events-drawer').addEventListener(n, e => docs.log('#demo-events-log', n + (e.detail && e.detail.reason ? ' reason=' + e.detail.reason : '') + (e.detail && e.detail.value !== undefined ? ' value=' + e.detail.value : ''))));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Attributes &amp; properties</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>open / isOpen</td><td>boolean</td><td>false</td><td>Open state, reflected. Frameworks may set <code>el.open = true</code>.</td></tr>
+        <tr><td>heading</td><td>string</td><td></td><td>Title (accessible name).</td></tr>
+        <tr><td>label</td><td>string</td><td></td><td>Accessible name when there is no heading.</td></tr>
+        <tr><td>placement</td><td>start ｜ end ｜ top ｜ bottom</td><td>end</td><td>Edge the panel slides from (logical, RTL aware).</td></tr>
+        <tr><td>size</td><td>sm ｜ md ｜ lg ｜ xl ｜ full ｜ CSS length</td><td>md</td><td>Width (start/end) or height (top/bottom).</td></tr>
+        <tr><td>static</td><td>boolean</td><td>false</td><td>Backdrop click does not close (shake).</td></tr>
+        <tr><td>closable</td><td>boolean</td><td>true</td><td>Close button, Escape, backdrop and swipe.</td></tr>
+        <tr><td>backdrop</td><td>boolean</td><td>true</td><td><code>backdrop="false"</code>: modeless — no dimming, page stays usable, no focus trap/scroll lock.</td></tr>
+        <tr><td>push</td><td>string</td><td></td><td>Modeless drawer that shifts a target element's margin (selector; empty = <code>&lt;body&gt;</code>). start/end only.</td></tr>
+        <tr><td>swipe</td><td>boolean</td><td>true</td><td>Touch/pen swipe towards the edge closes the drawer.</td></tr>
+        <tr><td>loading</td><td>boolean</td><td>false</td><td>Overlay spinner.</td></tr>
+        <tr><td>texts</td><td>object</td><td></td><td>Per-instance strings <code>{ close, loading }</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>Slots, methods &amp; actions</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>slot="footer" / .o-drawer-footer</td><td>Footer content (buttons).</td></tr>
+        <tr><td>slot="header"</td><td>Replaces the title area (close button kept).</td></tr>
+        <tr><td>open(trigger?)</td><td>Open; the trigger is used for nesting and focus return.</td></tr>
+        <tr><td>close(value?)</td><td>Request close (cancelable through <code>o-before-close</code>).</td></tr>
+        <tr><td>toggle(trigger?)</td><td>Toggle.</td></tr>
+        <tr><td>returnValue</td><td>Value of the last close.</td></tr>
+        <tr><td>data-o-toggle="drawer"</td><td>With <code>data-o-target="#id"</code> or <code>href="#id"</code>.</td></tr>
+        <tr><td>data-o-dismiss="drawer"</td><td>Close the nearest <code>&lt;o-drawer&gt;</code>; optional <code>data-o-value</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-open</td><td>{ trigger }</td><td>Before opening. Cancelable.</td></tr>
+        <tr><td>o-opened</td><td>{}</td><td>After the enter animation.</td></tr>
+        <tr><td>o-before-close</td><td>{ reason, value }</td><td>Cancelable. Reasons: escape, backdrop, close-button, dismiss, button, swipe, api, parent, native.</td></tr>
+        <tr><td>o-close</td><td>{ reason, value }</td><td>Closing starts.</td></tr>
+        <tr><td>o-closed</td><td>{ reason, value }</td><td>After the leave animation and focus return.</td></tr>
+      </tbody>
+    </table>
+    <h3>Orion.drawer(options) → handle</h3>
+    <p>Same handle shape as <code>Orion.modal()</code>: <code>{ el, close(value), result, setTitle, setContent, setLoading, setButtons, body, footer }</code>.</p>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>title, content, buttons, closable, className, label, backdrop, onOpen, onClose</td><td>As <code>Orion.modal()</code>.</td></tr>
+        <tr><td>placement</td><td>start ｜ end ｜ top ｜ bottom (default end).</td></tr>
+        <tr><td>size</td><td>As the attribute.</td></tr>
+        <tr><td>push</td><td><code>true</code> (pushes <code>&lt;body&gt;</code>) or a selector; implies modeless.</td></tr>
+        <tr><td>swipe</td><td><code>false</code> disables swipe-to-close.</td></tr>
+      </tbody>
+    </table>
+    <h3>Keyboard &amp; touch</h3>
+    <table class="docs-api">
+      <thead><tr><th>Input</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Tab / Shift+Tab</td><td>Cycle focus inside the panel (trapped, unless modeless).</td></tr>
+        <tr><td>Escape</td><td>Close (when closable); inner popups close first.</td></tr>
+        <tr><td>Swipe towards the edge</td><td>Close (a fast flick or dragging past 30% of the panel size commits it).</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS variables</h3>
+    <p><code>--o-drawer-size</code> (width for start/end), <code>--o-drawer-vsize</code> (height for top/bottom), <code>--o-drawer-vmax</code> (max height, default 85vh).</p>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,36 @@
+.o-ocr { display: block; }
+.o-ocr-drop {
+  position: relative; display: flex; align-items: center; justify-content: center; min-height: 12rem;
+  border: 2px dashed var(--o-border-strong); border-radius: var(--o-radius-lg); background: var(--o-surface-2);
+  cursor: pointer; transition: background var(--o-dur-fast) var(--o-ease), border-color var(--o-dur-fast) var(--o-ease);
+  overflow: hidden;
+}
+.o-ocr-drop:focus-visible { outline: var(--o-ring-width, 2px) solid var(--o-focus); outline-offset: 2px; }
+.o-ocr-drop.is-dragover { border-color: var(--o-primary); background: var(--o-primary-subtle); }
+.o-ocr-empty { display: flex; flex-direction: column; align-items: center; gap: .375rem; padding: 2rem 1rem; text-align: center; color: var(--o-text-muted); }
+.o-ocr-empty > .o-icon, .o-ocr-empty > o-icon { color: var(--o-text-subtle); }
+.o-ocr-drop-title { margin: 0; font-weight: 600; color: var(--o-text); }
+.o-ocr-drop-drop { margin: 0; font-size: var(--o-fs-sm); display: none; }
+.o-ocr-drop.is-dragover .o-ocr-drop-title { display: none; }
+.o-ocr-drop.is-dragover .o-ocr-drop-drop { display: block; }
+.o-ocr-canvas { position: relative; width: 100%; touch-action: none; cursor: crosshair; }
+.o-ocr-canvas[hidden] { display: none; }
+.o-ocr-img { display: block; width: 100%; height: auto; max-height: 26rem; object-fit: contain; background: var(--o-surface); user-select: none; -webkit-user-drag: none; }
+.o-ocr-region {
+  position: absolute; border: 2px dashed var(--o-primary); background: color-mix(in srgb, var(--o-primary) 16%, transparent);
+  pointer-events: none;
+}
+.o-ocr-words { position: absolute; inset: 0; pointer-events: none; }
+.o-ocr-word {
+  position: absolute; border: 1px solid var(--o-success); background: color-mix(in srgb, var(--o-success) 14%, transparent);
+  border-radius: 1px;
+}
+.o-ocr-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-block-start: .75rem; }
+.o-ocr-lang { width: auto; min-width: 8rem; }
+.o-ocr-progress { margin-block-start: .75rem; }
+.o-ocr-status { font-size: var(--o-fs-sm); color: var(--o-text-muted); }
+.o-ocr.is-busy .o-ocr-drop { cursor: progress; }
+.o-ocr-result { margin-block-start: 1rem; }
+.o-ocr-result-head { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-block-end: .5rem; }
+.o-ocr-words-toggle { font-size: var(--o-fs-sm); }
+.o-ocr-text { width: 100%; font-family: var(--o-font-mono, ui-monospace, monospace); }

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clipboard &amp; Share — Orion Admin</title>
+<meta name="docs:section" content="Services &amp; Utilities">
+<meta name="docs:order" content="120">
+<meta name="docs:desc" content="Copy buttons, clipboard read/paste, and the Web Share API with a network sheet fallback">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <style>
+    .paste-zone { min-height: 4rem; padding: .75rem; border: 1px dashed var(--o-border); border-radius: var(--o-radius); font-size: var(--o-fs-sm); }
+    .paste-zone:focus-visible { outline: 2px solid var(--o-focus); }
+  </style>
+  <header class="docs-hero">
+    <h1>Clipboard &amp; Share</h1>
+    <p class="docs-lead"><code>Orion.clipboard</code> copies text, HTML, images and Blobs (with an <code>execCommand</code> fallback), reads pasted content, and gives copy buttons a check-mark + toast confirmation. <code>Orion.share</code> uses the native Web Share sheet when available and falls back to a network picker (X, Facebook, LinkedIn, WhatsApp, Telegram, Reddit, Email, QR, Copy link).</p>
+  </header>
+
+  <section id="copy">
+    <h2>Copy</h2>
+    <p>The quickest path is <code>data-o-action="copy"</code> with <code>data-o-value</code> or <code>data-o-target</code>; <code>&lt;o-copy&gt;</code> wraps the same behavior as an icon, button or input+button. Both animate a check icon and announce "Copied!" (or your <code>data-o-copied</code> text).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-cluster">
+          <button class="o-btn o-btn-sm" data-o-action="copy" data-o-value="npm install orion-admin"><o-icon name="copy"></o-icon> Copy install command</button>
+          <button class="o-btn o-btn-ghost o-btn-icon o-btn-sm" data-o-action="copy" data-o-target="#cs-target" aria-label="Copy code"><o-icon name="copy"></o-icon></button>
+        </div>
+        <pre class="docs-code-block" id="cs-target" data-lang="js">Orion.clipboard.copy('Hello!');</pre>
+        <o-copy class="o-mt-3" variant="input" value="https://example.com/invite/9f21" label="Invite link"></o-copy>
+        <script>
+          document.querySelectorAll('[data-o-action="copy"]').forEach(b => b.addEventListener('o-copy', e => docs.log('#log-cs', 'o-copy ' + JSON.stringify(e.detail))));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="paste">
+    <h2>Paste</h2>
+    <p><code>Orion.clipboard.onPaste(el, handler)</code> reads text, HTML and files (auto-named images included) from a native paste event — no permission prompt needed, unlike <code>read()</code>.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="paste-zone" contenteditable="true" id="cs-paste" aria-label="Paste anything here">Click here and press Ctrl/Cmd+V…</div>
+        <div class="docs-log" id="log-cs"></div>
+        <script>
+          Orion.clipboard.onPaste('#cs-paste', ({ text, files, images }) => {
+            docs.log('#log-cs', `pasted: ${text ? text.slice(0, 40) : ''} (${files.length} file(s), ${images.length} image(s))`);
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="share">
+    <h2>Share</h2>
+    <p><code>&lt;o-share&gt;</code> and <code>data-o-action="share"</code> open the OS share sheet on mobile/supported browsers, or the network picker below (with a copy-link field and a QR tile when <code>Orion.qr</code> is present).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-cluster">
+          <o-share title="Orion Admin" text="A zero-dependency admin UI library" url="https://example.com/orion" label="Share this page"></o-share>
+          <o-share variant="icons" networks="x,linkedin,whatsapp,email,copy" title="Orion Admin" url="https://example.com/orion"></o-share>
+        </div>
+        <script>
+          document.querySelectorAll('o-share').forEach(el => el.addEventListener('o-share', e => docs.log('#log-cs', 'o-share ' + JSON.stringify(e.detail))));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="copy-link">
+    <h2>Copy link (deep links)</h2>
+    <p>Combine with <a href="url-state.html">URL state</a>'s deep links: <code>Orion.deeplink.copy(name, value)</code> copies a shareable <code>#name=value</code> link using the same clipboard helper.</p>
+    <pre class="docs-code-block" data-lang="js">
+      await Orion.deeplink.copy('invite', 'team-42');   // copies https://…/page#invite=team-42
+    </pre>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Orion.clipboard.copy(text | { text, html } | Blob | Element) → Promise&lt;boolean&gt;</td><td>Tries the async Clipboard API, falls back to <code>execCommand('copy')</code>.</td></tr>
+        <tr><td>Orion.clipboard.readText() → Promise&lt;string&gt;</td><td>Empty string when blocked.</td></tr>
+        <tr><td>Orion.clipboard.read() → Promise&lt;{ text, html, files, images }&gt;</td><td>Needs clipboard-read permission; prefer <code>onPaste</code> for a paste event.</td></tr>
+        <tr><td>Orion.clipboard.onPaste(target, handler, { preventDefault }) → off()</td><td><code>handler({ text, html, files, images, event })</code>; return <code>false</code> to prevent the default paste too.</td></tr>
+        <tr><td>Orion.clipboard.feedback(el, ok = true, text?)</td><td>Check-icon swap + bubble/tooltip + <code>announce()</code>; called automatically by the <code>copy</code> action and <code>&lt;o-copy&gt;</code>.</td></tr>
+        <tr><td>Orion.clipboard.supported / .canRead</td><td>Feature detection getters.</td></tr>
+        <tr><td>Orion.share(options) → Promise&lt;{ shared, method, network?, cancelled? }&gt;</td><td>Options: <code>title, text, url, files, networks, native ('auto'|true|false|'mobile'), anchor, heading</code>. <code>method</code>: <code>native | network | copy | qr | sheet</code>.</td></tr>
+        <tr><td>Orion.share.link(network, options) → string | null</td><td>Builds a network's share URL without opening anything.</td></tr>
+        <tr><td>Orion.share.networks.add(name, { label, glyph, url(data), self?, available?() })</td><td>Registers a custom network (e.g. Mastodon).</td></tr>
+        <tr><td>Orion.share.close()</td><td>Closes an open share sheet/popover.</td></tr>
+      </tbody>
+    </table>
+    <h3>Actions &amp; behaviors</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Applies to</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>data-o-action="copy"</td><td>button/link</td><td><code>data-o-value</code> (literal text) or <code>data-o-target</code> (element's value/text; add <code>data-o-copy-html</code> to also copy its HTML) and <code>data-o-copied</code> (custom confirmation text).</td></tr>
+        <tr><td>data-o-action="share"</td><td>button/link</td><td><code>data-o-url</code>, <code>data-o-title</code>, <code>data-o-text</code>, <code>data-o-networks</code>, <code>data-o-native</code> (<code>false</code>/<code>never</code> to disable the native sheet).</td></tr>
+      </tbody>
+    </table>
+    <h3>Elements</h3>
+    <table class="docs-api">
+      <thead><tr><th>Element</th><th>Attributes</th><th>Events</th></tr></thead>
+      <tbody>
+        <tr><td>&lt;o-copy&gt;</td><td><code>value</code>, <code>target</code> (selector), <code>variant</code> (<code>icon|button|input</code>), <code>label</code>, <code>size</code></td><td><code>o-before-copy</code> (cancelable), <code>o-copy</code> <code>{ text, success }</code></td></tr>
+        <tr><td>&lt;o-share&gt;</td><td><code>url</code>, <code>title</code>, <code>text</code>, <code>networks</code> (CSV or JSON array), <code>variant</code> (<code>button|icons</code>), <code>native</code> (<code>auto|mobile|never</code>), <code>label</code>, <code>size</code></td><td><code>o-before-share</code> (cancelable), <code>o-share</code> <code>{ shared, method, network? }</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

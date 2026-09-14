@@ -1,0 +1,47 @@
+/* ============================================================================
+ * Layout: containers, 12-column flex grid (.o-row/.o-col-*), CSS grid (.o-grid),
+ * stacks and clusters. Column/offset/gutter classes are generated (build/utilities.mjs).
+ * Breakpoints: sm 576 · md 768 · lg 992 · xl 1200 · xxl 1400
+ * ========================================================================== */
+.o-container, .o-container-fluid, .o-container-sm, .o-container-md, .o-container-lg, .o-container-xl, .o-container-xxl {
+  width: 100%; margin-inline: auto; padding-inline: var(--o-container-px, 1rem);
+}
+@media (min-width: 576px) { .o-container, .o-container-sm { max-width: 540px; } }
+@media (min-width: 768px) { .o-container, .o-container-sm, .o-container-md { max-width: 720px; } }
+@media (min-width: 992px) { .o-container, .o-container-sm, .o-container-md, .o-container-lg { max-width: 960px; } }
+@media (min-width: 1200px) { .o-container, .o-container-sm, .o-container-md, .o-container-lg, .o-container-xl { max-width: 1140px; } }
+@media (min-width: 1400px) { .o-container, .o-container-sm, .o-container-md, .o-container-lg, .o-container-xl, .o-container-xxl { max-width: var(--o-container-max); } }
+
+/* flex grid */
+.o-row {
+  --o-gx: 1.5rem; --o-gy: 0;
+  display: flex; flex-wrap: wrap;
+  margin-top: calc(-1 * var(--o-gy));
+  margin-inline: calc(-.5 * var(--o-gx));
+}
+.o-row > * { flex-shrink: 0; width: 100%; max-width: 100%; padding-inline: calc(var(--o-gx) * .5); margin-top: var(--o-gy); }
+
+/* CSS grid */
+.o-grid { display: grid; gap: var(--o-gap, 1rem); grid-template-columns: repeat(var(--o-cols, 12), minmax(0, 1fr)); }
+.o-grid-auto { display: grid; gap: var(--o-gap, 1rem); grid-template-columns: repeat(auto-fill, minmax(min(var(--o-min, 16rem), 100%), 1fr)); }
+.o-grid-auto-fit { display: grid; gap: var(--o-gap, 1rem); grid-template-columns: repeat(auto-fit, minmax(min(var(--o-min, 16rem), 100%), 1fr)); }
+
+/* composition primitives */
+.o-stack { display: flex; flex-direction: column; gap: var(--o-gap, 1rem); }
+.o-hstack { display: flex; align-items: center; gap: var(--o-gap, .75rem); }
+.o-cluster { display: flex; flex-wrap: wrap; align-items: center; gap: var(--o-gap, .5rem); }
+.o-center { display: flex; align-items: center; justify-content: center; }
+.o-between { display: flex; align-items: center; justify-content: space-between; gap: var(--o-gap, .75rem); }
+.o-spacer { flex: 1 1 auto; }
+.o-vr { align-self: stretch; width: 1px; min-height: 1em; background: var(--o-border); }
+
+/* page header (title + actions) */
+.o-page-header { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1rem; margin-bottom: 1.5rem; }
+.o-page-header > :first-child { flex: 1 1 auto; min-width: 0; }
+.o-page-header-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+
+/* ratio box */
+.o-ratio { position: relative; width: 100%; }
+.o-ratio::before { content: ""; display: block; padding-top: var(--o-ratio, 56.25%); }
+.o-ratio > * { position: absolute; inset: 0; width: 100%; height: 100%; }
+.o-ratio-1x1 { --o-ratio: 100%; } .o-ratio-4x3 { --o-ratio: 75%; } .o-ratio-16x9 { --o-ratio: 56.25%; } .o-ratio-21x9 { --o-ratio: 42.857%; }

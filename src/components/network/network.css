@@ -1,0 +1,11 @@
+/* <o-network-status variant="dot|badge|full"> */
+.o-network-status { display: inline-flex; align-items: center; vertical-align: middle; }
+.o-network-status[variant="full"] { display: block; }
+.o-network-status[variant="dot"] .o-status { width: .625rem; height: .625rem; }
+.o-net-badge > .o-icon { width: .9rem; height: .9rem; }
+.o-net-full { margin: 0; align-items: center; }
+.o-net-full > .o-icon { margin-top: 0; }
+.o-net-desc { font-size: var(--o-fs-sm); opacity: .9; }
+.o-net-meta { font-variant-numeric: tabular-nums; }
+.o-net-retry { margin-inline-start: auto; flex-shrink: 0; }
+@media (max-width: 575.98px) { .o-net-full { flex-wrap: wrap; } .o-net-retry { margin-inline-start: 2rem; } }

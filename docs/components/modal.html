@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modal — Orion Admin</title>
+<meta name="docs:section" content="Overlays &amp; Feedback">
+<meta name="docs:order" content="10">
+<meta name="docs:desc" content="Accessible dialogs: sizes, nested, static, scrollable, fullscreen, draggable, forms and Orion.modal()">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Modal</h1>
+    <p class="docs-lead"><code>&lt;o-modal&gt;</code> is a native <code>&lt;dialog&gt;</code> in the browser top layer (never clipped by its container) with focus trap and return, scroll lock, nesting, a cancelable close and enter/leave animations. Open it with an attribute, a data action or the <code>Orion.modal()</code> factory.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Basic</h2>
+    <p>Children become the body; an element with <code>slot="footer"</code> becomes the footer. <code>data-o-toggle="modal"</code> opens it and <code>data-o-dismiss="modal"</code> closes it (optionally with <code>data-o-value</code>).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-primary" id="demo-basic-btn" data-o-toggle="modal" data-o-target="#demo-basic">Open modal</button>
+        <o-modal id="demo-basic" heading="Invite teammates">
+          <p>Invited members get access to every project in this workspace. You can change their role at any time.</p>
+          <div class="o-field">
+            <label class="o-label" for="demo-basic-email">Email address</label>
+            <input class="o-input" id="demo-basic-email" type="email" placeholder="name@company.com">
+          </div>
+          <div slot="footer">
+            <button class="o-btn" data-o-dismiss="modal">Cancel</button>
+            <button class="o-btn o-btn-primary" id="demo-basic-send" data-o-dismiss="modal" data-o-value="sent">Send invite</button>
+          </div>
+        </o-modal>
+      </template>
+    </div>
+  </section>
+
+  <section id="sizes">
+    <h2>Sizes</h2>
+    <p><code>size="sm | md | lg | xl | full"</code> — 25rem, 35rem (default), 50rem, 71.25rem and the full viewport width. On small screens every size fits the viewport with a gutter.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn" data-o-toggle="modal" data-o-target="#demo-size-sm">Small</button>
+        <button class="o-btn" data-o-toggle="modal" data-o-target="#demo-size-lg">Large</button>
+        <button class="o-btn" data-o-toggle="modal" data-o-target="#demo-size-xl">Extra large</button>
+        <button class="o-btn" data-o-toggle="modal" data-o-target="#demo-size-full">Full width</button>
+        <o-modal id="demo-size-sm" size="sm" heading="Small modal"><p>A compact dialog for short confirmations.</p></o-modal>
+        <o-modal id="demo-size-lg" size="lg" heading="Large modal"><p>Room for a two-column form or a preview.</p><div class="o-form-grid"><div class="o-field"><label class="o-label" for="demo-lg-first">First name</label><input class="o-input" id="demo-lg-first"></div><div class="o-field"><label class="o-label" for="demo-lg-last">Last name</label><input class="o-input" id="demo-lg-last"></div></div></o-modal>
+        <o-modal id="demo-size-xl" size="xl" heading="Extra large modal"><p>Useful for tables, reports and side-by-side comparisons.</p></o-modal>
+        <o-modal id="demo-size-full" size="full" heading="Full width modal"><p>Spans the viewport width minus the gutter.</p></o-modal>
+      </template>
+    </div>
+  </section>
+
+  <section id="behaviour">
+    <h2>Centered, static &amp; forced choice</h2>
+    <p><code>centered</code> centers vertically. <code>static</code> keeps the modal open when the backdrop is clicked (it shakes instead). <code>closable="false"</code> removes the close button and ignores Escape and the backdrop, so the user must pick an action.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn" data-o-toggle="modal" data-o-target="#demo-centered">Centered</button>
+        <button class="o-btn" data-o-toggle="modal" data-o-target="#demo-static">Static backdrop</button>
+        <button class="o-btn" id="demo-forced-btn" data-o-toggle="modal" data-o-target="#demo-forced">Forced choice</button>
+        <o-modal id="demo-centered" heading="Centered" centered size="sm"><p>Vertically centered in the viewport.</p></o-modal>
+        <o-modal id="demo-static" heading="Static backdrop" static centered>
+          <p>Clicking outside does not close this modal. Use the button, the close icon or Escape.</p>
+          <div slot="footer"><button class="o-btn o-btn-primary" data-o-dismiss="modal">Got it</button></div>
+        </o-modal>
+        <o-modal id="demo-forced" heading="Accept the new terms" closable="false" centered>
+          <p>Our terms of service changed on 1 September. Please accept them to continue using the workspace.</p>
+          <div slot="footer"><button class="o-btn" data-o-dismiss="modal" data-o-value="later">Remind me later</button><button class="o-btn o-btn-primary" id="demo-forced-accept" data-o-dismiss="modal" data-o-value="accepted">Accept</button></div>
+        </o-modal>
+      </template>
+    </div>
+  </section>
+
+  <section id="scrolling">
+    <h2>Long content</h2>
+    <p>By default the whole dialog scrolls inside the viewport. With <code>scrollable</code> only the body scrolls and the header and footer stay visible.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn" data-o-toggle="modal" data-o-target="#demo-long">Page scroll</button>
+        <button class="o-btn" id="demo-scroll-btn" data-o-toggle="modal" data-o-target="#demo-scroll">Scrollable body</button>
+        <o-modal id="demo-long" heading="Terms of service"><div class="demo-lorem"></div></o-modal>
+        <o-modal id="demo-scroll" heading="Release notes" scrollable>
+          <div class="demo-lorem"></div>
+          <div slot="footer"><button class="o-btn o-btn-primary" data-o-dismiss="modal">Close</button></div>
+        </o-modal>
+        <script>
+          document.querySelectorAll('.demo-lorem').forEach(el => {
+            const p = 'Orion Admin keeps every overlay accessible: focus is trapped inside the dialog, returned to the trigger on close, and the page behind it is inert and cannot scroll.';
+            el.innerHTML = Array.from({ length: 14 }, (_, i) => `<h3 class="o-h6">Section ${i + 1}</h3><p>${p}</p>`).join('');
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="nested">
+    <h2>Nested modals</h2>
+    <p>A modal opened from inside another stacks above it. Escape closes only the top-most one, and closing a parent also closes its children.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn" id="demo-nest-btn" data-o-toggle="modal" data-o-target="#demo-nest-1">Open first</button>
+        <o-modal id="demo-nest-1" heading="Project settings" centered>
+          <p>Deleting the project removes every task and file.</p>
+          <button class="o-btn o-btn-soft-danger" id="demo-nest-open2" data-o-toggle="modal" data-o-target="#demo-nest-2">Delete project…</button>
+          <o-modal id="demo-nest-2" heading="Are you absolutely sure?" size="sm" centered>
+            <p>This is a nested modal. Press Escape to go back to the first one.</p>
+            <div slot="footer"><button class="o-btn" data-o-dismiss="modal">Back</button><button class="o-btn o-btn-danger" data-o-dismiss="modal">Delete</button></div>
+          </o-modal>
+        </o-modal>
+      </template>
+    </div>
+  </section>
+
+  <section id="form">
+    <h2>Form with validation</h2>
+    <p>Validate before closing: the Save button checks the form and the modal is only closed with the data when it is valid. A cancelable <code>o-before-close</code> asks before discarding unsaved changes.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-primary" id="demo-form-btn" data-o-toggle="modal" data-o-target="#demo-form"><o-icon name="plus"></o-icon> New customer</button>
+        <o-modal id="demo-form" heading="New customer" size="lg">
+          <form id="demo-form-el" class="o-validate" novalidate>
+            <div class="o-form-grid">
+              <div class="o-field"><label class="o-label is-required" for="demo-f-name">Full name</label><input class="o-input" id="demo-f-name" name="name" required minlength="2"><div class="o-error">Enter at least 2 characters</div></div>
+              <div class="o-field"><label class="o-label is-required" for="demo-f-email">Email</label><input class="o-input" id="demo-f-email" name="email" type="email" required><div class="o-error">Enter a valid email address</div></div>
+              <div class="o-field"><label class="o-label" for="demo-f-plan">Plan</label><select class="o-select" id="demo-f-plan" name="plan"><option>Starter</option><option selected>Growth</option><option>Enterprise</option></select></div>
+              <div class="o-field"><label class="o-label" for="demo-f-seats">Seats</label><input class="o-input" id="demo-f-seats" name="seats" type="number" min="1" max="500" value="5"></div>
+            </div>
+          </form>
+          <div slot="footer"><button class="o-btn" data-o-dismiss="modal">Cancel</button><button class="o-btn o-btn-primary" id="demo-form-save" type="button">Save customer</button></div>
+        </o-modal>
+        <div class="docs-log" id="demo-form-log" style="width:100%"></div>
+        <script>
+          (() => {
+            const m = document.getElementById('demo-form'), f = document.getElementById('demo-form-el');
+            let dirty = false;
+            f.addEventListener('input', () => { dirty = true; });
+            const markInvalid = () => f.querySelectorAll('.o-input').forEach(i => i.closest('.o-field').classList.toggle('is-invalid', !i.checkValidity()));
+            document.getElementById('demo-form-save').addEventListener('click', () => {
+              markInvalid();
+              if (!f.checkValidity()) { f.querySelector(':invalid').focus(); return; }
+              dirty = false;
+              m.close(Object.fromEntries(new FormData(f)));
+            });
+            m.addEventListener('o-before-close', e => {
+              if (e.target !== m || !dirty || e.detail.value) return;
+              e.preventDefault();
+              Orion.confirm({ title: 'Discard changes?', text: 'The customer has not been saved.', confirmText: 'Discard', danger: true }).then(ok => { if (ok) { dirty = false; m.close(); } });
+            });
+            m.addEventListener('o-closed', e => {
+              if (e.target !== m) return;
+              if (e.detail.value) docs.log('#demo-form-log', 'saved ' + JSON.stringify(e.detail.value));
+              f.reset(); f.querySelectorAll('.o-field').forEach(x => x.classList.remove('is-invalid'));
+            });
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="fullscreen">
+    <h2>Fullscreen</h2>
+    <p><code>fullscreen="sm"</code> (or <code>md</code>, <code>lg</code>) makes the modal edge-to-edge below that breakpoint — ideal for forms on phones. <code>fullscreen</code> with no value is always fullscreen.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn" id="demo-fs-sm-btn" data-o-toggle="modal" data-o-target="#demo-fs-sm">Fullscreen below 576px</button>
+        <button class="o-btn" data-o-toggle="modal" data-o-target="#demo-fs-always">Always fullscreen</button>
+        <o-modal id="demo-fs-sm" heading="Edit address" fullscreen="sm" scrollable>
+          <div class="o-field"><label class="o-label" for="demo-fs-street">Street</label><input class="o-input" id="demo-fs-street" value="12 Jalan Ampang"></div>
+          <div class="o-field"><label class="o-label" for="demo-fs-city">City</label><input class="o-input" id="demo-fs-city" value="Kuala Lumpur"></div>
+          <div class="o-field"><label class="o-label" for="demo-fs-zip">Postcode</label><input class="o-input" id="demo-fs-zip" value="50450"></div>
+          <div slot="footer"><button class="o-btn" data-o-dismiss="modal">Cancel</button><button class="o-btn o-btn-primary" data-o-dismiss="modal">Save</button></div>
+        </o-modal>
+        <o-modal id="demo-fs-always" heading="Report preview" fullscreen>
+          <p>A fullscreen modal works well for previews and editors.</p>
+          <div class="o-skeleton o-skeleton-img" style="max-width:48rem"></div>
+        </o-modal>
+      </template>
+    </div>
+  </section>
+
+  <section id="draggable-loading">
+    <h2>Draggable &amp; loading</h2>
+    <p><code>draggable</code> lets users move the dialog by its header (it stays inside the viewport). The <code>loading</code> property shows an overlay spinner while work is in progress.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn" data-o-toggle="modal" data-o-target="#demo-drag">Draggable</button>
+        <button class="o-btn" id="demo-load-btn">Load details</button>
+        <o-modal id="demo-drag" heading="Drag me by the header" draggable size="sm"><p>Move this dialog to see the content behind it.</p></o-modal>
+        <o-modal id="demo-load" heading="Order #10482" size="sm">
+          <dl class="o-dl"><dt>Customer</dt><dd>Aisha Rahman</dd><dt>Total</dt><dd>RM 1,284.00</dd><dt>Status</dt><dd><span class="o-badge o-badge-soft-success">Paid</span></dd></dl>
+        </o-modal>
+        <script>
+          document.getElementById('demo-load-btn').addEventListener('click', e => {
+            const m = document.getElementById('demo-load');
+            m.open(e.currentTarget);
+            m.loading = true;
+            setTimeout(() => { m.loading = false; }, 1200);
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="programmatic">
+    <h2>Programmatic modal</h2>
+    <p><code>Orion.modal()</code> builds a modal on the fly and returns a handle with a <code>result</code> promise. Buttons can be async (the button shows a spinner) and <code>submit: true</code> validates the form in the body and resolves with its data.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-primary" id="demo-prog-btn">Rename project</button>
+        <button class="o-btn" id="demo-prog-choice">Choose export format</button>
+        <div class="docs-log" id="demo-prog-log" style="width:100%"></div>
+        <script>
+          document.getElementById('demo-prog-btn').addEventListener('click', async () => {
+            const m = Orion.modal({
+              title: 'Rename project',
+              content: `<form><div class="o-field"><label class="o-label" for="demo-prog-name">Project name</label>
+                <input class="o-input" id="demo-prog-name" name="name" value="Website redesign" required minlength="3"></div></form>`,
+              buttons: [
+                { text: 'Cancel', value: null },
+                { text: 'Rename', variant: 'primary', submit: true, onClick: () => new Promise(r => setTimeout(r, 700)) },
+              ],
+            });
+            docs.log('#demo-prog-log', 'result: ' + JSON.stringify(await m.result));
+          });
+          document.getElementById('demo-prog-choice').addEventListener('click', async () => {
+            const m = Orion.modal({
+              title: 'Export format', size: 'sm', centered: true,
+              content: '<p class="o-muted o-mb-0">Choose the file type for the report.</p>',
+              buttons: [{ text: 'CSV', value: 'csv' }, { text: 'Excel', value: 'xlsx' }, { text: 'PDF', variant: 'primary', value: 'pdf', autofocus: true }],
+            });
+            docs.log('#demo-prog-log', 'format: ' + (await m.result));
+          });
+        </script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+      const m = Orion.modal({
+        title: 'Invite member',
+        content: document.querySelector('#invite-form-template').content.cloneNode(true),
+        size: 'md', centered: true, backdrop: 'static', fullscreen: 'sm',
+        buttons: [
+          { text: 'Cancel', value: null },
+          { text: 'Invite', variant: 'primary', submit: true, onClick: (handle, event, data) => api.invite(data) },
+        ],
+        onClose: (value, reason) => console.log(value, reason),
+      });
+      m.setLoading(true); m.setTitle('Inviting…'); m.close('done');
+      const value = await m.result;
+    </pre>
+  </section>
+
+  <section id="events">
+    <h2>Events</h2>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn" data-o-toggle="modal" data-o-target="#demo-events">Open and watch the log</button>
+        <o-modal id="demo-events" heading="Event demo" size="sm"><p>Close it any way you like.</p><div slot="footer"><button class="o-btn o-btn-primary" data-o-dismiss="modal" data-o-value="ok">OK</button></div></o-modal>
+        <div class="docs-log" id="demo-events-log" style="width:100%"></div>
+        <script>
+          ['o-open', 'o-opened', 'o-before-close', 'o-close', 'o-closed'].forEach(n => document.getElementById('demo-events').addEventListener(n, e => docs.log('#demo-events-log', n + (e.detail && e.detail.reason ? ' reason=' + e.detail.reason : '') + (e.detail && e.detail.value !== undefined ? ' value=' + e.detail.value : ''))));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Attributes &amp; properties</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>open / isOpen</td><td>boolean</td><td>false</td><td>Open state, reflected. Frameworks may set <code>el.open = true</code>.</td></tr>
+        <tr><td>heading</td><td>string</td><td></td><td>Title (used as the accessible name).</td></tr>
+        <tr><td>label</td><td>string</td><td></td><td>Accessible name when there is no heading.</td></tr>
+        <tr><td>size</td><td>sm | md | lg | xl | full</td><td>md</td><td>Width.</td></tr>
+        <tr><td>centered</td><td>boolean</td><td>false</td><td>Vertically centered.</td></tr>
+        <tr><td>static</td><td>boolean</td><td>false</td><td>Backdrop click does not close (shake).</td></tr>
+        <tr><td>closable</td><td>boolean</td><td>true</td><td><code>closable="false"</code>: no close button, Escape or backdrop close.</td></tr>
+        <tr><td>scrollable</td><td>boolean</td><td>false</td><td>Only the body scrolls.</td></tr>
+        <tr><td>fullscreen</td><td>sm | md | lg | always</td><td></td><td>Edge-to-edge below the breakpoint, or always.</td></tr>
+        <tr><td>draggable</td><td>boolean</td><td>false</td><td>Move by the header.</td></tr>
+        <tr><td>backdrop</td><td>boolean</td><td>true</td><td><code>backdrop="false"</code> hides the dimmed backdrop.</td></tr>
+        <tr><td>loading</td><td>boolean</td><td>false</td><td>Overlay spinner.</td></tr>
+        <tr><td>texts</td><td>object</td><td></td><td>Per-instance strings <code>{ close, loading }</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>Slots, methods &amp; actions</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>slot="footer" / .o-modal-footer</td><td>Footer content (buttons).</td></tr>
+        <tr><td>slot="header"</td><td>Replaces the title area (close button kept).</td></tr>
+        <tr><td>open(trigger?)</td><td>Open; the trigger is used for nesting and focus return.</td></tr>
+        <tr><td>close(value?)</td><td>Request close (cancelable through <code>o-before-close</code>).</td></tr>
+        <tr><td>toggle(trigger?)</td><td>Toggle.</td></tr>
+        <tr><td>returnValue</td><td>Value of the last close.</td></tr>
+        <tr><td>data-o-toggle="modal"</td><td>With <code>data-o-target="#id"</code> or <code>href="#id"</code>.</td></tr>
+        <tr><td>data-o-dismiss="modal"</td><td>Close the nearest modal; <code>data-o-value</code> becomes the value.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-open</td><td>{ trigger }</td><td>Before opening. Cancelable.</td></tr>
+        <tr><td>o-opened</td><td>{}</td><td>After the enter animation.</td></tr>
+        <tr><td>o-before-close</td><td>{ reason, value }</td><td>Cancelable. Reasons: escape, backdrop, close-button, dismiss, button, api, parent, native.</td></tr>
+        <tr><td>o-close</td><td>{ reason, value }</td><td>Closing starts.</td></tr>
+        <tr><td>o-closed</td><td>{ reason, value }</td><td>After the leave animation and focus return. Events bubble: check <code>e.target</code> with nested modals.</td></tr>
+      </tbody>
+    </table>
+    <h3>Orion.modal(options) → handle</h3>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>title, content</td><td>Title text; content as trusted HTML string, Node, SafeHTML or function returning a Node.</td></tr>
+        <tr><td>size, centered, scrollable, fullscreen, draggable</td><td>As the attributes.</td></tr>
+        <tr><td>backdrop</td><td><code>true</code> | <code>'static'</code> | <code>false</code>.</td></tr>
+        <tr><td>closable, className, label</td><td>Close affordances, extra class on the dialog, accessible name.</td></tr>
+        <tr><td>buttons</td><td><code>[{ text, variant, value, close = true, onClick(handle, event, data), submit, icon, autofocus, disabled }]</code>.</td></tr>
+        <tr><td>onOpen(handle), onClose(value, reason)</td><td>Callbacks.</td></tr>
+        <tr><td>handle</td><td><code>{ el, close(value), result, setTitle(s), setContent(c), setLoading(bool), setButtons(list), body, footer }</code></td></tr>
+      </tbody>
+    </table>
+    <h3>Keyboard</h3>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Tab / Shift+Tab</td><td>Move focus; it stays inside the dialog.</td></tr>
+        <tr><td>Escape</td><td>Close the top-most modal (inner menus and pickers close first).</td></tr>
+        <tr><td>Enter / Space</td><td>Activate the focused button.</td></tr>
+      </tbody>
+    </table>
+    <h3>Frameworks</h3>
+    <p>React 19, Vue and Angular can bind <code>open</code> as a property (<code>&lt;o-modal open={isOpen}&gt;</code>) and listen to <code>o-close</code>/<code>o-closed</code> to sync state back. Children are moved into the dialog body: keep one stable wrapper element per slot when the framework re-renders them.</p>
+  </section>
+</main>
+</body>
+</html>

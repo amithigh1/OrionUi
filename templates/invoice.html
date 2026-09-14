@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Invoice — Orion Admin</title>
+<script src="../dist/orion.js"></script>
+<link rel="stylesheet" href="assets/shell.css">
+<style>
+  .inv { max-width: 52rem; }
+  .inv-paper { padding: clamp(1.25rem, 4vw, 3rem); }
+  .inv-title { font-size: 2rem; font-weight: 750; letter-spacing: -.02em; margin: 0; }
+  .inv-meta { display: grid; gap: 1.5rem; grid-template-columns: 1fr; }
+  @media (min-width: 768px) { .inv-meta { grid-template-columns: 1fr 1fr auto; } }
+  .inv-totals { margin-inline-start: auto; width: min(20rem, 100%); }
+  .inv-totals .o-between { padding: .375rem 0; }
+  .inv-totals .inv-grand { border-top: 2px solid var(--o-border-strong); margin-top: .5rem; padding-top: .75rem; font-size: var(--o-fs-lg); font-weight: 700; }
+</style>
+<script>
+  window.PAGE = {
+    id: 'invoice', title: 'Invoice INV-2031', subtitle: 'Issued 12 Sep 2026 · Due 26 Sep 2026',
+    breadcrumbs: [{ label: 'Home', href: 'dashboard.html' }, { label: 'Commerce' }, { label: 'Invoices', href: 'invoice.html' }, { label: 'INV-2031' }],
+    actions: '<button class="o-btn" id="inv-print"><o-icon name="printer"></o-icon>Print</button>'
+      + '<button class="o-btn" id="inv-pdf"><o-icon name="download"></o-icon>PDF</button>'
+      + '<button class="o-btn o-btn-primary" id="inv-send"><o-icon name="send"></o-icon>Send invoice</button>',
+  };
+</script>
+<script src="assets/shell.js" defer></script>
+</head>
+<body>
+<div id="app-content">
+  <div class="o-card inv" id="invoice-paper">
+    <div class="o-card-body inv-paper">
+      <div class="o-between o-mb-6" style="align-items:flex-start">
+        <div>
+          <div class="o-hstack o-mb-3"><span class="o-avatar o-avatar-square o-c-primary"><o-icon name="sparkles"></o-icon></span><b class="o-text-lg">Orion Labs Sdn Bhd</b></div>
+          <div class="o-text-muted o-text-sm">Level 12, Menara Aurora<br>Jalan Ampang, 50450 Kuala Lumpur<br>Malaysia · SST: W10-1234-56789</div>
+        </div>
+        <div class="o-text-end">
+          <p class="inv-title">Invoice</p>
+          <div class="o-text-muted">INV-2031</div>
+          <span class="o-badge o-badge-soft-warning o-mt-2">Awaiting payment</span>
+        </div>
+      </div>
+
+      <div class="inv-meta o-mb-6">
+        <div><div class="o-eyebrow o-mb-1">Billed to</div>
+          <b>Globex Corporation</b><div class="o-text-muted o-text-sm">Attn: Mei Lin<br>88 Robinson Road, #12-01<br>Singapore 068898</div></div>
+        <div><div class="o-eyebrow o-mb-1">Payment details</div>
+          <div class="o-text-sm"><div class="o-between"><span class="o-text-muted">Invoice date</span><span>12 Sep 2026</span></div>
+            <div class="o-between"><span class="o-text-muted">Due date</span><span>26 Sep 2026</span></div>
+            <div class="o-between"><span class="o-text-muted">Terms</span><span>Net 14</span></div>
+            <div class="o-between"><span class="o-text-muted">Currency</span><span>USD</span></div></div></div>
+        <div><div class="o-eyebrow o-mb-1">Amount due</div>
+          <div class="o-stat-value" id="inv-due">—</div><div class="o-text-muted o-text-sm">by 26 Sep 2026</div></div>
+      </div>
+
+      <div class="o-table-wrap o-mb-4">
+        <table class="o-table o-table-sm o-table-stack">
+          <thead><tr><th>Description</th><th class="o-num">Qty</th><th class="o-num">Unit price</th><th class="o-num">Amount</th></tr></thead>
+          <tbody id="inv-lines"></tbody>
+        </table>
+      </div>
+
+      <div class="inv-totals o-mb-6" id="inv-totals"></div>
+
+      <div class="o-callout o-c-primary">
+        <b>Payment instructions.</b> Transfer to Orion Labs Sdn Bhd · Maybank 5141 2233 4455 · SWIFT MBBEMYKL.
+        Please quote <b>INV-2031</b> as the payment reference.
+      </div>
+      <p class="o-text-muted o-text-sm o-mt-4 o-mb-0">Questions? Email billing@orionlabs.example or call +60 3-1234 5678.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const F = Orion.format;
+    const LINES = [
+      { desc: 'Orion Admin — Team plan (annual)', detail: '25 seats · 12 Sep 2026 – 11 Sep 2027', qty: 25, price: 96 },
+      { desc: 'Priority support add-on', detail: 'Business hours, 4h response', qty: 1, price: 1200 },
+      { desc: 'Implementation workshop', detail: 'Two half-day remote sessions', qty: 2, price: 850 },
+      { desc: 'Custom theme package', qty: 1, price: 640 },
+    ];
+    const sub = LINES.reduce((s, l) => s + l.qty * l.price, 0);
+    const discount = -sub * 0.05, taxable = sub + discount, tax = taxable * 0.08, total = taxable + tax;
+
+    document.getElementById('inv-lines').innerHTML = LINES.map(l => `
+      <tr><td data-label="Description"><b>${l.desc}</b>${l.detail ? `<div class="o-text-muted o-text-xs">${l.detail}</div>` : ''}</td>
+        <td data-label="Qty" class="o-num">${l.qty}</td>
+        <td data-label="Unit price" class="o-num">${F.currency(l.price)}</td>
+        <td data-label="Amount" class="o-num">${F.currency(l.qty * l.price)}</td></tr>`).join('');
+
+    document.getElementById('inv-totals').innerHTML = `
+      <div class="o-between"><span class="o-text-muted">Subtotal</span><span>${F.currency(sub)}</span></div>
+      <div class="o-between"><span class="o-text-muted">Volume discount (5%)</span><span class="o-text-success">${F.currency(discount)}</span></div>
+      <div class="o-between"><span class="o-text-muted">SST (8%)</span><span>${F.currency(tax)}</span></div>
+      <div class="o-between inv-grand"><span>Total due</span><span>${F.currency(total)}</span></div>`;
+    document.getElementById('inv-due').textContent = F.currency(total);
+
+    const paper = document.getElementById('invoice-paper');
+    document.getElementById('inv-print')?.addEventListener('click', () =>
+      Orion.printPreview ? Orion.printPreview(paper, { title: 'Invoice INV-2031' })
+        : Orion.print ? Orion.print(paper, { title: 'Invoice INV-2031' }) : window.print());
+    document.getElementById('inv-pdf')?.addEventListener('click', () => {
+      if (!Orion.export?.pdf) return Orion.toast?.('Load the data package for PDF export');
+      Orion.export.pdf(LINES.map(l => ({ ...l, amount: l.qty * l.price })), {
+        columns: [{ key: 'desc', title: 'Description' }, { key: 'qty', title: 'Qty' },
+          { key: 'price', title: 'Unit price', format: v => F.currency(v) }, { key: 'amount', title: 'Amount', format: v => F.currency(v) }],
+        title: 'Invoice INV-2031', subtitle: 'Orion Labs Sdn Bhd → Globex Corporation · Total ' + F.currency(total), filename: 'INV-2031.pdf',
+      });
+    });
+    document.getElementById('inv-send')?.addEventListener('click', async () => {
+      const to = Orion.prompt ? await Orion.prompt({ title: 'Send invoice', label: 'Recipient email', value: 'mei.lin@globex.example', inputType: 'email', required: true }) : 'mei.lin@globex.example';
+      if (to) Orion.toast?.success(`Invoice sent to ${to}`);
+    });
+  });
+</script>
+</body>
+</html>

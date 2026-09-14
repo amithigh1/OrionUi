@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PDF Generator — Orion Admin</title>
+<meta name="docs:section" content="Data">
+<meta name="docs:order" content="65">
+<meta name="docs:desc" content="Dependency-free PDF 1.4 documents: text, shapes, images, links, tables across pages">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>PDF Generator</h1>
+    <p class="docs-lead"><code>new Orion.PDF()</code> writes real PDF 1.4 files in the browser (and in Node): wrapped and justified text with exact Helvetica/Times metrics, shapes, JPEG and canvas images, links, headers and footers with “Page 1 of N”, and data tables that break across pages with a repeating header. Coordinates start at the top-left corner.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Your first document</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-primary o-btn-sm" id="pdf1-preview"><o-icon name="eye"></o-icon> Preview</button>
+          <button class="o-btn o-btn-sm" id="pdf1-save"><o-icon name="download"></o-icon> Download</button>
+          <span class="o-muted o-text-sm" id="pdf1-info"></span>
+        </div>
+        <iframe class="o-w-100 o-rounded o-border" id="pdf1-frame" title="PDF preview" style="height: 30rem; background: var(--o-surface-3)"></iframe>
+        <script>
+          (() => {
+            const build = () => {
+              const pdf = new Orion.PDF({ size: 'A4', margin: 48, title: 'Hello from Orion', author: 'Orion docs' });
+              pdf.text('Hello, PDF!', 48, 48, { size: 26, bold: true, color: '#4f46e5' });
+              pdf.text('Generated in your browser — no server, no libraries.', 48, 86, { size: 12, color: '#64748b' });
+              pdf.rect(48, 120, pdf.contentWidth, 90, { fill: '#eef2ff', stroke: '#c7d2fe', radius: 10 });
+              pdf.text('Text wraps inside maxWidth using the real Adobe font metrics, so centred and right-aligned text lines up exactly. “Smart quotes”, €uro signs, bullets • and dashes — are part of the WinAnsi character set.', 64, 136, { maxWidth: pdf.contentWidth - 32, size: 11, lineHeight: 1.45 });
+              pdf.text('Visit the docs', 48, 232, { color: '#2563eb', underline: true, link: 'https://example.com/docs' });
+              pdf.write('\n' + 'Flowing text continues at the cursor, wraps to the content width and moves to a new page when it reaches the bottom margin. '.repeat(3), { size: 11, align: 'justify', gapBefore: 30 });
+              return pdf;
+            };
+            const frame = document.getElementById('pdf1-frame');
+            const show = async () => { const pdf = build(), blob = await pdf.toBlob(); URL.revokeObjectURL(frame.dataset.url || ''); frame.dataset.url = URL.createObjectURL(blob); frame.src = frame.dataset.url + '#view=FitH'; document.getElementById('pdf1-info').textContent = `${pdf.pageCount} page · ${Orion.util.formatBytes(blob.size)}`; };
+            document.getElementById('pdf1-preview').onclick = show;
+            document.getElementById('pdf1-save').onclick = () => build().save('hello.pdf');
+            show();
+          })();
+        </script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+      const pdf = new Orion.PDF({ size: 'A4', orientation: 'portrait', margin: 48, title: 'Invoice 1042' });
+      pdf.text('Hello, PDF!', 48, 48, { size: 26, bold: true, color: '#4f46e5' });
+      pdf.rect(48, 120, pdf.contentWidth, 90, { fill: '#eef2ff', radius: 10 });
+      pdf.text(longText, 64, 136, { maxWidth: 400, align: 'justify' });
+      await pdf.save('hello.pdf');          // or: const blob = await pdf.toBlob();
+    </pre>
+  </section>
+
+  <section id="text-shapes">
+    <h2>Text &amp; shapes</h2>
+    <p>Standard fonts <code>Helvetica</code>, <code>Times</code> and <code>Courier</code> with bold and italic; alignment, justification, line height, underline, strike-through, rotation and opacity; lines, dashed lines, rectangles with rounded corners, circles, ellipses and polygons.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3"><button class="o-btn o-btn-sm" id="pdf2-save"><o-icon name="download"></o-icon> Download</button></div>
+        <iframe class="o-w-100 o-rounded o-border" id="pdf2-frame" title="Text and shapes PDF" style="height: 30rem; background: var(--o-surface-3)"></iframe>
+        <script>
+          (async () => {
+            const build = () => {
+              const pdf = new Orion.PDF({ size: 'A4', orientation: 'landscape', margin: 40 });
+              const fonts = [['Helvetica', ''], ['Helvetica', 'bold'], ['Helvetica', 'italic'], ['Times', ''], ['Times', 'bold italic'], ['Courier', '']];
+              fonts.forEach(([f, st], i) => pdf.text(`${f} ${st || 'regular'} — The quick brown fox jumps over the lazy dog`, 40, 40 + i * 20, { font: f, bold: /bold/.test(st), italic: /italic/.test(st), size: 12 }));
+              const box = (x, align) => { pdf.rect(x, 180, 170, 110, { stroke: '#cbd5e1', dash: [3, 2] }); pdf.text(`${align}: Orion places each line using the real glyph widths of the font.`, x + 8, 188, { maxWidth: 154, align, size: 10, lineHeight: 1.4 }); };
+              box(40, 'left'); box(225, 'center'); box(410, 'right'); box(595, 'justify');
+              pdf.text('Underlined', 40, 315, { underline: true, size: 12 });
+              pdf.text('Struck through', 140, 315, { strike: true, size: 12, color: '#dc2626' });
+              pdf.text('DRAFT', 640, 470, { size: 60, bold: true, color: '#94a3b8', opacity: 0.35, angle: 25 });
+              pdf.line(40, 350, 780, 350, { color: '#4f46e5', width: 2 });
+              pdf.line(40, 360, 780, 360, { color: '#94a3b8', dash: [6, 3] });
+              pdf.rect(40, 380, 120, 70, { fill: '#e0e7ff' });
+              pdf.rect(180, 380, 120, 70, { fill: '#dcfce7', stroke: '#16a34a', radius: 14, width: 1.5 });
+              pdf.circle(360, 415, 35, { fill: '#fde68a', stroke: '#d97706' });
+              pdf.ellipse(470, 415, 55, 30, { fill: '#fbcfe8' });
+              pdf.polygon([[560, 450], [600, 380], [640, 450]], { fill: '#bae6fd', stroke: '#0284c7' });
+              pdf.rect(680, 380, 100, 70, { fill: '#4f46e5', opacity: 0.5, radius: 6 });
+              return pdf;
+            };
+            const frame = document.getElementById('pdf2-frame');
+            frame.src = await build().toObjectURL() + '#view=FitH';
+            document.getElementById('pdf2-save').onclick = () => build().save('text-and-shapes.pdf');
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="images">
+    <h2>Images</h2>
+    <p>JPEG bytes and <code>data:image/jpeg</code> URLs are embedded as-is (DCTDecode). Canvases, <code>&lt;img&gt;</code> elements, <code>ImageBitmap</code>s and PNG files are converted to RGB with a soft mask for transparency (FlateDecode). URLs and Blobs are fetched while the file is generated; pass <code>width</code> and/or <code>height</code> (aspect ratio is kept) and <code>fit: 'contain' | 'cover'</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3"><button class="o-btn o-btn-sm" id="pdf3-save"><o-icon name="download"></o-icon> Download</button></div>
+        <iframe class="o-w-100 o-rounded o-border" id="pdf3-frame" title="Images PDF" style="height: 26rem; background: var(--o-surface-3)"></iframe>
+        <script>
+          (async () => {
+            // a small bar chart drawn on a canvas (transparent background)
+            const cv = document.createElement('canvas'); cv.width = 480; cv.height = 240;
+            const g = cv.getContext('2d'), data = [42, 58, 35, 71, 64, 88, 77];
+            data.forEach((v, i) => { g.fillStyle = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7'][i]; g.beginPath(); g.roundRect(20 + i * 65, 220 - v * 2.2, 46, v * 2.2, 6); g.fill(); });
+            // a JPEG photo-like gradient
+            const jp = document.createElement('canvas'); jp.width = 320; jp.height = 200;
+            const j = jp.getContext('2d'), gr = j.createLinearGradient(0, 0, 320, 200);
+            gr.addColorStop(0, '#312e81'); gr.addColorStop(1, '#0ea5e9'); j.fillStyle = gr; j.fillRect(0, 0, 320, 200);
+            j.fillStyle = '#fff'; j.font = 'bold 28px sans-serif'; j.fillText('JPEG passthrough', 24, 110);
+            const jpeg = jp.toDataURL('image/jpeg', 0.9);
+            const build = () => {
+              const pdf = new Orion.PDF({ margin: 40 });
+              pdf.text('Canvas (with transparency)', 40, 40, { bold: true });
+              pdf.rect(40, 60, 260, 140, { fill: '#f1f5f9', radius: 8 });
+              pdf.image(cv, 50, 70, { width: 240 });
+              pdf.text('JPEG data URL', 320, 40, { bold: true });
+              pdf.image(jpeg, 320, 60, { width: 230 });
+              pdf.text('fit: contain inside a fixed box', 40, 230, { bold: true });
+              pdf.rect(40, 250, 200, 80, { stroke: '#94a3b8', dash: [3, 2] });
+              pdf.image(jpeg, 40, 250, { width: 200, height: 80, fit: 'contain' });
+              pdf.text('fit: cover', 320, 230, { bold: true });
+              pdf.image(jpeg, 320, 250, { width: 230, height: 80, fit: 'cover' });
+              return pdf;
+            };
+            document.getElementById('pdf3-frame').src = await build().toObjectURL() + '#view=FitH';
+            document.getElementById('pdf3-save').onclick = () => build().save('images.pdf');
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="tables">
+    <h2>Tables across pages</h2>
+    <p><code>pdf.table()</code> measures columns (or uses <code>width</code> / <code>columnWidths</code>, numbers or percentages), wraps cell text, repeats the header on every page and right-aligns numbers. <code>header</code> and <code>footer</code> callbacks run for every page when the file is written, so page counts are exact. Use <code>await pdf.tableAsync()</code> for thousands of rows.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3"><button class="o-btn o-btn-sm" id="pdf4-save"><o-icon name="download"></o-icon> Download</button><span class="o-muted o-text-sm" id="pdf4-info"></span></div>
+        <iframe class="o-w-100 o-rounded o-border" id="pdf4-frame" title="Table PDF" style="height: 32rem; background: var(--o-surface-3)"></iframe>
+        <script>
+          (async () => {
+            const rows = docs.people(180);
+            const build = async () => {
+              const pdf = new Orion.PDF({
+                margin: [56, 40, 48, 40], title: 'Staff list',
+                header: (p, i) => p.text('ACME Corp · Staff list', 40, 26, { size: 8, color: '#64748b' }),
+                footer: (p, i) => p.text(`Page ${i.page} of ${i.pages}`, i.width - 40, i.height - 30, { size: 8, color: '#64748b', align: 'right' }),
+              });
+              pdf.text('Staff list', 40, 56, { size: 18, bold: true });
+              pdf.y = 86;
+              await pdf.tableAsync({
+                rows, fontSize: 8.5, zebra: true,
+                columns: [
+                  { key: 'id', title: '#', width: 28 },
+                  { key: 'name', title: 'Name' },
+                  { key: 'email', title: 'Email' },
+                  { key: 'department', title: 'Department' },
+                  { key: 'country', title: 'Country' },
+                  { key: 'salary', title: 'Salary', type: 'currency' },
+                  { key: 'joined', title: 'Joined', type: 'date' },
+                ],
+                cellStyle: (v, row, col) => (col.key === 'salary' && row.salary > 130000 ? { color: '#15803d', bold: true } : null),
+              });
+              return pdf;
+            };
+            const pdf = await build();
+            document.getElementById('pdf4-frame').src = await pdf.toObjectURL() + '#view=FitH';
+            document.getElementById('pdf4-info').textContent = `${rows.length} rows · ${pdf.pageCount} pages`;
+            document.getElementById('pdf4-save').onclick = async () => (await build()).save('staff.pdf');
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="report">
+    <h2>One-call report</h2>
+    <p><code>Orion.export.pdf(rows, options)</code> builds a complete report: logo, title, subtitle, generation date, record count, accent rule, the table with a repeating header, an optional totals row and “Page X of N” footers. <code>orientation: 'auto'</code> switches to landscape when the table is wide.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-primary" id="pdf5"><o-icon name="download"></o-icon> Sales report.pdf</button>
+        <script>
+          (() => {
+            const logo = (() => { const c = document.createElement('canvas'); c.width = c.height = 96; const g = c.getContext('2d'); g.fillStyle = '#4f46e5'; g.beginPath(); g.roundRect(0, 0, 96, 96, 22); g.fill(); g.fillStyle = '#fff'; g.font = 'bold 54px sans-serif'; g.textAlign = 'center'; g.fillText('O', 48, 68); return c; })();
+            const r = docs.rand(4), regions = ['Americas', 'Europe', 'Asia Pacific', 'Middle East'];
+            const rows = Array.from({ length: 64 }, (_, i) => ({ order: 10400 + i, date: new Date(2026, 0, 1 + i * 3), region: regions[i % 4], customer: docs.people(64)[i].name, units: 1 + Math.floor(r() * 40), revenue: Math.round(2000 + r() * 48000), margin: 0.08 + r() * 0.3 }));
+            document.getElementById('pdf5').onclick = () => Orion.export.pdf(rows, {
+              title: 'Quarterly sales report', subtitle: 'Q1 2026 · all regions · confidential', logo, filename: 'sales-report', totals: true,
+              columns: [{ key: 'order', title: 'Order' }, { key: 'date', title: 'Date', type: 'date' }, { key: 'region', title: 'Region' }, { key: 'customer', title: 'Customer' }, { key: 'units', title: 'Units', type: 'integer' }, { key: 'revenue', title: 'Revenue', type: 'currency' }, { key: 'margin', title: 'Margin', type: 'percent', decimals: 1 }],
+            });
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="unicode">
+    <h2>Character set &amp; Unicode</h2>
+    <div class="o-alert o-alert-warning">
+      <o-icon name="alert-triangle"></o-icon>
+      <div class="o-alert-content">
+        <p class="o-alert-title">Latin text only</p>
+        <p>To stay dependency-free and small, text uses the 14 standard PDF fonts, which every viewer has built in, with WinAnsi encoding: ASCII, Latin-1 (é ü ñ ß ø …) and the Windows-1252 extras (€ ‘ ’ “ ” • – — … ™ Š Œ Ÿ). Accented letters outside that set are folded (ł → l, ą → a, ő → o), a few symbols are substituted (− → -, → → ->, ₹ → Rs), and everything else — Greek, Cyrillic, Arabic, Hebrew, CJK, emoji — becomes “?”. Document properties (title, author) support full Unicode. For multilingual output use the browser’s print-to-PDF path: <code>Orion.printPreview()</code> renders any HTML with system fonts and the print dialog’s “Save as PDF”.</p>
+      </div>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+      Orion.PDF.encode('Łódź café – €5 · 東京')   // -> "Lódz café – €5 · ??"  (WinAnsi bytes: ó is Latin-1 and stays accented, ź has no WinAnsi match and folds to z)
+      Orion.PDF.measure('Invoice', { size: 12, bold: true })   // -> width in points
+    </pre>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Constructor options</h3>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>size</td><td>'A4'</td><td><code>A3 A4 A5 A6 Letter Legal Tabloid Executive</code> or <code>[width, height]</code> in <code>unit</code>.</td></tr>
+        <tr><td>orientation</td><td>'portrait'</td><td><code>'portrait' | 'landscape'</code>.</td></tr>
+        <tr><td>unit</td><td>'pt'</td><td><code>pt mm cm in px</code> — every coordinate and size you pass.</td></tr>
+        <tr><td>margin</td><td>40 pt</td><td>Number, <code>[vertical, horizontal]</code>, <code>[top, right, bottom, left]</code> or object.</td></tr>
+        <tr><td>font, fontSize, lineHeight, color</td><td>Helvetica, 10, 1.2, #111827</td><td>Defaults for text.</td></tr>
+        <tr><td>title, author, subject, keywords, creator</td><td></td><td>Document properties (Unicode).</td></tr>
+        <tr><td>header(pdf, info), footer(pdf, info)</td><td></td><td>Called per page when writing; <code>info = { page, pages, width, height, margin }</code>.</td></tr>
+        <tr><td>compress</td><td>true</td><td>Flate-compress page content (via <code>CompressionStream</code>).</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>text(str, x, y, opts)</td><td><code>size font bold italic color align maxWidth maxLines lineHeight baseline ('top'|'middle'|'bottom'|'alphabetic') underline strike link angle opacity</code>. Sets <code>pdf.lastText = { width, height, lines }</code>.</td></tr>
+        <tr><td>write(str, opts)</td><td>Flowing text at <code>pdf.y</code> with page breaks (<code>gapBefore</code>, <code>gap</code>, <code>indent</code>, <code>width</code>).</td></tr>
+        <tr><td>line / rect / circle / ellipse / polygon</td><td>Style options: <code>fill stroke color width dash radius opacity cap</code>.</td></tr>
+        <tr><td>image(src, x, y, opts)</td><td><code>width height fit ('contain'|'cover') opacity</code>. Sets <code>pdf.lastImage</code>.</td></tr>
+        <tr><td>link(x, y, w, h, target)</td><td>URL or <code>{ page: n }</code>.</td></tr>
+        <tr><td>table(opts) / tableAsync(opts)</td><td><code>columns rows x y width fontSize padding lineHeight headerStyle zebra borderColor borders ('horizontal'|'all'|'none') columnWidths repeatHeader align maxLines cellStyle(value, row, column)</code> → <code>{ y, page }</code>.</td></tr>
+        <tr><td>addPage(opts), setPage(n), ensureSpace(h), moveDown(lines)</td><td>Pages and the cursor (<code>pdf.x</code>, <code>pdf.y</code>, <code>pdf.page</code>, <code>pdf.pageCount</code>, <code>pdf.width</code>, <code>pdf.height</code>, <code>pdf.contentWidth</code>, <code>pdf.margin</code>).</td></tr>
+        <tr><td>setFont(name, style), setFontSize, setTextColor, setDrawColor, setFillColor, setLineWidth, setProperties</td><td>Chainable state setters.</td></tr>
+        <tr><td>widthOf(str, opts), splitText(str, maxWidth, opts), heightOf(str, opts)</td><td>Measuring.</td></tr>
+        <tr><td>toBytes(), toBlob(), toDataURL(), toObjectURL(), save(filename)</td><td>Output (all async).</td></tr>
+        <tr><td>Orion.PDF.measure, .encode, .loadImage, .sizes</td><td>Static helpers.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

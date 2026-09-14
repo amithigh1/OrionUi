@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Buttons — Orion Admin</title>
+<meta name="docs:section" content="Foundation">
+<meta name="docs:order" content="20">
+<meta name="docs:desc" content="Solid, outline, soft, ghost, icon, loading and grouped buttons">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Buttons</h1>
+    <p class="docs-lead">Pure-CSS buttons with eight colors, four styles, five sizes, icon and loading states, groups and segmented controls.</p>
+  </header>
+
+  <section id="variants">
+    <h2>Solid</h2>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-primary">Primary</button>
+        <button class="o-btn o-btn-secondary">Secondary</button>
+        <button class="o-btn o-btn-success">Success</button>
+        <button class="o-btn o-btn-danger">Danger</button>
+        <button class="o-btn o-btn-warning">Warning</button>
+        <button class="o-btn o-btn-info">Info</button>
+        <button class="o-btn o-btn-light">Light</button>
+        <button class="o-btn o-btn-dark">Dark</button>
+        <button class="o-btn">Default</button>
+        <button class="o-btn o-btn-ghost">Ghost</button>
+        <button class="o-btn o-btn-link">Link</button>
+      </template>
+    </div>
+  </section>
+
+  <section id="outline-soft">
+    <h2>Outline &amp; soft</h2>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-outline-primary">Primary</button>
+        <button class="o-btn o-btn-outline-success">Success</button>
+        <button class="o-btn o-btn-outline-danger">Danger</button>
+        <button class="o-btn o-btn-soft-primary">Soft primary</button>
+        <button class="o-btn o-btn-soft-success">Soft success</button>
+        <button class="o-btn o-btn-soft-warning">Soft warning</button>
+        <button class="o-btn o-btn-soft-danger">Soft danger</button>
+      </template>
+    </div>
+  </section>
+
+  <section id="sizes">
+    <h2>Sizes, icons &amp; shapes</h2>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-primary o-btn-xs">Extra small</button>
+        <button class="o-btn o-btn-primary o-btn-sm">Small</button>
+        <button class="o-btn o-btn-primary">Default</button>
+        <button class="o-btn o-btn-primary o-btn-lg">Large</button>
+        <button class="o-btn o-btn-primary"><o-icon name="plus"></o-icon> New user</button>
+        <button class="o-btn">Export <o-icon name="download"></o-icon></button>
+        <button class="o-btn o-btn-icon" aria-label="Settings"><o-icon name="settings"></o-icon></button>
+        <button class="o-btn o-btn-primary o-btn-icon o-btn-pill" aria-label="Add"><o-icon name="plus"></o-icon></button>
+        <button class="o-btn o-btn-soft-primary o-btn-pill">Pill</button>
+      </template>
+    </div>
+  </section>
+
+  <section id="states">
+    <h2>Loading &amp; disabled</h2>
+    <p>Add <code>.is-loading</code> (or <code>aria-busy="true"</code>) to show a spinner while keeping the button's width.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-primary is-loading">Saving</button>
+        <button class="o-btn is-loading">Loading</button>
+        <button class="o-btn o-btn-primary" disabled>Disabled</button>
+        <button class="o-btn o-btn-success" id="demo-save">Click to save</button>
+        <script>
+          document.getElementById('demo-save').addEventListener('click', e => {
+            const b = e.currentTarget;
+            b.classList.add('is-loading');
+            setTimeout(() => b.classList.remove('is-loading'), 1500);
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="groups">
+    <h2>Groups &amp; segmented control</h2>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div class="o-btn-group" role="group" aria-label="Alignment">
+          <button class="o-btn">Left</button>
+          <button class="o-btn is-active">Center</button>
+          <button class="o-btn">Right</button>
+        </div>
+        <div class="o-segmented" role="radiogroup" aria-label="Range">
+          <label><input type="radio" name="range" checked><span>Day</span></label>
+          <label><input type="radio" name="range"><span>Week</span></label>
+          <label><input type="radio" name="range"><span>Month</span></label>
+        </div>
+        <div class="o-btn-group o-btn-group-vertical">
+          <button class="o-btn o-btn-sm">Top</button>
+          <button class="o-btn o-btn-sm">Middle</button>
+          <button class="o-btn o-btn-sm">Bottom</button>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>Classes</h2>
+    <table class="docs-api">
+      <thead><tr><th>Class</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>.o-btn</td><td>Base button (default neutral style).</td></tr>
+        <tr><td>.o-btn-{color}</td><td>Solid: <code>primary secondary success danger warning info light dark</code>.</td></tr>
+        <tr><td>.o-btn-outline-{color}</td><td>Outline style.</td></tr>
+        <tr><td>.o-btn-soft-{color}</td><td>Tinted background style.</td></tr>
+        <tr><td>.o-btn-ghost / .o-btn-link</td><td>Borderless styles.</td></tr>
+        <tr><td>.o-btn-xs / -sm / -lg / -xl</td><td>Sizes.</td></tr>
+        <tr><td>.o-btn-icon</td><td>Square icon-only button (add <code>aria-label</code>).</td></tr>
+        <tr><td>.o-btn-pill / .o-btn-block</td><td>Rounded ends / full width.</td></tr>
+        <tr><td>.is-loading, [aria-busy=true]</td><td>Spinner, keeps width, blocks clicks.</td></tr>
+        <tr><td>.is-active, [aria-pressed=true]</td><td>Pressed state.</td></tr>
+        <tr><td>.o-btn-group, .o-btn-group-vertical, .o-btn-toolbar, .o-segmented</td><td>Grouping.</td></tr>
+        <tr><td>.o-btn-close</td><td>Icon-only close button (pure CSS).</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS variables</h3>
+    <p>Customise a single button with <code>--o-btn-bg</code>, <code>--o-btn-fg</code>, <code>--o-btn-border</code>, <code>--o-btn-hover-bg</code>, <code>--o-btn-h</code>, <code>--o-btn-px</code>, <code>--o-btn-radius</code>.</p>
+  </section>
+</main>
+</body>
+</html>

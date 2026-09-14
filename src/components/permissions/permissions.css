@@ -1,0 +1,10 @@
+/* permission-based UI (data-o-permission / data-o-role / <o-can>) — hiding needs utility strength */
+.o-perm-hidden { display: none !important; }
+.o-perm-blur { filter: blur(5px); user-select: none; -webkit-user-select: none; opacity: .85; transition: filter var(--o-dur) var(--o-ease); }
+.o-perm-readonly { cursor: default; }
+[data-o-access="denied"][aria-disabled="true"] { cursor: not-allowed; }
+.o-btn[data-o-access="denied"][aria-disabled="true"] { pointer-events: auto; }
+.o-btn[data-o-access="denied"][aria-disabled="true"]:hover { background-color: var(--o-btn-bg); color: var(--o-btn-fg); }
+a[data-o-access="denied"][aria-disabled="true"] { color: var(--o-text-muted); text-decoration: none; opacity: .65; }
+o-can { display: contents; }
+o-can.is-denied > :not(.o-can-denied):not(template) { display: none !important; }

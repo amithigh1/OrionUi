@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Export &amp; Import — Orion Admin</title>
+<meta name="docs:section" content="Data">
+<meta name="docs:order" content="60">
+<meta name="docs:desc" content="CSV, Excel, PDF, JSON and HTML export; CSV/Excel/JSON import with a mapping wizard">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Export &amp; Import</h1>
+    <p class="docs-lead">Download any array of rows as CSV, Excel (.xlsx), a PDF report, JSON or HTML with one call, and bring data back in from CSV, TSV, Excel or JSON — with a guided wizard that maps columns, validates every cell and lets users fix errors. Everything is hand-written: an RFC&nbsp;4180 CSV engine, a ZIP writer/reader, a SpreadsheetML writer/reader and a PDF&nbsp;1.4 generator. No libraries.</p>
+  </header>
+
+  <section id="overview">
+    <h2>Overview</h2>
+    <div class="o-grid-auto" style="--o-min: 15rem">
+      <div class="o-callout"><strong>O.export.csv / tsv</strong><br><span class="o-muted">UTF-8 BOM for Excel, RFC 4180 quoting, formula-injection guard.</span></div>
+      <div class="o-callout"><strong>O.export.xlsx</strong><br><span class="o-muted">Typed cells, number formats, bold header, frozen row, autofilter, auto widths, multiple sheets.</span></div>
+      <div class="o-callout"><strong>O.export.pdf</strong><br><span class="o-muted">Report layout: title, logo, generated date, repeating table header, totals, “Page 1 of N”.</span></div>
+      <div class="o-callout"><strong>O.importFile / Orion.importWizard</strong><br><span class="o-muted">Auto-detects CSV, TSV, XLSX and JSON; maps, converts and validates.</span></div>
+    </div>
+  </section>
+
+  <section id="export">
+    <h2>Export rows</h2>
+    <p>Every helper takes the rows and an optional <code>columns</code> list, triggers a download and resolves with the <code>Blob</code>. Columns use <code>key</code> (dot paths work), <code>title</code>, <code>type</code> and an optional <code>format(value, row)</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-primary" data-exp="xlsx"><o-icon name="download"></o-icon> Excel</button>
+          <button class="o-btn" data-exp="csv">CSV</button>
+          <button class="o-btn" data-exp="pdf">PDF report</button>
+          <button class="o-btn" data-exp="json">JSON</button>
+          <button class="o-btn" data-exp="html">HTML</button>
+          <button class="o-btn o-btn-ghost" data-exp="clipboard"><o-icon name="copy"></o-icon> Copy</button>
+        </div>
+        <div class="o-table-wrap" id="exp-table" style="max-height: 16rem"></div>
+        <div class="docs-log" id="exp-log"></div>
+        <script>
+          (() => {
+            const rows = docs.people(60);
+            const columns = [
+              { key: 'id', title: 'ID', type: 'integer' },
+              { key: 'name', title: 'Name' },
+              { key: 'email', title: 'Email' },
+              { key: 'department', title: 'Department' },
+              { key: 'salary', title: 'Salary', type: 'currency', currency: 'USD' },
+              { key: 'joined', title: 'Joined', type: 'date' },
+              { key: 'progress', title: 'Progress', type: 'percent', value: r => r.progress / 100 },
+              { key: 'status', title: 'Status' },
+            ];
+            document.getElementById('exp-table').innerHTML = Orion.export.tableHTML(rows.slice(0, 10), { columns, tableClass: 'o-table o-table-sm o-table-sticky' });
+            document.querySelectorAll('[data-exp]').forEach(btn => btn.addEventListener('click', async () => {
+              const format = btn.dataset.exp;
+              btn.classList.add('is-loading');
+              try {
+                const t0 = performance.now();
+                const out = await Orion.export.to(format, rows, { columns, filename: 'people-{date}', title: 'People directory', subtitle: 'All departments', totals: true });
+                docs.log('#exp-log', `${format}: ${typeof out === 'string' ? out.split('\n').length + ' lines copied' : Orion.util.formatBytes(out.size)} in ${Math.round(performance.now() - t0)} ms`);
+              } finally { btn.classList.remove('is-loading'); }
+            }));
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="columns">
+    <h2>Columns, types &amp; formatting</h2>
+    <p><code>type</code> keeps values native where the format supports it (Excel numbers, dates and booleans with proper number formats) and formats them for CSV-to-humans, PDF and HTML. A <code>format</code> function wins for display formats; pass <code>raw: true</code> to write raw values to CSV.</p>
+    <pre class="docs-code-block" data-lang="js">
+      Orion.export.xlsx(orders, {
+        filename: 'orders-{date}',               // {date} -> 2026-09-11
+        sheetName: 'Orders',
+        columns: [
+          { key: 'id', title: 'Order', type: 'integer' },
+          { key: 'customer.name', title: 'Customer' },          // dot path
+          { key: 'total', title: 'Total', type: 'currency', currency: 'EUR' },
+          { key: 'discount', title: 'Discount', type: 'percent', decimals: 1 },
+          { key: 'placed', title: 'Placed', type: 'datetime' },
+          { key: 'paid', title: 'Paid', type: 'boolean' },
+          { key: 'weight', title: 'Weight', format: '0.0 "kg"' },  // any Excel number format
+          { key: 'status', title: 'Status', format: v => v.toUpperCase() },
+        ],
+      });
+    </pre>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster">
+          <button class="o-btn" id="exp-multi"><o-icon name="download"></o-icon> Workbook with 3 sheets</button>
+          <button class="o-btn" id="exp-rtl">RTL sheet</button>
+          <button class="o-btn" id="exp-tsv">TSV</button>
+        </div>
+        <script>
+          (() => {
+            const people = docs.people(40);
+            const depts = [...new Set(people.map(p => p.department))].map(d => ({ department: d, headcount: people.filter(p => p.department === d).length, payroll: people.filter(p => p.department === d).reduce((s, p) => s + p.salary, 0) }));
+            document.getElementById('exp-multi').onclick = () => Orion.export.xlsx([
+              { name: 'People', rows: people, columns: [{ key: 'name', title: 'Name' }, { key: 'email', title: 'Email' }, { key: 'country', title: 'Country' }, { key: 'salary', title: 'Salary', type: 'currency' }, { key: 'joined', title: 'Joined', type: 'date' }, { key: 'lastLogin', title: 'Last login', type: 'datetime' }] },
+              { name: 'Departments', rows: depts, columns: [{ key: 'department', title: 'Department' }, { key: 'headcount', title: 'Headcount', type: 'integer' }, { key: 'payroll', title: 'Payroll', type: 'currency' }] },
+              { name: 'Totals', rows: [['Total payroll', { f: `SUM(Departments!C2:C${depts.length + 1})`, v: depts.reduce((s, d) => s + d.payroll, 0) }]], headerRows: 0 },
+            ], { filename: 'workbook', title: 'Company workbook', author: 'Orion docs' });
+            document.getElementById('exp-rtl').onclick = () => Orion.export.xlsx(people.slice(0, 10), { columns: [{ key: 'name', title: 'الاسم' }, { key: 'city', title: 'المدينة' }, { key: 'salary', title: 'الراتب', type: 'number', decimals: 0 }], rtl: true, filename: 'rtl-sheet' });
+            document.getElementById('exp-tsv').onclick = () => Orion.export.tsv(people, { columns: ['name', 'email', 'role'], filename: 'people' });
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="large">
+    <h2>Large data</h2>
+    <p>Exports yield to the browser between chunks, so 50,000 rows never freeze the page. Watch the spinner keep turning while the file is built.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster">
+          <button class="o-btn o-btn-primary" data-big="xlsx">50,000 rows → Excel</button>
+          <button class="o-btn" data-big="csv">50,000 rows → CSV</button>
+          <button class="o-btn" data-big="pdf">5,000 rows → PDF</button>
+          <span class="o-spinner o-spinner-sm" aria-hidden="true"></span>
+        </div>
+        <div class="o-progress o-mt-3" style="max-width: 28rem"><div class="o-progress-bar" id="big-bar" style="--o-value: 0%"></div></div>
+        <div class="docs-log" id="big-log"></div>
+        <script>
+          (() => {
+            let rows = null;
+            const make = () => rows || (rows = Array.from({ length: 50000 }, (_, i) => ({ id: i + 1, sku: 'SKU-' + String(i % 9973).padStart(5, '0'), product: ['Laptop', 'Phone', 'Tablet', 'Monitor', 'Dock'][i % 5], qty: 1 + (i * 7) % 20, price: 19.99 + (i % 400), date: new Date(2025, 0, 1 + (i % 365)), paid: i % 3 !== 0 })));
+            const columns = [{ key: 'id', title: 'ID', type: 'integer' }, { key: 'sku', title: 'SKU' }, { key: 'product', title: 'Product' }, { key: 'qty', title: 'Qty', type: 'integer' }, { key: 'price', title: 'Price', type: 'currency' }, { key: 'date', title: 'Date', type: 'date' }, { key: 'paid', title: 'Paid', type: 'boolean' }];
+            const bar = document.getElementById('big-bar');
+            document.querySelectorAll('[data-big]').forEach(b => b.addEventListener('click', async () => {
+              b.classList.add('is-loading');
+              const t0 = performance.now();
+              try {
+                const data = b.dataset.big === 'pdf' ? make().slice(0, 5000) : make();
+                const blob = await Orion.export.to(b.dataset.big, data, { columns, filename: 'big-export', title: 'Big export', onProgress: r => bar.style.setProperty('--o-value', Math.round(r * 100) + '%') });
+                bar.style.setProperty('--o-value', '100%');
+                docs.log('#big-log', `${b.dataset.big}: ${data.length.toLocaleString()} rows, ${Orion.util.formatBytes(blob.size)} in ${Math.round(performance.now() - t0)} ms`);
+              } finally { b.classList.remove('is-loading'); }
+            }));
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="csv">
+    <h2>CSV parser</h2>
+    <p><code>O.csv.parse(text, options)</code> follows RFC 4180: quoted fields, escaped quotes, embedded line breaks, CRLF/LF/CR, a UTF-8 BOM and automatic delimiter detection among <code>, ; tab |</code>. <code>dynamicTyping</code> converts numbers, booleans and ISO dates while keeping codes such as <code>007</code> as text. For big files use <code>O.csv.parseAsync(file)</code>, which streams the file and yields to the UI.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-row o-g-3">
+          <div class="o-col-12 o-col-lg-5">
+            <label class="o-label" for="csv-in">CSV text</label>
+            <textarea class="o-textarea o-font-mono" id="csv-in" rows="9" spellcheck="false">id;name;amount;joined;active;note
+1;"Ada Lovelace";1234.5;2024-02-29;true;"Said ""hello"""
+2;"Zoë, the second";-12;2023-11-05;FALSE;"multi
+line"
+3;Bob;007;not a date;yes;</textarea>
+            <div class="o-cluster o-mt-2">
+              <label class="o-check o-check-inline"><input type="checkbox" id="csv-header" checked> <span>Header row</span></label>
+              <label class="o-check o-check-inline"><input type="checkbox" id="csv-typed" checked> <span>Dynamic typing</span></label>
+              <label class="o-check o-check-inline"><input type="checkbox" id="csv-trim"> <span>Trim</span></label>
+            </div>
+            <button class="o-btn o-btn-primary o-btn-sm o-mt-2" id="csv-go">Parse</button>
+          </div>
+          <div class="o-col-12 o-col-lg-7">
+            <div class="o-label">Result <span class="o-badge" id="csv-meta"></span></div>
+            <div class="o-table-wrap" id="csv-out" style="max-height: 15rem"></div>
+            <pre class="o-pre o-mt-2" id="csv-json" style="max-height: 9rem; font-size: .75rem"></pre>
+          </div>
+        </div>
+        <script>
+          (() => {
+            const run = () => {
+              const res = Orion.csv.parse(document.getElementById('csv-in').value, { header: document.getElementById('csv-header').checked, dynamicTyping: document.getElementById('csv-typed').checked, trim: document.getElementById('csv-trim').checked });
+              document.getElementById('csv-meta').textContent = `delimiter "${res.meta.delimiter === '\t' ? 'tab' : res.meta.delimiter}" · ${res.rows.length} rows · ${res.errors.length} errors`;
+              const cols = res.fields.length ? res.fields.map(f => ({ key: f, title: f })) : (res.rows[0] || []).map((_, i) => ({ key: i, title: 'Column ' + (i + 1) }));
+              document.getElementById('csv-out').innerHTML = Orion.export.tableHTML(res.rows, { columns: cols, tableClass: 'o-table o-table-sm' });
+              document.getElementById('csv-json').textContent = JSON.stringify(res.rows[0], (k, v) => v, 1) + (res.errors.length ? '\nerrors: ' + JSON.stringify(res.errors) : '');
+            };
+            document.getElementById('csv-go').onclick = run;
+            run();
+          })();
+        </script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">
+      const { rows, fields, errors, meta } = Orion.csv.parse(text, { delimiter: 'auto', header: true, dynamicTyping: true, comment: '#' });
+      const csv = Orion.csv.stringify(rows, { columns: [{ key: 'name', title: 'Name' }], delimiter: ';', bom: true, quote: 'auto' });
+      // streaming: rows arrive in chunks, memory stays flat
+      await Orion.csv.parseAsync(file, { onChunk: (rows, meta) => store.add(rows), chunkSize: 5000, onProgress: r => bar.value = r });
+    </pre>
+  </section>
+
+  <section id="import-file">
+    <h2>Import a file</h2>
+    <p><code>O.importFile(file)</code> detects the format from the content (ZIP → Excel, JSON/NDJSON, otherwise CSV/TSV with delimiter sniffing), decodes UTF-8, UTF-16 and Windows-1252 text and returns every sheet. With <code>columns</code> the fields are mapped and converted for you.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <input type="file" class="o-input" id="imp-file" accept=".csv,.tsv,.txt,.xlsx,.json" style="max-width: 20rem" aria-label="Choose a file">
+          <button class="o-btn o-btn-sm" data-fixture="sample.csv">Load sample.csv</button>
+          <button class="o-btn o-btn-sm" data-fixture="sample.xlsx">Load sample.xlsx</button>
+          <button class="o-btn o-btn-sm" data-fixture="sample.json">Load sample.json</button>
+        </div>
+        <div class="o-label" id="imp-meta"></div>
+        <div class="o-table-wrap" id="imp-out" style="max-height: 16rem"></div>
+        <script>
+          (() => {
+            const show = async file => {
+              const res = await Orion.importFile(file);
+              document.getElementById('imp-meta').textContent = `${file.name}: ${res.format.toUpperCase()} · ${res.sheets.length} sheet(s): ${res.sheets.map(s => s.name + ' (' + s.rows.length + ')').join(', ')}`;
+              document.getElementById('imp-out').innerHTML = Orion.export.tableHTML(res.rows.slice(0, 12), { tableClass: 'o-table o-table-sm o-table-sticky' });
+            };
+            document.getElementById('imp-file').addEventListener('change', e => e.target.files[0] && show(e.target.files[0]));
+            document.querySelectorAll('[data-fixture]').forEach(b => b.onclick = async () => {
+              const r = await fetch('../fixtures/data/' + b.dataset.fixture);
+              show(new File([await r.blob()], b.dataset.fixture));
+            });
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="wizard">
+    <h2>Import wizard</h2>
+    <p><code>Orion.importWizard(options)</code> opens a guided dialog: <strong>upload</strong> (drag &amp; drop, browse or paste rows from Excel), <strong>sheet</strong> choice for workbooks, <strong>column mapping</strong> (auto-matched by key, title, aliases and fuzzy matching), a <strong>review</strong> with every invalid cell highlighted and fixable in place, then <strong>import</strong> with progress. It resolves with the imported rows, or <code>null</code> when cancelled. Try it with the <a href="../fixtures/data/sample.csv" download>sample CSV</a> or <a href="../fixtures/data/sample.xlsx" download>sample workbook</a> — they contain a bad email, a missing name, a duplicate, an unknown department and a non-numeric salary.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-primary" id="wiz-open"><o-icon name="upload"></o-icon> Import employees…</button>
+        <button class="o-btn" id="wiz-sample">Open with sample.xlsx</button>
+        <div class="docs-log o-w-100" id="wiz-log"></div>
+        <script>
+          (() => {
+            const columns = [
+              { key: 'name', title: 'Name', required: true, aliases: ['full name', 'employee'] },
+              { key: 'email', title: 'Email', type: 'email', required: true, unique: true },
+              { key: 'phone', title: 'Phone', type: 'phone', aliases: ['mobile', 'tel'] },
+              { key: 'department', title: 'Department', aliases: ['dept', 'team'], options: ['Engineering', 'Sales', 'Marketing', 'Finance', 'Operations', 'Design'] },
+              { key: 'salary', title: 'Salary', type: 'currency', aliases: ['annual salary', 'pay'], min: 0 },
+              { key: 'startDate', title: 'Start date', type: 'date', format: 'DD/MM/YYYY' },
+              { key: 'active', title: 'Active', type: 'boolean', default: true },
+            ];
+            const open = () => Orion.importWizard({
+              title: 'Import employees', columns, maxRows: 5000, batchSize: 10,
+              onImport: async (batch, { progress }) => { await new Promise(r => setTimeout(r, 120)); },
+            }).then(rows => docs.log('#wiz-log', rows ? `imported ${rows.length} rows — first: ${JSON.stringify(rows[0])}` : 'cancelled'));
+            document.getElementById('wiz-open').onclick = open;
+            document.getElementById('wiz-sample').onclick = async () => {
+              const p = open();
+              const blob = await (await fetch('../fixtures/data/sample.xlsx')).blob();
+              const dt = new DataTransfer(); dt.items.add(new File([blob], 'sample.xlsx'));
+              document.querySelector('.o-iw-drop')?.dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true, cancelable: true }));
+              return p;
+            };
+          })();
+        </script>
+      </template>
+    </div>
+    <h3>Keyboard</h3>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Tab / Shift+Tab</td><td>Move between controls (focus is trapped inside the dialog).</td></tr>
+        <tr><td>Enter / Space on the drop zone</td><td>Open the file picker. <kbd class="o-kbd">Ctrl</kbd>+<kbd class="o-kbd">V</kbd> pastes a copied file.</td></tr>
+        <tr><td>Enter on a highlighted cell</td><td>Edit the value; <kbd class="o-kbd">Enter</kbd> saves and re-validates, <kbd class="o-kbd">Esc</kbd> cancels.</td></tr>
+        <tr><td>Esc</td><td>Close the wizard (disabled while importing — use Cancel).</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="importer-helpers">
+    <h2>Lower-level helpers — <code>Orion.importer</code></h2>
+    <p>The wizard's Map and Review steps are built on three standalone functions, exposed as <code>Orion.importer</code>
+      for building a custom import flow: <code>autoMap(fields, columns)</code> guesses a field→column mapping,
+      <code>coerce(value, column)</code> converts and validates one raw cell against a <code>ColumnDef</code>, and
+      <code>validate(rows, mapping, columns)</code> runs <code>coerce</code> over every row.</p>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <button class="o-btn o-btn-sm o-btn-primary" id="imp-helpers-run">Run autoMap() + coerce()</button>
+        <pre class="docs-log" id="imp-helpers-out" style="font-family:var(--o-font-mono);white-space:pre-wrap"> </pre>
+        <script>
+          document.getElementById('imp-helpers-run').onclick = () => {
+            const columns = [{ key: 'email', title: 'Email address', type: 'email', required: true }, { key: 'total', title: 'Order total', type: 'currency', min: 0 }];
+            const mapping = Orion.importer.autoMap(['E-mail', 'Order Total ($)'], columns);
+            const email = Orion.importer.coerce('not-an-email', columns[0]);
+            const total = Orion.importer.coerce('(42.50)', columns[1]);
+            document.getElementById('imp-helpers-out').textContent =
+              'autoMap(["E-mail","Order Total ($)"], columns) → ' + JSON.stringify(mapping) + '\n' +
+              "coerce('not-an-email', emailColumn) → " + JSON.stringify(email) + '\n' +
+              "coerce('(42.50)', totalColumn) → " + JSON.stringify(total) + '   // parenthesized = negative currency';
+          };
+          document.getElementById('imp-helpers-run').click();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="zip">
+    <h2>ZIP &amp; Excel engines</h2>
+    <p>The building blocks are public. <code>O.zip</code> writes and reads archives (deflate through the native <code>CompressionStream</code>, CRC-32, UTF-8 names, data descriptors, ZIP64 reading). <code>O.xlsx</code> writes and reads SpreadsheetML directly.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster">
+          <button class="o-btn" id="zip-make"><o-icon name="download"></o-icon> Download report.zip</button>
+          <button class="o-btn" id="zip-list">Round-trip in the browser</button>
+        </div>
+        <div class="docs-log" id="zip-log"></div>
+        <script>
+          (() => {
+            const files = async () => [
+              { name: 'people.csv', data: Orion.csv.stringify(docs.people(100), { columns: ['id', 'name', 'email'], bom: true }) },
+              { name: 'people.xlsx', data: await Orion.xlsx.write(docs.people(100), { columns: [{ key: 'name' }, { key: 'salary', type: 'currency' }] }) },
+              { name: 'notes/readme – ünïcode.txt', data: 'Created by Orion Admin ✓' },
+            ];
+            document.getElementById('zip-make').onclick = async () => Orion.download(await Orion.zip.create(await files()), 'report.zip');
+            document.getElementById('zip-list').onclick = async () => {
+              const zip = await Orion.zip.create(await files());
+              const entries = await Orion.zip.read(zip);
+              for (const e of entries) docs.log('#zip-log', `${e.name} — ${e.size} bytes (${e.compressedSize} packed)`);
+              const wb = await Orion.xlsx.read(await entries[1].blob());
+              docs.log('#zip-log', `people.xlsx → sheet "${wb.sheets[0].name}", ${wb.sheets[0].rows.length} rows, first salary ${wb.sheets[0].rows[0].salary}`);
+            };
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Export helpers</h3>
+    <table class="docs-api">
+      <thead><tr><th>Function</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>O.export.csv(rows, opts)</td><td>CSV download. <code>delimiter</code> (<code>,</code>), <code>bom</code> (true, lets Excel read UTF-8), <code>eol</code> (<code>\r\n</code>), <code>quote</code> (<code>'auto'|'all'</code>), <code>safe</code> (true: prefixes <code>= + - @</code> with <code>'</code>), <code>header</code>, <code>raw</code> (skip format functions).</td></tr>
+        <tr><td>O.export.tsv(rows, opts)</td><td>Tab-separated text (<code>.tsv</code>).</td></tr>
+        <tr><td>O.export.xlsx(rows | sheets, opts)</td><td>Excel workbook. <code>sheetName</code>, <code>title</code> (document property), <code>titleRow</code>, <code>author</code>, <code>rtl</code>, <code>freeze</code>, <code>autoFilter</code>, <code>headerStyle</code>, plus every <code>O.xlsx.write</code> option. Sheets: <code>[{ name, rows, columns }]</code>.</td></tr>
+        <tr><td>O.export.pdf(rows, opts)</td><td>PDF report. <code>title</code>, <code>subtitle</code>, <code>logo</code> (URL, data URL, image or canvas), <code>orientation</code> (<code>'auto'</code> picks landscape for wide tables), <code>size</code>, <code>margin</code> (pt), <code>fontSize</code>, <code>zebra</code>, <code>totals</code> (true or <code>{ key: value }</code>), <code>footerText</code>, <code>author</code>.</td></tr>
+        <tr><td>O.export.json(rows, opts)</td><td>JSON (<code>space</code>, <code>ndjson</code>, <code>keys: 'key'|'title'</code>, <code>raw</code>).</td></tr>
+        <tr><td>O.export.html(rows, opts)</td><td>Standalone, print-friendly HTML document.</td></tr>
+        <tr><td>O.export.clipboard(rows, opts)</td><td>Copies tab-separated text (pastes into Excel/Sheets). Resolves with the text.</td></tr>
+        <tr><td>O.export.to(format, rows, opts)</td><td><code>'csv' | 'tsv' | 'xlsx' | 'pdf' | 'json' | 'html' | 'clipboard'</code>.</td></tr>
+        <tr><td>O.export.tableHTML(rows, opts)</td><td>Escaped <code>&lt;table&gt;</code> markup for the rows (<code>tableClass</code>).</td></tr>
+        <tr><td>Common options</td><td><code>columns</code>, <code>filename</code> (may contain <code>{date}</code>), <code>download</code> (false: only return the Blob), <code>onProgress(ratio)</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>Column options</h3>
+    <table class="docs-api">
+      <thead><tr><th>Option</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>key</td><td>Property name, dot path (<code>'user.email'</code>) or function.</td></tr>
+        <tr><td>title</td><td>Header text (default: humanized key).</td></tr>
+        <tr><td>type</td><td><code>string number integer currency percent date datetime time boolean</code> (percent values are ratios: 0.25 = 25%).</td></tr>
+        <tr><td>format</td><td>Function <code>(value, row) → string</code> for display, or an Excel number format string for XLSX.</td></tr>
+        <tr><td>value(row)</td><td>Computed value instead of <code>key</code>.</td></tr>
+        <tr><td>currency, decimals, width, align, wrap, hidden, total</td><td>Formatting details; <code>total: true</code> adds the column to PDF totals.</td></tr>
+      </tbody>
+    </table>
+    <h3>Import</h3>
+    <table class="docs-api">
+      <thead><tr><th>Function / option</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>O.importFile(file, opts)</td><td>→ <code>{ rows, fields, sheets, sheet, format, mapping, errors }</code>. Options: <code>columns</code>, <code>sheet</code>, <code>header</code>, <code>delimiter</code>, <code>encoding</code>, <code>dynamicTyping</code>, <code>onProgress</code>, <code>signal</code>. Accepts a File/Blob or CSV/JSON text.</td></tr>
+        <tr><td>Orion.importWizard(opts)</td><td>→ <code>Promise&lt;rows | null&gt;</code>. The promise has <code>.close()</code>.</td></tr>
+        <tr><td>columns</td><td><code>[{ key, title, required, type, aliases, options, unique, default, format (date pattern), min, max, maxLength, pattern, example, validate(value, row) → true | false | message }]</code>. Types add <code>email url phone</code> to the export types.</td></tr>
+        <tr><td>accept, maxSize, maxRows</td><td>Allowed extensions (<code>'.csv,.tsv,.txt,.xlsx,.xlsm,.json'</code>), size limit (10 MB) and row limit.</td></tr>
+        <tr><td>onImport(rows, { progress, signal, index, total })</td><td>Async save. With <code>batchSize</code> it is called per batch and the progress bar advances automatically; otherwise call <code>progress(ratio)</code>. Respect <code>signal</code> for Cancel.</td></tr>
+        <tr><td>skipInvalid, allowPaste, template, title, texts</td><td>Defaults: skip invalid rows, allow pasting, offer a CSV template (or pass a template URL).</td></tr>
+        <tr><td>onStep(step), onComplete({ rows, skipped })</td><td>Callbacks.</td></tr>
+        <tr><td>container</td><td><code>'auto'</code> uses <code>Orion.modal</code> when available, <code>'dialog'</code> forces the built-in dialog. <code>&lt;o-upload&gt;</code> is used for the drop zone when present (<code>upload: false</code> to opt out).</td></tr>
+        <tr><td>Orion.importer</td><td><code>{ autoMap(fields, columns), coerce(value, column), validate(raw, mapping, columns, opts), read: importFile, wizard: importWizard }</code> — the lower-level pieces the wizard's Map/Review steps call, exposed for building a custom import flow: <code>autoMap</code> is the greedy field→column matcher, <code>coerce</code> converts+validates one cell, <code>validate</code> runs it over every row.</td></tr>
+      </tbody>
+    </table>
+    <h3>Engines</h3>
+    <table class="docs-api">
+      <thead><tr><th>Function</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>O.csv.parse(text, opts)</td><td><code>{ rows, fields, errors, meta }</code>. <code>delimiter</code> ('auto'), <code>header</code>, <code>trim</code>, <code>skipEmpty</code> (true | 'greedy'), <code>dynamicTyping</code> (true | {field: bool} | fn), <code>comment</code>, <code>maxRows</code>, <code>transform</code>, <code>onChunk(rows, meta)</code>, <code>chunkSize</code>.</td></tr>
+        <tr><td>O.csv.parseAsync(text | Blob, opts)</td><td>Streams Blobs (UTF-8/UTF-16/Windows-1252), yields between slices, <code>onProgress</code>, <code>signal</code>.</td></tr>
+        <tr><td>O.csv.stringify(rows, opts)</td><td>RFC 4180 text; see export options.</td></tr>
+        <tr><td>O.zip.create(entries, opts)</td><td><code>[{ name, data, date }]</code> → <code>Promise&lt;Blob&gt;</code>.</td></tr>
+        <tr><td>O.zip.read(blob)</td><td>→ entries with <code>text()</code>, <code>bytes()</code>, <code>blob()</code>, <code>name</code>, <code>size</code>, <code>date</code>.</td></tr>
+        <tr><td>O.xlsx.write(rows | sheets, opts)</td><td>→ <code>Promise&lt;Blob&gt;</code>; formula cells <code>{ f: 'SUM(A1:A9)', v: cached }</code>.</td></tr>
+        <tr><td>O.xlsx.read(file, opts)</td><td>→ <code>{ sheets: [{ name, rows, columns, merges, range }], sheetNames }</code>; <code>header</code>, <code>sheet</code>, <code>fillMerged</code>.</td></tr>
+        <tr><td>O.csv.detect(text)</td><td>Standalone delimiter auto-detection → <code>',' | ';' | '\t' | '|'</code>, the same heuristic <code>parse</code> uses for <code>delimiter: 'auto'</code>.</td></tr>
+        <tr><td>O.csv.Parser</td><td>The incremental parser class behind <code>parse</code>/<code>parseAsync</code> (<code>push(chunk, final)</code>, <code>result()</code>) for custom streaming transports.</td></tr>
+        <tr><td>O.zip.crc32(bytes, seed?)</td><td>Standalone CRC-32 (pass a previous return value as <code>seed</code> to continue over more chunks).</td></tr>
+        <tr><td>O.zip.deflate(bytes, format?) / O.zip.inflate(bytes, format?)</td><td>Raw <code>'deflate-raw' | 'deflate'</code> compress/decompress → <code>Promise&lt;Uint8Array&gt;</code>, without the ZIP container. <code>O.zip.inflateSync</code> is the synchronous pure-JS fallback used when <code>DecompressionStream</code> is unavailable.</td></tr>
+        <tr><td>O.xlsx.colName(i) / O.xlsx.colIndex(letters)</td><td>0-based column index ⇄ Excel column letters (<code>0 ⇄ 'A'</code>, <code>26 ⇄ 'AA'</code>).</td></tr>
+        <tr><td>O.xlsx.toSerial(date) / O.xlsx.fromSerial(n)</td><td>Local <code>Date</code> ⇄ Excel 1900-system serial number.</td></tr>
+        <tr><td>O.export.humanize(key)</td><td><code>'firstName'</code> → <code>'First name'</code>; used to derive column titles when none is given.</td></tr>
+        <tr><td>O.export.toCSV(rows, opts)</td><td>The CSV/TSV text used by <code>O.export.csv</code>, returned directly (no download) — chunked and yields like the file export.</td></tr>
+        <tr><td>O.importer.autoMap(fields, columns)</td><td>The wizard's column auto-matching (exact, substring, then fuzzy scoring), usable standalone.</td></tr>
+        <tr><td>O.importer.coerce(value, column)</td><td>→ <code>{ value, error }</code> — converts and validates one raw value against a column spec (same rules the wizard's Review step uses).</td></tr>
+      </tbody>
+    </table>
+    <h3>Frameworks</h3>
+    <p>These are plain functions: call them from event handlers in React, Vue or Angular. Pass <code>{ download: false }</code> to upload the Blob instead of saving it.</p>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Create your account — Orion Admin example</title>
+<script src="../../dist/orion.js"></script>
+<style>
+  body { max-width: 34rem; margin: 0 auto; padding: 3rem 1.25rem; }
+  .card { padding: 1.75rem; }
+</style>
+</head>
+<body>
+<div class="o-card card">
+  <h1 style="margin-top:0">Create your account</h1>
+  <p class="o-text-muted" style="margin-top:-.5rem">A realistic sign-up screen combining validation (with a mocked remote email check), a conditional company field, and a math captcha — everything below runs with no backend.</p>
+
+  <form id="signup-form" data-o-summary onsubmit="event.preventDefault()">
+    <div class="o-form-grid">
+      <div class="o-field"><label class="o-label is-required" for="su-name">Full name</label><input class="o-input" id="su-name" name="name" data-o-rules="required|min:2"></div>
+      <div class="o-field"><label class="o-label is-required" for="su-email">Work email</label><input class="o-input" id="su-email" name="email" type="email" data-o-rules="required|email|remote:checkRegEmail" data-o-messages='{"remote":"This email is already registered"}'><div class="o-help">Try taken@example.com to see the remote check fail.</div></div>
+
+      <div class="o-field o-span-full">
+        <label class="o-label">Account type</label>
+        <div class="o-form-grid" style="--o-cols:2;margin:0">
+          <label class="o-check"><input type="radio" name="accountType" value="individual" checked> <span>Individual</span></label>
+          <label class="o-check"><input type="radio" name="accountType" value="company"> <span>Company</span></label>
+        </div>
+      </div>
+      <div class="o-field o-span-full" data-o-show-if="accountType=company" data-o-require-if="accountType=company">
+        <label class="o-label" for="su-company">Company name</label><input class="o-input" id="su-company" name="company">
+      </div>
+
+      <div class="o-field"><label class="o-label is-required" for="su-pw">Password</label><input class="o-input" id="su-pw" name="password" type="password" data-o-rules="required|minlength:8"></div>
+      <div class="o-field"><label class="o-label is-required" for="su-pw2">Confirm password</label><input class="o-input" id="su-pw2" name="password_confirmation" type="password" data-o-rules="required|same:password"></div>
+
+      <div class="o-field o-span-full">
+        <label class="o-label">Security check</label>
+        <o-captcha type="math" name="captcha" data-o-rules="captcha"></o-captcha>
+      </div>
+
+      <div class="o-field o-span-full"><label class="o-check"><input type="checkbox" name="agree" data-o-rules="accepted"> <span>I agree to the Terms of Service and Privacy Policy</span></label></div>
+      <div class="o-form-actions o-span-full"><button class="o-btn o-btn-primary o-btn-block" type="submit">Create account</button></div>
+    </div>
+  </form>
+  <div id="signup-result" style="margin-top:1rem"></div>
+</div>
+<script>
+  window.checkRegEmail = async (value) => { await new Promise(r => setTimeout(r, 350)); return String(value).toLowerCase() !== 'taken@example.com'; };
+  Orion.validate('#signup-form', {
+    summary: true,
+    onSubmit: async data => {
+      await new Promise(r => setTimeout(r, 300));
+      document.getElementById('signup-result').innerHTML =
+        '<div class="o-alert o-alert-success">' + Orion.icon('check-circle') +
+        '<div class="o-alert-content"><strong>Account created!</strong><br>' + Orion.util.esc(JSON.stringify({ ...data, password: '••••••••', password_confirmation: undefined, captcha: undefined })) + '</div></div>';
+    },
+  });
+</script>
+</body>
+</html>

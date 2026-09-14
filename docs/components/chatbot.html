@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chatbot &amp; Assistant — Orion Admin</title>
+<meta name="docs:section" content="AI">
+<meta name="docs:order" content="30">
+<meta name="docs:desc" content="<o-chatbot> floating assistant and <o-chat>-window, and <o-assistant> context-aware side panel — both streamed from Orion.ai">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Chatbot &amp; Assistant</h1>
+    <p class="docs-lead"><code>&lt;o-chatbot&gt;</code> is a floating launcher + chat window (or an inline panel) with
+      streamed Markdown replies, suggested prompts, feedback thumbs and transcript export.
+      <code>&lt;o-assistant&gt;</code> is a resizable side panel with context actions — summarize this page, explain
+      the selection, draft a reply — that insert or replace text back where you were working. Both stream from
+      <a href="ai.html"><code>Orion.ai</code></a>, so configure a provider (the mock below, or your own) before using
+      either.</p>
+  </header>
+
+  <section id="chatbot-basic">
+    <h2>&lt;o-chatbot&gt; — floating launcher</h2>
+    <p>Click the launcher (bottom corner of the box below) to open the window. Try a suggested prompt, send a message,
+      thumbs-up/down a reply, and use the export button (<span class="o-badge">⬇</span> in the header) to download the
+      transcript.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div style="position:relative;height:32rem;background:var(--o-surface-2);border-radius:var(--o-radius)">
+          <p class="o-muted o-text-sm" style="padding:1rem">— the rest of your page goes here —</p>
+          <o-chatbot id="cb1" style="position:absolute" title="Orion Assistant" welcome="Hi! Ask me about the data table, or pick a suggestion below."
+            suggestions='["How do I export to CSV?", "Can columns be resized?", "Does it support server-side paging?"]'>
+          </o-chatbot>
+        </div>
+        <div class="docs-log" id="log-cb1"></div>
+        <script>
+          Orion.ai.configure({ provider: Orion.ai.mock({
+            latency: 200, speed: 16,
+            responses: { csv: 'Yes — `Orion.exportCSV()` or the datatable\'s built-in Export button.', resize: 'Yes, drag a column edge, or double-click it to auto-fit.', paging: 'Yes — set `mode="server"` and provide a `source` function.' },
+          }) });
+          const cb1 = document.getElementById('cb1');
+          ['o-message', 'o-response', 'o-feedback', 'o-export'].forEach(evt =>
+            cb1.addEventListener(evt, e => docs.log('#log-cb1', `${evt} → ${JSON.stringify(e.detail).slice(0, 90)}`)));
+        </script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="html">&lt;o-chatbot title="Orion Assistant" welcome="Hi! How can I help?"
+  suggestions='["How do I export to CSV?", "Can columns be resized?"]' persist="support"&gt;&lt;/o-chatbot&gt;
+&lt;script&gt;
+  Orion.ai.configure({ provider: Orion.ai.http({ url: '/api/ai/chat', stream: 'sse' }) });
+  document.querySelector('o-chatbot').addEventListener('o-feedback', e =&gt; logFeedback(e.detail));
+&lt;/script&gt;</pre>
+  </section>
+
+  <section id="chatbot-inline">
+    <h2>Inline mode, keyboard &amp; JavaScript API</h2>
+    <p><code>launcher="false"</code> renders the window in place (no floating button) — handy inside a docked panel or
+      a help tab. <kbd class="o-kbd">Enter</kbd> sends, <kbd class="o-kbd">Shift</kbd>+<kbd class="o-kbd">Enter</kbd>
+      inserts a newline, <kbd class="o-kbd">Esc</kbd> stops a reply in progress (or closes the window when floating),
+      <kbd class="o-kbd">↑</kbd> on an empty input recalls the last message.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-sm" id="cb2-send">send('What can you do?')</button>
+          <button class="o-btn o-btn-sm" id="cb2-stop">stop()</button>
+          <button class="o-btn o-btn-sm" id="cb2-export">exportTranscript()</button>
+          <button class="o-btn o-btn-sm" id="cb2-new">newChat()</button>
+        </div>
+        <o-chatbot id="cb2" launcher="false" style="height:20rem" title="Inline assistant"></o-chatbot>
+        <div class="docs-log" id="log-cb2"></div>
+        <script>
+          const cb2 = document.getElementById('cb2');
+          document.getElementById('cb2-send').onclick = () => cb2.send("What can you do?");
+          document.getElementById('cb2-stop').onclick = () => cb2.stop();
+          document.getElementById('cb2-new').onclick = () => cb2.newChat();
+          document.getElementById('cb2-export').onclick = () => {
+            const md = cb2.exportTranscript({ download: false });
+            docs.log('#log-cb2', 'exportTranscript() → ' + (md ? md.length + ' chars' : '(empty — send a message first)'));
+          };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="assistant">
+    <h2>&lt;o-assistant&gt; — context-aware side panel</h2>
+    <p>Select some text in the paragraph below, then open the panel and try <em>Explain selection</em> — or just use
+      <em>Summarize this page</em> / <em>Draft a reply</em>. <em>Insert</em> / <em>Replace selection</em> write the
+      result back into the last field or selection you had focused.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div style="position:relative;height:30rem;overflow:hidden;background:var(--o-surface-2);border-radius:var(--o-radius)">
+          <div style="padding:1.5rem;max-width:26rem">
+            <button class="o-btn o-btn-primary o-btn-sm" id="asst-open">Open assistant</button>
+            <p class="o-prose" id="asst-para">Orion Admin ships as a single dependency-free file. Every widget is a
+              native custom element, the behaviors are attribute driven, and the services are a plain JS API — so it
+              works the same in plain HTML, React, Vue, Angular and Svelte.</p>
+            <label class="o-label" for="asst-notes">Notes</label>
+            <textarea class="o-input" id="asst-notes" rows="3" placeholder="Click into this field, then use Insert…"></textarea>
+          </div>
+          <o-assistant id="asst1" style="position:absolute" title="Page assistant"></o-assistant>
+        </div>
+        <div class="docs-log" id="log-asst1"></div>
+        <script>
+          const asst1 = document.getElementById('asst1');
+          document.getElementById('asst-open').onclick = () => asst1.open();
+          asst1.addEventListener('o-insert', e => docs.log('#log-asst1', `o-insert (${e.detail.mode}) → "${e.detail.text.slice(0, 60)}…"`));
+          asst1.addEventListener('o-result', e => docs.log('#log-asst1', `o-result "${e.detail.label}"`));
+        </script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="html">&lt;o-assistant title="Page assistant" id="asst"&gt;&lt;/o-assistant&gt;
+&lt;script&gt;
+  const asst = document.getElementById('asst');
+  asst.templates = [{ label: 'Write a title', build: ctx =&gt; `Suggest a short page title for: ${ctx}` }];   // property only — "templates" is not attribute-parsed
+  document.getElementById('open-btn').onclick = () =&gt; asst.open();
+  asst.addEventListener('o-insert', e =&gt; console.log(e.detail.mode, e.detail.text));
+&lt;/script&gt;</pre>
+  </section>
+
+  <section id="chatbot-api">
+    <h2>&lt;o-chatbot&gt; API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Attribute / Property</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>title / welcome / placeholder</td><td><code>string</code></td><td>Header title, first assistant bubble, input placeholder.</td></tr>
+        <tr><td>suggestions</td><td><code>(string | { label, prompt })[]</code></td><td>Chips shown until the first user message; JSON in the attribute.</td></tr>
+        <tr><td>launcher</td><td><code>boolean</code></td><td>Default <code>true</code> (floating button). <code>false</code> renders inline, always open.</td></tr>
+        <tr><td>position</td><td><code>bottom-end | bottom-start | top-end | top-start</code></td><td>Launcher/window corner (default <code>bottom-end</code>).</td></tr>
+        <tr><td>persist</td><td><code>boolean | string</code></td><td>Remember the conversation in <code>localStorage</code> (<code>orion:chatbot:&lt;id or key&gt;</code>).</td></tr>
+        <tr><td>avatar</td><td><code>string</code></td><td>Icon name or an image URL.</td></tr>
+        <tr><td>open</td><td><code>boolean</code></td><td>Reflects the window's open state.</td></tr>
+        <tr><td>disabled</td><td><code>boolean</code></td><td>Disables the composer.</td></tr>
+        <tr><td>provider / system</td><td><code>function / string</code></td><td>Per-instance override of <code>Orion.ai.configure()</code>'s provider, and a system prompt.</td></tr>
+        <tr><td>texts</td><td><code>object</code></td><td>Per-instance string overrides.</td></tr>
+      </tbody>
+    </table>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>open() / close() / toggle() / focus()</td><td>Window and input focus control.</td></tr>
+        <tr><td>send(text)</td><td>Send a message as the user (opens the window first if it's a launcher).</td></tr>
+        <tr><td>stop()</td><td>Abort the in-progress reply.</td></tr>
+        <tr><td>regenerate()</td><td>Re-run the last exchange.</td></tr>
+        <tr><td>newChat() / clear()</td><td>Clear the conversation (and persisted storage).</td></tr>
+        <tr><td>exportTranscript({ format, download, filename })</td><td><code>format</code>: <code>'markdown'</code> (default) <code>| 'text' | 'json'</code>. Returns the transcript string; downloads a file unless <code>download: false</code>.</td></tr>
+      </tbody>
+    </table>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>o-message</td><td><code>{ message: { role: 'user', text } }</code></td></tr>
+        <tr><td>o-response</td><td><code>{ message: { role: 'assistant', text }, aborted }</code></td></tr>
+        <tr><td>o-feedback</td><td><code>{ message, rating: 'up' | 'down' | null }</code> (toggling the same thumb again clears it)</td></tr>
+        <tr><td>o-error</td><td><code>{ error }</code></td></tr>
+        <tr><td>o-export</td><td><code>{ format, text }</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="assistant-api">
+    <h2>&lt;o-assistant&gt; API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Attribute / Property</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>title</td><td><code>string</code></td><td>Panel header.</td></tr>
+        <tr><td>context-selector</td><td><code>boolean</code></td><td>Show the current-context badge (default <code>true</code>).</td></tr>
+        <tr><td>dock</td><td><code>start | end</code></td><td>Which edge the panel docks to (default <code>end</code>; mirrors in RTL).</td></tr>
+        <tr><td>width</td><td><code>number</code></td><td>Panel width in px (280–640, drag the handle or <kbd class="o-kbd">←</kbd>/<kbd class="o-kbd">→</kbd> on it).</td></tr>
+        <tr><td>open</td><td><code>boolean</code></td><td>Reflects the panel's open state.</td></tr>
+        <tr><td>context</td><td><code>() => string</code></td><td>Override what "the page" means (default: current selection, else the last focused field, else page text).</td></tr>
+        <tr><td>templates</td><td><code>{ label, build }[]</code></td><td>Extra quick actions; <code>build(context)</code> returns the prompt.</td></tr>
+        <tr><td>provider / texts</td><td><code>function / object</code></td><td>Same as <code>&lt;o-chatbot&gt;</code>.</td></tr>
+      </tbody>
+    </table>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>open() / close() / toggle() / focus()</td><td>Panel and input focus control.</td></tr>
+        <tr><td>ask(prompt)</td><td>Programmatically ask a question using the current context.</td></tr>
+        <tr><td>stop()</td><td>Abort the in-progress result.</td></tr>
+        <tr><td>clearHistory()</td><td>Clear the short result history list.</td></tr>
+      </tbody>
+    </table>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>o-result</td><td><code>{ label, text }</code></td></tr>
+        <tr><td>o-insert</td><td><code>{ text, mode: 'insert' | 'replace' }</code></td></tr>
+        <tr><td>o-error</td><td><code>{ error }</code></td></tr>
+      </tbody>
+    </table>
+    <p><strong>Ctrl</strong>+<strong>J</strong> toggles the panel when <code>Orion.shortcuts</code> is in the build (falls back to nothing — still fully usable from the trigger button).</p>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Where</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Enter</td><td>Chatbot composer</td><td>Send.</td></tr>
+        <tr><td>Shift+Enter</td><td>Chatbot composer</td><td>New line.</td></tr>
+        <tr><td>↑ (empty input)</td><td>Chatbot composer</td><td>Recall the last message you sent.</td></tr>
+        <tr><td>Esc</td><td>Chatbot</td><td>Stop a reply in progress, else close the window (launcher mode).</td></tr>
+        <tr><td>Esc</td><td>Assistant</td><td>Close the panel.</td></tr>
+        <tr><td>←/→</td><td>Assistant resize handle</td><td>Narrow / widen by 16px (mirrors in RTL).</td></tr>
+        <tr><td>Ctrl+J</td><td>Anywhere</td><td>Toggle the assistant (when <code>Orion.shortcuts</code> is loaded).</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="frameworks">
+    <h2>Frameworks</h2>
+    <p>Both are plain custom elements: set <code>provider</code>/<code>context</code>/<code>templates</code> as
+      properties from React/Vue/Angular (they are functions/objects, so attributes won't do), and listen for
+      <code>o-response</code>/<code>o-insert</code>/<code>o-feedback</code> through a ref. Neither touches
+      <code>Orion.ai.configure()</code> for you — call it once at app startup (or pass a per-instance
+      <code>provider</code>).</p>
+  </section>
+</main>
+</body>
+</html>

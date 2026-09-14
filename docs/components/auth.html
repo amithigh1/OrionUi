@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auth — Orion Admin</title>
+<meta name="docs:section" content="Auth & Onboarding">
+<meta name="docs:order" content="10">
+<meta name="docs:desc" content="Login, register, forgot/reset password, lock screen and magic-link forms">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Auth</h1>
+    <p class="docs-lead"><code>&lt;o-auth-form&gt;</code> is one element that renders six sign-in flows — login,
+      register, forgot password, reset password, a lock screen and a passwordless magic link — with correct
+      autocomplete/inputmode attributes, inline validation, a password strength meter, social buttons and
+      "check your inbox" success states. See also <a href="two-factor.html">Two-factor</a> and
+      <a href="biometric.html">Biometric / passkeys</a>.</p>
+  </header>
+
+  <section id="login">
+    <h2>Login</h2>
+    <p>A working form against a mocked backend — try <code>demo@orion.dev</code> / <code>password123</code>,
+      or anything else to see the error alert. The password field's show/hide toggle, caps-lock hint and
+      strength meter come from the <code>inputs</code> package's <code>data-o-password-toggle</code> /
+      <code>data-o-strength</code> behaviors when it is part of the build; they are plain, harmless attributes
+      otherwise.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div style="max-width:24rem;width:100%">
+          <o-auth-form type="login" brand="Orion Admin" social='["google","github"]' remember id="demo-login"></o-auth-form>
+        </div>
+        <script>
+          const el = document.getElementById('demo-login');
+          el.onSubmit = async (data) => {
+            await new Promise(r => setTimeout(r, 700));
+            if (data.email !== 'demo@orion.dev' || data.password !== 'password123') {
+              throw { field: 'password', message: 'Incorrect email or password' };
+            }
+            docs.log('#login-log', 'Signed in: ' + JSON.stringify(data));
+          };
+          el.addEventListener('o-social', e => docs.log('#login-log', 'Social: ' + e.detail.provider));
+          el.addEventListener('o-mode', e => docs.log('#login-log', 'Mode -> ' + e.detail.type));
+        </script>
+        <div class="docs-log" id="login-log"></div>
+      </template>
+    </div>
+  </section>
+
+  <section id="register">
+    <h2>Register</h2>
+    <p>Confirm-password matching is live as you type; the terms checkbox is required. Type a password to see
+      the strength meter (only rendered when the <code>inputs</code> package is present).</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div style="max-width:24rem;width:100%">
+          <o-auth-form type="register" brand="Orion Admin" terms-url="#" id="demo-register"></o-auth-form>
+        </div>
+        <script>
+          document.getElementById('demo-register').onSubmit = async (data) => {
+            await new Promise(r => setTimeout(r, 600));
+            docs.log('#register-log', 'Account created: ' + data.email);
+          };
+        </script>
+        <div class="docs-log" id="register-log"></div>
+      </template>
+    </div>
+  </section>
+
+  <section id="forgot">
+    <h2>Forgot password &amp; magic link</h2>
+    <p>Both end with a "check your inbox" screen and a resend countdown.</p>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div style="display:flex;gap:1.5rem;flex-wrap:wrap;justify-content:center">
+          <div style="max-width:22rem;width:100%">
+            <o-auth-form type="forgot" id="demo-forgot"></o-auth-form>
+          </div>
+          <div style="max-width:22rem;width:100%">
+            <o-auth-form type="magic-link" id="demo-magic"></o-auth-form>
+          </div>
+        </div>
+        <script>
+          const noop = async () => { await new Promise(r => setTimeout(r, 500)); };
+          document.getElementById('demo-forgot').onSubmit = noop;
+          document.getElementById('demo-magic').onSubmit = noop;
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="lock">
+    <h2>Reset password &amp; lock screen</h2>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <div style="display:flex;gap:1.5rem;flex-wrap:wrap;justify-content:center">
+          <div style="max-width:22rem;width:100%">
+            <o-auth-form type="reset" id="demo-reset"></o-auth-form>
+          </div>
+          <div style="max-width:22rem;width:100%">
+            <o-auth-form type="lock" id="demo-lock"></o-auth-form>
+          </div>
+        </div>
+        <script>
+          document.getElementById('demo-reset').onSubmit = async () => { await new Promise(r => setTimeout(r, 500)); };
+          const lock = document.getElementById('demo-lock');
+          lock.user = { name: 'Ada Lovelace', email: 'ada@example.com' };
+          lock.onSubmit = async () => { await new Promise(r => setTimeout(r, 500)); docs.log('#lock-log', 'Unlocked'); };
+          lock.addEventListener('o-switch-user', () => docs.log('#lock-log', 'Not you? clicked'));
+        </script>
+        <div class="docs-log" id="lock-log"></div>
+      </template>
+    </div>
+  </section>
+
+  <section id="examples">
+    <h2>Full-page examples</h2>
+    <p>Split-screen, premium-SaaS-styled pages built with the <code>.o-auth-split</code> / <code>.o-auth-cover</code>
+      layout classes and a hand-made SVG illustration:</p>
+    <ul>
+      <li><a href="../examples/auth-login.html">Login</a></li>
+      <li><a href="../examples/auth-register.html">Register</a></li>
+      <li><a href="../examples/auth-forgot.html">Forgot password</a></li>
+      <li><a href="../examples/auth-lock.html">Lock screen</a></li>
+    </ul>
+  </section>
+
+  <section id="api">
+    <h2>API — <code>&lt;o-auth-form&gt;</code></h2>
+    <table class="docs-api">
+      <thead><tr><th>Prop / attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>type</code></td><td>string</td><td><code>login｜register｜forgot｜reset｜lock｜magic-link</code>. Reflected.</td></tr>
+        <tr><td><code>brand</code>, <code>logo</code></td><td>string</td><td>Header brand name / logo image.</td></tr>
+        <tr><td><code>social</code></td><td>array</td><td>JSON or comma list of <code>google, microsoft, github, apple</code>.</td></tr>
+        <tr><td><code>remember</code></td><td>boolean</td><td>Show "Remember me" (login only).</td></tr>
+        <tr><td><code>terms-url</code></td><td>string</td><td>Link target for the terms checkbox (register).</td></tr>
+        <tr><td><code>user</code></td><td>object</td><td><code>{ name, email, avatar }</code> for the lock screen.</td></tr>
+        <tr><td><code>onSubmit</code></td><td>function (property)</td><td><code>async (data) =&gt; void</code>; throw <code>{ message, field? }</code> to show an error.</td></tr>
+        <tr><td><code>texts</code></td><td>object</td><td>Per-instance string overrides.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <tbody>
+        <tr><td><code>submit()</code></td><td>Validate and submit programmatically.</td></tr>
+        <tr><td><code>reset()</code></td><td>Clear fields, errors and the success screen.</td></tr>
+        <tr><td><code>showSuccess()</code> / <code>showError(err)</code></td><td>Force the success screen / render an error.</td></tr>
+        <tr><td><code>focus()</code></td><td>Focus the first field.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <tbody>
+        <tr><td><code>o-submit</code></td><td><code>{ type, data }</code> — cancelable; prevent to take over submission entirely.</td></tr>
+        <tr><td><code>o-success</code></td><td><code>{ type, data, result }</code></td></tr>
+        <tr><td><code>o-error</code></td><td><code>{ type, error }</code></td></tr>
+        <tr><td><code>o-social</code></td><td><code>{ provider }</code></td></tr>
+        <tr><td><code>o-mode</code></td><td><code>{ type }</code> — cancelable; default switches <code>type</code>.</td></tr>
+        <tr><td><code>o-resend</code></td><td><code>{ type, data }</code> — cancelable.</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS layout classes</h3>
+    <table class="docs-api">
+      <tbody>
+        <tr><td><code>.o-auth</code> / <code>.o-auth-card</code></td><td>Centered single-card page.</td></tr>
+        <tr><td><code>.o-auth-split</code> / <code>.o-auth-cover</code> / <code>.o-auth-split-form</code></td><td>Split brand panel + form; the cover collapses below 992px.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <tbody>
+        <tr><td><kbd>Tab</kbd></td><td>Move between fields, the password toggle and buttons in document order.</td></tr>
+        <tr><td><kbd>Enter</kbd></td><td>Submit the form from any field.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

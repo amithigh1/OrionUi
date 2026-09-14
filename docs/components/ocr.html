@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OCR — Orion Admin</title>
+<meta name="docs:section" content="Devices &amp; Capture">
+<meta name="docs:order" content="50">
+<meta name="docs:desc" content="Pluggable OCR: image/drop/camera input, region selection, progress, editable result">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .ocr-samples { display: flex; flex-wrap: wrap; gap: .75rem; margin-block-end: 1rem; }
+  .ocr-samples button { display: flex; flex-direction: column; align-items: center; gap: .375rem; padding: .5rem; border: 1px solid var(--o-border); border-radius: var(--o-radius); background: var(--o-surface); cursor: pointer; }
+  .ocr-samples button.is-active { border-color: var(--o-primary); box-shadow: 0 0 0 2px var(--o-primary-subtle); }
+  .ocr-samples img { width: 5rem; height: 3.75rem; object-fit: contain; background: var(--o-surface-2); border-radius: var(--o-radius-xs); }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>OCR</h1>
+    <p class="docs-lead">This library ships <strong>no third-party OCR code</strong>. <code>&lt;o-ocr&gt;</code>
+    is a UI shell — image/drop/camera input, drag-to-select a region, progress, an editable result panel —
+    around whatever engine you register with <code>Orion.ocr.use(engine)</code>. Every demo on this page runs
+    against the bundled, fully offline <strong>fixture engine</strong>.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Fixture engine</h2>
+    <p>Pick a bundled sample, then Recognize. The fixture engine matches the image by its
+    <code>data-ocr-fixture</code> id (set here) or by exact pixel size, and returns canned text —
+    everything below works with no network calls.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="ocr-samples" id="ocr-samples">
+          <button type="button" data-id="invoice"><img src="../fixtures/ocr/invoice.svg" alt="Invoice sample"><span>Invoice</span></button>
+          <button type="button" data-id="receipt"><img src="../fixtures/ocr/receipt.svg" alt="Receipt sample"><span>Receipt</span></button>
+          <button type="button" data-id="card"><img src="../fixtures/ocr/business-card.svg" alt="Business card sample"><span>Business card</span></button>
+        </div>
+        <o-ocr id="ocr-basic" languages='[{"value":"eng","label":"English"}]'></o-ocr>
+        <script>
+          Orion.ocr.use(Orion.ocr.fixture());
+          const ob = document.getElementById('ocr-basic');
+          const samples = document.getElementById('ocr-samples');
+          const FILES = { invoice: '../fixtures/ocr/invoice.svg', receipt: '../fixtures/ocr/receipt.svg', card: '../fixtures/ocr/business-card.svg' };
+          samples.addEventListener('click', e => {
+            const btn = e.target.closest('button[data-id]'); if (!btn) return;
+            samples.querySelectorAll('button').forEach(b => b.classList.toggle('is-active', b === btn));
+            ob.load(FILES[btn.dataset.id], btn.dataset.id);
+          });
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="region">
+    <h2>Region selection</h2>
+    <p>Load the invoice sample, Recognize once, then drag a small box over just the "Total: $75.00" line
+    near the bottom — the result narrows to whatever bundled words fall inside your selection, and
+    re-recognizes automatically. "Clear region" (shown once a region is set) goes back to the full image.</p>
+    <div class="docs-demo">
+      <template>
+        <o-ocr id="ocr-region"></o-ocr>
+        <div class="docs-log" id="ocr-region-log"></div>
+        <script>
+          const orEl = document.getElementById('ocr-region');
+          orEl.load('../fixtures/ocr/invoice.svg', 'invoice');
+          orEl.addEventListener('o-region', e => docs.log('#ocr-region-log', `o-region → ${e.detail.region ? JSON.stringify(e.detail.region) : 'cleared'}`));
+          orEl.addEventListener('o-result', e => docs.log('#ocr-region-log', `o-result → "${e.detail.text.slice(0, 60)}"`));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="words">
+    <h2>Word boxes &amp; confidence</h2>
+    <p>After recognizing, "Show word boxes" overlays each returned word's bounding box on the image. The
+    confidence badge is colour-coded <em>and</em> labelled with the percentage — never colour alone.</p>
+    <div class="docs-demo">
+      <template>
+        <o-ocr id="ocr-words" auto-recognize></o-ocr>
+        <script>
+          document.getElementById('ocr-words').load('../fixtures/ocr/receipt.svg', 'receipt');
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="abort">
+    <h2>Progress &amp; abort</h2>
+    <p>Recognizing shows a progress bar (three intermediate steps, then done); "Cancel" aborts via the
+    engine's <code>AbortSignal</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <o-ocr id="ocr-abort"></o-ocr>
+        <div class="docs-log" id="ocr-abort-log"></div>
+        <script>
+          const oa = document.getElementById('ocr-abort');
+          oa.load('../fixtures/ocr/business-card.svg', 'card');
+          oa.addEventListener('o-progress', e => docs.log('#ocr-abort-log', `o-progress → ${e.detail.status} ${(e.detail.progress * 100).toFixed(0)}%`));
+          oa.addEventListener('o-error', () => docs.log('#ocr-abort-log', 'o-error (aborted)'));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="registration">
+    <h2>Engine registration</h2>
+    <p><code>Orion.ocr.use()</code> validates engines and throws a clear error for a missing
+    <code>name</code> or <code>recognize()</code>, instead of failing silently later.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-sm" id="ocr-reg-bad">Register an invalid engine</button>
+          <button class="o-btn o-btn-sm" id="ocr-reg-good">Register a valid engine</button>
+        </div>
+        <div class="docs-log" id="ocr-reg-log"></div>
+        <script>
+          document.getElementById('ocr-reg-bad').onclick = () => {
+            try { Orion.ocr.use({}); docs.log('#ocr-reg-log', 'unexpectedly succeeded'); }
+            catch (e) { docs.log('#ocr-reg-log', 'threw: ' + e.message); }
+          };
+          document.getElementById('ocr-reg-good').onclick = () => {
+            Orion.ocr.register({ name: 'demo-echo', recognize: async () => ({ text: 'ok', confidence: 1 }) });
+            docs.log('#ocr-reg-log', 'registered "demo-echo" — Orion.ocr.list() = ' + JSON.stringify(Orion.ocr.list()));
+          };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="tesseract">
+    <h2>Tesseract.js adapter (developer opt-in)</h2>
+    <p>Nothing is fetched by default. To use real OCR, host a Tesseract.js build yourself and register it —
+    see <code>src/components/ocr/README.md</code> and <code>20-adapters.js</code> for the full contract:</p>
+    <pre class="docs-code-block" data-lang="js">
+Orion.ocr.use(Orion.ocr.tesseract({
+  scriptUrl: 'https://your-cdn/tesseract.min.js',   // you choose/host this — never fetched automatically
+  workerOptions: { langPath: 'https://your-cdn/lang-data' },
+}));
+await document.querySelector('o-ocr').recognize();  // now runs real OCR
+    </pre>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Orion.ocr</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>use(engine) / register(engine)</td><td>Validates <code>{ name, recognize }</code>; <code>use()</code> also activates it.</td></tr>
+        <tr><td>get(name) / list() / active / setActive(name)</td><td>Registry access.</td></tr>
+        <tr><td>recognize(imageSource, opts)</td><td>Runs the active (or <code>opts.engine</code>) engine.</td></tr>
+        <tr><td>fixture(opts?)</td><td>Built-in offline engine factory.</td></tr>
+        <tr><td>shapeDetection(opts?)</td><td>Native <code>TextDetector</code> wrapper (rarely supported).</td></tr>
+        <tr><td>tesseract(opts)</td><td>Developer-opt-in Tesseract.js adapter.</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-ocr&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>lang / languages</td><td><code>string</code> / <code>array</code></td><td>Active language + the select's options.</td></tr>
+        <tr><td>auto-recognize</td><td><code>boolean</code></td><td>Recognize as soon as an image loads.</td></tr>
+        <tr><td>camera</td><td><code>boolean</code></td><td>Shows a camera button only when the <code>camera</code> package is present.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>load(source, fixtureId?)</td><td>File/Blob, URL, or loaded <code>&lt;img&gt;</code>.</td></tr>
+        <tr><td>recognize() / abort()</td><td>Run / cancel.</td></tr>
+        <tr><td>clearRegion()</td><td>Drop the selected region.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>o-before-recognize</td><td><code>{ region }</code>, cancelable</td></tr>
+        <tr><td>o-progress</td><td><code>{ status, progress }</code></td></tr>
+        <tr><td>o-result</td><td><code>{ text, confidence, words? }</code></td></tr>
+        <tr><td>o-error</td><td><code>{ error }</code></td></tr>
+        <tr><td>o-region</td><td><code>{ region }</code></td></tr>
+        <tr><td>o-copy / o-download</td><td><code>{ text }</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Tab</td><td>Moves through the drop zone, language select, toolbar buttons, word-boxes switch, copy/download, and the result textarea.</td></tr>
+        <tr><td>Enter / Space</td><td>On the focused drop zone, opens the file picker.</td></tr>
+      </tbody>
+    </table>
+    <p class="o-text-muted o-text-sm">Region selection itself is pointer-only (drag to draw a box) — see the README for why.</p>
+  </section>
+</main>
+</body>
+</html>

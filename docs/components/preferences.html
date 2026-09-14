@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preferences — Orion Admin</title>
+<meta name="docs:section" content="Auth & Onboarding">
+<meta name="docs:order" content="60">
+<meta name="docs:desc" content="A settings panel for theme, accessibility, language and notifications">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Preferences</h1>
+    <p class="docs-lead"><code>&lt;o-preferences&gt;</code> is a self-contained settings panel — theme mode,
+      density, high contrast, text size, a reduced-motion override, language and notification toggles —
+      that can be embedded inline or opened in a drawer with <code>Orion.preferences.open()</code>.</p>
+  </header>
+
+  <section id="inline">
+    <h2>Inline panel</h2>
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div style="max-width:28rem">
+          <o-preferences id="demo-prefs"></o-preferences>
+        </div>
+        <div class="docs-log" id="prefs-log"></div>
+        <script>
+          const el = document.getElementById('demo-prefs');
+          el.addEventListener('o-change', e => docs.log('#prefs-log', 'change: ' + e.detail.key + ' = ' + e.detail.value));
+          el.addEventListener('o-notification-change', e => docs.log('#prefs-log', 'notif ' + e.detail.key + ' = ' + e.detail.value));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="drawer">
+    <h2><code>Orion.preferences.open()</code></h2>
+    <div class="docs-demo" data-preview="center">
+      <template>
+        <button class="o-btn o-btn-primary" data-o-action="preferences"><o-icon name="settings"></o-icon> Open preferences</button>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Props</td><td><code>sections(="appearance,accessibility,language,notifications") notifications texts</code></td></tr>
+        <tr><td>Method</td><td><code>reset()</code></td></tr>
+        <tr><td>Events</td><td><code>o-change {key,value}</code>, <code>o-notification-change {key,value}</code></td></tr>
+        <tr><td><code>Orion.preferences.open(opts?)</code></td><td>Opens in a drawer. <code>opts: { sections, notifications, texts }</code>.</td></tr>
+        <tr><td><code>Orion.preferences.close()</code> / <code>.toggle(opts?)</code></td><td>—</td></tr>
+        <tr><td><code>data-o-action="preferences"</code></td><td>Delegated open button.</td></tr>
+      </tbody>
+    </table>
+    <h3>Persistence</h3>
+    <p>Reads/writes through <code>Orion.prefs.get/set</code> when the <code>services-b</code> package is
+      present, <code>localStorage</code> (<code>orion:preferences</code>) otherwise. Theme mode, contrast and
+      font scale are already persisted by <code>Orion.theme</code> itself; density and the motion override
+      are persisted here.</p>
+    <h3>Limitation</h3>
+    <p>The reduced-motion override forces every CSS transition/animation to ~0 duration
+      (<code>html.o-motion-reduce</code>), but cannot reach JS-driven <code>Orion.animate()</code> calls,
+      which only check the OS-level <code>prefers-reduced-motion</code> media query. A one-line core change
+      (<code>reducedMotion()</code> also checking a runtime flag) would close that gap — see this package's
+      final report.</p>
+  </section>
+</main>
+</body>
+</html>

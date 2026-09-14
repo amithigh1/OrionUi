@@ -1,0 +1,5 @@
+/* print helpers (in addition to .o-print-hide / .o-no-print / .o-print-only from the utilities) */
+@media print {
+  .o-print-break { break-before: page; }
+  .o-print-avoid { break-inside: avoid; }
+}

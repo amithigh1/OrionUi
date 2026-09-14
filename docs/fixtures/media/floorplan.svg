@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" width="1600" height="1000" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <title>Apartment floor plan</title>
+  <defs>
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="#e2e8f0" stroke-width="1"/></pattern>
+    <pattern id="tile" width="24" height="24" patternUnits="userSpaceOnUse"><rect width="24" height="24" fill="#f1f5f9"/><path d="M24 0H0V24" fill="none" stroke="#cbd5e1" stroke-width="1"/></pattern>
+    <pattern id="wood" width="60" height="14" patternUnits="userSpaceOnUse"><rect width="60" height="14" fill="#fef3c7"/><path d="M0 13.5H60M30 0V14" stroke="#fcd34d" stroke-width="1"/></pattern>
+  </defs>
+  <rect width="1600" height="1000" fill="#ffffff"/>
+  <rect width="1600" height="1000" fill="url(#grid)"/>
+  <!-- floors -->
+  <rect x="100" y="100" width="620" height="440" fill="url(#wood)"/>
+  <rect x="720" y="100" width="380" height="300" fill="url(#tile)"/>
+  <rect x="1100" y="100" width="400" height="360" fill="#ede9fe"/>
+  <rect x="720" y="400" width="380" height="140" fill="#f8fafc"/>
+  <rect x="100" y="540" width="420" height="360" fill="#e0f2fe"/>
+  <rect x="520" y="540" width="300" height="360" fill="url(#tile)"/>
+  <rect x="820" y="540" width="680" height="360" fill="#dcfce7"/>
+  <rect x="1100" y="460" width="400" height="80" fill="#f8fafc"/>
+  <!-- walls -->
+  <g fill="none" stroke="#1e293b" stroke-width="12" stroke-linecap="square">
+    <path d="M100 100 H1500 V900 H100 Z"/>
+    <path d="M720 100 V300 M720 360 V540 M720 400 H1100 M1100 100 V240 M1100 300 V540"/>
+    <path d="M100 540 H300 M360 540 H620 M680 540 H1000 M1060 540 H1500"/>
+    <path d="M520 540 V900 M820 540 V650 M820 710 V900 M1100 460 H1500"/>
+  </g>
+  <!-- windows -->
+  <g stroke="#38bdf8" stroke-width="6"><path d="M200 100 H420 M860 100 H980 M1220 100 H1400 M1500 620 V820 M180 900 H420 M960 900 H1300"/></g>
+  <!-- doors -->
+  <g fill="none" stroke="#64748b" stroke-width="2.5">
+    <path d="M720 300 A60 60 0 0 1 780 360"/><path d="M1100 240 A60 60 0 0 0 1040 300"/><path d="M300 540 A60 60 0 0 1 360 480"/>
+    <path d="M620 540 A60 60 0 0 0 680 600"/><path d="M1000 540 A60 60 0 0 1 1060 480"/><path d="M820 650 A60 60 0 0 0 880 710"/>
+  </g>
+  <!-- furniture -->
+  <g fill="#ffffff" stroke="#475569" stroke-width="3">
+    <rect x="150" y="380" width="300" height="100" rx="20"/><rect x="150" y="380" width="300" height="30" rx="12"/>
+    <rect x="230" y="220" width="160" height="90" rx="10"/>
+    <rect x="530" y="150" width="140" height="80" rx="6"/>
+    <circle cx="600" cy="400" r="60"/><circle cx="600" cy="320" r="18"/><circle cx="600" cy="480" r="18"/><circle cx="520" cy="400" r="18"/><circle cx="680" cy="400" r="18"/>
+    <rect x="740" y="120" width="340" height="60" rx="4"/><rect x="740" y="180" width="60" height="120" rx="4"/>
+    <circle cx="790" cy="150" r="14"/><circle cx="840" cy="150" r="14"/><rect x="930" y="128" width="80" height="44" rx="6"/>
+    <rect x="1180" y="160" width="240" height="200" rx="10"/><rect x="1190" y="170" width="100" height="50" rx="8"/><rect x="1310" y="170" width="100" height="50" rx="8"/>
+    <rect x="1130" y="130" width="40" height="40" rx="4"/><rect x="1430" y="130" width="40" height="40" rx="4"/>
+    <rect x="160" y="600" width="180" height="200" rx="8"/><rect x="170" y="610" width="75" height="40" rx="6"/><rect x="255" y="610" width="75" height="40" rx="6"/>
+    <rect x="380" y="820" width="120" height="60" rx="4"/>
+    <rect x="560" y="580" width="220" height="110" rx="40"/><rect x="560" y="780" width="80" height="90" rx="6"/><ellipse cx="730" cy="830" rx="40" ry="46"/>
+    <rect x="900" y="600" width="220" height="100" rx="6"/><circle cx="1010" cy="740" r="26"/>
+    <rect x="1200" y="620" width="200" height="120" rx="60"/><circle cx="1250" cy="800" r="30"/><circle cx="1350" cy="800" r="30"/>
+  </g>
+  <g fill="#86efac"><circle cx="1460" cy="580" r="22"/><circle cx="860" cy="860" r="22"/><circle cx="130" cy="130" r="18"/></g>
+  <!-- labels -->
+  <g fill="#0f172a" font-size="30" font-weight="600" text-anchor="middle">
+    <text x="410" y="170">Living room</text><text x="910" y="250">Kitchen</text><text x="1300" y="420">Primary bedroom</text>
+    <text x="330" y="880" font-size="26">Bedroom 2</text><text x="670" y="740" font-size="26">Bath</text><text x="1160" y="870">Office</text><text x="910" y="480" font-size="24">Hall</text>
+  </g>
+  <g fill="#64748b" font-size="20" text-anchor="middle">
+    <text x="410" y="200">6.2 × 4.4 m</text><text x="910" y="280">3.8 × 3.0 m</text><text x="1300" y="445">4.0 × 3.6 m</text><text x="1160" y="895">6.8 × 3.6 m</text>
+  </g>
+  <!-- dimension line -->
+  <g stroke="#94a3b8" stroke-width="2"><path d="M100 60 H1500 M100 48 V72 M1500 48 V72"/></g>
+  <text x="800" y="50" fill="#475569" font-size="22" text-anchor="middle">14.0 m</text>
+  <g transform="translate(1540 960)"><circle r="26" fill="#fff" stroke="#475569" stroke-width="2"/><path d="M0 -18 L8 8 L0 2 L-8 8Z" fill="#ef4444"/><text y="-30" font-size="18" text-anchor="middle" fill="#475569">N</text></g>
+</svg>

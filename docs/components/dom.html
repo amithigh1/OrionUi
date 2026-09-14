@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DOM manipulation — Orion Admin</title>
+<meta name="docs:section" content="Services & Utilities">
+<meta name="docs:order" content="5">
+<meta name="docs:title" content="DOM Manipulation">
+<meta name="docs:desc" content="Chainable Orion.$, element builder h(), delegated events, utilities, sanitizer, formatting, dates">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>DOM Manipulation &amp; Utilities</h1>
+    <p class="docs-lead">A jQuery-style chainable API (<code>Orion.$</code>), an element builder, delegated events and a set of everyday utilities. You don't need another helper library.</p>
+  </header>
+
+  <section id="query">
+    <h2>Orion.$ — chainable queries</h2>
+    <div class="docs-demo">
+      <template>
+        <ul class="o-list o-mb-3" id="dom-list"><li class="o-list-item">One</li><li class="o-list-item">Two</li><li class="o-list-item">Three</li></ul>
+        <div class="o-cluster">
+          <button class="o-btn o-btn-sm" id="dom-add">append()</button>
+          <button class="o-btn o-btn-sm" id="dom-mark">addClass / css</button>
+          <button class="o-btn o-btn-sm" id="dom-fade">fadeOut / fadeIn</button>
+          <button class="o-btn o-btn-sm" id="dom-slide">slideToggle</button>
+        </div>
+        <script>
+          const $ = Orion.$;
+          $('#dom-list').on('click', '.o-list-item', (e, item) => $(item).toggleClass('is-active'));
+          $('#dom-add').on('click', () => $('#dom-list').append(`<li class="o-list-item">Item ${$('#dom-list .o-list-item').length + 1}</li>`));
+          $('#dom-mark').on('click', () => $('#dom-list .o-list-item').where(':nth-child(odd)').addClass('o-fw-semibold').css({ color: 'var(--o-primary-text)' }));
+          $('#dom-fade').on('click', async () => { $('#dom-list').fadeOut(200); setTimeout(() => $('#dom-list').fadeIn(200), 400); });
+          $('#dom-slide').on('click', () => $('#dom-list').slideToggle());
+        </script>
+      </template>
+    </div>
+    <table class="docs-api">
+      <thead><tr><th>Methods</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Orion.$(selector | element | list | '&lt;html&gt;' | fn)</td><td>Returns a chainable array of elements; a function runs on DOM ready.</td></tr>
+        <tr><td>find closest parent children siblings next prev where eq first last is index</td><td>Traversal (<code>where</code> filters by selector or function).</td></tr>
+        <tr><td>addClass removeClass toggleClass hasClass attr removeAttr prop data css</td><td>Attributes and styles.</td></tr>
+        <tr><td>text html val append prepend before after remove empty clone</td><td>Content.</td></tr>
+        <tr><td>on(types, [selector], fn) off(types, fn) trigger(type, detail)</td><td>Events (delegation with selector).</td></tr>
+        <tr><td>show hide toggle fadeIn fadeOut slideDown slideUp slideToggle</td><td>Visibility and animation.</td></tr>
+        <tr><td>each rect focus el</td><td>Misc (<code>.el</code> = first element).</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="h">
+    <h2>Orion.h — build elements</h2>
+    <pre class="docs-code-block" data-lang="js">
+      const btn = Orion.h('button', { class: ['o-btn', isPrimary && 'o-btn-primary'], onClick: save, 'aria-label': 'Save' },
+        Orion.icon('check'), 'Save');
+      const chart = Orion.h('o-chart', { props: { config } });   // set element properties
+      document.body.append(btn);
+    </pre>
+  </section>
+
+  <section id="events">
+    <h2>Events</h2>
+    <pre class="docs-code-block" data-lang="js">
+      const off = Orion.dom.on(document, 'click', '[data-row]', (e, row) => select(row.dataset.row));
+      off();                                            // remove
+      Orion.dom.emit(el, 'o-refresh', { force: true }); // CustomEvent (bubbles)
+      Orion.on('ready', fn);  Orion.emit('app:saved', data);   // global app event bus
+    </pre>
+  </section>
+
+  <section id="utils">
+    <h2>Utilities</h2>
+    <table class="docs-api">
+      <thead><tr><th>Function</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Orion.util.debounce(fn, ms) / throttle / rafThrottle</td><td>Rate limiting (<code>.cancel()</code>, <code>.flush()</code>).</td></tr>
+        <tr><td>Orion.util.merge / clone / equal / getPath / setPath</td><td>Objects (<code>getPath(row, 'user.address.city')</code>).</td></tr>
+        <tr><td>Orion.util.fuzzy(q, text) / fuzzySearch(items, q, key) / highlight(text, q)</td><td>Fuzzy search with ranking and <code>&lt;mark&gt;</code> highlighting.</td></tr>
+        <tr><td>Orion.sanitize(html)</td><td>Remove scripts, event handlers and unsafe URLs from untrusted HTML.</td></tr>
+        <tr><td>Orion.util.html`…` / raw() / esc()</td><td>Escaping template literal.</td></tr>
+        <tr><td>Orion.download(blob|string, filename) / downloadURL(url)</td><td>Save files.</td></tr>
+        <tr><td>Orion.util.uid(prefix) / sleep(ms) / clamp / formatBytes</td><td>Misc.</td></tr>
+        <tr><td>Orion.format.number / currency / percent / compact / bytes / date / time / datetime / relative / duration / list / parseNumber</td><td>Locale-aware formatting (Intl).</td></tr>
+        <tr><td>Orion.date.parse / format / add / startOf / endOf / diff / isSame / matrix / weekNumber / …</td><td>Date helpers (local time, immutable).</td></tr>
+        <tr><td>Orion.position.place(float, ref, opts) / autoPlace</td><td>Floating element positioning (flip, shift, RTL).</td></tr>
+        <tr><td>Orion.overlays / Orion.portal / Orion.announce / new Orion.ListNav()</td><td>Building blocks for your own components.</td></tr>
+      </tbody>
+    </table>
+    <div class="docs-demo">
+      <template>
+        <pre class="o-pre" id="util-out"></pre>
+        <script>
+          const F = Orion.format, D = Orion.date;
+          document.getElementById('util-out').textContent = [
+            `format.currency(1234.5, 'MYR')  → ${F.currency(1234.5, 'MYR')}`,
+            `format.compact(1530000)         → ${F.compact(1530000)}`,
+            `format.percent(0.256, 1)        → ${F.percent(0.256, 1)}`,
+            `format.relative(-90 minutes)    → ${F.relative(Date.now() - 90 * 60000)}`,
+            `format.duration(3725000,'clock')→ ${F.duration(3725000, 'clock')}`,
+            `date.format(today, 'dddd, D MMMM YYYY') → ${D.format(D.today(), 'dddd, D MMMM YYYY')}`,
+            `date.diff('2026-12-25', today, 'd')     → ${D.diff('2026-12-25', D.today(), 'd')} days`,
+            `util.highlight('Orion Admin', 'adm')    → ${Orion.util.highlight('Orion Admin', 'adm')}`,
+          ].join('\n');
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="custom-components">
+    <h2>Build your own components</h2>
+    <p>Orion's component base classes are public, so your own widgets get the same lifecycle, props, form integration, theming and i18n:</p>
+    <pre class="docs-code-block" data-lang="js">
+      const { OElement, define, html } = Orion.core;
+      class HelloCard extends OElement {
+        static props = { name: { type: String, default: 'World' } };
+        render() { this.innerHTML = String(html`&lt;div class="o-card o-card-body"&gt;Hello, ${this.name}!&lt;/div&gt;`); }
+      }
+      define('hello-card', HelloCard);   // &lt;hello-card name="Ada"&gt;&lt;/hello-card&gt;
+    </pre>
+  </section>
+</main>
+</body>
+</html>

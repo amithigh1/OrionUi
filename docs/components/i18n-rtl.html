@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Languages &amp; RTL — Orion Admin</title>
+<meta name="docs:section" content="Foundation">
+<meta name="docs:order" content="95">
+<meta name="docs:title" content="Languages &amp; RTL">
+<meta name="docs:desc" content="Multi-language support, translations, plurals, locale formatting and right-to-left layouts">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Languages &amp; RTL</h1>
+    <p class="docs-lead">Every component string is translatable, numbers, dates and currencies follow the locale, and all layouts mirror automatically for right-to-left languages such as Arabic, Hebrew, Persian and Urdu.</p>
+  </header>
+
+  <section id="switch">
+    <h2>Switching language</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-4" id="lang-btns"></div>
+        <div class="o-card o-card-body">
+          <div class="o-cluster o-mb-3"><button class="o-btn o-btn-primary" id="l-ok"></button><button class="o-btn" id="l-cancel"></button><span class="o-badge o-badge-soft-primary" id="l-items"></span></div>
+          <p class="o-mb-1" id="l-money"></p>
+          <p class="o-mb-0 o-text-muted" id="l-date"></p>
+        </div>
+        <script>
+          const paint = () => {
+            document.getElementById('l-ok').textContent = Orion.t('common.save');
+            document.getElementById('l-cancel').textContent = Orion.t('common.cancel');
+            document.getElementById('l-items').textContent = Orion.t('common.items', { count: 3 });
+            document.getElementById('l-money').textContent = Orion.format.currency(1234567.891, 'USD') + ' · ' + Orion.format.number(0.5, { style: 'percent' });
+            document.getElementById('l-date').textContent = Orion.format.date(new Date(), 'full') + ' · ' + Orion.format.relative(Date.now() - 36e5 * 26);
+          };
+          [['en', 'English'], ['ms', 'Bahasa Melayu'], ['ar', 'العربية'], ['zh', '中文'], ['fr', 'Français'], ['de', 'Deutsch']].forEach(([code, name]) => {
+            document.getElementById('lang-btns').append(Orion.h('button', { class: 'o-btn o-btn-sm', onClick: () => Orion.i18n.set(code, { persist: false }) }, name));
+          });
+          Orion.on('locale', paint); paint();
+        </script>
+      </template>
+    </div>
+    <p>Setting a right-to-left language sets <code>&lt;html dir="rtl"&gt;</code> automatically (disable with <code>autoDir: false</code>). Components re-render their strings on the <code>locale</code> event.</p>
+  </section>
+
+  <section id="translations">
+    <h2>Adding translations</h2>
+    <pre class="docs-code-block" data-lang="js">
+      Orion.i18n.add('ms', {
+        common: { save: 'Simpan', cancel: 'Batal', items: { other: '{count} item' } },
+        table: { search: 'Cari…' }
+      }, 'Bahasa Melayu');                       // optional display name
+
+      Orion.i18n.set('ms');                       // switch (persisted)
+      Orion.t('common.items', { count: 5 });      // "5 item"
+      Orion.i18n.locales();                       // [{ code: 'en', name: 'English' }, ...]
+    </pre>
+    <p>Keys are namespaced per component (<code>select.noResults</code>, <code>table.rowsPerPage</code>…). Plurals use <code>{ zero, one, two, few, many, other }</code> objects resolved with <code>Intl.PluralRules</code>. Missing keys fall back to English. Individual components also accept a <code>texts</code> property to override strings per instance.</p>
+  </section>
+
+  <section id="rtl">
+    <h2>Right-to-left</h2>
+    <div class="docs-demo">
+      <template>
+        <div dir="rtl" class="o-card o-card-body" lang="ar">
+          <div class="o-between o-mb-3"><h4 class="o-m-0">لوحة التحكم</h4><button class="o-btn o-btn-primary"><o-icon name="plus"></o-icon> جديد</button></div>
+          <div class="o-input-wrap o-mb-3"><o-icon name="search"></o-icon><input class="o-input" placeholder="بحث…"></div>
+          <nav aria-label="breadcrumb"><ol class="o-breadcrumb"><li class="o-breadcrumb-item"><a href="#rtl">الرئيسية</a></li><li class="o-breadcrumb-item"><a href="#rtl">المستخدمون</a></li><li class="o-breadcrumb-item is-active">الملف الشخصي</li></ol></nav>
+          <div class="o-alert o-alert-info o-mt-3 o-mb-0"><o-icon name="info"></o-icon><div class="o-alert-content">يتم عكس التخطيط تلقائيًا باستخدام الخصائص المنطقية.</div></div>
+        </div>
+      </template>
+    </div>
+    <p>Orion uses CSS logical properties (<code>margin-inline-start</code>, <code>inset-inline-end</code>…) everywhere, so layouts mirror with no extra CSS. Directional icons (chevrons, arrows) flip, keyboard arrows follow the reading direction, and floating panels and drawers open from the correct side. Utilities use <code>s</code>/<code>e</code> (start/end) instead of left/right: <code>.o-ms-2</code>, <code>.o-pe-4</code>, <code>.o-text-end</code>.</p>
+  </section>
+
+  <section id="formatting">
+    <h2>Locale formatting</h2>
+    <p>See <a href="dom.html#utils">Orion.format</a>. The first day of the week, 12/24-hour clocks, month names and number separators all come from <code>Intl</code> for the current locale. Override them with <code>OrionConfig.weekStart</code> and <code>currency</code>.</p>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chart gallery — Orion Admin</title>
+<script src="../../dist/orion.js"></script>
+<style>
+  body { padding: 1.5rem; }
+  .gal { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 30rem), 1fr)); }
+  .gal .o-card-body { padding: 1rem 1.25rem 1.25rem; }
+</style>
+</head>
+<body>
+<h1 class="o-page-title o-mb-4">Chart gallery</h1>
+<div class="gal" id="gal"></div>
+<script>
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const card = (title, cfg) => {
+    const c = document.createElement('div');
+    c.className = 'o-card';
+    c.innerHTML = `<div class="o-card-header"><h3 class="o-card-title"></h3></div><div class="o-card-body"></div>`;
+    c.querySelector('h3').textContent = title;
+    document.getElementById('gal').append(c);
+    return Orion.chart(c.querySelector('.o-card-body'), cfg);
+  };
+  window.charts = {};
+  charts.line = card('Revenue vs costs', { type: 'line', labels: months, yAxis: { format: 'currency' }, series: [
+    { name: 'Revenue', data: [42e3, 45e3, 51e3, 49e3, 56e3, 61e3, 64e3, 62e3, 70e3, 74e3, 79e3, 86e3] },
+    { name: 'Costs', data: [31e3, 33e3, 34e3, 36e3, 37e3, 39e3, 41e3, 43e3, 44e3, 47e3, 49e3, 52e3] } ] });
+  charts.column = card('Traffic by channel', { type: 'column', labels: ['Q1', 'Q2', 'Q3', 'Q4'], series: [
+    { name: 'Organic', data: [320, 410, 380, 460] }, { name: 'Paid', data: [210, 260, 300, 280] }, { name: 'Referral', data: [120, 140, 150, 190] } ] });
+  charts.stacked = card('Stacked', { type: 'column', stacked: true, labels: months.slice(0, 8), series: [
+    { name: 'Organic', data: [32, 41, 38, 46, 50, 52, 55, 60] }, { name: 'Paid', data: [21, 26, 30, 28, 30, 33, 31, 35] }, { name: 'Referral', data: [12, 14, 15, 19, 18, 21, 20, 24] } ] });
+  charts.bar = card('Top pages', { type: 'bar', labels: ['/pricing', '/docs/getting-started', '/blog/launch', '/signup', '/about'], series: [{ name: 'Views', data: [12800, 9400, 7100, 5300, 2100] }] });
+  charts.area = card('Sessions (time axis)', { type: 'area', series: [{ name: 'Sessions', data: Array.from({ length: 90 }, (_, i) => ({ x: new Date(2026, 5, 1 + i), y: Math.round(800 + 300 * Math.sin(i / 7) + i * 6 + (i % 7 === 5 ? -180 : 0)) })) }] });
+  charts.mixed = card('Orders & conversion', { type: 'mixed', labels: months.slice(0, 6), series: [{ name: 'Orders', type: 'column', data: [120, 150, 170, 160, 190, 220] }, { name: 'Target', type: 'line', dashed: true, data: [130, 140, 160, 170, 180, 200] }] });
+  charts.percent = card('100% stacked', { type: 'bar', stacked: 'percent', labels: ['Desktop', 'Mobile', 'Tablet'], series: [{ name: 'New', data: [40, 62, 30] }, { name: 'Returning', data: [60, 38, 70] }] });
+  charts.scatter = card('Scatter', { type: 'scatter', xAxis: { title: 'Session length (min)' }, yAxis: { title: 'Pages' }, series: [
+    { name: 'Free', data: Array.from({ length: 40 }, (_, i) => ({ x: (i * 7) % 23 + 1, y: ((i * 13) % 17) + 2 })) },
+    { name: 'Pro', data: Array.from({ length: 30 }, (_, i) => ({ x: (i * 5) % 29 + 3, y: ((i * 11) % 19) + 6 })) } ] });
+  charts.donut = card('Donut', { type: 'donut', labels: ['Direct', 'Organic', 'Paid', 'Referral', 'Social'], series: [{ name: 'Visits', data: [3200, 5400, 2100, 1300, 900] }] });
+  charts.pie = card('Pie', { type: 'pie', labels: ['Chrome', 'Safari', 'Edge', 'Firefox'], series: [{ data: [64, 19, 10, 7] }] });
+  charts.radar = card('Radar', { type: 'radar', labels: ['Speed', 'Reliability', 'Comfort', 'Safety', 'Efficiency', 'Price'], series: [{ name: 'Model A', data: [80, 90, 70, 85, 60, 75] }, { name: 'Model B', data: [65, 70, 90, 80, 85, 60] }] });
+  charts.polar = card('Polar area', { type: 'polar', labels: ['North', 'East', 'South', 'West', 'Central'], series: [{ data: [42, 28, 35, 18, 51] }] });
+  charts.radialBar = card('Radial bar', { type: 'radialBar', labels: ['Storage', 'Memory', 'CPU', 'Network'], yAxis: { format: v => v + '%' }, series: [{ data: [72, 58, 41, 23] }] });
+  charts.gauge = card('Gauge', { type: 'gauge', yAxis: { format: v => Math.round(v) + '%' }, gauge: { value: 76, target: 85, label: 'CPU load', bands: [{ from: 0, to: 60, status: 'good', label: 'Normal' }, { from: 60, to: 85, status: 'warning', label: 'Elevated' }, { from: 85, to: 100, status: 'critical', label: 'Critical' }] } });
+  charts.progress = card('Progress', { type: 'progress', height: 160, progress: { value: 64, label: 'Quota used' } });
+  const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+  charts.heat = card('Heatmap', { type: 'heatmap', labels: hours, series: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d, j) => ({ name: d, data: hours.map((_, i) => Math.round(Math.max(0, Math.sin((i - 6) / 24 * Math.PI * 2)) * (j < 5 ? 90 : 40) + ((i * 7 + j * 13) % 17))) })) });
+  charts.cal = card('Calendar', { type: 'calendar', series: [{ name: 'Commits', data: Array.from({ length: 365 }, (_, i) => ({ date: new Date(2026, 0, 1 + i), value: (i * 37 % 11) > 6 ? (i * 13) % 9 : 0 })) }] });
+  charts.tree = card('Treemap', { type: 'treemap', series: [{ data: [{ name: 'Engineering', children: [{ name: 'Platform', value: 42 }, { name: 'Web', value: 31 }, { name: 'Mobile', value: 22 }, { name: 'Data', value: 12 }] }, { name: 'Sales', children: [{ name: 'EMEA', value: 28 }, { name: 'APAC', value: 21 }, { name: 'AMER', value: 34 }] }, { name: 'Marketing', children: [{ name: 'Brand', value: 14 }, { name: 'Growth', value: 18 }] }] }] });
+  charts.funnel = card('Funnel', { type: 'funnel', labels: ['Visited', 'Signed up', 'Activated', 'Subscribed', 'Renewed'], series: [{ data: [12000, 4800, 2600, 1100, 760] }] });
+  charts.candle = card('Candlestick', { type: 'candlestick', series: [{ name: 'ORN', data: Array.from({ length: 30 }, (_, i) => { const o = 100 + Math.sin(i / 4) * 8 + i * 0.4; const c = o + Math.cos(i * 1.7) * 3; return { x: new Date(2026, 7, 1 + i), o, h: Math.max(o, c) + 1.5, l: Math.min(o, c) - 1.5, c }; }) }] });
+  charts.box = card('Box plot', { type: 'boxplot', labels: ['API', 'Web', 'Worker'], series: [{ name: 'Latency', data: [[120, 130, 145, 150, 160, 170, 180, 260], [80, 90, 95, 100, 110, 115, 120, 125], [200, 210, 240, 250, 260, 300, 320, 480]] }] });
+  charts.bubble = card('Bubble', { type: 'bubble', series: [{ name: 'Products', data: [{ x: 10, y: 20, z: 30 }, { x: 25, y: 35, z: 80 }, { x: 40, y: 15, z: 50 }, { x: 55, y: 42, z: 120 }, { x: 70, y: 28, z: 20 }] }] });
+  fetch('../fixtures/charts/aurelia.geojson').then(r => r.json()).then(gj => {
+    charts.geo = card('Choropleth', { type: 'choropleth', geo: { geojson: gj, projection: 'mercator' }, series: [{ name: 'Revenue', data: [{ id: 'WS', value: 120 }, { id: 'NM', value: 340 }, { id: 'HM', value: 90 }, { id: 'EV', value: 210 }, { id: 'LK', value: 160 }, { id: 'CT', value: 420 }, { id: 'RV', value: 280 }, { id: 'SC', value: 60 }, { id: 'SR', value: 130 }, { id: 'RF', value: 240 }, { id: 'GW', value: 180 }] }] });
+    charts.bmap = card('Bubble map', { type: 'bubbleMap', geo: { geojson: gj }, series: [{ name: 'Stores', data: [{ id: 'c-aur', value: 48 }, { id: 'c-por', value: 22 }, { id: 'c-hav', value: 17 }, { id: 'c-riv', value: 12 }, { id: 'c-kes', value: 9 }, { id: 'c-sol', value: 14 }, { id: 'c-isl', value: 4 }] }] });
+  });
+  const sp = document.createElement('div');
+  sp.className = 'o-card o-card-body';
+  sp.innerHTML = '<o-sparkline values="4,8,5,9,7,11,10,14"></o-sparkline> <o-sparkline type="area" color="3" values="4,8,5,9,7,11,10,14"></o-sparkline> <o-sparkline type="bar" values="4,8,5,9,7,11,10,14"></o-sparkline> <o-sparkline type="winloss" values="1,-1,1,1,0,-1,1,1,-1,1"></o-sparkline>';
+  document.getElementById('gal').append(sp);
+</script>
+</body>
+</html>

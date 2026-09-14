@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compare — Orion Admin</title>
+<meta name="docs:section" content="Services &amp; Utilities">
+<meta name="docs:order" content="40">
+<meta name="docs:desc" content="Compare Items: a sticky compare tray and a side-by-side attribute table">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+<style>
+  .cmp-grid { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); margin-bottom: 3.5rem; }
+  .cmp-card { padding: .875rem; display: flex; flex-direction: column; gap: .5rem; }
+  .cmp-emoji { font-size: 1.75rem; }
+  .cmp-demo-frame { position: relative; min-height: 4rem; }
+  .cmp-demo-frame o-compare-tray { position: absolute; inset-inline: 0; inset-block-end: 0; border-radius: var(--o-radius-lg); }
+</style>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Compare</h1>
+    <p class="docs-lead">Collect a handful of items with <code>Orion.compare</code>, pick them via
+    <code>data-o-action="compare"</code> buttons, review the running selection in a sticky
+    <code>&lt;o-compare-tray&gt;</code>, and line their attributes up with <code>&lt;o-compare-table&gt;</code>.</p>
+  </header>
+
+  <section id="basic">
+    <h2>Tray + table</h2>
+    <p>Add a few products to compare. The tray is a sticky bar (scoped to this demo box here — normally
+    you'd place it once at the end of your page body); pressing "Compare" reveals the table below it.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="cmp-demo-frame">
+          <div class="cmp-grid" id="cmp-grid"></div>
+          <o-compare-tray max="4" target="#cmp-table"></o-compare-tray>
+        </div>
+        <o-compare-table id="cmp-table" live hidden
+          attributes='[{"key":"price","label":"Price","numeric":true,"best":"low","unit":"USD"},{"key":"rating","label":"Rating","numeric":true,"best":"high"},{"key":"wireless","label":"Wireless"}]'>
+        </o-compare-table>
+        <script>
+          (function () {
+            const ITEMS = [
+              { id: 1, title: 'Aurora Headphones', image: '', emoji: '🎧', price: 79, rating: 4.5, wireless: true },
+              { id: 2, title: 'Nimbus Earbuds', emoji: '🎧', price: 129, rating: 4.2, wireless: true },
+              { id: 3, title: 'Vertex Watch', emoji: '⌚', price: 199, rating: 4.6, wireless: true },
+              { id: 4, title: 'Cobalt Laptop', emoji: '💻', price: 899, rating: 4.1, wireless: false },
+              { id: 5, title: 'Lumen Band', emoji: '⌚', price: 59, rating: 3.9, wireless: false },
+              { id: 6, title: 'Zephyr Mouse', emoji: '💻', price: 25, rating: 4.4, wireless: true },
+            ];
+            const grid = document.getElementById('cmp-grid');
+            grid.innerHTML = ITEMS.map(it => `
+              <div class="o-card cmp-card">
+                <div class="cmp-emoji">${it.emoji}</div>
+                <div>${Orion.util.esc(it.title)}</div>
+                <div>${Orion.format.currency(it.price, 'USD')}</div>
+                <button type="button" class="o-btn o-btn-sm" data-o-action="compare"
+                  data-o-item='${JSON.stringify({ id: it.id, title: it.title, price: it.price, rating: it.rating, wireless: it.wireless }).replace(/'/g, '&apos;')}'>
+                  Add to compare
+                </button>
+              </div>`).join('');
+          })();
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="modes">
+    <h2>Differences &amp; best value</h2>
+    <p>The toolbar toggles "Highlight differences" (tints rows that differ) and "Only show differences"
+    (hides rows that don't). Numeric rows mark the best value automatically (<code>best: 'low'</code> for
+    price, <code>'high'</code> for rating).</p>
+    <div class="docs-demo">
+      <template>
+        <o-compare-table
+          items='[{"id":1,"title":"Plan Basic","price":9,"storage":"10 GB","support":false},
+                  {"id":2,"title":"Plan Pro","price":29,"storage":"200 GB","support":true},
+                  {"id":3,"title":"Plan Team","price":49,"storage":"200 GB","support":true}]'
+          attributes='[{"key":"price","label":"Price","numeric":true,"best":"low","unit":"/mo"},{"key":"storage","label":"Storage"},{"key":"support","label":"Priority support"}]'
+          highlight-diff>
+        </o-compare-table>
+      </template>
+    </div>
+  </section>
+
+  <section id="api-js">
+    <h2>JavaScript API</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3">
+          <button class="o-btn o-btn-sm" id="cmp-add">Orion.compare.add(...)</button>
+          <button class="o-btn o-btn-sm" id="cmp-clear">Orion.compare.clear()</button>
+        </div>
+        <div class="docs-log" id="cmp-log"></div>
+        <script>
+          let n = 1;
+          document.getElementById('cmp-add').onclick = () => {
+            const ok = Orion.compare.add({ id: 'js-' + n, title: 'Scripted item ' + n, price: n * 10 });
+            docs.log('#cmp-log', `add() -> ${ok} (list now has ${Orion.compare.list().length})`);
+            n++;
+          };
+          document.getElementById('cmp-clear').onclick = () => { Orion.compare.clear(); docs.log('#cmp-log', 'clear()'); };
+          Orion.compare.subscribe(({ items, source }) => docs.log('#cmp-log', `subscribe: ${items.length} item(s), source=${source}`));
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Orion.compare</h3>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>add(item) / remove(id) / toggle(item)</td><td>Item needs <code>.id</code>.</td></tr>
+        <tr><td>has(id) / get(id) / list()</td><td>Read access.</td></tr>
+        <tr><td>max / setMax(n)</td><td>Default 4.</td></tr>
+        <tr><td>clear()</td><td>Empty the list.</td></tr>
+        <tr><td>subscribe(fn({items,source}))</td><td>Fires immediately, then on every change. Returns <code>unsubscribe()</code>.</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-compare-tray&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>max</td><td><code>number</code></td><td>Default 4; forwarded to <code>Orion.compare.setMax()</code>.</td></tr>
+        <tr><td>target</td><td><code>string</code></td><td>Selector revealed by "Compare".</td></tr>
+      </tbody>
+    </table>
+    <h3>&lt;o-compare-table&gt;</h3>
+    <table class="docs-api">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>items / attributes</td><td><code>array</code></td><td>Data + column config (see README for <code>AttrDef</code>).</td></tr>
+        <tr><td>highlight-diff / only-diff</td><td><code>boolean</code></td><td>Reflected; also toolbar toggles.</td></tr>
+        <tr><td>best-value / removable / live / toolbar</td><td><code>boolean</code></td><td>See README.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Element</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>o-compare</td><td>tray</td><td><code>{ items }</code>, cancelable</td></tr>
+        <tr><td>o-remove</td><td>table</td><td><code>{ id, item }</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <p>Every tray/table control is a native <code>&lt;button&gt;</code> or <code>&lt;input type=checkbox&gt;</code> — standard Tab / Space / Enter behaviour, no custom key handling.</p>
+  </section>
+</main>
+</body>
+</html>

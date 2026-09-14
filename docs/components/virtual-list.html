@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Virtual List — Orion Admin</title>
+<meta name="docs:section" content="Data">
+<meta name="docs:order" content="80">
+<meta name="docs:desc" content="Windowed rendering for huge lists and grids: fixed or measured variable heights, sticky group headers, keyboard selection">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Virtual List</h1>
+    <p class="docs-lead"><code>&lt;o-virtual-list&gt;</code> renders only the rows near the viewport — however many items the array holds — so a list of 100,000 people scrolls exactly like a list of ten. Fixed or auto-measured row heights, sticky group headers, horizontal strips, auto-fit grids and listbox keyboard selection, in one dependency-free element.</p>
+  </header>
+
+  <section id="overview">
+    <h2>Overview</h2>
+    <p>Give it <code>items</code> (an array) and a <code>renderItem(item, index)</code> function that returns a Node or an HTML string; only the rows near the visible window are ever created. Size the element with CSS (default <code>24rem</code> tall) — it also works as a flex child, shrinking correctly inside a card body.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div style="padding:1.5rem">
+          <o-virtual-list id="ov-basic" item-height="44" style="block-size:20rem"></o-virtual-list>
+        </div>
+        <script>
+          {
+            const people = docs.people(5000);
+            const list = document.getElementById('ov-basic');
+            list.renderItem = (p, i) => {
+              const el = document.createElement('div');
+              el.style.cssText = 'display:flex;align-items:center;gap:.75rem;width:100%;min-width:0';
+              el.innerHTML = `<span class="o-avatar o-avatar-sm">${p.first[0]}${p.last[0]}</span>
+                <span style="min-width:0;flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><b>${p.name}</b> <span class="o-text-muted">— ${p.role}, ${p.department}</span></span>
+                <span class="o-badge o-badge-sm">#${i + 1}</span>`;
+              return el;
+            };
+            list.items = people;
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="huge">
+    <h2>100,000 rows — variable height &amp; sticky letter headers</h2>
+    <p>Set <code>item-height="auto"</code> to let each row size itself (measured with a <code>ResizeObserver</code> and cached); <code>group-by</code> flattens already-sorted data into group-header rows and keeps the current letter pinned to the top as you scroll, pushed off by the next one. Try scrolling, or jump straight to a row.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div style="padding:1.5rem">
+          <div class="o-cluster o-mb-3" style="--o-gap:.5rem">
+            <span class="o-badge o-badge-lg" id="ov-count"></span>
+            <input class="o-input o-input-sm" id="ov-goto" type="number" min="1" style="width:8rem" placeholder="Row #">
+            <button class="o-btn o-btn-sm o-btn-primary" id="ov-goto-btn" type="button">Scroll to row</button>
+            <button class="o-btn o-btn-sm" id="ov-goto-mid" type="button">Middle</button>
+            <button class="o-btn o-btn-sm" id="ov-goto-end" type="button">End</button>
+            <span class="o-text-muted o-text-sm" id="ov-range"></span>
+          </div>
+          <o-virtual-list id="ov-huge" item-height="auto" group-by="letter" style="block-size:26rem"></o-virtual-list>
+        </div>
+        <script>
+          {
+            const n = 100000;
+            const people = docs.people(n, 11)
+              .map((p, i) => ({ ...p, name: p.first + ' ' + p.last, id: i }))
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map(p => ({ ...p, letter: p.name[0].toUpperCase() }));
+            const list = document.getElementById('ov-huge');
+            document.getElementById('ov-count').textContent = n.toLocaleString() + ' rows';
+            list.groupBy = 'letter';
+            list.renderGroup = (letter) => letter;
+            list.renderItem = (p, i) => {
+              const tall = i % 11 === 0; // a few taller rows to prove variable-height measuring works
+              const el = document.createElement('div');
+              el.style.cssText = 'display:flex;flex-direction:column;justify-content:center;gap:.125rem;width:100%;min-width:0;padding-block:' + (tall ? '.75rem' : '.4rem');
+              el.innerHTML = `<div style="display:flex;align-items:center;gap:.625rem;min-width:0">
+                  <span class="o-avatar o-avatar-sm">${p.first[0]}${p.last[0]}</span>
+                  <b style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</b>
+                  <span class="o-badge o-badge-sm o-badge-soft-secondary">${p.role}</span>
+                </div>` + (tall ? `<div class="o-text-xs o-text-muted" style="padding-inline-start:2.625rem">${p.email} · ${p.city}, ${p.country}</div>` : '');
+              return el;
+            };
+            list.keyFn = (p) => p.id;
+            list.items = people;
+            const paintRange = () => { const r = list.getVisibleRange(); document.getElementById('ov-range').textContent = `rendering rows ${r.start.toLocaleString()}–${r.end.toLocaleString()} (${(r.end - r.start)} DOM nodes for ${n.toLocaleString()} people)`; };
+            list.addEventListener('o-range-change', paintRange);
+            paintRange();
+            document.getElementById('ov-goto-btn').onclick = () => { const v = +document.getElementById('ov-goto').value || 1; list.scrollToIndex(clampIdx(v - 1), 'start'); };
+            document.getElementById('ov-goto-mid').onclick = () => list.scrollToIndex(clampIdx(Math.floor(n / 2)), 'center');
+            document.getElementById('ov-goto-end').onclick = () => list.scrollToIndex(n - 1, 'end');
+            function clampIdx(v) { return Math.max(0, Math.min(n - 1, v)); }
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="grid">
+    <h2>Grid mode</h2>
+    <p>Set <code>grid</code> to lay items out in auto-fit columns (<code>min-column-width</code>, or an explicit <code>columns</code>) instead of one column per row — the same recycled-node windowing applies to the cells.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div style="padding:1.5rem">
+          <o-virtual-list id="ov-grid" grid min-column-width="140" item-height="140" gap="10" style="block-size:22rem"></o-virtual-list>
+        </div>
+        <script>
+          {
+            const colors = ['#4f46e5', '#0e7490', '#15803d', '#b45309', '#dc2626', '#7c3aed', '#0f766e', '#c2410c'];
+            const items = Array.from({ length: 2000 }, (_, i) => ({ i, c: colors[i % colors.length] }));
+            const grid = document.getElementById('ov-grid');
+            grid.renderItem = (it) => {
+              const el = document.createElement('div');
+              el.style.cssText = `display:grid;place-items:center;width:100%;height:100%;border-radius:var(--o-radius-lg);color:#fff;font-weight:700;font-size:1.25rem;background:${it.c}`;
+              el.textContent = '#' + (it.i + 1);
+              return el;
+            };
+            grid.items = items;
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="horizontal">
+    <h2>Horizontal</h2>
+    <p>Set <code>horizontal</code> to virtualize a wide strip instead of a tall column — <code>item-width</code> replaces <code>item-height</code>.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div style="padding:1.5rem">
+          <o-virtual-list id="ov-h" horizontal item-width="160" style="block-size:8rem"></o-virtual-list>
+        </div>
+        <script>
+          {
+            const items = Array.from({ length: 3000 }, (_, i) => i);
+            const h = document.getElementById('ov-h');
+            h.renderItem = (i) => {
+              const el = document.createElement('div');
+              el.style.cssText = 'display:grid;place-items:center;width:100%;height:100%';
+              el.innerHTML = `<div class="o-card o-card-compact" style="width:9rem;text-align:center"><b>Card ${i + 1}</b><div class="o-text-muted o-text-sm">Item</div></div>`;
+              return el;
+            };
+            h.items = items;
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="selection">
+    <h2>Listbox keyboard selection</h2>
+    <p>Set <code>selectable="single"</code> or <code>"multiple"</code> to turn the list into a <code>role="listbox"</code>: focus stays on the list itself and moves a virtual (<code>aria-activedescendant</code>) cursor with the arrow keys — the standard pattern for a composite widget whose rows come and go from the DOM. Click, or press Enter / Space, to (de)select.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div style="padding:1.5rem">
+          <p class="o-text-sm o-text-muted o-mb-2">Selected: <b id="ov-sel-count">0</b></p>
+          <o-virtual-list id="ov-sel" selectable="multiple" item-height="40" style="block-size:16rem"></o-virtual-list>
+        </div>
+        <script>
+          {
+            const items = docs.people(300);
+            const list = document.getElementById('ov-sel');
+            list.keyFn = (p) => p.id;
+            list.renderItem = (p) => {
+              const el = document.createElement('div');
+              el.style.cssText = 'display:flex;align-items:center;gap:.625rem;width:100%';
+              el.innerHTML = `<span class="o-avatar o-avatar-xs">${p.first[0]}</span><span>${p.name}</span>`;
+              return el;
+            };
+            list.items = items;
+            list.addEventListener('o-select', e => { document.getElementById('ov-sel-count').textContent = e.detail.selected.length; });
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="events">
+    <h2>Events &amp; methods</h2>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster" style="--o-gap:.5rem">
+          <button class="o-btn o-btn-sm" type="button" data-m="mid">scrollToIndex(500)</button>
+          <button class="o-btn o-btn-sm" type="button" data-m="refresh">refresh()</button>
+          <button class="o-btn o-btn-sm" type="button" data-m="append">append 100 rows</button>
+        </div>
+        <o-virtual-list id="ov-events" item-height="36" style="block-size:12rem;margin-top:.75rem"></o-virtual-list>
+        <div class="docs-log" id="ov-events-log"></div>
+        <script>
+          {
+            let items = docs.people(1000);
+            const list = document.getElementById('ov-events');
+            list.renderItem = (p, i) => `<span>${i + 1}. ${p.name}</span>`;
+            list.items = items;
+            list.addEventListener('o-range-change', e => docs.log('#ov-events-log', 'o-range-change ' + JSON.stringify(e.detail)));
+            list.addEventListener('o-near-end', e => docs.log('#ov-events-log', 'o-near-end ' + JSON.stringify(e.detail)));
+            document.querySelector('[data-m="mid"]').onclick = () => list.scrollToIndex(500, 'center');
+            document.querySelector('[data-m="refresh"]').onclick = () => list.refresh();
+            document.querySelector('[data-m="append"]').onclick = () => { items = items.concat(docs.people(100, Date.now() % 1000)); list.items = items; };
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>↓ / ↑</td><td>Move the active row by one (by one grid row / column in <code>grid</code> mode).</td></tr>
+        <tr><td>← / →</td><td>Move by one item — <code>grid</code> and <code>horizontal</code> modes.</td></tr>
+        <tr><td>Home / End</td><td>First / last item.</td></tr>
+        <tr><td>Page Down / Page Up</td><td>Move by one viewport's worth of rows.</td></tr>
+        <tr><td>Enter / Space</td><td><code>selectable</code>: toggle the active item.</td></tr>
+      </tbody>
+    </table>
+    <p>ARIA: the host is a <code>listbox</code> (or <code>grid</code> when <code>grid</code> is set) with <code>aria-activedescendant</code> pointing at the currently focused row's id; rows are <code>option</code>s with <code>aria-selected</code>. Group headers are <code>role="presentation"</code> (decorative dividers, not part of the option list).</p>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <h3>Properties / attributes</h3>
+    <table class="docs-api">
+      <thead><tr><th>Property (attribute)</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>items</td><td>Array</td><td>[]</td><td>The full dataset. Only the visible slice is ever rendered.</td></tr>
+        <tr><td>itemHeight (item-height)</td><td>number | 'auto'</td><td>40</td><td>Fixed row height in px, or <code>'auto'</code> to measure each row (list / vertical mode only).</td></tr>
+        <tr><td>itemWidth (item-width)</td><td>number</td><td>220</td><td>Row width in <code>horizontal</code> mode, or the fallback cell size in <code>grid</code> mode.</td></tr>
+        <tr><td>overscan</td><td>number</td><td>6</td><td>Extra rows rendered beyond each edge of the viewport, to absorb fast scrolls.</td></tr>
+        <tr><td>horizontal</td><td>boolean</td><td>false</td><td>Virtualize a horizontal strip (scrollLeft) instead of a vertical column.</td></tr>
+        <tr><td>grid</td><td>boolean</td><td>false</td><td>Auto-fit column grid instead of one item per row. Requires a fixed <code>itemHeight</code>; no <code>groupBy</code>.</td></tr>
+        <tr><td>columns</td><td>number</td><td>0</td><td><code>grid</code>: explicit column count. 0 = auto-fit from <code>minColumnWidth</code>.</td></tr>
+        <tr><td>minColumnWidth (min-column-width)</td><td>number</td><td>180</td><td><code>grid</code> auto-fit floor, in px.</td></tr>
+        <tr><td>gap</td><td>number</td><td>0</td><td><code>grid</code> cell gap, in px.</td></tr>
+        <tr><td>groupBy (group-by)</td><td>string (path) | (item) =&gt; key</td><td>—</td><td>Insert a header row whenever the key changes. <b>Items must already be sorted</b> so each key's rows are contiguous.</td></tr>
+        <tr><td>groupHeaderHeight</td><td>number</td><td>34</td><td>Height of group-header rows and the sticky clone.</td></tr>
+        <tr><td>renderGroup</td><td>(key, items) =&gt; Node | string</td><td>—</td><td>Custom header content; default is the key itself.</td></tr>
+        <tr><td>renderItem</td><td>(item, index) =&gt; Node | string</td><td>—</td><td>Row content. <code>index</code> is the item's position in <code>items</code>, not the row's DOM position.</td></tr>
+        <tr><td>keyFn</td><td>(item, index) =&gt; string | number</td><td>item.id ?? item.key ?? index</td><td>Stable identity — used for <code>selected</code> and to keep unrelated rows from re-rendering when <code>items</code> changes.</td></tr>
+        <tr><td>selectable</td><td>'' | 'single' | 'multiple'</td><td>''</td><td>Turns the list into a keyboard-operable <code>listbox</code>.</td></tr>
+        <tr><td>selected</td><td>array of keys</td><td>[]</td><td>Controlled selection, by <code>keyFn</code> key (not index).</td></tr>
+        <tr><td>loading</td><td>boolean</td><td>false</td><td>Sets <code>aria-busy</code> and dims the list.</td></tr>
+        <tr><td>emptyText</td><td>string</td><td>"Nothing to show"</td><td>Message shown when <code>items</code> is empty.</td></tr>
+        <tr><td>label</td><td>string</td><td>—</td><td><code>aria-label</code> for the list.</td></tr>
+      </tbody>
+    </table>
+    <h3>Events</h3>
+    <table class="docs-api">
+      <thead><tr><th>Event</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>o-range-change</td><td>{ start, end, total }</td><td>The rendered row window moved (row space; item space when there is no <code>groupBy</code>).</td></tr>
+        <tr><td>o-near-end / o-near-start</td><td>{ remaining } / { index }</td><td>Scrolled within <code>overscan</code> rows of either end — hook up <code>Orion.infiniteScroll</code> here.</td></tr>
+        <tr><td>o-activate</td><td>{ index, item }</td><td>The active item changed (click or arrow keys).</td></tr>
+        <tr><td>o-select</td><td>{ selected, index, item }</td><td><code>selectable</code>: the selection changed.</td></tr>
+      </tbody>
+    </table>
+    <h3>Methods</h3>
+    <table class="docs-api">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>scrollToIndex(index, align = 'auto')</td><td>Scroll so item <code>index</code> is visible. <code>align</code>: <code>'auto' | 'start' | 'center' | 'end'</code>.</td></tr>
+        <tr><td>refresh()</td><td>Clear measured heights and re-render (data unchanged) — use after something outside the list changes row sizes (e.g. a web font finishes loading).</td></tr>
+        <tr><td>getVisibleRange()</td><td>-&gt; <code>{ start, end }</code> currently rendered.</td></tr>
+        <tr><td>select(keys) / clearSelection() / getSelected()</td><td>Read or set the controlled selection.</td></tr>
+      </tbody>
+    </table>
+    <h3>CSS variables &amp; classes</h3>
+    <p>Parts: <code>.o-vlist-row</code> (<code>.o-vlist-group</code> for headers, <code>.is-active</code>, <code>[aria-selected]</code>), <code>.o-vlist-cell</code> (<code>grid</code>), <code>.o-vlist-sticky</code>. The host has no default block size beyond <code>24rem</code> — size it with ordinary CSS (height, flex, <code>block-size</code>), including 100% of a flex parent.</p>
+    <h3>Orion.virtualList()</h3>
+    <p><code>Orion.virtualList(container, options) → &lt;o-virtual-list&gt;</code> — creates (or configures, if <code>container</code> already is one) the element; <code>options.on</code> attaches listeners (<code>o-</code> prefix optional).</p>
+  </section>
+</main>
+</body>
+</html>

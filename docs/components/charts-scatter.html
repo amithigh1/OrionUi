@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scatter, Bubble &amp; Financial — Orion Admin</title>
+<meta name="docs:section" content="Charts">
+<meta name="docs:order" content="30">
+<meta name="docs:desc" content="Scatter, bubble, candlestick, OHLC and box plot charts">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Scatter, bubble &amp; financial</h1>
+    <p class="docs-lead">Relationships and distributions: scatter and bubble plots with a nearest-point hover layer, candlestick and OHLC charts for prices, and box plots for spread and outliers.</p>
+  </header>
+
+  <section id="scatter">
+    <h2>Scatter</h2>
+    <p>Points are 8px dots with a 2px surface ring so overlaps stay legible. You don't need to land on a dot: the nearest point within 24px is picked. Because any two dots can sit side by side, keep scatter plots to <strong>three</strong> series (the palette validates all-pairs for the first three slots only).</p>
+    <div class="docs-demo">
+      <template>
+        <o-chart id="scatter-demo" height="320"></o-chart>
+        <script>
+          {
+            const rnd = docs.rand(21);
+            const gen = (n, mx, my, sx, sy) => Array.from({ length: n }, () => { const x = Math.max(0.5, mx + (rnd() + rnd() + rnd() - 1.5) * sx); return { x: Math.round(x * 10) / 10, y: Math.max(1, Math.round(my + (x - mx) * 0.9 + (rnd() - 0.5) * sy)) }; });
+            document.getElementById('scatter-demo').config = {
+              type: 'scatter',
+              xAxis: { title: 'Session length (minutes)' },
+              yAxis: { title: 'Pages viewed' },
+              series: [
+                { name: 'Free plan', data: gen(70, 6, 7, 6, 6) },
+                { name: 'Team plan', data: gen(55, 12, 13, 8, 8) },
+                { name: 'Business', data: gen(35, 18, 19, 8, 9) },
+              ],
+            };
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="bubble">
+    <h2>Bubble</h2>
+    <p>A third value <code>z</code> (or <code>r</code> / <code>size</code>) sets the bubble <em>area</em> (radius ∝ √z). Name points with <code>label</code>; the tooltip shows x, y and size.</p>
+    <div class="docs-demo">
+      <template>
+        <o-chart id="bubble-demo" height="340"></o-chart>
+        <script>
+          document.getElementById('bubble-demo').config = {
+            type: 'bubble',
+            xAxis: { title: 'Revenue growth (%)', format: v => v + '%' },
+            yAxis: { title: 'Net margin (%)', format: v => v + '%' },
+            sizeLabel: 'Revenue ($M)',
+            series: [
+              { name: 'Software', data: [
+                { label: 'Analytics', x: 24, y: 18, z: 42 }, { label: 'Security', x: 31, y: 22, z: 65 },
+                { label: 'Collaboration', x: 12, y: 9, z: 120 }, { label: 'DevTools', x: 38, y: 5, z: 18 } ] },
+              { name: 'Services', data: [
+                { label: 'Consulting', x: 6, y: 11, z: 80 }, { label: 'Training', x: 9, y: 16, z: 22 }, { label: 'Support', x: 3, y: 24, z: 51 } ] },
+            ],
+          };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="candlestick">
+    <h2>Candlestick &amp; OHLC</h2>
+    <p>Rising periods are hollow and falling periods filled, so direction never depends on color alone (status tokens: good / critical). Data points are <code>{ x, o, h, l, c }</code> or <code>[x, o, h, l, c]</code>. The tooltip adds the change.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-cluster o-mb-3" role="group" aria-label="Chart style">
+          <button class="o-btn o-btn-sm is-active" data-style="candlestick" aria-pressed="true">Candlestick</button>
+          <button class="o-btn o-btn-sm" data-style="ohlc" aria-pressed="false">OHLC</button>
+        </div>
+        <o-chart id="candle-demo" height="320"></o-chart>
+        <script>
+          {
+            const rnd = docs.rand(8);
+            const start = new Date(2026, 5, 1);
+            let price = 142;
+            const days = [];
+            for (let i = 0; days.length < 45; i++) {
+              const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+              if (d.getDay() === 0 || d.getDay() === 6) continue;
+              const o = price, c = Math.max(80, o + (rnd() - 0.47) * 6);
+              days.push({ x: d, o: +o.toFixed(2), h: +(Math.max(o, c) + rnd() * 2.4).toFixed(2), l: +(Math.min(o, c) - rnd() * 2.4).toFixed(2), c: +c.toFixed(2) });
+              price = c;
+            }
+            const el = document.getElementById('candle-demo');
+            const cfg = type => ({ type, yAxis: { format: 'currency', beginAtZero: false }, annotations: [{ type: 'line', value: 150, label: '52-week high' }], series: [{ name: 'ORN', data: days }] });
+            el.config = cfg('candlestick');
+            document.querySelectorAll('[data-style]').forEach(b => b.addEventListener('click', () => {
+              document.querySelectorAll('[data-style]').forEach(x => { x.classList.toggle('is-active', x === b); x.setAttribute('aria-pressed', String(x === b)); });
+              el.config = cfg(b.dataset.style);
+            }));
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="boxplot">
+    <h2>Box plot</h2>
+    <p>Pass raw samples per category and the chart computes quartiles and 1.5×IQR whiskers; values beyond are drawn as hollow outliers. Or pass <code>{ min, q1, median, q3, max, outliers }</code> directly. Several series sit side by side.</p>
+    <div class="docs-demo">
+      <template>
+        <o-chart id="box-demo" height="300"></o-chart>
+        <script>
+          {
+            const rnd = docs.rand(4);
+            const sample = (n, base, spread, tail) => Array.from({ length: n }, () => Math.round(base + (rnd() + rnd() + rnd() - 1.5) * spread + (rnd() > 0.96 ? tail : 0)));
+            const services = ['Auth', 'Search', 'Checkout', 'Reports', 'Uploads'];
+            document.getElementById('box-demo').config = {
+              type: 'boxplot',
+              labels: services,
+              yAxis: { title: 'Response time (ms)' },
+              series: [
+                { name: 'eu-west', data: services.map((_, i) => sample(120, 90 + i * 35, 40 + i * 8, 260)) },
+                { name: 'us-east', data: services.map((_, i) => sample(120, 110 + i * 30, 45 + i * 6, 300)) },
+              ],
+            };
+          }
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>Data formats</h2>
+    <table class="docs-api">
+      <thead><tr><th>Type</th><th>Point</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>scatter</td><td><code>{ x, y, label? }</code> or <code>[x, y]</code></td><td>x may be numbers or dates (time axis). Dense sets (&gt; 1,200 points) drop the ring for speed.</td></tr>
+        <tr><td>bubble</td><td><code>{ x, y, z, label? }</code> (or <code>r</code> / <code>size</code> for z), <code>[x, y, z]</code></td><td>Area-true radius up to 30px; <code>sizeLabel</code> / <code>sizeFormat</code> name the third value.</td></tr>
+        <tr><td>candlestick / ohlc</td><td><code>{ x, o, h, l, c }</code>, <code>[x, o, h, l, c]</code>, or <code>[o, h, l, c]</code> with <code>labels</code></td><td>Long names <code>open/high/low/close</code> also work.</td></tr>
+        <tr><td>boxplot</td><td><code>number[]</code> samples or <code>{ min, q1, median, q3, max, outliers }</code></td><td>Quartiles use linear interpolation; whiskers at 1.5 × IQR.</td></tr>
+        <tr><td>xAxis.type</td><td><code>'linear'</code> <code>'log'</code> <code>'time'</code></td><td>Inferred; set <code>'log'</code> for orders of magnitude. <code>xAxis.grid: true</code> adds vertical gridlines.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

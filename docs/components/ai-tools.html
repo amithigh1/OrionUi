@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Everywhere — Orion Admin</title>
+<meta name="docs:section" content="AI">
+<meta name="docs:order" content="20">
+<meta name="docs:desc" content="Ghost-text autocomplete, improve-with-AI rewrite/tone, summarize, form filling, document analysis and AI search — all built on Orion.ai">
+<script src="../../dist/orion.js"></script>
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body>
+<script>
+  // Configures the whole page before any demo below runs (docs.js inserts demo <template>s, and runs their
+  // <script>s, on DOMContentLoaded — this plain, non-deferred script always runs first).
+  Orion.ai.configure({ provider: Orion.ai.mock({
+    latency: 200, speed: 14,
+    responses: (text, ctx) => {
+      if (!ctx.task && /autocomplete suggestions/.test(ctx.system || '')) return ' and will follow up with an update by tomorrow morning.';
+      if (!ctx.task && /analyze documents/.test(ctx.system || '')) return JSON.stringify({
+        summary: 'A customer is asking for a status update on a delayed order.',
+        keyPoints: ['Order #48213 was expected last Friday', 'Customer needs it before the 30th', 'Requesting a revised delivery date'],
+        entities: [{ name: 'Order #48213', type: 'reference' }, { name: 'the 30th', type: 'date' }],
+        fields: {},
+      });
+      return undefined; // fall through to the built-in default (summarize/rewrite/translate/extract/classify + generic chat)
+    },
+  }) });
+</script>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>AI Everywhere</h1>
+    <p class="docs-lead">Small, attribute- and function-driven helpers that drop AI into plain markup: ghost-text
+      autocomplete for any input/textarea, an "improve with AI" rewrite &amp; tone toolbar, one-line summarize /
+      rewrite / translate, form filling from free text, document analysis, and an AI-answer provider for
+      <code>&lt;o-global-search&gt;</code>. All of it calls <a href="ai.html"><code>Orion.ai</code></a> — configure a
+      provider once and every helper on this page uses it.</p>
+  </header>
+
+  <section id="setup">
+    <h2>Setup</h2>
+    <p>Every demo below runs against the offline mock provider, exactly like your tests would:</p>
+    <pre class="docs-code-block" data-lang="js">Orion.ai.configure({ provider: Orion.ai.mock({ latency: 250, speed: 14 }) });</pre>
+  </section>
+
+  <section id="complete">
+    <h2>Ghost-text autocomplete — <code>data-o-ai-complete</code></h2>
+    <p>Add the attribute to any <code>&lt;input&gt;</code>/<code>&lt;textarea&gt;</code>. Once the caret is at the end
+      of the text and typing pauses, a suggestion appears greyed out after the caret. <kbd class="o-kbd">Tab</kbd>
+      (or <kbd class="o-kbd">→</kbd>/<kbd class="o-kbd">End</kbd> at the end of the field) accepts it into the field;
+      <kbd class="o-kbd">Esc</kbd> or further typing dismisses it. The attribute's value is a short free-text hint
+      about what is being written.</p>
+    <div class="docs-demo">
+      <template>
+        <div style="max-width:30rem">
+          <label class="o-label" for="complete-ta">Support ticket reply</label>
+          <textarea class="o-input" id="complete-ta" rows="3" data-o-ai-complete="a reply to a customer support ticket" data-o-ai-complete-min-chars="6" data-o-ai-complete-delay="300">Thanks for reaching out</textarea>
+          <p class="o-muted o-text-sm">Type a few more characters and pause — a suggestion appears after the caret.</p>
+        </div>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="html">&lt;textarea data-o-ai-complete="a reply to a customer support ticket"
+          data-o-ai-complete-min-chars="8"   &lt;!-- default 8 --&gt;
+          data-o-ai-complete-delay="450"     &lt;!-- default 450ms debounce --&gt;
+          data-o-ai-complete-max="160"&gt;&lt;/textarea&gt;   &lt;!-- default 160 — max suggestion length --&gt;</pre>
+  </section>
+
+  <section id="suggest">
+    <h2>Improve with AI — <code>data-o-ai-suggest</code></h2>
+    <p>A small <span class="o-badge">✦</span> button appears at the top corner of the field while it has focus and
+      text. Click it for tone/rewrite presets (or a custom instruction / target language), then review a word-diff
+      of the AI's rewrite before <strong>Accept</strong>, <strong>Retry</strong> or <strong>Discard</strong>. It
+      operates on the field's whole value; for selection-aware rewriting inside a page use
+      <a href="chatbot.html">&lt;o-assistant&gt;</a>'s "Replace selection" instead.</p>
+    <div class="docs-demo">
+      <template>
+        <div style="max-width:30rem">
+          <label class="o-label" for="suggest-ta">Announcement draft</label>
+          <textarea class="o-input" id="suggest-ta" rows="4" data-o-ai-suggest>hey team, just a heads up the release is delayed a bit, more info soon</textarea>
+        </div>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="html">&lt;textarea data-o-ai-suggest&gt;&lt;/textarea&gt;</pre>
+  </section>
+
+  <section id="textops">
+    <h2>Summarize, rewrite, translate</h2>
+    <p><code>Orion.ai.summarize(text | element, opts)</code>, <code>.rewrite(text | element, { instruction })</code> and
+      <code>.translate(text | element, { to })</code> accept a plain string, a selection's text, or any element (its
+      <code>.value</code> or <code>.textContent</code>) and return <code>Promise&lt;string&gt;</code>.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-stack" style="--o-gap:.75rem;max-width:36rem">
+          <p id="article-el" class="o-prose">Orion Admin's data table supports server-side paging, multi-column sort,
+            saved views and inline editing. Columns can be reordered, resized, pinned and hidden, and the whole
+            configuration persists per user.</p>
+          <div class="o-cluster">
+            <button class="o-btn o-btn-sm" id="op-summarize">summarize(#article-el)</button>
+            <button class="o-btn o-btn-sm" id="op-selection">summarize(selection)</button>
+            <button class="o-btn o-btn-sm" id="op-translate">translate(to: 'Spanish')</button>
+          </div>
+          <div class="o-prose" id="op-out" style="min-height:2.5rem;padding:.75rem;background:var(--o-surface-2);border-radius:var(--o-radius)"></div>
+        </div>
+        <script>
+          const opOut = document.getElementById('op-out');
+          document.getElementById('op-summarize').onclick = async () => {
+            opOut.textContent = 'Working…';
+            opOut.textContent = await Orion.ai.summarize(document.getElementById('article-el'), { format: 'bullets' });
+          };
+          document.getElementById('op-selection').onclick = async () => {
+            const sel = getSelection().toString();
+            if (!sel) { opOut.textContent = 'Select some text in the paragraph above first.'; return; }
+            opOut.textContent = 'Working…';
+            opOut.textContent = await Orion.ai.summarize(sel, { length: 'short' });
+          };
+          document.getElementById('op-translate').onclick = async () => {
+            opOut.textContent = 'Working…';
+            opOut.textContent = await Orion.ai.translate(document.getElementById('article-el'), { to: 'Spanish' });
+          };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="fillform">
+    <h2>Fill a form from free text — <code>Orion.ai.fillForm()</code></h2>
+    <p><code>Orion.ai.fillForm(form, text, opts)</code> reads the form's named fields (<code>Orion.formFields</code>),
+      asks the AI to pull matching values out of the text, and shows a panel listing each proposed value — old value
+      struck through, new one next to it, all checked by default. <strong>The form is only written to when you click
+      Apply</strong> (<code>Orion.fill</code>); Cancel discards the proposal untouched.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-grid" style="--o-cols:2;--o-gap:1.5rem;max-width:44rem">
+          <div>
+            <label class="o-label" for="fill-text">Paste a free-text request</label>
+            <textarea class="o-input" id="fill-text" rows="6">Please ship this to Priya Nair, priya.nair@example.com, +1 555 0142. Deliver to 84 King Street, Toronto. Order value is $420.</textarea>
+            <button class="o-btn o-btn-primary o-mt-2" id="fill-run">Fill with AI</button>
+          </div>
+          <form class="o-form-grid" id="fill-form">
+            <div class="o-field"><label class="o-label" for="f-name">Full name</label><input class="o-input" id="f-name" name="name"></div>
+            <div class="o-field"><label class="o-label" for="f-email">Email</label><input class="o-input" id="f-email" name="email" type="email"></div>
+            <div class="o-field"><label class="o-label" for="f-phone">Phone</label><input class="o-input" id="f-phone" name="phone" type="tel"></div>
+            <div class="o-field"><label class="o-label" for="f-address">Delivery address</label><input class="o-input" id="f-address" name="address"></div>
+            <div class="o-field"><label class="o-label" for="f-amount">Order amount</label><input class="o-input" id="f-amount" name="amount" type="number"></div>
+          </form>
+        </div>
+        <script>
+          document.getElementById('fill-run').onclick = () => {
+            Orion.ai.fillForm(document.getElementById('fill-form'), document.getElementById('fill-text').value);
+          };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="analyze">
+    <h2>Document analysis — <code>Orion.ai.analyze()</code></h2>
+    <p><code>Orion.ai.analyze(file | text, opts) → Promise&lt;{ summary, keyPoints, entities, fields, raw }&gt;</code>.
+      <code>file</code> may be a plain-text <code>File</code>/<code>Blob</code> (.txt/.md/.csv/.json/…) — a
+      zero-dependency build cannot parse PDFs, so a <code>.pdf</code> rejects with a message pointing at a dedicated
+      parser instead of failing silently.</p>
+    <div class="docs-demo">
+      <template>
+        <div class="o-stack" style="--o-gap:.75rem;max-width:36rem">
+          <textarea class="o-input" id="doc-text" rows="4">Hi team — order #48213 was due last Friday and still hasn't arrived. Could you confirm the new delivery date? We need it before the 30th for the Chen account. Thanks, Morgan.</textarea>
+          <button class="o-btn o-btn-sm" id="doc-run">Orion.ai.analyze(text)</button>
+          <div id="doc-out"></div>
+        </div>
+        <script>
+          document.getElementById('doc-run').onclick = async () => {
+            const out = document.getElementById('doc-out');
+            out.innerHTML = '<p class="o-muted">Analyzing…</p>';
+            const r = await Orion.ai.analyze(document.getElementById('doc-text').value);
+            out.innerHTML = `<div class="o-prose"><p><strong>Summary</strong> — ${r.summary}</p>
+              <p><strong>Key points</strong></p><ul>${r.keyPoints.map(k => `<li>${k}</li>`).join('')}</ul>
+              <p><strong>Entities</strong> — ${r.entities.map(e => `${e.name} (${e.type})`).join(', ') || '—'}</p></div>`;
+          };
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="search">
+    <h2>AI search — <code>Orion.ai.searchProvider()</code></h2>
+    <p><code>Orion.ai.searchProvider(opts)</code> returns a provider you drop into
+      <a href="global-search.html"><code>&lt;o-global-search&gt;</code></a>'s <code>providers</code> array (see its
+      <a href="global-search.html">docs</a> for the full provider/result contract) — it adds an "AI answer" category
+      that answers the typed query directly.</p>
+    <div class="docs-demo" data-preview="flush">
+      <template>
+        <div style="padding:3rem 1.5rem">
+          <o-global-search id="ai-search" placeholder="Ask anything…" shortcut=""></o-global-search>
+        </div>
+        <script>
+          document.getElementById('ai-search').providers = [Orion.ai.searchProvider()];
+        </script>
+      </template>
+    </div>
+    <pre class="docs-code-block" data-lang="js">searchEl.providers = [
+  Orion.ai.searchProvider({ minChars: 4 }),   // { id='ai', title, icon='sparkles', minChars=4, system, provider, sources }
+  ...otherProviders,
+];</pre>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <table class="docs-api">
+      <thead><tr><th>Member</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>data-o-ai-complete[="hint"]</code></td><td>Ghost-text autocomplete. Extra config: <code>data-o-ai-complete-min-chars</code> (8), <code>-delay</code> (450ms), <code>-max</code> (160 chars).</td></tr>
+        <tr><td><code>data-o-ai-suggest</code></td><td>"Improve with AI" trigger + tone menu + diff preview on a field.</td></tr>
+        <tr><td><code>Orion.ai.summarize(text|element, opts) → Promise&lt;string&gt;</code></td><td><code>opts</code>: <code>length: 'short'|'medium'|'long'</code>, <code>format: 'paragraph'|'bullets'</code>, plus any <code>Orion.ai.chat</code> option.</td></tr>
+        <tr><td><code>Orion.ai.rewrite(text|element, { instruction, ... }) → Promise&lt;string&gt;</code></td><td></td></tr>
+        <tr><td><code>Orion.ai.translate(text|element, { to, ... }) → Promise&lt;string&gt;</code></td><td></td></tr>
+        <tr><td><code>Orion.ai.fillForm(form, text, opts) → Promise&lt;{ proposed, applied, values }&gt;</code></td><td><code>opts</code>: <code>fields</code> (limit to these field names), <code>provider</code>, <code>signal</code>, <code>container</code>. Resolves once the user applies or cancels.</td></tr>
+        <tr><td><code>Orion.ai.analyze(file|text, opts) → Promise&lt;{ summary, keyPoints, entities, fields, raw }&gt;</code></td><td><code>opts.fields</code> requests additional structured fields (same shape as <code>Orion.ai.tasks.extract</code>).</td></tr>
+        <tr><td><code>Orion.ai.searchProvider(opts) → Provider</code></td><td>For <code>&lt;o-global-search&gt;</code>'s <code>providers</code> array — see <a href="global-search.html">its docs</a>.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="keyboard">
+    <h2>Keyboard</h2>
+    <table class="docs-api">
+      <thead><tr><th>Key</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Tab (ghost text)</td><td>Accept the suggestion (also →/End at the end of the field).</td></tr>
+        <tr><td>Esc (ghost text)</td><td>Dismiss the suggestion.</td></tr>
+        <tr><td>Esc (suggest panel)</td><td>Close the "improve with AI" panel.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="notes">
+    <h2>Notes &amp; limitations</h2>
+    <ul>
+      <li>All of it is built on <a href="ai.html"><code>Orion.ai</code></a> — configure a provider before using any
+        helper on this page (the <code>ai</code> package is a hard dependency, declared via <code>@deps</code>).</li>
+      <li>Ghost text and "improve with AI" operate on the field's whole value, not a partial selection.</li>
+      <li><code>fillForm()</code> skips password/file/hidden fields and de-dupes radio/checkbox groups to their first
+        control; it asks for one value per field name, so multi-value checkbox groups are not extracted as arrays.</li>
+      <li><code>analyze()</code> cannot parse PDFs in a zero-dependency build — convert to text/Markdown first, or
+        pair it with a dedicated PDF/OCR extractor and pass the extracted text in.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

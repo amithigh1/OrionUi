@@ -1,0 +1,28 @@
+/* ============================================================================
+ * <o-workflow> — node cards, config panel and simulate-mode token, layered on
+ * top of diagram.css (.o-dg-*). Scoped to .o-workflow so a plain <o-diagram>
+ * elsewhere on the page is never affected.
+ * ========================================================================== */
+.o-workflow .o-dg-toolbar .o-btn.is-active { color: var(--o-primary-text); background: var(--o-primary-subtle); }
+
+/* node cards */
+.o-workflow .o-wf-card { stroke-width: 1.5px; transition: stroke var(--o-dur-fast) ease; }
+.o-workflow .o-dg-node:hover .o-wf-card { stroke-width: 2px; }
+.o-workflow .o-dg-node.is-selected .o-wf-card { stroke: var(--o-dg-select); stroke-width: 2px; }
+.o-wf-chip-ic { pointer-events: none; }
+.o-wf-sub { font-size: 10.5px; font-weight: 500; fill: var(--o-text-muted); pointer-events: none; }
+.o-wf-portlabel { font-size: 10px; font-weight: 700; fill: var(--o-text-muted); pointer-events: none; }
+.o-wf-errdot { fill: var(--o-danger); stroke: var(--o-surface); stroke-width: 1.5px; }
+.o-wf-errdot-ic { color: var(--o-on-danger); pointer-events: none; }
+
+/* simulate token */
+.o-wf-token { fill: var(--o-primary); stroke: var(--o-surface); stroke-width: 2px; filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .35)); }
+.o-workflow .o-dg-edge.is-active .o-dg-edge-line { stroke: var(--o-primary); stroke-width: 2.5px; }
+.o-workflow .o-dg-edge.is-active .o-dg-arrow { fill: var(--o-primary); }
+.is-simulating .o-dg-stage { cursor: default; }
+
+/* schema-driven config panel */
+.o-wf-errors { display: flex; flex-direction: column; gap: .25rem; margin-bottom: .75rem; padding: .5rem .625rem; font-size: var(--o-fs-xs); color: var(--o-danger-text); background: var(--o-danger-subtle); border: 1px solid var(--o-danger-border); border-radius: var(--o-radius); }
+.o-wf-error-item { display: flex; align-items: flex-start; gap: .375rem; }
+.o-wf-error-ic { flex: 0 0 auto; width: .875rem; height: .875rem; margin-top: .0625rem; color: var(--o-danger); }
+.o-wf-mono { font-family: var(--o-font-mono); font-size: .75rem; min-height: 5rem; }

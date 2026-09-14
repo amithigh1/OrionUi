@@ -1,0 +1,51 @@
+/* ============================================================================
+ * <o-virtual-list> — windowed list / grid. Rows are absolutely positioned inside
+ * `.o-vlist-inner` (sized to the full virtual content length) so the browser never has
+ * to lay out more than what is on screen, however many items the data holds.
+ * ========================================================================== */
+o-virtual-list:not(:defined) { visibility: hidden; }
+.o-vlist {
+  position: relative; display: block; block-size: 24rem; min-block-size: 0; min-inline-size: 0;
+  overflow: auto; overscroll-behavior: contain; overflow-anchor: none; /* we do our own scroll anchoring */
+  background: var(--o-surface); border: 1px solid var(--o-border); border-radius: var(--o-radius-lg);
+  outline: none; contain: strict; -webkit-overflow-scrolling: touch;
+}
+.o-vlist:focus-visible { box-shadow: inset 0 0 0 var(--o-ring-width) color-mix(in srgb, var(--o-focus) var(--o-ring-alpha), transparent); }
+.o-vlist[horizontal] { overflow-x: auto; overflow-y: hidden; white-space: nowrap; }
+.o-vlist[grid] { contain: layout style; }
+
+.o-vlist-inner { position: relative; min-width: 100%; }
+.o-vlist[horizontal] .o-vlist-inner { min-width: 0; min-height: 100%; height: 100%; }
+
+.o-vlist-row {
+  box-sizing: border-box; overflow: hidden; display: flex; align-items: center; gap: .625rem;
+  padding-inline: .875rem; border-bottom: 1px solid var(--o-border); color: var(--o-text); background: var(--o-surface);
+  contain: layout style;
+}
+.o-vlist[horizontal] .o-vlist-row { border-bottom: 0; border-inline-end: 1px solid var(--o-border); }
+.o-vlist-row[role="option"] { cursor: pointer; }
+.o-vlist-row[role="option"]:hover { background: var(--o-surface-2); }
+.o-vlist-row[aria-selected="true"] { background: var(--o-primary-subtle); color: var(--o-primary-text); }
+.o-vlist-row.is-active { box-shadow: inset 0 0 0 1px var(--o-primary-border); }
+.o-vlist:focus-visible .o-vlist-row.is-active { box-shadow: inset 0 0 0 2px var(--o-primary); }
+
+/* group header row (rendered inline, part of the virtual flow) */
+.o-vlist-row.o-vlist-group {
+  font-size: var(--o-fs-xs); font-weight: 700; letter-spacing: .02em; text-transform: uppercase;
+  color: var(--o-text-muted); background: var(--o-surface-2); border-bottom: 1px solid var(--o-border);
+}
+/* the persistent sticky clone shown at the scroller's top edge while a group is in view */
+.o-vlist-sticky-wrap { position: sticky; top: 0; z-index: 2; height: 0; overflow: visible; }
+.o-vlist-sticky {
+  display: flex; align-items: center; height: var(--o-vlist-group-h, 2.125rem); padding-inline: .875rem;
+  font-size: var(--o-fs-xs); font-weight: 700; letter-spacing: .02em; text-transform: uppercase;
+  color: var(--o-text-muted); background: var(--o-surface-2); border-bottom: 1px solid var(--o-border);
+  box-shadow: var(--o-shadow-xs);
+}
+
+/* grid mode cells */
+.o-vlist-cell { box-sizing: border-box; border: 0; border-radius: var(--o-radius); padding: 0; overflow: hidden; }
+.o-vlist[grid] .o-vlist-row { border: 0; }
+
+.o-vlist-empty { position: sticky; top: 0; height: 100%; }
+.o-vlist[aria-busy="true"] .o-vlist-inner { opacity: .5; transition: opacity var(--o-dur); }
