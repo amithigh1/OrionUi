@@ -31,10 +31,16 @@ Use it from plain HTML, React, Vue, Angular or Svelte, loaded from a CDN, npm or
 
 ## Quick start
 
-### CDN
+### CDN (Global jsDelivr Delivery)
+
+Drop in the single script tag directly — zero setup required:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/orion-admin/dist/orion.min.js"></script>
+<!-- Always latest -->
+<script src="https://cdn.jsdelivr.net/gh/amithigh1/OrionUi@main/dist/orion.min.js"></script>
+
+<!-- Or pinned to release (v0.1.0) -->
+<script src="https://cdn.jsdelivr.net/gh/amithigh1/OrionUi@v0.1.0/dist/orion.min.js"></script>
 
 <button class="o-btn o-btn-primary" onclick="Orion.toast.success('It works!')">Click me</button>
 <o-datepicker name="start"></o-datepicker>
@@ -43,12 +49,12 @@ Use it from plain HTML, React, Vue, Angular or Svelte, loaded from a CDN, npm or
 ### npm
 
 ```bash
-npm install orion-admin
+npm install @amithigh1/orion-admin
 ```
 
 ```js
-import Orion from 'orion-admin';        // registers all components and injects the CSS
-// import Orion from 'orion-admin/lite'; // the 48 most used components, about a third of the size
+import Orion from '@amithigh1/orion-admin';        // registers all components and injects the CSS
+// import Orion from '@amithigh1/orion-admin/lite'; // the 48 most used components
 Orion.theme.setMode('dark');
 ```
 
