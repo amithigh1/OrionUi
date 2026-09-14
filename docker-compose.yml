@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  orion-admin:
+    build: .
+    container_name: orion-admin-ui
+    restart: unless-stopped
+    ports:
+      - "8080:80"
