@@ -15,6 +15,23 @@
   const here = location.href.split('#')[0].split('?')[0];
   const escH = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
+  /* ── Google Analytics (GA4: G-GKMCZFLK5L) ────────────────────────── */
+  (function initGA() {
+    if (window.__orion_ga_injected) return;
+    window.__orion_ga_injected = true;
+    if (!document.querySelector('script[src*="googletagmanager.com/gtag/js"]')) {
+      const s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-GKMCZFLK5L';
+      document.head.append(s);
+    }
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ window.dataLayer.push(arguments); }
+    window.gtag = window.gtag || gtag;
+    gtag('js', new Date());
+    gtag('config', 'G-GKMCZFLK5L', { page_path: location.pathname + location.search + location.hash });
+  })();
+
   /* ── syntax highlighting ─────────────────────────────────────────── */
   const JS_KW = /^(?:const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|new|class|extends|import|export|from|default|async|await|try|catch|finally|throw|typeof|instanceof|in|of|this|super|null|undefined|true|false|static|get|set|yield|delete|void)$/;
   function hlJS(src) {
