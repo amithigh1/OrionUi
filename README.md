@@ -4,11 +4,17 @@
 
 **One file. Every admin component you need.**
 
+[![Developed by Orion Infosys](https://img.shields.io/badge/Powered%20By-Orion%20Infosys-0284c7?style=for-the-badge&logo=googlechrome&logoColor=white)](http://orion-infosys.com/)
+[![Live Documentation](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-22c55e?style=for-the-badge&logo=github)](https://amithigh1.github.io/OrionUi/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
+
 A zero-dependency, open-source admin UI library that ships as a **single JavaScript file**:
 layout, forms, pickers, data tables, charts, calendars, kanban, editors, uploads, maps, AI panels and more.
 Use it from plain HTML, React, Vue, Angular or Svelte, loaded from a CDN, npm or a downloaded file.
 
 `MIT` · `0 dependencies` · `300+ features` · `Light/Dark/Auto` · `RTL` · `i18n` · `WAI-ARIA`
+
+[**Explore Live Documentation &rarr;**](https://amithigh1.github.io/OrionUi/) · [**Visit Orion Infosys &rarr;**](http://orion-infosys.com/)
 
 </div>
 
@@ -180,6 +186,17 @@ Read [ARCHITECTURE.md](ARCHITECTURE.md) (component contract) and [CONTRIBUTING.m
 ## Browser support
 
 Chrome/Edge 111+, Firefox 113+, Safari 16.4+ (iOS 16.4+). SSR-safe to import.
+
+## 🏢 Enterprise Support & Custom Development
+
+Orion Admin is proudly engineered and maintained by **[Orion Infosys](http://orion-infosys.com/)**.
+
+If your team or business requires:
+- Custom enterprise software architecture, full-stack development, or healthcare tech solutions
+- Tailored UI/UX components and custom extensions built on Orion
+- Dedicated SLA support, legacy system modernisation, or consultation
+
+👉 **Visit [orion-infosys.com](http://orion-infosys.com/)** to discover our engineering services and connect with our team.
 
 ## License
 

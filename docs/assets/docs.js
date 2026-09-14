@@ -135,6 +135,7 @@
         <button class="o-btn o-btn-ghost o-btn-icon o-btn-sm docs-rtl" title="Toggle RTL" aria-label="Toggle right-to-left">RTL</button>
         <button class="o-btn o-btn-ghost o-btn-icon o-btn-sm docs-theme" title="Theme" aria-label="Toggle theme"></button>
         <a class="o-btn o-btn-ghost o-btn-sm" href="${ROOT}../templates/index.html">Templates</a>
+        <a class="o-btn o-btn-primary o-btn-sm" href="http://orion-infosys.com/" target="_blank" rel="noopener" title="Visit Orion Infosys">Orion Infosys ↗</a>
       </div>`;
     const layout = document.createElement('div'); layout.className = 'docs-layout';
     const sidebar = document.createElement('aside'); sidebar.className = 'docs-sidebar'; sidebar.setAttribute('aria-label', 'Documentation');
@@ -159,6 +160,19 @@
       if (flat[idx + 1]) pager.innerHTML += `<a class="is-next" href="${flat[idx + 1].href}"><small>Next</small>${escH(flat[idx + 1].title)}</a>`;
       main.append(pager);
     }
+    // footer
+    const footer = document.createElement('footer');
+    footer.className = 'docs-footer';
+    footer.innerHTML = `
+      <div class="docs-footer-info">
+        <span>Developed by <a href="http://orion-infosys.com/" target="_blank" rel="noopener"><strong>Orion Infosys</strong></a> — Enterprise IT &amp; Software Solutions</span>
+      </div>
+      <div class="docs-footer-links">
+        <a href="http://orion-infosys.com/" target="_blank" rel="noopener">Company Website ↗</a>
+        <span class="docs-footer-sep">·</span>
+        <a href="https://github.com/amithigh1/OrionUi" target="_blank" rel="noopener">GitHub ↗</a>
+      </div>`;
+    main.append(footer);
     // toc
     const heads = [...main.querySelectorAll('section[id] > h2, h2[id]')];
     if (heads.length > 1) {

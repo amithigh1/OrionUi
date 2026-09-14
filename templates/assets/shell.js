@@ -98,6 +98,10 @@
           <div class="o-page-header-actions">${PAGE.actions || ''}</div>
         </div>
         <div id="tpl-slot"></div>
+        <footer style="margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--o-border); display: flex; justify-content: space-between; align-items: center; font-size: .8125rem; color: var(--o-text-muted); flex-wrap: wrap; gap: .5rem;">
+          <span>Built with Orion Admin · Sponsored by <a href="http://orion-infosys.com/" target="_blank" rel="noopener" style="color:var(--o-primary);font-weight:600;text-decoration:none">Orion Infosys</a></span>
+          <a href="http://orion-infosys.com/" target="_blank" rel="noopener" style="color:var(--o-text-muted);text-decoration:none">orion-infosys.com ↗</a>
+        </footer>
       </div>
     </main>`;
 

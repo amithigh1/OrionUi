@@ -82,6 +82,11 @@ table.docs-api td code { white-space: nowrap; }
 .docs-pager a:hover { border-color: var(--o-primary-border); }
 .docs-pager small { color: var(--o-text-muted); font-size: .75rem; }
 .docs-pager .is-next { text-align: end; margin-inline-start: auto; }
+.docs-footer { margin-top: 4rem; padding: 2rem 0 1.5rem; border-top: 1px solid var(--o-border); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1.25rem; font-size: .875rem; color: var(--o-text-muted); }
+.docs-footer a { color: var(--o-primary); text-decoration: none !important; font-weight: 500; }
+.docs-footer a:hover { text-decoration: underline !important; }
+.docs-footer-sep { margin: 0 .4rem; opacity: .5; }
+.docs-footer-links { display: flex; align-items: center; flex-wrap: wrap; }
 .docs-backdrop { display: none; }
 
 @media (max-width: 1199.98px) { .docs-content { grid-template-columns: minmax(0, 1fr); } .docs-toc { display: none; } }
