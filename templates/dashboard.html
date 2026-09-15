@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/shell.css">
 <script>
   window.PAGE = {
-    id: 'dashboard', title: 'Dashboard', subtitle: 'Welcome back, Aisha — here is what happened today.',
+    id: 'dashboard', title: 'Dashboard', subtitle: 'Welcome back, Priya — here is what happened today.',
     breadcrumbs: [{ label: 'Home', href: 'dashboard.html' }, { label: 'Dashboard' }],
     actions: '<o-daterange id="range" presets style="max-width:16rem"></o-daterange>'
       + '<button class="o-btn" id="export"><o-icon name="download"></o-icon>Export</button>'
@@ -93,7 +93,7 @@
     });
 
     const STATUS = { Paid: 'success', Pending: 'warning', Refunded: 'danger', Shipped: 'info' };
-    const names = ['Aisha Rahman', 'Ben Tan', 'Chen Wei', 'Diego Silva', 'Elena Ivanova', 'Farid Haddad', 'Grace Kim'];
+    const names = ['Priya Sharma', 'Ben Tan', 'Chen Wei', 'Diego Silva', 'Elena Ivanova', 'Oliver Davies', 'Grace Kim'];
     const table = document.getElementById('recent');
     table.columns = [
       { key: 'ref', title: 'Order' },
@@ -111,7 +111,7 @@
     const feed = document.getElementById('activity');
     if (feed) feed.items = [
       { id: 1, actor: { name: 'Ben Tan' }, verb: 'shipped order', target: { label: '#10236' }, type: 'status', icon: 'truck', color: 'info', createdAt: Date.now() - 6e5 },
-      { id: 2, actor: { name: 'Aisha Rahman' }, verb: 'refunded', target: { label: '#10232' }, type: 'status', icon: 'rotate-ccw', color: 'danger', createdAt: Date.now() - 36e5 },
+      { id: 2, actor: { name: 'Priya Sharma' }, verb: 'refunded', target: { label: '#10232' }, type: 'status', icon: 'rotate-ccw', color: 'danger', createdAt: Date.now() - 36e5 },
       { id: 3, actor: { name: 'Chen Wei' }, verb: 'added product', target: { label: 'Aurora desk lamp' }, type: 'upload', icon: 'package', color: 'success', createdAt: Date.now() - 9e6 },
       { id: 4, actor: { name: 'Grace Kim' }, verb: 'commented on', target: { label: 'Q3 report' }, type: 'comment', icon: 'message-square', color: 'primary', createdAt: Date.now() - 864e5 },
     ];

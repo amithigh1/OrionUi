@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const mk = ([name, size], i) => ({
     name: name.replace(/\/$/, ''), isFolder: name.endsWith('/'), size, kind: kindOf(name),
     sizeLabel: name.endsWith('/') ? '—' : F.bytes(size),
-    modified: new Date(now - (i + 1) * 1.7 * D), by: ['Amira R.', 'Daniel O.', 'Sofia M.', 'Kenji T.'][i % 4],
+    modified: new Date(now - (i + 1) * 1.7 * D), by: ['Ananya P.', 'Daniel O.', 'Sofia M.', 'Kenji T.'][i % 4],
   });
 
   let cwd = '/', selected = new Set(), query = '';

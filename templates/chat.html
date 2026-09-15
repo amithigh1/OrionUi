@@ -122,14 +122,14 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const O = Orion, esc = O.util.esc, now = Date.now(), M = 60e3, H = 3600e3, D = 864e5;
-  const ME = 'Amira Rahman';
+  const ME = 'Ananya Patel';
 
   const PEOPLE = {
     'Daniel Okafor': { role: 'Engineering manager', status: 'online' },
     'Sofia Marin':   { role: 'Product designer', status: 'away' },
     'Kenji Tanaka':  { role: 'Support lead', status: 'online' },
     'Priya Nair':    { role: 'Data analyst', status: 'offline' },
-    'Amira Rahman':  { role: 'Head of Operations', status: 'online' },
+    'Ananya Patel':  { role: 'Head of Operations', status: 'online' },
   };
 
   const CONVOS = [
@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { from: 'Sofia Marin', at: now - 26 * H, text: 'Shipped the new status timeline in the order drawer — screenshots in the design channel.', reacts: { '🎉': 3, '👀': 1 } },
         { from: 'Priya Nair', at: now - 5 * H, text: 'Weekly export is ready: revenue up 8.4% WoW, refunds flat.' },
         { from: 'Kenji Tanaka', at: now - 42 * M, text: 'Can someone approve the refund for Globex? It is over my limit.' },
-        { from: 'Daniel Okafor', at: now - 12 * M, text: '@Amira Rahman this one is yours I think 🙏' },
+        { from: 'Daniel Okafor', at: now - 12 * M, text: '@Ananya Patel this one is yours I think 🙏' },
       ] },
     { id: 'daniel', name: 'Daniel Okafor', kind: 'dm', members: ['Daniel Okafor', ME], unread: 0,
       messages: [

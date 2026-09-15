@@ -7,14 +7,14 @@
   r.tabCount = tabs.getTabs().length;
   r.progress = $('#pf-pct').textContent.trim();
   r.todoItems = $$('#pf-todo li').length;
-  $('#d-first').value = 'Amirah'; $('#d-first').dispatchEvent(new Event('input', { bubbles: true })); await sleep(50);
+  $('#d-first').value = 'Ananyaa'; $('#d-first').dispatchEvent(new Event('input', { bubbles: true })); await sleep(50);
   r.dirtyShown = $('#pf-dirty').textContent.includes('Unsaved');
   $('#d-first').value = ''; $('#d-first').dispatchEvent(new Event('input', { bubbles: true }));
   $('#pf-save').click(); await sleep(300);
   r.saveBlockedWhenInvalid = $$('#pf-form .o-error').filter(e => e.textContent.trim()).length >= 1;
-  $('#d-first').value = 'Amirah'; $('#d-first').dispatchEvent(new Event('input', { bubbles: true }));
+  $('#d-first').value = 'Ananyaa'; $('#d-first').dispatchEvent(new Event('input', { bubbles: true }));
   $('#pf-save').click(); await sleep(400);
-  r.nameUpdated = $('#pf-name').textContent.trim() === 'Amirah Rahman';
+  r.nameUpdated = $('#pf-name').textContent.trim() === 'Ananyaa Patel';
   r.avatarInitials = $('#pf-av').textContent.trim();
   tabs.select('security'); await sleep(200);
   r.securityVisible = vis($('#pw-form')) && $('#security').hidden === false;
@@ -33,7 +33,7 @@
   tabs.select('notifications'); await sleep(200);
   r.notifRows = $$('#pf-notif tr').length;
   r.ok = r.tabCount === 4 && r.progress === '60%' && r.todoItems === 5 && r.dirtyShown && r.saveBlockedWhenInvalid
-    && r.nameUpdated && r.avatarInitials === 'AR' && r.securityVisible && r.sessions === 3 && r.sessionsAfterRevoke === 2
+    && r.nameUpdated && r.avatarInitials === 'AP' && r.securityVisible && r.sessions === 3 && r.sessionsAfterRevoke === 2
     && r.codesShown && r.codesClosed && r.timelineItems === 5 && r.loginRows === 6 && r.loginBadges >= 6 && r.notifRows === 7;
   return r;
 })()

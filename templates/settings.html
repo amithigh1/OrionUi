@@ -77,7 +77,7 @@
       </div>
       <div class="o-card">
         <div class="o-card-header"><h2 class="o-card-title">Two-factor authentication</h2></div>
-        <div class="o-card-body"><o-2fa-setup issuer="Orion Admin" account="aisha@orionlabs.example"></o-2fa-setup></div>
+        <div class="o-card-body"><o-2fa-setup issuer="Orion Admin" account="priya@orionlabs.example"></o-2fa-setup></div>
       </div>
     </o-tab-panel>
 
@@ -99,11 +99,11 @@
       manager: { roles: ['manager'], permissions: ['users.edit', 'reports.view'] },
       viewer: { roles: ['viewer'], permissions: ['reports.view'] },
     };
-    Orion.auth?.setUser({ id: 1, name: 'Aisha Rahman', ...ROLES.admin });
+    Orion.auth?.setUser({ id: 1, name: 'Priya Sharma', ...ROLES.admin });
     document.getElementById('role-switch')?.addEventListener('click', e => {
       const b = e.target.closest('button'); if (!b) return;
       [...b.parentElement.children].forEach(x => x.classList.toggle('is-active', x === b));
-      Orion.auth?.setUser({ id: 1, name: 'Aisha Rahman', ...ROLES[b.dataset.role] });
+      Orion.auth?.setUser({ id: 1, name: 'Priya Sharma', ...ROLES[b.dataset.role] });
       Orion.toast?.(`Previewing as ${b.textContent}`, { duration: 1500 });
     });
 

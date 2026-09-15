@@ -55,12 +55,12 @@
       <nav class="o-sidebar-body"><ul class="o-menu">${menu}</ul></nav>
       <div class="o-sidebar-footer">
         <button class="o-sidebar-user" type="button" data-o-toggle="dropdown" data-o-target="#tpl-user-menu">
-          <o-avatar name="Aisha Rahman" size="sm" status="online"></o-avatar>
-          <span class="o-user-info"><span class="o-user-name">Aisha Rahman</span><span class="o-user-sub">Administrator</span></span>
+          <o-avatar name="Priya Sharma" size="sm" status="online"></o-avatar>
+          <span class="o-user-info"><span class="o-user-name">Priya Sharma</span><span class="o-user-sub">Administrator</span></span>
           ${icon('more-vertical')}
         </button>
         <div class="o-dropdown-menu" id="tpl-user-menu">
-          <div class="o-dropdown-header">Aisha Rahman</div>
+          <div class="o-dropdown-header">Priya Sharma</div>
           <a class="o-dropdown-item" href="profile.html">${icon('user')}Profile</a>
           <a class="o-dropdown-item" href="settings.html">${icon('settings')}Settings</a>
           <div class="o-dropdown-divider"></div>
@@ -77,7 +77,7 @@
         <o-theme-switch></o-theme-switch>
         <o-notification-bell id="tpl-bell"></o-notification-bell>
         <button class="o-btn o-btn-ghost o-btn-icon" data-o-toggle="dropdown" data-o-target="#tpl-user-menu-2" aria-label="Account">
-          <o-avatar name="Aisha Rahman" size="sm"></o-avatar>
+          <o-avatar name="Priya Sharma" size="sm"></o-avatar>
         </button>
         <div class="o-dropdown-menu" id="tpl-user-menu-2">
           <a class="o-dropdown-item" href="profile.html">${icon('user')}Profile</a>
@@ -127,7 +127,7 @@
     // Demo notifications
     if (O.notifications) {
       O.notifications.setItems?.([
-        { id: 1, title: 'New order #10231', body: 'Aisha Rahman · RM 1,240.00', type: 'success', createdAt: Date.now() - 6e4 },
+        { id: 1, title: 'New order #10231', body: 'Priya Sharma · RM 1,240.00', type: 'success', createdAt: Date.now() - 6e4 },
         { id: 2, title: 'Payment failed', body: 'Invoice INV-2031 could not be charged', type: 'error', createdAt: Date.now() - 36e5 },
         { id: 3, title: 'Ben mentioned you', body: '“can you review the Q3 report?”', type: 'mention', createdAt: Date.now() - 864e5 },
       ]);
