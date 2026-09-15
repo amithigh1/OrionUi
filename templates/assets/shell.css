@@ -9,6 +9,7 @@
 .tpl-preview .o-icon { width: 2.5rem; height: 2.5rem; }
 .tpl-chart { min-height: 18rem; height: auto; }
 .o-card { overflow: clip; }
+:root { --o-font-scale: 1.0625; }
 .tpl-two-col { display: grid; gap: 1.25rem; grid-template-columns: 1fr; }
 @media (min-width: 992px) { .tpl-two-col { grid-template-columns: 2fr 1fr; } }
 .tpl-full-height { height: calc(100vh - var(--o-header-h) - 4.5rem); min-height: 30rem; }
