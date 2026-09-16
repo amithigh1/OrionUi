@@ -18,3 +18,8 @@ Thumbs.db
 .vscode/
 .idea/
 *.sw?
+
+# Local deployment tools & credentials
+deploy.mjs
+deploy.ps1
+DEPLOY.md
