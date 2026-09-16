@@ -19,7 +19,10 @@ Thumbs.db
 .idea/
 *.sw?
 
-# Local deployment tools & credentials
+# Local deployment tools & credentials (never commit to git)
+deploy/
+Deploy/
 deploy.mjs
 deploy.ps1
+deploy.cmd
 DEPLOY.md
