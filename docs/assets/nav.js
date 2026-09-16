@@ -14,6 +14,11 @@ window.DOCS_NAV = [
     "desc": "Install via CDN, npm or download; configure; custom builds"
    },
    {
+    "href": "ai.html",
+    "title": "Using with AI Agents",
+    "desc": "Prompting ChatGPT, Claude, Gemini & Cursor to build Orion Admin apps"
+   },
+   {
     "href": "frameworks.html",
     "title": "React, Vue & Angular",
     "desc": "Use Orion Admin in React 18/19, Vue 3, Angular, Svelte and plain JavaScript"

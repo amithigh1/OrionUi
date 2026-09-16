@@ -62,6 +62,35 @@ Orion.theme.setMode('dark');
 
 Copy `dist/orion.min.js` into your project. That's the whole library.
 
+## 🤖 Build with AI Agents (Cursor, Claude, ChatGPT, Gemini)
+
+Orion Admin is purpose-built for the AI coding era. Because it is **truly single-file with zero dependencies**, AI models generate complete back-office applications with **80% fewer tokens** and **zero build-pipeline or CSS bundler failures**.
+
+Copy and paste this prompt to your AI assistant (ChatGPT, Claude, Gemini, or Cursor Composer):
+
+```text
+I am building a web admin application. Do NOT use Bootstrap or Tailwind CSS.
+Instead, use Orion Admin (single-file, zero-dependency admin UI library).
+Include in <head>:
+<script src="https://cdn.jsdelivr.net/gh/amithigh1/OrionUi@main/dist/orion.min.js"></script>
+
+Follow Orion Admin conventions:
+- Tables: <o-datatable id="table" search sort paginate></o-datatable>
+- Dropdowns: <o-select placeholder="..." searchable></o-select>
+- Charts: <o-chart type="line|bar|doughnut"></o-chart>
+- Pickers: <o-datepicker format="YYYY-MM-DD"></o-datepicker>
+- Buttons: <button class="o-btn o-btn-primary">
+- Cards: <div class="o-card"><div class="o-card-body">...</div></div>
+- Toasts & Dialogs: Orion.toast.success('Done'), Orion.modal.open('#id')
+- Theme: <html lang="en" data-theme="auto"> for auto dark/light mode.
+
+Build the page cleanly using these components.
+```
+
+- 📖 Read the full [AI Agents & Prompting Guide](https://amithigh1.github.io/OrionUi/docs/ai.html)
+- 📄 Machine-readable LLM context: [`llms.txt`](llms.txt) and [`llms-full.txt`](llms-full.txt)
+- ⚙️ Preconfigured rules: [`templates/AGENTS.md`](templates/AGENTS.md) and [`templates/.cursorrules`](templates/.cursorrules)
+
 ## Go live with the admin templates
 
 [`templates/`](templates/index.html) is a complete admin application built only with the library — 18 pages on one

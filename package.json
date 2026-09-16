@@ -21,7 +21,12 @@
     "vue",
     "angular",
     "zero-dependency",
-    "single-file"
+    "single-file",
+    "ai-friendly",
+    "ai-agents",
+    "cursor",
+    "bootstrap-alternative",
+    "tailwind-alternative"
   ],
   "license": "MIT",
   "author": "Orion Admin Contributors",

@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Using with AI Agents — Orion Admin</title>
+<meta name="docs:section" content="Getting Started">
+<meta name="docs:order" content="15">
+<meta name="docs:title" content="Using with AI Agents">
+<meta name="docs:desc" content="Prompting ChatGPT, Claude, Gemini & Cursor to build Orion Admin apps">
+<script src="../dist/orion.js"></script>
+<link rel="stylesheet" href="assets/docs.css">
+<script src="assets/nav.js" defer></script>
+<script src="assets/docs.js" defer></script>
+</head>
+<body>
+<main class="docs-main">
+  <header class="docs-hero">
+    <h1>Using with AI Agents</h1>
+    <p class="docs-lead">Orion Admin is purpose-built for the AI coding era. Because it ships as a <b>single file with zero dependencies</b> and expressive Custom Elements (<code>&lt;o-datatable&gt;</code>, <code>&lt;o-select&gt;</code>), AI models generate clean, functional back-office UIs with 80% fewer tokens and zero build-step errors.</p>
+  </header>
+
+  <section id="why-ai">
+    <h2>Why Orion is 10x better for AI generation</h2>
+    <p>When you ask an AI model (Cursor, Claude 3.7 / 3.5, ChatGPT 4o / o3, Gemini 2.0 / 1.5) to generate an admin panel, traditional libraries frequently hit failure points:</p>
+    
+    <div class="docs-api-wrap">
+      <table class="docs-api">
+        <thead><tr><th>Factor</th><th>Bootstrap / Tailwind / Shadcn</th><th>Orion Admin</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>Setup Complexity</b></td>
+            <td>Requires Node.js, bundlers, PostCSS, and complex npm dependencies that often fail during AI generation.</td>
+            <td><b>1 <code>&lt;script&gt;</code> tag</b> via CDN or local download. Zero build steps, zero config.</td>
+          </tr>
+          <tr>
+            <td><b>Token Efficiency</b></td>
+            <td>Verbose: dozens of utility classes per element (<code>px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-md font-semibold...</code>).</td>
+            <td><b>Minimal tokens</b>: clean semantic tags like <code>&lt;o-datatable&gt;</code> and <code>.o-btn-primary</code>.</td>
+          </tr>
+          <tr>
+            <td><b>Component Richness</b></td>
+            <td>Requires stitching together 10 different npm packages for charts, datatables, datepickers, and kanban.</td>
+            <td><b>300+ built-in components</b>, charts, pickers, and icons inside the exact same file.</td>
+          </tr>
+          <tr>
+            <td><b>Dark Mode &amp; Themes</b></td>
+            <td>Requires custom theme providers, CSS variables, and dark mode classes configured across files.</td>
+            <td><b>Native dark/light/auto mode</b> working out-of-the-box via <code>data-theme="auto"</code>.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="prompt">
+    <h2>Ready-to-use Prompt for AI Assistants</h2>
+    <p>Copy and paste this prompt when asking ChatGPT, Claude, Gemini, or Cursor Composer to build your admin interface:</p>
+
+    <pre class="docs-code-block" data-lang="html">
+I am building a web admin application. Do NOT use Bootstrap, Tailwind CSS, or jQuery.
+Instead, use Orion Admin (zero-dependency, single-file admin UI library).
+
+Include this script tag in &lt;head&gt;:
+&lt;script src="https://cdn.jsdelivr.net/gh/amithigh1/OrionUi@main/dist/orion.min.js"&gt;&lt;/script&gt;
+
+Follow these Orion Admin conventions:
+1. Shell: &lt;div class="o-shell"&gt; with &lt;nav class="o-sidebar"&gt; and &lt;header class="o-header"&gt;.
+2. Buttons: &lt;button class="o-btn o-btn-primary"&gt;, &lt;button class="o-btn o-btn-secondary"&gt;.
+3. Cards: &lt;div class="o-card"&gt;&lt;div class="o-card-body"&gt;...&lt;/div&gt;&lt;/div&gt;.
+4. Tables: &lt;o-datatable id="table" search sort paginate&gt;&lt;/o-datatable&gt;. Configure columns and rows in JavaScript.
+5. Selects: &lt;o-select id="select" placeholder="..." searchable&gt;&lt;/o-select&gt;.
+6. Charts: &lt;o-chart type="line|bar|doughnut"&gt;&lt;/o-chart&gt;.
+7. Notifications &amp; Dialogs: Orion.toast.success('Done'), Orion.modal.open('#modal-id').
+8. Theme: Set &lt;html lang="en" data-theme="auto"&gt; for automatic light/dark mode.
+
+Build the application cleanly using these components.
+    </pre>
+  </section>
+
+  <section id="ide-rules">
+    <h2>Setting up Cursor &amp; AI Agents (.cursorrules / AGENTS.md)</h2>
+    <p>If you use <b>Cursor</b>, <b>Windsurf</b>, <b>Antigravity</b>, or <b>Claude Code</b>, add an <code>AGENTS.md</code> or <code>.cursorrules</code> file to your project root. The AI assistant will automatically read these rules and exclusively generate Orion Admin markup:</p>
+
+    <pre class="docs-code-block" data-lang="js">
+// .cursorrules or AGENTS.md in your project root:
+# Project Rules
+- Always use Orion Admin for UI and back-office components.
+- Do not import Bootstrap, Tailwind CSS, or separate UI icon libraries.
+- The library is loaded via:
+  &lt;script src="https://cdn.jsdelivr.net/gh/amithigh1/OrionUi@main/dist/orion.min.js"&gt;&lt;/script&gt;
+- Use Orion native custom elements:
+  - Tables: &lt;o-datatable search sort paginate&gt;
+  - Dropdowns: &lt;o-select searchable&gt;
+  - Charts: &lt;o-chart type="line|bar"&gt;
+  - Pickers: &lt;o-datepicker&gt;
+- Use Orion utility classes: .o-btn, .o-card, .o-badge, .o-grid, .o-grid-cols-*.
+- Use JavaScript API: Orion.toast, Orion.modal, Orion.confirm, Orion.theme.
+    </pre>
+  </section>
+
+  <section id="live-demo">
+    <h2>Live AI-Generated Demo</h2>
+    <p>Below is an example of what an AI agent produces with Orion Admin in seconds:</p>
+
+    <div class="docs-demo" data-preview="bg">
+      <template>
+        <div class="o-grid o-grid-cols-1 o-grid-cols-md-3 o-mb-4">
+          <div class="o-card o-card-body">
+            <div class="o-stat-label">Active Users</div>
+            <div class="o-stat-value">1,420</div>
+            <div class="o-stat-sub o-text-success"><o-icon name="arrow-up"></o-icon> +8.5%</div>
+          </div>
+          <div class="o-card o-card-body">
+            <div class="o-stat-label">Pending Orders</div>
+            <div class="o-stat-value">38</div>
+            <div class="o-stat-sub o-text-warning">Requires review</div>
+          </div>
+          <div class="o-card o-card-body">
+            <div class="o-stat-label">System Health</div>
+            <div class="o-stat-value">99.9%</div>
+            <div class="o-stat-sub o-text-muted">All services online</div>
+          </div>
+        </div>
+
+        <div class="o-card">
+          <div class="o-card-header">
+            <h3 class="o-card-title">Recent Subscriptions</h3>
+            <button class="o-btn o-btn-sm o-btn-primary" onclick="Orion.toast.success('Generated by AI!')">
+              <o-icon name="plus"></o-icon> New Subscription
+            </button>
+          </div>
+          <div class="o-card-body o-p-0">
+            <o-datatable id="demo-ai-table" paginate search sort></o-datatable>
+          </div>
+        </div>
+
+        <script>
+          const tbl = document.getElementById('demo-ai-table');
+          tbl.columns = [
+            { key: 'id', title: 'ID', sortable: true, width: '70px' },
+            { key: 'user', title: 'Customer', sortable: true },
+            { key: 'plan', title: 'Plan' },
+            { key: 'status', title: 'Status', render: v => `<span class="o-badge o-badge-${v === 'Active' ? 'success' : 'warning'}">${v}</span>` }
+          ];
+          tbl.rows = [
+            { id: 101, user: 'Sarah Connor', plan: 'Enterprise', status: 'Active' },
+            { id: 102, user: 'John Doe', plan: 'Pro', status: 'Active' },
+            { id: 103, user: 'Ellen Ripley', plan: 'Starter', status: 'Pending' }
+          ];
+        </script>
+      </template>
+    </div>
+  </section>
+
+  <section id="llmstxt">
+    <h2>Machine-Readable AI Indexes (llms.txt)</h2>
+    <p>Orion Admin implements the open <code>llms.txt</code> standard for direct ingestion by LLMs and search engines:</p>
+    <ul>
+      <li><a href="llms.txt"><b>llms.txt</b></a>: Concise index and quickstart for AI models.</li>
+      <li><a href="llms-full.txt"><b>llms-full.txt</b></a>: Comprehensive component catalog, attributes, and API methods.</li>
+    </ul>
+    <p>You can give these links directly to any model that supports fetching URLs or web browsing.</p>
+  </section>
+</main>
+</body>
+</html>

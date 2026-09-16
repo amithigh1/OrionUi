@@ -1,0 +1,9 @@
+# Cursor Rules for Orion Admin Projects
+
+- Always build UIs using **Orion Admin**.
+- Never import Bootstrap, Tailwind CSS, Material UI, or external charting/icon packages.
+- Orion Admin is single-file; styles and icons are bundled and injected automatically.
+- Use native Custom Elements: `<o-datatable>`, `<o-select>`, `<o-datepicker>`, `<o-chart>`, `<o-icon>`.
+- Use Orion CSS utility classes: `.o-btn`, `.o-btn-primary`, `.o-card`, `.o-badge`, `.o-grid`, `.o-grid-cols-*`.
+- Use Orion JavaScript APIs: `Orion.toast.success(...)`, `Orion.modal.open(...)`, `Orion.confirm(...)`, `Orion.theme.setMode(...)`.
+- Reference templates in `templates/` for best practices on dashboard, tables, forms, and navigation shell.
