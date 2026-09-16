@@ -24,11 +24,12 @@ i18n.add('en', {
 });
 
 class OThemeBuilder extends OElement {
-  static props = { presets: { type: Array, default: () => [] }, texts: Object };
+  static props = { presets: { type: Array, default: () => [] }, texts: Object, global: Boolean };
   setup() {
     this.classList.add('o-theme-builder');
     this.draft = tbDefaultDraft();
     this._applying = false;
+    this._globalApplied = false;
     this.controlsEl = h('div', { class: 'o-tb-controls' });
     this.previewLight = this._buildPreviewPane('light');
     this.previewDark = this._buildPreviewPane('dark');
@@ -43,7 +44,13 @@ class OThemeBuilder extends OElement {
     on(this.contrastEl, 'click', '[data-tb-action]', (e, el) => this._onAction(el));
   }
   connected() { this._offTheme = O.theme.onChange(() => { if (!this._applying) this.applyDraft(); }); this.applyDraft(); }
-  disconnected() { this._offTheme?.(); }
+  disconnected() {
+    this._offTheme?.();
+    if (this._globalApplied) {
+      O.theme.reset();
+      this._globalApplied = false;
+    }
+  }
   update(changed) { if (changed.has('presets') || changed.has('init')) this._renderPresets(); }
   get presetList() { return toArr(this.presets).length ? toArr(this.presets) : TB_PRESETS; }
 
@@ -155,14 +162,38 @@ class OThemeBuilder extends OElement {
     try {
       const d = this.draft, resolved = O.theme.resolved;
       const colorTokens = {}; TB_SEMANTIC.forEach(k => { if (d.colors[k]) colorTokens[k] = d.colors[k]; });
-      O.theme.set({
+      const fontScaleFactor = d.fontScale > 2 ? d.fontScale / 100 : (d.fontScale || 1);
+
+      const baseTokens = {
         ...colorTokens, ...tbRadiusTokens(d.radius), ...tbDensityTokens(d.density),
         ...tbSidebarTokens(d.sidebarStyle, d.colors.primary), font: d.font,
-        ...tbTintSurfaces(resolved, d.colors.primary, d.neutralTint), ...tbShadowTokens(resolved, d.shadowIntensity),
-      });
-      O.theme.setFontScale(d.fontScale / 100);
-      O.theme.set({ ...tbTintSurfaces('light', d.colors.primary, d.neutralTint), ...tbShadowTokens('light', d.shadowIntensity) }, this.previewLight.stage);
-      O.theme.set({ ...tbTintSurfaces('dark', d.colors.primary, d.neutralTint), ...tbShadowTokens('dark', d.shadowIntensity) }, this.previewDark.stage);
+        '--o-font-scale': String(fontScaleFactor),
+      };
+
+      // Always apply complete tokens directly to both light & dark preview stages
+      O.theme.set({
+        ...baseTokens,
+        ...tbTintSurfaces('light', d.colors.primary, d.neutralTint),
+        ...tbShadowTokens('light', d.shadowIntensity),
+      }, this.previewLight.stage);
+
+      O.theme.set({
+        ...baseTokens,
+        ...tbTintSurfaces('dark', d.colors.primary, d.neutralTint),
+        ...tbShadowTokens('dark', d.shadowIntensity),
+      }, this.previewDark.stage);
+
+      // Only modify host document :root when explicitly requested via global or live prop/attribute
+      if (this.hasAttribute('global') || this.hasAttribute('live') || this.global) {
+        this._globalApplied = true;
+        O.theme.set({
+          ...baseTokens,
+          ...tbTintSurfaces(resolved, d.colors.primary, d.neutralTint),
+          ...tbShadowTokens(resolved, d.shadowIntensity),
+        });
+        O.theme.setFontScale(fontScaleFactor, { persist: false });
+      }
+
       this._paintPalettes();
       this._paintContrast();
       this.emit('change', { draft: clone(d) });

@@ -2139,7 +2139,11 @@ function __themeBoot() {
   theme.setMode(saved || cfg.theme || doc.documentElement.getAttribute('data-theme') || 'auto', { persist: false });
   if (cfg.persist !== false && ls.get('orion:contrast')) theme.setContrast(true, { persist: false });
   const fs = cfg.persist !== false ? ls.get('orion:fontScale') : null;
-  if (fs && fs !== 1) theme.setFontScale(fs, { persist: false });
+  if (fs === 0.75) {
+    ls.remove('orion:fontScale');
+  } else if (fs && fs !== 1) {
+    theme.setFontScale(fs, { persist: false });
+  }
   const tenant = cfg.persist !== false ? ls.get('orion:tenant') : null;
   if (tenant && __theme.tenants[tenant]) theme.use(tenant, { persist: false });
   if (win.matchMedia) {

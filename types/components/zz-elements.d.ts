@@ -2395,6 +2395,7 @@ export interface OTagsElement extends FormElement<any> {
 export interface OThemeBuilderElement extends OElement {
   presets: any[];
   texts: Record<string, any>;
+  global: boolean;
   applyDraft(...args: any[]): any;
   applyPreset(...args: any[]): any;
   exportJSON(...args: any[]): any;

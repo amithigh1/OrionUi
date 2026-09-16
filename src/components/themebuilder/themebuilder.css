@@ -1,9 +1,9 @@
 /* <o-theme-builder>: a controls sidebar + live previews/contrast main area. Tokens only. */
-o-theme-builder, .o-theme-builder { display: grid; grid-template-columns: 20rem 1fr; gap: 1.5rem; align-items: start; min-width: 0; }
-@media (max-width: 860px) { .o-theme-builder { grid-template-columns: 1fr; } }
+o-theme-builder, .o-theme-builder { display: grid; grid-template-columns: 20rem minmax(0, 1fr); gap: 1.5rem; align-items: start; min-width: 0; width: 100%; }
+@media (max-width: 1100px) { .o-theme-builder { grid-template-columns: 1fr; } }
 
 .o-tb-controls { display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; max-height: 44rem; overflow-y: auto; padding-inline-end: .25rem; }
-@media (max-width: 860px) { .o-tb-controls { max-height: none; } }
+@media (max-width: 1100px) { .o-tb-controls { max-height: none; } }
 .o-tb-section { padding: 1rem; background: var(--o-surface); border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); }
 .o-tb-section-title { margin: 0 0 .75rem; font-size: var(--o-fs-sm); font-weight: 700; color: var(--o-text); }
 .o-tb-field { margin-bottom: .875rem; }
@@ -32,8 +32,7 @@ o-theme-builder, .o-theme-builder { display: grid; grid-template-columns: 20rem 
 
 /* ── previews ── */
 .o-tb-main { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
-.o-tb-previews { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
-@media (max-width: 640px) { .o-tb-previews { grid-template-columns: 1fr; } }
+.o-tb-previews { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1.25rem; min-width: 0; }
 .o-tb-preview { min-width: 0; border: 1px solid var(--o-border); border-radius: var(--o-radius-lg); overflow: hidden; box-shadow: var(--o-shadow-sm); }
 .o-tb-preview-label { padding: .5rem .875rem; font-size: var(--o-fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--o-text-muted); background: var(--o-surface-2); border-bottom: 1px solid var(--o-border); }
 .o-tb-stage { display: flex; min-height: 16rem; background: var(--o-bg); color: var(--o-text); font-family: var(--o-font-sans); }

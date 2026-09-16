@@ -27,7 +27,7 @@ const TB_SEMANTIC = ['primary', 'secondary', 'success', 'danger', 'warning', 'in
 function tbDefaultDraft() {
   return {
     colors: { primary: '#4f46e5', secondary: '#64748b', success: '#15803d', danger: '#dc2626', warning: '#f59e0b', info: '#0e7490' },
-    neutralTint: 0, radius: 8, font: 'Inter, ui-sans-serif, system-ui, sans-serif', fontScale: 1,
+    neutralTint: 0, radius: 8, font: 'Inter, ui-sans-serif, system-ui, sans-serif', fontScale: 100,
     density: 'comfortable', shadowIntensity: 50, sidebarStyle: 'light',
   };
 }
