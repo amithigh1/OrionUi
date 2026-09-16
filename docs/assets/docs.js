@@ -129,7 +129,12 @@
     header.innerHTML = `
       <button class="o-btn o-btn-ghost o-btn-icon docs-menu-btn" aria-label="Menu">${O.icon('menu')}</button>
       <a class="docs-brand" href="${ROOT}index.html"><span class="docs-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg></span>Orion Admin <span class="docs-version">v${O.version}</span></a>
-      <label class="docs-search"><span class="o-sr-only">Search docs</span>${O.icon('search')}<input class="o-input o-input-sm" type="search" placeholder="Search components…" autocomplete="off"></label>
+      <label class="docs-search">
+        <span class="o-sr-only">Search docs</span>
+        ${O.icon('search')}
+        <input class="o-input o-input-sm" type="search" placeholder="Search components…" autocomplete="off" aria-label="Search components">
+        <button type="button" class="docs-search-clear" title="Clear search" aria-label="Clear search" hidden>×</button>
+      </label>
       <div class="docs-tools">
         <select class="o-select o-input-sm docs-lang" aria-label="Language" style="width:auto"></select>
         <button class="o-btn o-btn-ghost o-btn-icon o-btn-sm docs-rtl" title="Toggle RTL" aria-label="Toggle right-to-left">RTL</button>
@@ -140,10 +145,77 @@
     const layout = document.createElement('div'); layout.className = 'docs-layout';
     const sidebar = document.createElement('aside'); sidebar.className = 'docs-sidebar'; sidebar.setAttribute('aria-label', 'Documentation');
     const flat = [];
-    sidebar.innerHTML = nav.map(sec => `<div class="docs-nav-section"><div class="docs-nav-title">${escH(sec.section)}</div>${sec.pages.map(p => {
-      const href = ROOT + p.href; flat.push({ ...p, href });
-      return `<a class="docs-nav-link${href === here ? ' is-active' : ''}" href="${href}" title="${escH(p.desc || p.title)}">${escH(p.title)}</a>`;
-    }).join('')}</div>`).join('') || '<p class="o-text-muted o-p-3">Run <code>npm run build</code> to generate the navigation.</p>';
+
+    // Total component / item count
+    const totalCount = nav.reduce((acc, sec) => acc + (sec.pages ? sec.pages.length : 0), 0);
+
+    // Active section detection
+    let activeSectionName = null;
+    nav.forEach(sec => {
+      if (sec.pages.some(p => (ROOT + p.href) === here)) {
+        activeSectionName = sec.section;
+      }
+    });
+
+    // Saved accordion states from localStorage
+    let savedState = {};
+    try {
+      savedState = JSON.parse(localStorage.getItem('orion:docs:nav-open') || '{}');
+    } catch {}
+
+    sidebar.innerHTML = `
+      <div class="docs-sidebar-header">
+        <div class="docs-sidebar-search">
+          <span class="docs-sidebar-search-icon">${O.icon('search')}</span>
+          <input class="o-input o-input-sm docs-nav-search-input" type="search" placeholder="Search components…" autocomplete="off" aria-label="Search components">
+          <kbd class="docs-search-kbd">/</kbd>
+          <button type="button" class="docs-nav-search-clear" title="Clear search" aria-label="Clear search" hidden>×</button>
+        </div>
+        <div class="docs-sidebar-toolbar">
+          <span class="docs-sidebar-count">${totalCount} items</span>
+          <button type="button" class="docs-accordion-toggle" title="Expand or collapse all sections">Collapse all</button>
+        </div>
+      </div>
+      <nav class="docs-sidebar-nav" aria-label="Sections">
+        ${nav.map(sec => {
+          const hasActive = sec.section === activeSectionName;
+          let isOpen;
+          if (hasActive) {
+            isOpen = true;
+          } else if (savedState[sec.section] != null) {
+            isOpen = !!savedState[sec.section];
+          } else {
+            isOpen = (sec.section === 'Getting Started' || sec.section === 'Foundation');
+          }
+
+          return `
+            <details class="docs-nav-section${hasActive ? ' has-active' : ''}" data-section="${escH(sec.section)}" ${isOpen ? 'open' : ''}>
+              <summary class="docs-nav-title">
+                <span class="docs-nav-title-text">${escH(sec.section)}</span>
+                <span class="docs-nav-count">${sec.pages.length}</span>
+                <span class="docs-nav-chevron">${O.icon('chevron-right')}</span>
+              </summary>
+              <div class="docs-nav-body">
+                ${sec.pages.map(p => {
+                  const href = ROOT + p.href;
+                  flat.push({ ...p, href });
+                  const isActive = href === here;
+                  const slug = p.href.replace(/^components\//, '').replace(/\.html$/, '');
+                  const tag = 'o-' + slug;
+                  return `<a class="docs-nav-link${isActive ? ' is-active' : ''}" href="${href}" data-slug="${escH(slug)}" data-tag="${escH(tag)}" title="${escH(p.desc || p.title)}"><span class="docs-nav-link-title">${escH(p.title)}</span></a>`;
+                }).join('')}
+              </div>
+            </details>
+          `;
+        }).join('') || '<p class="o-text-muted o-p-3">Run <code>npm run build</code> to generate the navigation.</p>'}
+        <div class="docs-nav-empty" hidden>
+          <div class="docs-nav-empty-icon">${O.icon('search')}</div>
+          <div class="docs-nav-empty-text">No components found for "<strong class="docs-nav-empty-query"></strong>"</div>
+          <button type="button" class="o-btn o-btn-xs o-btn-soft docs-nav-empty-clear">Clear filter</button>
+        </div>
+      </nav>
+    `;
+
     const content = document.createElement('div'); content.className = 'docs-content';
     const toc = document.createElement('nav'); toc.className = 'docs-toc'; toc.setAttribute('aria-label', 'On this page');
     const backdrop = document.createElement('div'); backdrop.className = 'docs-backdrop';
@@ -186,24 +258,185 @@
     if (active) {
       const sRect = sidebar.getBoundingClientRect();
       const aRect = active.getBoundingClientRect();
-      if (aRect.top < sRect.top + 40 || aRect.bottom > sRect.bottom - 40) {
+      if (aRect.top < sRect.top + 50 || aRect.bottom > sRect.bottom - 50) {
         const sec = active.closest('.docs-nav-section');
         const target = sec || active;
-        sidebar.scrollTop = Math.max(0, Math.round(target.getBoundingClientRect().top - sRect.top + sidebar.scrollTop - 12));
+        sidebar.scrollTop = Math.max(0, Math.round(target.getBoundingClientRect().top - sRect.top + sidebar.scrollTop - 64));
       }
     }
-    // search
-    const input = header.querySelector('.docs-search input');
-    input.addEventListener('input', () => {
-      const q = input.value.trim();
-      sidebar.querySelectorAll('.docs-nav-section').forEach(sec => {
-        let any = false;
-        sec.querySelectorAll('.docs-nav-link').forEach(a => { const ok = !q || O.util.fuzzy(q, a.textContent + ' ' + a.title); a.hidden = !ok; any = any || !!ok; });
-        sec.hidden = !any;
+
+    // Accordion persistence & toggle all button
+    const sections = sidebar.querySelectorAll('details.docs-nav-section');
+    const toggleAllBtn = sidebar.querySelector('.docs-accordion-toggle');
+    const countEl = sidebar.querySelector('.docs-sidebar-count');
+
+    function updateToggleAllBtn() {
+      if (!toggleAllBtn) return;
+      const allOpen = [...sections].every(s => s.open);
+      toggleAllBtn.textContent = allOpen ? 'Collapse all' : 'Expand all';
+      toggleAllBtn.title = allOpen ? 'Collapse all sections' : 'Expand all sections';
+    }
+    updateToggleAllBtn();
+
+    sections.forEach(sec => {
+      sec.addEventListener('toggle', () => {
+        if (!activeSearchQuery) {
+          const name = sec.dataset.section;
+          if (name) {
+            savedState[name] = sec.open;
+            try { localStorage.setItem('orion:docs:nav-open', JSON.stringify(savedState)); } catch {}
+          }
+          updateToggleAllBtn();
+        }
       });
     });
-    input.addEventListener('keydown', e => { if (e.key === 'Enter') { const a = sidebar.querySelector('.docs-nav-link:not([hidden])'); if (a) location.href = a.href; } });
-    document.addEventListener('keydown', e => { if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && !document.activeElement.isContentEditable) { e.preventDefault(); input.focus(); } });
+
+    if (toggleAllBtn) {
+      toggleAllBtn.onclick = () => {
+        const anyClosed = [...sections].some(s => !s.open);
+        sections.forEach(s => {
+          s.open = anyClosed;
+          const name = s.dataset.section;
+          if (name) savedState[name] = anyClosed;
+        });
+        try { localStorage.setItem('orion:docs:nav-open', JSON.stringify(savedState)); } catch {}
+        updateToggleAllBtn();
+      };
+    }
+
+    // Dual search inputs (sidebar nav search + header search)
+    const headerSearch = header.querySelector('.docs-search');
+    const headerInput = headerSearch ? headerSearch.querySelector('input') : null;
+    const headerClear = headerSearch ? headerSearch.querySelector('.docs-search-clear') : null;
+
+    const sidebarSearch = sidebar.querySelector('.docs-sidebar-search');
+    const sidebarInput = sidebarSearch ? sidebarSearch.querySelector('input') : null;
+    const sidebarClear = sidebarSearch ? sidebarSearch.querySelector('.docs-nav-search-clear') : null;
+
+    const emptyState = sidebar.querySelector('.docs-nav-empty');
+    const emptyQuery = sidebar.querySelector('.docs-nav-empty-query');
+    const emptyClearBtn = sidebar.querySelector('.docs-nav-empty-clear');
+
+    let activeSearchQuery = '';
+
+    function handleSearch(q, sourceInput) {
+      activeSearchQuery = q.trim();
+      const query = activeSearchQuery.toLowerCase();
+      const hasQuery = query.length > 0;
+
+      if (headerInput && headerInput !== sourceInput) headerInput.value = activeSearchQuery;
+      if (sidebarInput && sidebarInput !== sourceInput) sidebarInput.value = activeSearchQuery;
+
+      if (headerClear) headerClear.hidden = !hasQuery;
+      if (sidebarClear) sidebarClear.hidden = !hasQuery;
+
+      if (!hasQuery) {
+        if (emptyState) emptyState.hidden = true;
+        sections.forEach(sec => {
+          sec.hidden = false;
+          const name = sec.dataset.section;
+          const wasOpen = sec.classList.contains('has-active') || (savedState[name] != null ? savedState[name] : (name === 'Getting Started' || name === 'Foundation'));
+          sec.open = wasOpen;
+          sec.querySelectorAll('.docs-nav-link').forEach(a => { a.hidden = false; });
+        });
+        if (countEl) countEl.textContent = `${totalCount} items`;
+        updateToggleAllBtn();
+        return;
+      }
+
+      const words = query.split(/\s+/).filter(Boolean);
+      let totalMatches = 0;
+
+      sections.forEach(sec => {
+        let sectionMatches = 0;
+        const secName = (sec.dataset.section || '').toLowerCase();
+
+        sec.querySelectorAll('.docs-nav-link').forEach(a => {
+          const title = (a.querySelector('.docs-nav-link-title')?.textContent || a.textContent || '').toLowerCase();
+          const desc = (a.title || '').toLowerCase();
+          const slug = (a.dataset.slug || '').toLowerCase();
+          const tag = (a.dataset.tag || '').toLowerCase();
+          const href = (a.getAttribute('href') || '').toLowerCase();
+
+          const corpus = `${title} ${slug} ${tag} ${desc} ${secName} ${href}`;
+          const isDirectMatch = words.every(w => corpus.includes(w));
+          const isFuzzyMatch = !isDirectMatch && (O.util && O.util.fuzzy ? !!O.util.fuzzy(query, `${title} ${slug} ${tag}`) : false);
+          const ok = isDirectMatch || isFuzzyMatch;
+
+          a.hidden = !ok;
+          if (ok) {
+            sectionMatches++;
+            totalMatches++;
+          }
+        });
+
+        if (sectionMatches > 0) {
+          sec.hidden = false;
+          sec.open = true;
+        } else {
+          sec.hidden = true;
+        }
+      });
+
+      if (emptyState) {
+        emptyState.hidden = totalMatches > 0;
+        if (emptyQuery) emptyQuery.textContent = activeSearchQuery;
+      }
+
+      if (countEl) {
+        countEl.textContent = `${totalMatches} result${totalMatches === 1 ? '' : 's'}`;
+      }
+    }
+
+    const attachSearchEvents = (inp) => {
+      if (!inp) return;
+      inp.addEventListener('input', e => handleSearch(e.target.value, inp));
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+          handleSearch('', null);
+          inp.blur();
+        } else if (e.key === 'Enter') {
+          const firstVisible = sidebar.querySelector('.docs-nav-link:not([hidden])');
+          if (firstVisible) location.href = firstVisible.href;
+        } else if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          const firstVisible = sidebar.querySelector('.docs-nav-link:not([hidden])');
+          if (firstVisible) firstVisible.focus();
+        }
+      });
+    };
+
+    attachSearchEvents(sidebarInput);
+    attachSearchEvents(headerInput);
+
+    const resetSearch = () => {
+      handleSearch('', null);
+      if (sidebarInput && window.innerWidth > 991) sidebarInput.focus();
+      else if (headerInput) headerInput.focus();
+    };
+
+    if (sidebarClear) sidebarClear.addEventListener('click', resetSearch);
+    if (headerClear) headerClear.addEventListener('click', resetSearch);
+    if (emptyClearBtn) emptyClearBtn.addEventListener('click', resetSearch);
+
+    // Initial search from URL parameter (e.g. ?q=theme)
+    try {
+      const urlQuery = new URLSearchParams(location.search).get('q');
+      if (urlQuery) {
+        handleSearch(urlQuery, null);
+      }
+    } catch {}
+
+    document.addEventListener('keydown', e => {
+      if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && !document.activeElement.isContentEditable) {
+        e.preventDefault();
+        const target = (window.innerWidth <= 991 && sidebarInput) ? sidebarInput : (sidebarInput || headerInput);
+        if (target) {
+          target.focus();
+          target.select();
+        }
+      }
+    });
     // menu (mobile)
     header.querySelector('.docs-menu-btn').onclick = () => document.body.classList.toggle('docs-nav-open');
     backdrop.onclick = () => document.body.classList.remove('docs-nav-open');
